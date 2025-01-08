@@ -1864,6 +1864,15 @@ Helper::SubscriptionWrapper::clear() {
 
 
 bool
+Helper::SubscriptionWrapper::wrapConnectionVector(const std::string& objID, const int variable, const std::vector<TraCIConnection>& value) {
+    auto sl = std::make_shared<TraCIConnectionVectorWrapped>();
+    sl->value = value;
+    (*myActiveResults)[objID][variable] = sl;
+    return true;
+}
+
+
+bool
 Helper::SubscriptionWrapper::wrapDouble(const std::string& objID, const int variable, const double value) {
     (*myActiveResults)[objID][variable] = std::make_shared<TraCIDouble>(value);
     return true;

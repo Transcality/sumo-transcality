@@ -582,7 +582,7 @@ AdditionalHandler::parseSumoBaseObject(CommonXMLStructure::SumoBaseObject* obj) 
             if (buildClosingLaneReroute(obj,
                                         obj->getStringAttribute(SUMO_ATTR_ID),
                                         parseVehicleClasses(obj->getStringAttribute(SUMO_ATTR_ALLOW),
-                                        obj->getStringAttribute(SUMO_ATTR_DISALLOW)))) {
+                                                obj->getStringAttribute(SUMO_ATTR_DISALLOW)))) {
                 obj->markAsCreated();
             }
             break;
@@ -590,7 +590,7 @@ AdditionalHandler::parseSumoBaseObject(CommonXMLStructure::SumoBaseObject* obj) 
             if (buildClosingReroute(obj,
                                     obj->getStringAttribute(SUMO_ATTR_ID),
                                     parseVehicleClasses(obj->getStringAttribute(SUMO_ATTR_ALLOW),
-                                    obj->getStringAttribute(SUMO_ATTR_DISALLOW)))) {
+                                            obj->getStringAttribute(SUMO_ATTR_DISALLOW)))) {
                 obj->markAsCreated();
             }
             break;
@@ -962,13 +962,13 @@ AdditionalHandler::parseChargingStationAttributes(const SUMOSAXAttributes& attrs
     const double efficiency = attrs.getOpt<double>(SUMO_ATTR_EFFICIENCY, id.c_str(), parsedOk, 0.95);
     const bool chargeInTransit = attrs.getOpt<bool>(SUMO_ATTR_CHARGEINTRANSIT, id.c_str(), parsedOk, 0);
     const SUMOTime chargeDelay = attrs.getOptSUMOTimeReporting(SUMO_ATTR_CHARGEDELAY, id.c_str(), parsedOk, 0);
-    const std::string chargeType = attrs.getOpt<std::string>(SUMO_ATTR_CHARGETYPE, id.c_str(), parsedOk, "normal");
+    const std::string chargeType = attrs.getOpt<std::string>(SUMO_ATTR_CHARGETYPE, id.c_str(), parsedOk, SUMOXMLDefinitions::ChargeTypes.getString(ChargeType::NORMAL));
     const SUMOTime waitingTime = attrs.getOptSUMOTimeReporting(SUMO_ATTR_WAITINGTIME, id.c_str(), parsedOk, TIME2STEPS(900));
     const bool friendlyPos = attrs.getOpt<bool>(SUMO_ATTR_FRIENDLY_POS, id.c_str(), parsedOk, false);
     const std::string parkingAreaID = attrs.getOpt<std::string>(SUMO_ATTR_PARKING_AREA, id.c_str(), parsedOk, "");
 
     // check charge type
-    if ((chargeType != "normal") && (chargeType != "electric") && (chargeType != "fuel")) {
+    if ((chargeType != "normal") && (chargeType != "battery-exchange") && (chargeType != "fuel")) {
         writeError(TLF("Invalid charge type '%' defined in chargingStation '%'.", chargeType, id));
         parsedOk = false;
     }
@@ -1553,7 +1553,7 @@ AdditionalHandler::parseRerouterAttributes(const SUMOSAXAttributes& attrs) {
     const bool off = attrs.getOpt<bool>(SUMO_ATTR_OFF, id.c_str(), parsedOk, false);
     const bool optional = attrs.getOpt<bool>(SUMO_ATTR_OPTIONAL, id.c_str(), parsedOk, false);
     // check attributes
-    if (!checkNegative(SUMO_TAG_REROUTER, id, SUMO_ATTR_PROB , probability, true)) {
+    if (!checkNegative(SUMO_TAG_REROUTER, id, SUMO_ATTR_PROB, probability, true)) {
         parsedOk = false;
     }
     // continue if flag is ok
@@ -2050,10 +2050,10 @@ AdditionalHandler::checkCalibratorFlowParents() {
     if (parentRootFile != nullptr) {
         return false;
     }
-    if ((parentCalibrator->getTag() == SUMO_TAG_CALIBRATOR) || (parentCalibrator->getTag() == GNE_TAG_CALIBRATOR_LANE)){
+    if ((parentCalibrator->getTag() == SUMO_TAG_CALIBRATOR) || (parentCalibrator->getTag() == GNE_TAG_CALIBRATOR_LANE)) {
         return true;
     } else {
-        return writeError(TLF("Calibrator Flows has to be defined within of a %.", toString(SUMO_TAG_CALIBRATOR)));
+        return writeError(TLF("Calibrator Flows have to be defined within a %.", toString(SUMO_TAG_CALIBRATOR)));
     }
 }
 

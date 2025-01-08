@@ -43,6 +43,15 @@ ticket15667b
 # parking outflow is blocked
 ticket15757
 
+# parking outflow is blocked (with trucks and longer busStops)
+ticket15757b
+
+# use parkingAreas instead of busStops
+ticket15757_parkingArea
+
+# use short parkingAreas and very long vehicles
+ticket15757_parkingArea2
+
 # collision
 ticket15770
 
@@ -51,3 +60,7 @@ ticket15843
 
 # unsafe approach speed to pedestrian crossing
 ticket15848
+
+# teleport beyond busStop
+ticket15972
+ticket15976

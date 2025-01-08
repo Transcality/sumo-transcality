@@ -11,6 +11,7 @@ title: ChangeLog
   - Fixed platform specific taxi behavior related to pre-booking #15698 (regression in 1.20.0)
   - Fixed crash involving pedestrians at pedestrian crossing #15807 (regression in 1.21.0)
   - Fixed reduced simulation speed of pedestrians (~ factor 5) #15825 (regression in 1.21.0)
+  - Fixed bug that caused parkingAreaReroute to assigns an invalid route #15960 (regression in 1.21.0)
   - Fixed rerouting error on the last route edge with a stop #15552
   - Fixed routing error on departure #15563
   - Fixed invalid warnings regarding inconsistent loaded stop times #15602
@@ -38,8 +39,14 @@ title: ChangeLog
   - Fixed lane-changing deadlock on junction #15887
   - Fixed inconsistent statistics on bike departDelay #13142
   - Fixed bug where vehicles with bluelight device slowed down before entering a rescue lane #12067
-  - Fixed invalid right-of-way when turning right-on-red and there is a pedestrian crossing #15939 
-  
+  - Fixed invalid right-of-way when turning right-on-red and there is a pedestrian crossing #15939
+  - Fixed invalid gap in person movement when a ride without arrivalPos is followed by a stop #8468
+  - Vehicles are no longer inserted on used pedestrian crossing #15843
+  - Fixed crash when loading state for vehicles with random arrivalPos #13110
+  - Fixed inconsisent arrivalPos when loading state #15961
+  - Fixed invalid stopping after vehicle teleports beyond stopping place #15972
+  - Fixed bug where a vehicle steals another vehicles parking spot #15976
+  - Fixed bug where parking egress is blocked after lane change #15757 
 
 - netedit
   - Fixed crash when moving a big selection #15132 (regression in 1.16.0)
@@ -48,6 +55,7 @@ title: ChangeLog
   - Fixed candidate edge coloring in pedestrian mode #15888 (regression in 1.19.0)
   - E2 multilane detectors can be moved avain #15551 (regression in 1.20.0)
   - Fixed invalid rectangle selection when zoomed out #15766 (regression in 1.20.0)
+  - Traffic light mode shows traffic light icons again when zoomed out #15966 (regression in 1.20.0)
   - Loaded containers starting from stops are now drawn #15567
   - ESC aborts creation of edgeRel and tazRel datas #15601
   - Fixed invalid TAZ coloring during mouse hovering in create TAZRel mode #15544
@@ -111,7 +119,8 @@ title: ChangeLog
   - No longer generating invalid signal plan when giving invalid argument **--tls.green.time** #15719
   - Fixed invalid linkState for left turns from the major road at junction type `allway_stop` #15737
   - Fixed invalid tlLogic after processing net with **--keep-edges** #15798
-  - No longer building bicyle left turns from a straight-only vehicle lane (starting from a left-turn lane instead) #15943 
+  - No longer building bicyle left turns from a straight-only vehicle lane (starting from a left-turn lane instead) #15943
+  - Fixed invalid handling of negative stop position in ptstop-files #12183 
 
 - duarouter
   - Fixed crash when using stop with coordinates and option **--mapmatch.junctions** #15740
@@ -125,7 +134,8 @@ title: ChangeLog
 - meso
   - Fixed crash when using **--mapmatch.junctions** in a network with internal edges #15741
   - Fixed crash when using **--time-to-teleport.disconnected** #15751
-  - Option **--time-to-teleport.disconnected** is now working when connections are missing #15777 
+  - Option **--time-to-teleport.disconnected** is now working when connections are missing #15777
+  - Fixed crash when rendering vehicle at parkingArea #15956 
 
 - activitygen
   - fixed crash when attribute is not set #15782 
@@ -136,7 +146,9 @@ title: ChangeLog
   - Fixed invalid result by `vehicle.couldChangeLane` #10739
   - Fixd invalid result by `trafficlight.getSpentDuration` after `setProgramLogic` #15753
   - Fixed non-functional libsumo windows wheels #15516
-  - setEmissionClass now works with PHEMlight #15761 
+  - setEmissionClass now works with PHEMlight #15761
+  - subscribing to complex types now works with the python API #15785
+  - Concurrent access to libsumo now works #15967 
  
 - Tools
   - matsim_importPlans.py: no longer writes unsorted trips with option **-vehicles-only** #15743
@@ -147,12 +159,14 @@ title: ChangeLog
   - sumolib.xml: Fixed bug where parse_fast retrieves wrong attribute if one attribute is the end-suffix of another attribute #15901 
   - randomTrips.py: option **--fringe-factor** now works in lefthand networks #15876
   - randomTrips.py: Options **--random-departpos** and **--random-arrivalpos** now take effect for persons #15946 
-  - routeSampler.py: fixed crash when loading negative counts #15908 
+  - routeSampler.py: fixed crash when loading negative counts #15908
+  - gtfs2pt.py: Import now works when optional 'direction_id' is missing #15736
+  - Empty strings can now be passed via tool config file #15499 
     
 ### Enhancements
 
 - sumo
-  - Added new [stationfinder device](Simulation/Stationfinder.md) which reroutes electric vehicles to a chargingStation depending on it's state of charge #9663 
+  - Added new [stationfinder device](Simulation/Stationfinder.md) which reroutes electric vehicles to a chargingStation depending on it's state of charge #9663, #15871, #15931
   - The new vType attribute `lcContRight` can be used to configure lane choice at a lane split where all lanes have equal strategic value. #15579
   - Added option **--insertion-checks** to set global defaults for vehicle attribute `insertionChecks` #15149
   - Added option **--pedestrian.striping.jamfactor** to configure the speed of jammed pedestrians (default 0.25) #15610
@@ -172,7 +186,8 @@ title: ChangeLog
   - Added warning if IDM internal stepping is configured too large #15836
   - Battery device now includes info about total energy consumption in tripinfo #15800
   - Pedestrian speeds are now affected by speed limits on crossings and walkingareas (starting with network version 1.20.0) #11527
-  - Loaded route files are no logged in **--verbose** mode #13875 
+  - Loaded route files are no logged in **--verbose** mode #13875
+  - Option **--pedestrian.jupedsim.wkt** can now be used to export geometry data from JuPedSim #14436
   - railways
     - major rewrite of signal logic #7578
     - major improvement in railway simulation speed (simulation time reduced by ~50-75% depending on scenario size) #4379 
@@ -207,7 +222,8 @@ title: ChangeLog
   - Traffic lights now supports the special value `offset="begin"` which lets the logic start in cycle-second 0 regardless of simulation begin time #15248
   - Actuated pedestrian crossings are now actuated by pedestrians rather than vehicles #7637
   - Pedestrian crossings created by option **--crossings.guess** are now given priority. The old behavior can be obtained by setting option **--crossings.guess.roundabout-priority false** #15833
-  - Option **--plain-output-prefix** now also saves a *.netccfg*-file for rebuilding the network from plain-xml files #12998 
+  - Option **--plain-output-prefix** now also saves a *.netccfg*-file for rebuilding the network from plain-xml files #12998
+  - Improved geometry of pedestrian crossings when a footpath crosses a road #15975 
 
 - meso
   - fcd-output can now be configured to include model attributes *segment, queue, entryTime, eventTime* and *blockTime* #15670
@@ -243,7 +259,9 @@ title: ChangeLog
   - routeSampler.py: Major increase in processing speed for long routes #15911
   - routeSampler.py: Added option **--depart-distribution** to distribute departures within the counting data intervals #15909
   - xml2csv.py: Added option **--keep-attributes** to limit the attributes exported to csv #15915
-  - plotXMLAttributes.py: Added options **--split-x** and **--split-y** for plotting attributes with list values #15934 
+  - plotXMLAttributes.py: Added options **--split-x** and **--split-y** for plotting attributes with list values #15934
+  - sumolib: Geometry helper functions for rotation at offset is now available #15445
+  - duaIterate.py: When loading trips with taz or junction-taz, vehicles may change their depart and arrival edge in each iteration #15983 
 
 ### Miscellaneous
 

@@ -1802,7 +1802,7 @@ MSVehicle::processNextStop(double currentVelocity) {
                             // rerouted, keep driving
                             return currentVelocity;
                         }
-                    } else if (stop.parkingarea->getOccupancyIncludingBlocked() >= stop.parkingarea->getCapacity()) {
+                    } else if (stop.parkingarea->getOccupancyIncludingReservations(this) >= stop.parkingarea->getCapacity()) {
                         fitsOnStoppingPlace = false;
                     } else if (stop.parkingarea->parkOnRoad() && stop.parkingarea->getLotIndex(this) < 0) {
                         fitsOnStoppingPlace = false;
@@ -4564,7 +4564,7 @@ MSVehicle::executeMove() {
     // (Leo) to avoid tiny oscillations (< 1e-10) of vNext in a standing vehicle column (observed for ballistic update), we cap off vNext
     //       (We assure to do this only for vNext<<NUMERICAL_EPS since otherwise this would nullify the workaround for #2995
     // (Jakob) We also need to make sure to reach a stop at the start of the next edge
-    if (fabs(vNext) < NUMERICAL_EPS_SPEED && myStopDist > POSITION_EPS) {
+    if (fabs(vNext) < NUMERICAL_EPS_SPEED && (myStopDist > POSITION_EPS || (hasStops() && myCurrEdge == getNextStop().edge))) {
         vNext = 0.;
     }
 #ifdef DEBUG_EXEC_MOVE
@@ -5657,6 +5657,13 @@ MSVehicle::enterLaneAtInsertion(MSLane* enteredLane, double pos, double speed, d
         myLastBestLanesEdge = nullptr;
         myLastBestLanesInternalLane = nullptr;
         myLaneChangeModel->resetState();
+        while (!myStops.empty() && myStops.front().edge == myCurrEdge && &myStops.front().lane->getEdge() == &myLane->getEdge()
+                && myStops.front().pars.endPos < pos) {
+            WRITE_WARNINGF(TL("Vehicle '%' skips stop on lane '%' time=%."), getID(), myStops.front().lane->getID(),
+                    time2string(MSNet::getInstance()->getCurrentTimeStep()));
+            myStops.pop_front();
+        }
+
     }
     computeFurtherLanes(enteredLane, pos);
     if (MSGlobals::gLateralResolution > 0) {
@@ -7662,6 +7669,10 @@ MSVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
     bis >> stopped;
     bis >> pastStops;
 
+    if (attrs.hasAttribute(SUMO_ATTR_ARRIVALPOS_RANDOMIZED)) {
+        bool ok;
+        myArrivalPos = attrs.get<double>(SUMO_ATTR_ARRIVALPOS_RANDOMIZED, getID().c_str(), ok);
+    }
     // load stops
     myStops.clear();
     addStops(!MSGlobals::gCheckRoutes, &myCurrEdge, false);

@@ -140,24 +140,24 @@ class junction:
 
     class inspectSelection:
         type = 1
-        radius = 3
-        keepClear = 4
-        rightOfWay = 5
-        fringe = 7
-        name = 9
-        parameters = 12
+        radius = 2
+        keepClear = 3
+        rightOfWay = 4
+        fringe = 5
+        name = 6
+        parameters = 9
 
     class inspectSelectionTLS:
         type = 1
-        radius = 3
-        keepClear = 4
-        rightOfWay = 5
-        fringe = 7
-        name = 9
-        tlType = 10
-        tlLayout = 12
-        tl = 14
-        parameters = 17
+        radius = 2
+        keepClear = 3
+        rightOfWay = 4
+        fringe = 5
+        name = 6
+        tlType = 7
+        tlLayout = 8
+        tl = 10
+        parameters = 13
 
 # edge
 
@@ -203,7 +203,7 @@ class edge:
         stopOffset = 21
         stopOffsetExceptionButton = 22
         stopOffsetException = 23
-        parameters = 24
+        parameters = 26
 
     class inspectSelection:
         speed = 1
@@ -215,15 +215,15 @@ class edge:
         disallow = 7
         length = 8
         spreadType = 9
-        name = 11
-        width = 12
-        endOffset = 13
-        shapeStart = 14
-        shapeEnd = 15
-        stopOffset = 16
-        stopOffsetExceptionButton = 17
-        stopOffsetException = 18
-        parameters = 21
+        name = 10
+        width = 11
+        endOffset = 12
+        shapeStart = 13
+        shapeEnd = 14
+        stopOffset = 15
+        stopOffsetExceptionButton = 16
+        stopOffsetException = 17
+        parameters = 20
 
     class template:
         create = 30
@@ -261,7 +261,7 @@ class lane:
         stopOffset = 15
         stopOffsetExceptionButton = 16
         stopOffsetException = 17
-        parameters = 18
+        parameters = 20
 
     class inspectSelection:
         speed = 1
@@ -374,14 +374,14 @@ class connection:
 
 class crossing:
     class create:
-        edges = 1
-        priority = 2
-        width = 3
-        button = 9
+        edges = 2
+        priority = 3
+        width = 4
+        button = 10
 
     class createTLS:
-        edges = 1
-        width = 2
+        edges = 2
+        width = 3
         button = 9
 
     class inspect:
@@ -412,6 +412,7 @@ class crossing:
         linkIndex2 = 4
         parameters = 7
 
+    clearEdges = 3
     useSelectedEdges = 3
     firstField = 3
 
@@ -761,9 +762,9 @@ class chargingStation:
         chargeInTrainsit = 5
         chargeDelay = 6
         chargeType = 7
-        waitingTime = 9
-        parkingArea = 10
-        parameters = 13
+        waitingTime = 8
+        parkingArea = 9
+        parameters = 12
 
 # access
 
@@ -1990,7 +1991,7 @@ class flow:
         end = 28
         terminateOption = 29
         spacingOption = 30
-        parameters = 32
+        parameters = 33
 
     class inspectSelection:
         typeButton = 1
@@ -2014,7 +2015,7 @@ class flow:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 26
+        parameters = 29
 
 # flow (from-to junctions)
 
@@ -2071,7 +2072,7 @@ class flowJunction:
         end = 27
         terminateOption = 28
         spacingOption = 29
-        parameters = 31
+        parameters = 32
 
     class inspectSelection:
         typeButton = 1
@@ -2095,7 +2096,7 @@ class flowJunction:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 26
+        parameters = 29
 
 # flow (from-to TAZs)
 
@@ -2152,7 +2153,7 @@ class flowTAZ:
         end = 27
         terminateOption = 28
         spacingOption = 29
-        parameters = 31
+        parameters = 32
 
     class inspectSelection:
         typeButton = 1
@@ -2176,7 +2177,7 @@ class flowTAZ:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 26
+        parameters = 29
 
 # flow (over route)
 
@@ -2234,7 +2235,7 @@ class routeFlow:
         end = 28
         terminateOption = 29
         spacingOption = 30
-        parameters = 32
+        parameters = 33
 
     class inspectSelection:
         typeButton = 1
@@ -2258,7 +2259,7 @@ class routeFlow:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 26
+        parameters = 29
 
 # flow (embedded route)
 
@@ -2315,7 +2316,7 @@ class flowEmbedded:
         end = 27
         terminateOption = 28
         spacingOption = 29
-        parameters = 31
+        parameters = 32
 
     class inspectSelection:
         typeButton = 1
@@ -2339,7 +2340,7 @@ class flowEmbedded:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 26
+        parameters = 29
 
 # stop over bus stop
 
@@ -2391,16 +2392,16 @@ class stopBusStop:
         extensionEnable = 5
         extension = 6
         triggered = 7
-        expected = 9
-        join = 9
-        permitted = 10
-        parking = 11
-        actType = 13
-        tripID = 14
-        line = 15
-        onDemand = 16
-        jump = 17
-        split = 18
+        expected = 8
+        join = 8
+        permitted = 9
+        parking = 10
+        actType = 12
+        tripID = 13
+        line = 14
+        onDemand = 15
+        jump = 16
+        split = 17
 
 # stop over train stop
 
@@ -2452,16 +2453,16 @@ class stopTrainStop:
         extensionEnable = 5
         extension = 6
         triggered = 7
-        expected = 9
-        join = 9
-        permitted = 10
-        parking = 11
-        actType = 13
-        tripID = 14
-        line = 15
-        onDemand = 16
-        jump = 17
-        split = 18
+        expected = 8
+        join = 8
+        permitted = 9
+        parking = 10
+        actType = 12
+        tripID = 13
+        line = 14
+        onDemand = 15
+        jump = 16
+        split = 17
 
 # stop over container stop
 
@@ -3055,12 +3056,13 @@ class person:
         parameters = 11
 
     class inspectSelection:
-        type = 1
-        colorButton = 3
-        color = 4
-        departPos = 5
-        depart = 6
-        parameters = 9
+        typeButton = 1
+        type = 2
+        colorButton = 4
+        color = 5
+        departPos = 6
+        depart = 7
+        parameters = 10
 
 
 class personFlow:
@@ -3090,19 +3092,20 @@ class personFlow:
         end = 14
         terminateOption = 15
         spacingOption = 16
-        parameters = 18
+        parameters = 19
 
     class inspectSelection:
-        type = 1
-        colorButton = 3
-        color = 4
-        departPos = 5
-        begin = 6
-        terminate = 9
-        spacing = 11
-        terminateOption = 13
-        spacingOption = 14
-        parameters = 16
+        typeButton = 1
+        type = 2
+        colorButton = 4
+        color = 5
+        departPos = 6
+        begin = 7
+        terminate = 10
+        spacing = 12
+        terminateOption = 14
+        spacingOption = 15
+        parameters = 18
 
 # PersonPlans
 
@@ -3666,12 +3669,13 @@ class container:
         parameters = 11
 
     class inspectSelection:
-        type = 1
-        colorButton = 3
-        color = 4
-        departPos = 5
-        depart = 6
-        parameters = 9
+        typeButton = 1
+        type = 2
+        colorButton = 4
+        color = 5
+        departPos = 6
+        depart = 7
+        parameters = 10
 
 
 class containerFlow:
@@ -3701,19 +3705,20 @@ class containerFlow:
         end = 14
         terminateOption = 15
         spacingOption = 16
-        parameters = 18
+        parameters = 19
 
     class inspectSelection:
-        type = 1
-        colorButton = 3
-        color = 4
-        departPos = 5
-        begin = 6
-        terminate = 9
-        spacing = 11
-        terminateOption = 13
-        spacingOption = 14
-        parameters = 16
+        typeButton = 1
+        type = 2
+        colorButton = 4
+        color = 5
+        departPos = 6
+        begin = 7
+        terminate = 10
+        spacing = 12
+        terminateOption = 14
+        spacingOption = 15
+        parameters = 19
 
 # PersonPlans
 
@@ -4058,7 +4063,7 @@ class edgeData:
         parameters = 3
 
     class inspectSelection:
-        parameters = 3
+        parameters = 1
 
 # edgeRelData
 
@@ -4073,7 +4078,7 @@ class edgeRelData:
         parameters = 5
 
     class inspectSelection:
-        parameters = 3
+        parameters = 1
 
 # TAZRelData
 
@@ -4088,7 +4093,7 @@ class TAZRelData:
         parameters = 5
 
     class inspectSelection:
-        parameters = 3
+        parameters = 1
 
 # edge mean data
 

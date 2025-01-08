@@ -766,6 +766,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "departEdge",             SUMO_ATTR_DEPARTEDGE },
     { "arrivalLane",            SUMO_ATTR_ARRIVALLANE },
     { "arrivalPos",             SUMO_ATTR_ARRIVALPOS },
+    { "arrivalPosRandomized",   SUMO_ATTR_ARRIVALPOS_RANDOMIZED },
     { "arrivalPosLat",          SUMO_ATTR_ARRIVALPOS_LAT },
     { "arrivalSpeed",           SUMO_ATTR_ARRIVALSPEED },
     { "arrivalEdge",            SUMO_ATTR_ARRIVALEDGE },
@@ -1470,6 +1471,12 @@ StringBijection<ParkingType>::Entry SUMOXMLDefinitions::parkingTypeValues[] = {
     {"opportunistic",  ParkingType::OPPORTUNISTIC } // park of the street if there is an opportunity for it
 };
 
+StringBijection<ChargeType>::Entry SUMOXMLDefinitions::chargeTypeValues[] = {
+    {"normal",              ChargeType::NORMAL },           // default: either connected with a wire or charged by induction
+    {"battery-exchange",    ChargeType::BATERY_ECHANGE},    // battery echange
+    {"fuel",                ChargeType::FUEL }              // use fuel for charging
+};
+
 StringBijection<RightOfWay>::Entry SUMOXMLDefinitions::rightOfWayValuesInitializer[] = {
     {"edgePriority",  RightOfWay::EDGEPRIORITY }, // use only edge priority values
     {"mixedPriority", RightOfWay::MIXEDPRIORITY }, // use the default behavior but encode this explicitly (only needed for overriding the NEMA fallback behavior)
@@ -1670,6 +1677,9 @@ StringBijection<LaneSpreadFunction> SUMOXMLDefinitions::LaneSpreadFunctions(
 
 StringBijection<ParkingType> SUMOXMLDefinitions::ParkingTypes(
     SUMOXMLDefinitions::parkingTypeValues, ParkingType::OPPORTUNISTIC);
+
+StringBijection<ChargeType> SUMOXMLDefinitions::ChargeTypes(
+    SUMOXMLDefinitions::chargeTypeValues, ChargeType::FUEL);
 
 StringBijection<RightOfWay> SUMOXMLDefinitions::RightOfWayValues(
     SUMOXMLDefinitions::rightOfWayValuesInitializer, RightOfWay::DEFAULT);

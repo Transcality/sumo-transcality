@@ -102,6 +102,23 @@
 %{
 #include <libsumo/TraCIDefs.h>
 
+static PyObject* parseConnectionList(const std::vector<libsumo::TraCIConnection>& connList) {
+    PyObject* result = PyTuple_New(connList.size());
+    int index = 0;
+    for (auto iter = connList.begin(); iter != connList.end(); ++iter) {
+        PyTuple_SetItem(result, index++, Py_BuildValue("(sNNNsssd)",
+                                                        iter->approachedLane.c_str(),
+                                                        PyBool_FromLong(iter->hasPrio),
+                                                        PyBool_FromLong(iter->isOpen),
+                                                        PyBool_FromLong(iter->hasFoe),
+                                                        iter->approachedInternal.c_str(),
+                                                        iter->state.c_str(),
+                                                        iter->direction.c_str(),
+                                                        iter->length));
+    }
+    return result;
+}
+
 static PyObject* parseSubscriptionMap(const std::map<int, std::shared_ptr<libsumo::TraCIResult> >& subMap) {
     PyObject* result = PyDict_New();
     for (auto iter = subMap.begin(); iter != subMap.end(); ++iter) {
@@ -161,6 +178,12 @@ static PyObject* parseSubscriptionMap(const std::map<int, std::shared_ptr<libsum
                 } else {
                     pyVal = Py_BuildValue("(sd)", theRoadPosition->edgeID.c_str(), theRoadPosition->pos);
                 }
+            }
+        }
+        if (pyVal == nullptr) {
+            const libsumo::TraCIConnectionVectorWrapped* const theConnectionList = dynamic_cast<const libsumo::TraCIConnectionVectorWrapped*>(traciVal);
+            if (theConnectionList != nullptr) {
+                pyVal = parseConnectionList(theConnectionList->value);
             }
         }
         if (pyVal == nullptr) {
@@ -233,19 +256,7 @@ static PyObject* parseSubscriptionMap(const std::map<int, std::shared_ptr<libsum
 };
 
 %typemap(out) std::vector<libsumo::TraCIConnection> {
-    $result = PyTuple_New($1.size());
-    int index = 0;
-    for (auto iter = $1.begin(); iter != $1.end(); ++iter) {
-        PyTuple_SetItem($result, index++, Py_BuildValue("(sNNNsssd)",
-                                                        iter->approachedLane.c_str(),
-                                                        PyBool_FromLong(iter->hasPrio),
-                                                        PyBool_FromLong(iter->isOpen),
-                                                        PyBool_FromLong(iter->hasFoe),
-                                                        iter->approachedInternal.c_str(),
-                                                        iter->state.c_str(),
-                                                        iter->direction.c_str(),
-                                                        iter->length));
-    }
+    $result = parseConnectionList($1);
 };
 
 %typemap(out) std::vector<libsumo::TraCIVehicleData> {
@@ -351,14 +362,14 @@ static PyObject* parseSubscriptionMap(const std::map<int, std::shared_ptr<libsum
 %}
 
 %define SUBSCRIBE_HELPER(domain)
-%pythonprepend SWIG_MODULE::domain::subscribe(const std::string&, const std::vector<int>&, double begin, double, const SWIG_MODULE::TraCIResults&) %{
+%pythonprepend SWIG_MODULE::domain::subscribe(const std::string&, const std::vector<int>&, double begin, double, const libsumo::TraCIResults&) %{
     if len(args) > 1 and args[1] is None:
         args = (args[0], [-1]) + args[2:]
     if "varIDs" in kwargs and kwargs["varIDs"] is None:
         kwargs["varIDs"] = [-1]
 %}
 
-%pythonprepend SWIG_MODULE::domain::subscribeContext(const std::string&, int, double, const std::vector<int>&, double begin, double, const SWIG_MODULE::TraCIResults&) %{
+%pythonprepend SWIG_MODULE::domain::subscribeContext(const std::string&, int, double, const std::vector<int>&, double begin, double, const libsumo::TraCIResults&) %{
     if len(args) > 3 and args[3] is None:
         args = (args[0], args[1], args[2], [-1]) + args[4:]
     if "varIDs" in kwargs and kwargs["varIDs"] is None:
@@ -390,12 +401,12 @@ SUBSCRIBE_HELPER(MeanData)
 SUBSCRIBE_HELPER(VariableSpeedSign)
 SUBSCRIBE_HELPER(RouteProbe)
 
-%pythonprepend SWIG_MODULE::Simulation::subscribe(const std::string&, const std::vector<int>&, double begin, double, const SWIG_MODULE::TraCIResults&) %{
+%pythonprepend SWIG_MODULE::Simulation::subscribe(const std::string&, const std::vector<int>&, double begin, double, const libsumo::TraCIResults&) %{
     if len(args) > 1 and args[1] is None:
         args = (args[0], [-1]) + args[2:]
 %}
 
-%pythonprepend SWIG_MODULE::Simulation::subscribeContext(const std::string&, int, double, const std::vector<int>&, double begin, double, const SWIG_MODULE::TraCIResults&) %{
+%pythonprepend SWIG_MODULE::Simulation::subscribeContext(const std::string&, int, double, const std::vector<int>&, double begin, double, const libsumo::TraCIResults&) %{
     if len(args) > 3 and args[3] is None:
         args = (args[0], args[1], args[2], [-1]) + args[4:]
     if "varIDs" in kwargs and kwargs["varIDs"] is None:
@@ -435,8 +446,23 @@ SUBSCRIBE_HELPER(RouteProbe)
 %shared_ptr(libsumo::TraCIString)
 %shared_ptr(libsumo::TraCIStringList)
 %shared_ptr(libsumo::TraCIDoubleList)
+%shared_ptr(libsumo::TraCIPhase)
+%shared_ptr(libsumo::TraCILogic)
+%shared_ptr(libsumo::TraCILink)
+%shared_ptr(libsumo::TraCIConnection)
+%shared_ptr(libsumo::TraCIConnectionVectorWrapped)
+%shared_ptr(libsumo::TraCIVehicleData)
+%shared_ptr(libsumo::TraCINextTLSData)
+%shared_ptr(libsumo::TraCINextTLSDataVectorWrapped)
 %shared_ptr(libsumo::TraCINextStopData)
-%shared_ptr(libsumo::TraCINextStopDataVector)
+%shared_ptr(libsumo::TraCINextStopDataVectorWrapped)
+%shared_ptr(libsumo::TraCIBestLanesData)
+%shared_ptr(libsumo::TraCIBestLanesDataVectorWrapped)
+%shared_ptr(libsumo::TraCIStage)
+%shared_ptr(libsumo::TraCIReservation)
+%shared_ptr(libsumo::TraCICollision)
+%shared_ptr(libsumo::TraCISignalConstraint)
+%shared_ptr(libsumo::TraCIJunctionFoe)
 #endif
 
 // replacing vector instances of standard types, see https://stackoverflow.com/questions/8469138
@@ -559,7 +585,7 @@ SELF_NULL_CHECKER(TraCIConnection)
 SELF_NULL_CHECKER(TraCIVehicleData)
 SELF_NULL_CHECKER(TraCINextTLSData)
 SELF_NULL_CHECKER(TraCINextStopData)
-SELF_NULL_CHECKER(TraCINextStopDataVector)
+SELF_NULL_CHECKER(TraCINextStopDataVectorWrapped)
 SELF_NULL_CHECKER(TraCIBestLanesData)
 SELF_NULL_CHECKER(TraCIStage)
 SELF_NULL_CHECKER(TraCIReservation)
