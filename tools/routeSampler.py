@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2012-2024 German Aerospace Center (DLR) and others.
+# Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -144,6 +144,12 @@ def get_options(args=None):
                     help="set optimization method level (full, INT boundary)")
     op.add_argument("--optimize-input", dest="optimizeInput", action="store_true", default=False,
                     help="Skip resampling and run optimize directly on the input routes")
+    op.add_argument("--init-input", dest="initInput", action="store_true", default=False,
+                    help="use loaded routes as initialization for the used routes")
+    op.add_argument("--init-input.remove-overflow", dest="initInputRemove", action="store_true", default=False,
+                    help="use loaded routes as initialization but remove those that are responsible for overflow")
+    op.add_argument("--no-sampling", dest="noSampling", action="store_true", default=False,
+                    help="Skip sampling of routes")
     op.add_argument("--min-count", dest="minCount", type=int, default=1,
                     help="Set minimum number of counting locations that a route must visit")
     op.add_argument("--minimize-vehicles", dest="minimizeVehs", type=float, default=0,
@@ -151,6 +157,8 @@ def get_options(args=None):
                     "(prefer routes that pass multiple counting locations over routes that pass fewer)")
     op.add_argument("--geh-ok", dest="gehOk", type=float, default=5,
                     help="threshold for acceptable GEH values")
+    op.add_argument("--geh-scale", dest="gehScale", type=float, default=None,
+                    help="Should be set to 0.1 when loading traffic for a full day (estimating peak hour traffic as 1/10 of daily traffic)")
     op.add_argument("--turn-ratio-total", dest="turnRatioTotal", type=float, default=1,
                     help="Set value for normalizing turning ratios (default 1)")
     op.add_argument("--turn-ratio-tolerance", dest="turnRatioTolerance", type=float,
@@ -198,9 +206,15 @@ def get_options(args=None):
             print("Cannot use optimization (scipy not installed)", file=sys.stderr)
             sys.exit(1)
 
-    if options.optimizeInput and not isinstance(options.optimize, int):
-        print("Option --optimize-input requires an integer argument for --optimize", file=sys.stderr)
-        sys.exit(1)
+    if options.optimizeInput:
+        if not isinstance(options.optimize, int):
+            print("Option --optimize-input requires an integer argument for --optimize", file=sys.stderr)
+            sys.exit(1)
+        options.initInput = True
+        options.noSampling = True
+
+    if options.initInputRemove:
+        options.initInput = True
 
     if options.threads > 1 and sys.version_info[0] < 3:
         print("Using multiple cpus is only supported for python 3", file=sys.stderr)
@@ -306,25 +320,13 @@ class CountData:
             return None
         return i
 
-    def use(self):
-        self.count -= 1
-        self.assignedCount += 1
+    def use(self, n = 1):
+        self.count -= n
+        self.assignedCount += n
 
     def addCount(self, count):
         self.count += count
         self.origCount += count
-
-    def sampleOpen(self, rng, openRoutes, routeCounts):
-        cands = list(self.routeSet.intersection(openRoutes))
-        assert cands
-        probs = [routeCounts[i] for i in cands]
-        x = rng.rand() * sum(probs)
-        seen = 0
-        for route, prob in zip(cands, probs):
-            seen += prob
-            if seen >= x:
-                return route
-        assert False
 
     def updateTurnRatioCounts(self, openRoutes, openCounts, updateSiblings=False):
         if self.isRatio:
@@ -457,7 +459,9 @@ def parseDataIntervals(parseFun, fnames, begin, end, allRoutes, attr, options,
         return result
     for fname in fnames:
         for interval in sumolib.xml.parse(fname, 'interval', heterogeneous=True):
-            overlap = 1 if isRatio else getOverlap(begin, end, parseTime(interval.begin), parseTime(interval.end))
+            iBegin = parseTime(interval.begin)
+            iEnd = parseTime(interval.end)
+            overlap = 1 if isRatio else getOverlap(begin, end, iBegin, iEnd)
             if overlap > 0:
                 # print(begin, end, interval.begin, interval.end, "overlap:", overlap)
                 for edges, value in parseFun(interval, attr, warn):
@@ -477,6 +481,14 @@ def parseDataIntervals(parseFun, fnames, begin, end, allRoutes, attr, options,
                     elif isRatio != locations[edges].isRatio:
                         print("Warning: Edge relation '%s' occurs as turn relation and also as turn-ratio" %
                               ' '.join(edges), file=sys.stderr)
+                    elif not warn and overlap == 1 and begin == iBegin and end == iEnd:
+                        # in 'Warn' mode we are parsing the whole time range at once so duplicate occurences are expected.
+                        # Hence we warn only in the context of solveInterval where 'warn=False'
+                        print("Edge %s'%s' occurs more than once in interval %s-%s" % (
+                            "relation " if len(edges) > 1 else "",
+                            ' '.join(edges),
+                            interval.begin, interval.end),
+                            file=sys.stderr)
                     value *= overlap
                     if not isRatio:
                         value = int(value)
@@ -518,7 +530,7 @@ def updateOpenCounts(openCounts, countData, openRoutes):
     return list(filter(lambda i: countData[i].routeSet.intersection(openRoutes), openCounts))
 
 
-def optimize(options, countData, routes, usedRoutes, routeUsage, intervalCount, rng):
+def optimize(options, countData, routes, priorRouteCounts, routeUsage, intervalCount, rng):
     """ use relaxtion of the ILP problem for picking the number of times that each route is used
     x = usageCount vector (count for each route index)
     c = weight vector (vector of 1s)
@@ -533,8 +545,6 @@ def optimize(options, countData, routes, usedRoutes, routeUsage, intervalCount, 
     import scipy.optimize as opt
 
     m = len(countData)
-
-    priorRouteCounts = getRouteCounts(routes, usedRoutes)
 
     relevantRoutes = [i for i in range(routes.number) if len(routeUsage[i]) >= options.minCount]
     priorRelevantRouteCounts = [priorRouteCounts[r] for r in relevantRoutes]
@@ -593,7 +603,6 @@ def optimize(options, countData, routes, usedRoutes, routeUsage, intervalCount, 
 
     if res.success:
         print("Optimization succeeded")
-        del usedRoutes[:]
         routeCountsR = res.x[:k]  # cut of slack variables
         # translate to original route indices
         # routeCounts = [0] * routes.number
@@ -618,11 +627,12 @@ def optimize(options, countData, routes, usedRoutes, routeUsage, intervalCount, 
         #    sum(map(round, routeCounts)),
         #    routeCounts))
         # print("slack (n=%s, sum=%s) %s" % (len(slack), sum(slack), slack))
-        usedRoutes.extend(sum([[i] * count for i, count in enumerate(routeCountsRounded)], []))
+        return routeCountsRounded
         # print("#usedRoutes=%s" % len(usedRoutes))
         # update countData
     else:
         print("Optimization failed")
+        return priorRouteCounts
 
 
 def zero():
@@ -723,17 +733,14 @@ def resetCounts(usedRoutes, routeUsage, countData):
     for cd in countData:
         cd.count = cd.origCount
         cd.assignedCount = 0
-    for r in usedRoutes:
+    for r, usage in enumerate(usedRoutes):
         for i in routeUsage[r]:
-            countData[i].use()
+            countData[i].use(usage)
 
-
-def getRouteCounts(routes, usedRoutes):
-    result = [0] * routes.number
-    for r in usedRoutes:
-        result[r] += 1
-    return result
-
+def negateCounts(countData):
+    for cd in countData:
+        cd.count *= -1
+        cd.assignedCount *= -1
 
 def getRouteUsage(routes, countData):
     """store which counting locations are used by each route (using countData index)"""
@@ -874,7 +881,7 @@ def main(options):
                     if result[4][i] is not None:
                         ratioSummary.add(result[4][i], begin)
                     inputCountSummary.add(result[5][i], begin)
-                    usedRoutesSummary.add(result[6][i], begin)
+                    usedRoutesSummary.add(sum(result[6][i]), begin)
         else:
             for i, (begin, end) in enumerate(intervals):
                 intervalPrefix = "" if len(intervals) == 1 else "%s_" % int(begin)
@@ -887,7 +894,7 @@ def main(options):
                 if ratioPerc is not None:
                     ratioSummary.add(ratioPerc, begin)
                 inputCountSummary.add(inputCount, begin)
-                usedRoutesSummary.add(usedRoutes, begin)
+                usedRoutesSummary.add(sum(usedRoutes), begin)
         outf.write('</routes>\n')
 
     if options.mismatchOut:
@@ -966,6 +973,22 @@ def hasODCount(cdIndices, countData):
     return False
 
 
+def initOpen(options, routes, routeUsage, countData, unrestricted):
+    openRoutes = updateOpenRoutes(range(0, routes.number), routeUsage, countData)
+    openRoutes = [r for r in openRoutes if r not in unrestricted]
+    if options.odFiles and not options.extraOD:
+        openRoutes = [r for r in openRoutes if hasODCount(routeUsage[r], countData)]
+    openCounts = updateOpenCounts(range(0, len(countData)), countData, openRoutes)
+    return openRoutes, openCounts
+
+
+def getHourFraction(options, begin, end):
+    if options.gehScale is None:
+        return (end - begin) / 3600.0
+    else:
+        return 1 / options.gehScale
+
+
 def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, rng, intervalCount):
     countData = parseCounts(options, routes, begin, end)
 
@@ -983,79 +1006,30 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
             print("Ignored %s routes which pass fewer than %s counting location" % (
                 len(unrestricted), options.minCount))
 
-    # pick a random counting location and select a new route that passes it until
-    # all counts are satisfied or no routes can be used anymore
+    openRoutes, openCounts = initOpen(options, routes, routeUsage, countData, unrestricted)
 
-    openRoutes = updateOpenRoutes(range(0, routes.number), routeUsage, countData)
-    openRoutes = [r for r in openRoutes if r not in unrestricted]
-    if options.odFiles and not options.extraOD:
-        openRoutes = [r for r in openRoutes if hasODCount(routeUsage[r], countData)]
-
-    openCounts = updateOpenCounts(range(0, len(countData)), countData, openRoutes)
-
-    usedRoutes = []
+    routeCounts = [0] * routes.number # hold the use-count for each route
     numSampled = 0
-    if options.optimizeInput:
-        usedRoutes = [routes.edges2index[e] for e in routes.all]
-        resetCounts(usedRoutes, routeUsage, countData)
-    elif options.optimize != "full":
-        while openCounts:
-            if intervalCount is not None and numSampled >= intervalCount:
-                break
+    if options.initInput:
+        for e in routes.all:
+            routeCounts[routes.edges2index[e]] += 1
+        resetCounts(routeCounts, routeUsage, countData)
 
-            if ratioIndices and intervalCount is None:
-                realCounts = [cdi for cdi in openCounts if cdi not in ratioIndices]
-                if not realCounts:
-                    if numSampled == 0:
-                        print("Stopped sampling routes because only ratios are still open."
-                              + " Set option --total-count to sample ratios without local counts",
-                              file=sys.stderr)
-                    break
+        if options.initInputRemove:
+            fully_unrestricted = set([r for r, usage in enumerate(routeUsage) if len(usage) == 0])
+            negateCounts(countData)
+            openRoutes, openCounts = initOpen(options, routes, routeUsage, countData, fully_unrestricted)
+            routeCounts, numSampled = sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCounts,
+                                                  None, numSampled, intervalCount, routeCounts, remove=True)
+            if numSampled < 0:
+                print("  Removed %s routes from input to reduce overflow" % -numSampled)
+            negateCounts(countData)
 
-            if options.weighted:
-                routeIndex = _sample_skewed(openRoutes, rng, routes.probabilities)
-            else:
-                # sampling equally among open counting locations appears to
-                # improve GEH but it would also introduce a bias in the loaded
-                # route probabilities
-                cd = countData[rng.choice(openCounts)]
-                routeIndex = rng.choice([r for r in openRoutes if r in cd.routeSet])
-            numSampled += 1
-            usedRoutes.append(routeIndex)
-            for dataIndex in routeUsage[routeIndex]:
-                countData[dataIndex].use()
+        openRoutes, openCounts = initOpen(options, routes, routeUsage, countData, unrestricted)
 
-            if ratioIndices:
-                for dataIndex in routeUsage[routeIndex]:
-                    countData[dataIndex].updateTurnRatioCounts(openRoutes, openCounts, True)
-
-                # this is the old and slow way to update things
-                openRoutes = updateOpenRoutes(openRoutes, routeUsage, countData)
-                openCounts = updateOpenCounts(openCounts, countData, openRoutes)
-
-            else:
-                # update openRouts and openCounts only if needed
-                closedRoutes = set()
-                for dataIndex in routeUsage[routeIndex]:
-                    cd = countData[dataIndex]
-                    if cd.count == 0:
-                        openCounts.remove(dataIndex)
-                        for r in cd.routeSet:
-                            closedRoutes.add(r)
-
-                if closedRoutes:
-                    cdRecheck = set()
-                    openRoutes2 = []
-                    for r in openRoutes:
-                        if r in closedRoutes:
-                            for dataIndex in routeUsage[r]:
-                                cdRecheck.add(dataIndex)
-                        else:
-                            openRoutes2.append(r)
-                    openRoutes = openRoutes2
-                    closedCounts = [c for c in cdRecheck if not countData[c].routeSet.intersection(openRoutes)]
-                    if closedCounts:
-                        openCounts = [c for c in openCounts if c not in closedCounts]
+    if options.optimize != "full" and not options.noSampling:
+        routeCounts, numSampled = sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCounts,
+                                              ratioIndices, numSampled, intervalCount, routeCounts)
 
     totalMismatch = sum([cd.count for cd in countData])  # noqa
 
@@ -1063,9 +1037,9 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
         if options.verbose:
             print("Starting optimization for interval [%s, %s] (mismatch %s)" % (
                 begin, end, totalMismatch))
-        optimize(options, countData, routes, usedRoutes, routeUsage, intervalCount, rng)
-        resetCounts(usedRoutes, routeUsage, countData)
-        numSampled = len(usedRoutes)
+        routeCounts = optimize(options, countData, routes, routeCounts, routeUsage, intervalCount, rng)
+        resetCounts(routeCounts, routeUsage, countData)
+        numSampled = sum(routeCounts)
 
     if intervalCount is not None and numSampled < intervalCount:
         if unrestricted:
@@ -1079,133 +1053,17 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
                     routeIndex = _sample_skewed(unrestricted, rng, routes.probabilities)
                 else:
                     routeIndex = rng.choice(unrestricted_list)
-                usedRoutes.append(routeIndex)
+                routeCounts[routeIndex] += 1
                 assert len(routeUsage[routeIndex]) == 0
                 numSampled += 1
         else:
             print("Cannot fulfill total interval count of %s due to lack of unrestricted routes" % intervalCount,
                   file=sys.stderr)
 
-    # avoid bias from sampling order / optimization
-    rng.shuffle(usedRoutes)
-
-    if usedRoutes:
-        outf.write('<!-- begin="%s" end="%s" -->\n' % (begin, end))
-        routeCounts = getRouteCounts(routes, usedRoutes)
-        if options.writeRouteIDs:
-            for routeIndex in sorted(set(usedRoutes)):
-                routes.write(outf, options.prefix, intervalPrefix, routeIndex, routeCounts[routeIndex])
-            outf.write('\n')
-        elif options.writeRouteDist:
-            outf.write('    <routeDistribution id="%s%s%s">\n' % (
-                       options.prefix, intervalPrefix, options.writeRouteDist))
-            for routeIndex in sorted(set(usedRoutes)):
-                routes.write(outf, options.prefix, intervalPrefix, routeIndex,
-                             routeCounts[routeIndex], writeDist=True)
-            outf.write('    </routeDistribution>\n\n')
-
-        routeID = options.writeRouteDist
-
-        if options.writeFlows is None:
-            if options.departDist:
-                departs = options.departDist.sample(rng, len(usedRoutes), begin, end)
-            else:
-                departs = [rng.uniform(begin, end) for ri in usedRoutes]
-            departs.sort()
-            for i, routeIndex in enumerate(usedRoutes):
-                if options.writeRouteIDs:
-                    routeID = routeIndex
-                vehID = options.prefix + intervalPrefix + str(i)
-                depart = departs[i]
-                if routeID is not None:
-                    if options.pedestrians:
-                        outf.write('    <person id="%s" depart="%.2f"%s>\n' % (
-                            vehID, depart, options.vehattrs))
-                        outf.write('        <walk route="%s%s%s"/>\n' % (options.prefix, intervalPrefix, routeID))
-                        outf.write('    </person>\n')
-                    else:
-                        outf.write('    <vehicle id="%s" depart="%.2f" route="%s%s%s"%s/>\n' % (
-                            vehID, depart, options.prefix, intervalPrefix, routeID, options.vehattrs))
-                else:
-                    if options.pedestrians:
-                        outf.write('    <person id="%s" depart="%.2f"%s>\n' % (
-                            vehID, depart, options.vehattrs))
-                        outf.write('        <walk edges="%s"/>\n' % ' '.join(routes.unique[routeIndex]))
-                        outf.write('    </person>\n')
-                    else:
-                        outf.write('    <vehicle id="%s" depart="%.2f"%s>\n' % (
-                            vehID, depart, options.vehattrs))
-                        routes.write(outf, None, None, routeIndex, None)
-                        outf.write('    </vehicle>\n')
-        else:
-            if options.writeRouteDist:
-                totalCount = sum(routeCounts)
-                probability = totalCount / (end - begin)
-                fBegin = begin
-                if options.writeFlows == "number":
-                    # don't always start at the interval begin
-                    fBegin += rng.uniform(0, 1 / probability)
-                flowID = options.prefix + intervalPrefix + options.writeRouteDist
-                if options.writeFlows == "poisson":
-                    repeat = 'period="exp(%.4f)"' % probability
-                elif options.writeFlows == "number" or probability > 1.00004:
-                    repeat = 'number="%s"' % totalCount
-                    if options.writeFlows == "probability":
-                        sys.stderr.write("Warning: could not write flow %s with probability %.5f\n" %
-                                         (flowID, probability))
-                else:
-                    repeat = 'probability="%.4f"' % probability
-                outf.write('    <flow id="%s" begin="%.2f" end="%.2f" %s route="%s"%s/>\n' % (
-                    flowID, fBegin, end, repeat,
-                    options.writeRouteDist, options.vehattrs))
-            else:
-                # ensure flows are sorted
-                flows = []
-                for routeIndex in sorted(set(usedRoutes)):
-                    outf2 = StringIO()
-                    probability = routeCounts[routeIndex] / (end - begin)
-                    fBegin = begin
-                    fEnd = end
-                    if options.writeFlows == "number":
-                        # don't always start at the interval begin
-                        fBegin += rng.uniform(0, 1 / probability)
-                    flowID = "%s%s%s" % (options.prefix, intervalPrefix, routeIndex)
-                    if options.writeFlows == "poisson":
-                        repeat = 'period="exp(%.4f)"' % probability
-                    elif options.writeFlows == "number" or probability > 1.00004:
-                        repeat = 'number="%s"' % routeCounts[routeIndex]
-                        if options.writeFlows == "probability":
-                            sys.stderr.write("Warning: could not write flow %s with probability %.5f\n" % (
-                                flowID, probability))
-                    else:
-                        repeat = 'probability="%.4f"' % probability
-                    if options.writeRouteIDs:
-                        if options.pedestrians:
-                            outf2.write('    <personFlow id="%s" begin="%.2f" end="%.2f" %s%s>\n' % (
-                                flowID, fBegin, fEnd, repeat, options.vehattrs))
-                            outf2.write('        <walk route="%s%s%s"/>\n' % (
-                                options.prefix, intervalPrefix, routeIndex))
-                            outf2.write('    </personFlow>\n')
-                        else:
-                            outf2.write('    <flow id="%s" begin="%.2f" end="%.2f" %s route="%s%s%s"%s/>\n' % (
-                                flowID, fBegin, fEnd, repeat,
-                                options.prefix, intervalPrefix, routeIndex, options.vehattrs))
-                    else:
-                        if options.pedestrians:
-                            outf2.write('    <personFlow id="%s" begin="%.2f" end="%.2f" %s%s>\n' % (
-                                flowID, fBegin, fEnd, repeat, options.vehattrs))
-                            outf2.write('        <walk edges="%s"/>\n' % ' '.join(routes.unique[routeIndex]))
-                            outf2.write('    </personFlow>\n')
-                        else:
-                            outf2.write('    <flow id="%s" begin="%.2f" end="%.2f" %s%s>\n' % (
-                                flowID, fBegin, fEnd, repeat, options.vehattrs))
-                            routes.write(outf2, None, None, routeIndex, None)
-                            outf2.write('    </flow>\n')
-                    # secondary sort by routeIndex so we don't have to compare stringIO
-                    flows.append((fBegin, routeIndex, outf2))
-                flows.sort()
-                for fBegin, index, outf2 in flows:
-                    outf.write(outf2.getvalue())
+    if any(routeCounts):
+        usedRoutes = writeRoutes(options, rng, outf, routes, routeCounts, begin, end, intervalPrefix)
+    else:
+        usedRoutes = []
 
     underflow = sumolib.miscutils.Statistics("underflow locations")
     overflow = sumolib.miscutils.Statistics("overflow locations")
@@ -1214,7 +1072,7 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
     numGehOK = 0.0
     gehOKPerc = 100
     ratioPerc = None
-    hourFraction = (end - begin) / 3600.0
+    hourFraction = getHourFraction(options, begin, end)
     totalCount = 0
     totalOrigCount = 0
     totalRatioCount = 0
@@ -1261,7 +1119,7 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
     outputIntervalPrefix = "" if intervalPrefix == "" else "%s: " % int(begin)
     print("%sWrote %s routes (%s distinct) %s%s%s" % (
         outputIntervalPrefix,
-        len(usedRoutes), len(set(usedRoutes)),
+        sum(routeCounts), len([c for c in routeCounts if c != 0]),
         ("achieving " if countData else "no data"),
         gehInfo, ratioInfo))
 
@@ -1282,25 +1140,228 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
     sys.stdout.flush()  # needed for multiprocessing
 
     if mismatchf:
-        mismatchf.write('    <interval id="deficit" begin="%s" end="%s">\n' % (begin, end))
-        for cd in countData:
-            if len(cd.edgeTuple) == 1:
-                mismatchf.write('        <edge id="%s" measuredCount="%s" deficit="%s"/>\n' % (
-                    cd.edgeTuple[0], cd.origCount, cd.count))
-            elif len(cd.edgeTuple) == 2:
-                if cd.isRatio:
-                    deficit = setPrecision("%.2f",  options.precision) % (cd.assignedProbability() - cd.origCount)
-                    mismatchf.write('        <edgeRelation from="%s" to="%s" measuredProbability="%s" deficit="%s" totalAssignedFromCount="%s"/>\n' % (  # noqa
-                        cd.edgeTuple[0], cd.edgeTuple[1], cd.origCount, deficit, cd.getSiblingCount()))
-                else:
-                    mismatchf.write('        <edgeRelation from="%s" to="%s" measuredCount="%s" deficit="%s"/>\n' % (
-                        cd.edgeTuple[0], cd.edgeTuple[1], cd.origCount, cd.count))
-            else:
-                print("Warning: output for edge relations with more than 2 edges not supported (%s)" % cd.edgeTuple,
-                      file=sys.stderr)
-        mismatchf.write('    </interval>\n')
+        writeMismatch(options, mismatchf, countData, begin, end)
 
-    return sum(underflow.values), sum(overflow.values), gehOKPerc, ratioPerc, totalOrigCount, len(usedRoutes), outf
+    return sum(underflow.values), sum(overflow.values), gehOKPerc, ratioPerc, totalOrigCount, routeCounts, outf
+
+
+def sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCounts,
+                ratioIndices, numSampled, intervalCount, routeCounts, remove=False):
+    """pick a random counting location and select a new route that passes it until
+       all counts are satisfied or no routes can be used anymore """
+    while openCounts:
+        if intervalCount is not None and numSampled >= intervalCount:
+            break
+
+        if ratioIndices and intervalCount is None:
+            realCounts = [cdi for cdi in openCounts if cdi not in ratioIndices]
+            if not realCounts:
+                if numSampled == 0:
+                    print("Stopped sampling routes because only ratios are still open."
+                          + " Set option --total-count to sample ratios without local counts",
+                          file=sys.stderr)
+                break
+
+        if options.weighted:
+            routeIndex = _sample_skewed(openRoutes, rng, routes.probabilities)
+        else:
+            # sampling equally among open counting locations appears to
+            # improve GEH but it would also introduce a bias in the loaded
+            # route probabilities
+            cd = countData[rng.choice(openCounts)]
+            routeIndex = rng.choice([r for r in openRoutes if r in cd.routeSet])
+        if remove:
+            numSampled -= 1
+            routeCounts[routeIndex] -= 1
+        else:
+            numSampled += 1
+            routeCounts[routeIndex] += 1
+
+        for dataIndex in routeUsage[routeIndex]:
+            countData[dataIndex].use(1)
+
+        if ratioIndices:
+            for dataIndex in routeUsage[routeIndex]:
+                countData[dataIndex].updateTurnRatioCounts(openRoutes, openCounts, True)
+
+            # this is the old and slow way to update things
+            openRoutes = updateOpenRoutes(openRoutes, routeUsage, countData)
+            openCounts = updateOpenCounts(openCounts, countData, openRoutes)
+
+        else:
+            # update openRouts and openCounts only if needed
+            closedRoutes = set()
+            for dataIndex in routeUsage[routeIndex]:
+                cd = countData[dataIndex]
+                if cd.count == 0:
+                    openCounts.remove(dataIndex)
+                    for r in cd.routeSet:
+                        closedRoutes.add(r)
+
+            if remove and routeCounts[routeIndex] == 0:
+                closedRoutes.add(routeIndex)
+
+            if closedRoutes:
+                cdRecheck = set()
+                openRoutes2 = []
+                for r in openRoutes:
+                    if r in closedRoutes:
+                        for dataIndex in routeUsage[r]:
+                            cdRecheck.add(dataIndex)
+                    else:
+                        openRoutes2.append(r)
+                openRoutes = openRoutes2
+                closedCounts = [c for c in cdRecheck if not countData[c].routeSet.intersection(openRoutes)]
+                if closedCounts:
+                    openCounts = [c for c in openCounts if c not in closedCounts]
+
+    return routeCounts, numSampled
+
+
+def writeRoutes(options, rng, outf, routes, routeCounts, begin, end, intervalPrefix):
+    outf.write('<!-- begin="%s" end="%s" -->\n' % (begin, end))
+    usedRoutes = [] # simple list of route indices with
+    for r, usage in enumerate(routeCounts):
+        usedRoutes += [r] * usage
+    rng.shuffle(usedRoutes)
+
+    if options.writeRouteIDs:
+        for routeIndex in sorted(set(usedRoutes)):
+            routes.write(outf, options.prefix, intervalPrefix, routeIndex, routeCounts[routeIndex])
+        outf.write('\n')
+    elif options.writeRouteDist:
+        outf.write('    <routeDistribution id="%s%s%s">\n' % (
+                   options.prefix, intervalPrefix, options.writeRouteDist))
+        for routeIndex in sorted(set(usedRoutes)):
+            routes.write(outf, options.prefix, intervalPrefix, routeIndex,
+                         routeCounts[routeIndex], writeDist=True)
+        outf.write('    </routeDistribution>\n\n')
+
+    routeID = options.writeRouteDist
+
+    if options.writeFlows is None:
+        if options.departDist:
+            departs = options.departDist.sample(rng, len(usedRoutes), begin, end)
+        else:
+            departs = [rng.uniform(begin, end) for ri in usedRoutes]
+        departs.sort()
+        for i, routeIndex in enumerate(usedRoutes):
+            if options.writeRouteIDs:
+                routeID = routeIndex
+            vehID = options.prefix + intervalPrefix + str(i)
+            depart = departs[i]
+            if routeID is not None:
+                if options.pedestrians:
+                    outf.write('    <person id="%s" depart="%.2f"%s>\n' % (
+                        vehID, depart, options.vehattrs))
+                    outf.write('        <walk route="%s%s%s"/>\n' % (options.prefix, intervalPrefix, routeID))
+                    outf.write('    </person>\n')
+                else:
+                    outf.write('    <vehicle id="%s" depart="%.2f" route="%s%s%s"%s/>\n' % (
+                        vehID, depart, options.prefix, intervalPrefix, routeID, options.vehattrs))
+            else:
+                if options.pedestrians:
+                    outf.write('    <person id="%s" depart="%.2f"%s>\n' % (
+                        vehID, depart, options.vehattrs))
+                    outf.write('        <walk edges="%s"/>\n' % ' '.join(routes.unique[routeIndex]))
+                    outf.write('    </person>\n')
+                else:
+                    outf.write('    <vehicle id="%s" depart="%.2f"%s>\n' % (
+                        vehID, depart, options.vehattrs))
+                    routes.write(outf, None, None, routeIndex, None)
+                    outf.write('    </vehicle>\n')
+    else:
+        if options.writeRouteDist:
+            totalCount = sum(routeCounts)
+            probability = totalCount / (end - begin)
+            fBegin = begin
+            if options.writeFlows == "number":
+                # don't always start at the interval begin
+                fBegin += rng.uniform(0, 1 / probability)
+            flowID = options.prefix + intervalPrefix + options.writeRouteDist
+            if options.writeFlows == "poisson":
+                repeat = 'period="exp(%.4f)"' % probability
+            elif options.writeFlows == "number" or probability > 1.00004:
+                repeat = 'number="%s"' % totalCount
+                if options.writeFlows == "probability":
+                    sys.stderr.write("Warning: could not write flow %s with probability %.5f\n" %
+                                     (flowID, probability))
+            else:
+                repeat = 'probability="%.4f"' % probability
+            outf.write('    <flow id="%s" begin="%.2f" end="%.2f" %s route="%s"%s/>\n' % (
+                flowID, fBegin, end, repeat,
+                options.writeRouteDist, options.vehattrs))
+        else:
+            # ensure flows are sorted
+            flows = []
+            for routeIndex in sorted(set(usedRoutes)):
+                outf2 = StringIO()
+                probability = routeCounts[routeIndex] / (end - begin)
+                fBegin = begin
+                fEnd = end
+                if options.writeFlows == "number":
+                    # don't always start at the interval begin
+                    fBegin += rng.uniform(0, 1 / probability)
+                flowID = "%s%s%s" % (options.prefix, intervalPrefix, routeIndex)
+                if options.writeFlows == "poisson":
+                    repeat = 'period="exp(%.4f)"' % probability
+                elif options.writeFlows == "number" or probability > 1.00004:
+                    repeat = 'number="%s"' % routeCounts[routeIndex]
+                    if options.writeFlows == "probability":
+                        sys.stderr.write("Warning: could not write flow %s with probability %.5f\n" % (
+                            flowID, probability))
+                else:
+                    repeat = 'probability="%.4f"' % probability
+                if options.writeRouteIDs:
+                    if options.pedestrians:
+                        outf2.write('    <personFlow id="%s" begin="%.2f" end="%.2f" %s%s>\n' % (
+                            flowID, fBegin, fEnd, repeat, options.vehattrs))
+                        outf2.write('        <walk route="%s%s%s"/>\n' % (
+                            options.prefix, intervalPrefix, routeIndex))
+                        outf2.write('    </personFlow>\n')
+                    else:
+                        outf2.write('    <flow id="%s" begin="%.2f" end="%.2f" %s route="%s%s%s"%s/>\n' % (
+                            flowID, fBegin, fEnd, repeat,
+                            options.prefix, intervalPrefix, routeIndex, options.vehattrs))
+                else:
+                    if options.pedestrians:
+                        outf2.write('    <personFlow id="%s" begin="%.2f" end="%.2f" %s%s>\n' % (
+                            flowID, fBegin, fEnd, repeat, options.vehattrs))
+                        outf2.write('        <walk edges="%s"/>\n' % ' '.join(routes.unique[routeIndex]))
+                        outf2.write('    </personFlow>\n')
+                    else:
+                        outf2.write('    <flow id="%s" begin="%.2f" end="%.2f" %s%s>\n' % (
+                            flowID, fBegin, fEnd, repeat, options.vehattrs))
+                        routes.write(outf2, None, None, routeIndex, None)
+                        outf2.write('    </flow>\n')
+                # secondary sort by routeIndex so we don't have to compare stringIO
+                flows.append((fBegin, routeIndex, outf2))
+            flows.sort()
+            for fBegin, index, outf2 in flows:
+                outf.write(outf2.getvalue())
+    return usedRoutes
+
+
+def writeMismatch(options, mismatchf, countData, begin, end):
+    mismatchf.write('    <interval id="deficit" begin="%s" end="%s">\n' % (begin, end))
+    hourFraction = getHourFraction(options, begin, end)
+    for cd in countData:
+        geh = None if cd.isRatio else sumolib.miscutils.geh(cd.origCount / hourFraction, (cd.origCount - cd.count) / hourFraction)
+        if len(cd.edgeTuple) == 1:
+            mismatchf.write('        <edge id="%s" measuredCount="%s" deficit="%s" GEH="%.2f"/>\n' % (
+                cd.edgeTuple[0], cd.origCount, cd.count, geh))
+        elif len(cd.edgeTuple) == 2:
+            if cd.isRatio:
+                deficit = setPrecision("%.2f",  options.precision) % (cd.assignedProbability() - cd.origCount)
+                mismatchf.write('        <edgeRelation from="%s" to="%s" measuredProbability="%s" deficit="%s" totalAssignedFromCount="%s"/>\n' % (  # noqa
+                    cd.edgeTuple[0], cd.edgeTuple[1], cd.origCount, deficit, cd.getSiblingCount()))
+            else:
+                mismatchf.write('        <edgeRelation from="%s" to="%s" measuredCount="%s" deficit="%s" GEH="%.2f"/>\n' % (
+                    cd.edgeTuple[0], cd.edgeTuple[1], cd.origCount, cd.count, geh))
+        else:
+            print("Warning: output for edge relations with more than 2 edges not supported (%s)" % cd.edgeTuple,
+                  file=sys.stderr)
+    mismatchf.write('    </interval>\n')
 
 
 if __name__ == "__main__":

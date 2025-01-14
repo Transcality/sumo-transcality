@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2024 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,10 @@
 
 class editElements:
     overlapped = 5
+
+
+class move:
+    moveWholePolygon = 5
 
 
 class selection:
@@ -203,7 +207,7 @@ class edge:
         stopOffset = 21
         stopOffsetExceptionButton = 22
         stopOffsetException = 23
-        parameters = 26
+        parameters = 24
 
     class inspectSelection:
         speed = 1
@@ -261,7 +265,7 @@ class lane:
         stopOffset = 15
         stopOffsetExceptionButton = 16
         stopOffsetException = 17
-        parameters = 20
+        parameters = 18
 
     class inspectSelection:
         speed = 1
@@ -856,7 +860,7 @@ class parkingSpace:
         angle = 5
         slope = 6
         parameters = 9
-        parent = 13
+        parent = 14
 
     class inspectSelection:
         name = 1
@@ -865,7 +869,7 @@ class parkingSpace:
         angle = 4
         slope = 5
         parameters = 8
-        parent = 11
+        parent = 13
 
 # E1
 
@@ -902,8 +906,8 @@ class E1:
         vTypes = 4
         nextEdges = 5
         detectPersons = 6
-        friendlyPos = 8
-        parameters = 11
+        friendlyPos = 7
+        parameters = 10
 
 # E2
 
@@ -954,12 +958,12 @@ class E2:
         vTypes = 6
         nextEdges = 7
         detectPersons = 8
-        timeThreshold = 10
-        speedThreshold = 11
-        jamThreshold = 12
-        friendlyPos = 13
-        show = 14
-        parameters = 17
+        timeThreshold = 9
+        speedThreshold = 10
+        jamThreshold = 11
+        friendlyPos = 12
+        show = 13
+        parameters = 16
 
 # E2Multilane
 
@@ -1007,12 +1011,12 @@ class E2Multilane:
         vTypes = 5
         nextEdges = 6
         detectPersons = 7
-        timeThreshold = 9
-        speedThreshold = 10
-        jamThreshold = 11
-        friendlyPos = 12
-        show = 13
-        parameters = 16
+        timeThreshold = 8
+        speedThreshold = 9
+        jamThreshold = 10
+        friendlyPos = 11
+        show = 12
+        parameters = 15
 
 # E3
 
@@ -1053,11 +1057,11 @@ class E3:
         vTypes = 4
         nextEdges = 5
         detectPersons = 6
-        openEntry = 8
-        timeThreshold = 9
-        speedThreshold = 10
-        expectArrival = 11
-        parameters = 14
+        openEntry = 7
+        timeThreshold = 8
+        speedThreshold = 9
+        expectArrival = 10
+        parameters = 13
 
 # entryExit
 
@@ -1073,12 +1077,14 @@ class entryExit:
         pos = 3
         friendlyPos = 4
         parameters = 7
-        parent = 11
+        parentButton = 11
+        parent = 12
 
     class inspectSelection:
         friendlyPos = 1
         parameters = 4
-        parent = 7
+        parentButton = 8
+        parent = 9
 
 # E1Instant
 
@@ -1112,8 +1118,8 @@ class E1Instant:
         vTypes = 3
         nextEdges = 4
         detectPersons = 5
-        friendlyPos = 7
-        parameters = 10
+        friendlyPos = 6
+        parameters = 9
 
 # calibrator
 
@@ -1236,7 +1242,8 @@ class poly:
         imgFile = 13
         reativePath = 14
         angle = 15
-        closeShape = 19
+        geo = 16
+        closeShape = 20
 
     class inspect:
         id = 1
@@ -1251,10 +1258,10 @@ class poly:
         imgFile = 10
         reativePath = 11
         angle = 12
+        geo = 15
         geoshape = 15
-        geo = 16
-        parameters = 19
-        closeShape = 23
+        parameters = 18
+        closeShape = 22
 
     class inspectSelection:
         colorButton = 1
@@ -1340,20 +1347,20 @@ class poiGeo:
 
     class inspect:
         id = 1
-        lon = 2
-        lat = 3
-        colorButton = 4
-        color = 5
-        type = 6
-        icon = 7
-        name = 9
-        layer = 10
-        width = 11
-        height = 12
-        imgFile = 13
-        relativePath = 14
-        angle = 15
-        parameters = 18
+        colorButton = 2
+        color = 3
+        type = 4
+        icon = 5
+        name = 7
+        layer = 8
+        width = 9
+        height = 10
+        imgFile = 11
+        relativePath = 12
+        angle = 13
+        lon = 16
+        lat = 17
+        parameters = 20
 
     class inspectSelection:
         colorButton = 1
@@ -1516,6 +1523,7 @@ class type:
         id = 8
         typeDist = 8
         vClass = 9
+        vClassEdited = 9
         colorButton = 11
         color = 12
         length = 13
@@ -1530,6 +1538,7 @@ class type:
 
     class editDefault:
         vClass = 7
+        vClassEdited = 8
         colorButton = 9
         color = 10
         length = 11
@@ -2015,7 +2024,7 @@ class flow:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 29
+        parameters = 27
 
 # flow (from-to junctions)
 
@@ -2096,7 +2105,7 @@ class flowJunction:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 29
+        parameters = 27
 
 # flow (from-to TAZs)
 
@@ -2177,7 +2186,7 @@ class flowTAZ:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 29
+        parameters = 27
 
 # flow (over route)
 
@@ -2259,7 +2268,7 @@ class routeFlow:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 29
+        parameters = 27
 
 # flow (embedded route)
 
@@ -2340,7 +2349,7 @@ class flowEmbedded:
         spacing = 23
         terminateOption = 25
         spacingOption = 26
-        parameters = 29
+        parameters = 27
 
 # stop over bus stop
 
@@ -2392,8 +2401,8 @@ class stopBusStop:
         extensionEnable = 5
         extension = 6
         triggered = 7
-        expected = 8
-        join = 8
+        expected = 9
+        join = 9
         permitted = 9
         parking = 10
         actType = 12
@@ -2453,8 +2462,8 @@ class stopTrainStop:
         extensionEnable = 5
         extension = 6
         triggered = 7
-        expected = 8
-        join = 8
+        expected = 9
+        join = 9
         permitted = 9
         parking = 10
         actType = 12
@@ -2516,14 +2525,14 @@ class stopContainerStop:
         triggered = 7
         expected = 9
         join = 9
-        permitted = 10
-        parking = 11
-        actType = 13
-        tripID = 14
-        line = 15
-        onDemand = 16
-        jump = 17
-        split = 18
+        permitted = 9
+        parking = 10
+        actType = 12
+        tripID = 13
+        line = 14
+        onDemand = 15
+        jump = 16
+        split = 17
 
 # stop over charging station
 
@@ -2577,14 +2586,14 @@ class stopChargingStation:
         triggered = 7
         expected = 9
         join = 9
-        permitted = 10
-        parking = 11
-        actType = 13
-        tripID = 14
-        line = 15
-        onDemand = 16
-        jump = 17
-        split = 18
+        permitted = 9
+        parking = 10
+        actType = 12
+        tripID = 13
+        line = 14
+        onDemand = 15
+        jump = 16
+        split = 17
 
 # stop over parkings
 
@@ -2636,13 +2645,13 @@ class stopParkingArea:
         triggered = 7
         expected = 9
         join = 9
-        permitted = 10
-        actType = 11
-        tripID = 12
-        line = 13
-        onDemand = 14
-        jump = 15
-        split = 16
+        permitted = 9
+        actType = 10
+        tripID = 11
+        line = 12
+        onDemand = 13
+        jump = 14
+        split = 15
 
 # stop over lane
 
@@ -2706,14 +2715,14 @@ class stopLane:
         triggered = 9
         expected = 11
         join = 11
-        permitted = 12
-        parking = 13
-        actType = 15
-        tripID = 16
-        line = 17
-        onDemand = 18
-        jump = 19
-        split = 20
+        permitted = 11
+        parking = 12
+        actType = 14
+        tripID = 15
+        line = 16
+        onDemand = 17
+        jump = 18
+        split = 19
 
 # waypoint over bus stops
 
@@ -3718,7 +3727,7 @@ class containerFlow:
         spacing = 12
         terminateOption = 14
         spacingOption = 15
-        parameters = 19
+        parameters = 18
 
 # PersonPlans
 

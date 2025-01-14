@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2024 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -136,7 +136,7 @@ GNEAttributesEditorRow::showAttributeRow(const GNEAttributeProperties& attrPrope
     // check if we're editing multiple ACs
     const auto multipleEditedACs = (myAttributeTable->myEditedACs.size() > 1);
     // declare flag for show attribute enabled
-    const bool attributeEnabled = attrProperty.isAlwaysEnabled() ? true : firstEditedAC->isAttributeEnabled(myAttribute);
+    const bool attributeEnabled = isAttributeEnabled(attrProperty);
     // check if this attribute is computed
     const bool computedAttribute = multipleEditedACs ? false : firstEditedAC->isAttributeComputed(myAttribute);
     // get string value depending if attribute is enabled
@@ -176,13 +176,12 @@ GNEAttributesEditorRow::showAttributeRow(const GNEAttributeProperties& attrPrope
         }
     }
     // don't show stop offset exception if stopOffset is zero
-    if ((myAttribute == GNE_ATTR_STOPOEXCEPTION) &&
-            (GNEAttributeCarrier::parse<double>(firstEditedAC->getAttribute(GNE_ATTR_STOPOFFSET)) == 0)) {
+    if ((myAttribute == GNE_ATTR_STOPOEXCEPTION) && !attributeEnabled) {
         return hideAttributeRow();
     }
     // show elements depending of attribute properties
     if (attrProperty.isActivatable()) {
-        showAttributeToggleEnable(attrProperty, firstEditedAC->isAttributeEnabled(myAttribute));
+        showAttributeToggleEnable(attrProperty, attributeEnabled);
     } else if (myAttribute == GNE_ATTR_PARENT) {
         showAttributeReparent(attributeEnabled);
     } else if ((myAttribute == SUMO_ATTR_TYPE) && tagProperty.hasTypeParent()) {
@@ -236,8 +235,7 @@ long
 GNEAttributesEditorRow::onCmdOpenColorDialog(FXObject*, FXSelector, void*) {
     const auto& attrProperty = myAttributeTable->myEditedACs.front()->getTagProperty().getAttributeProperties(myAttribute);
     // create FXColorDialog
-    FXColorDialog colordialog(this, TL("Color Dialog"));
-    colordialog.setTarget(this);
+    FXColorDialog colordialog(myAttributeTable->getFrameParent()->getViewNet(), TL("Color Dialog"));
     colordialog.setIcon(GUIIconSubSys::getIcon(GUIIcon::COLORWHEEL));
     // If previous attribute wasn't correct, set black as default color
     if (GNEAttributeCarrier::canParse<RGBColor>(myValueTextField->getText().text())) {
@@ -751,6 +749,21 @@ GNEAttributesEditorRow::enableElements(const GNEAttributeProperties& attrPropert
         myValueCheckButton->disable();
         myValueLaneUpButton->disable();
         myValueLaneDownButton->disable();
+    }
+}
+
+
+bool
+GNEAttributesEditorRow::isAttributeEnabled(const GNEAttributeProperties& attrProperty) const {
+    if (attrProperty.isAlwaysEnabled()) {
+        return true;
+    } else {
+        for (const auto &AC : myAttributeTable->myEditedACs) {
+            if (AC->isAttributeEnabled(attrProperty.getAttr())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

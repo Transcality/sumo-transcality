@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2024 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -546,6 +546,26 @@ class elements:
         class shapeD:
             x = 650
             y = 233
+
+        class centerShape:
+            x = 400
+            y = 121
+
+        class geometryPointNew:
+            x = 400
+            y = 138
+
+        class geometryPointExistent:
+            x = 362
+            y = 138
+
+        class geometryPointDestinyA:
+            x = 574
+            y = 238
+
+        class geometryPointDestinyB:
+            x = 498
+            y = 332
 
         shapeSize = 200
 

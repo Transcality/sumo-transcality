@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2011-2024 German Aerospace Center (DLR) and others.
+# Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@
 # @file    xml.py
 # @author  Michael Behrisch
 # @author  Jakob Erdmann
+# @author  Mirko Barthauer
 # @date    2011-06-23
 
 from __future__ import print_function
@@ -130,7 +131,12 @@ def compound_object(element_name, attrnames, warn=False, sort=True):
 
         def setAttribute(self, name, value):
             if name not in self._original_fields:
-                self._original_fields.append(name)
+                if isinstance(self._original_fields, tuple):
+                    tempList = list(self._original_fields)
+                    tempList.append(name)
+                    self._original_fields = tuple(tempList)
+                else:
+                    self._original_fields.append(name)
                 self._fields.append(_prefix_keyword(name, warn))
             self.__dict__[_prefix_keyword(name, warn)] = value
 

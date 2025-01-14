@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2024 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -1467,6 +1467,28 @@ def moveElement(referencePosition, originalPosition, radius):
              originalPosition.y + radius.down,
              originalPosition.x + radius.left,
              originalPosition.y + radius.up)
+
+
+def moveGeometryPoint(referencePosition, originalPosition, destinyPositionA, destinyPositionB):
+    """
+    @brief move geometry point
+    """
+    leftClick(referencePosition, originalPosition)
+    # move element
+    dragDrop(referencePosition, originalPosition.x, originalPosition.y, destinyPositionA.x, destinyPositionA.y)
+    dragDrop(referencePosition, destinyPositionA.x, destinyPositionA.y, destinyPositionB.x, destinyPositionB.y)
+
+
+def toggleMoveEntireShape():
+    """
+    @brief toggle move entire shape
+    """
+    # focus current frame
+    focusOnFrame()
+    for _ in range(attrs.move.moveWholePolygon):
+        typeTab()
+    # type space to create crossing
+    typeSpace()
 
 #################################################
     # crossings

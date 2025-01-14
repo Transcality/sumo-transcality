@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2024 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -105,6 +105,9 @@ MSTriggeredRerouter::MSTriggeredRerouter(const std::string& id,
     }
     const std::vector<std::string> vt = StringTokenizer(vTypes).getVector();
     myVehicleTypes.insert(vt.begin(), vt.end());
+    if (myPosition == Position::INVALID) {
+        myPosition = edges.front()->getLanes()[0]->getShape()[0];
+    }
 }
 
 
@@ -389,7 +392,7 @@ MSTriggeredRerouter::getCurrentReroute(SUMOTime time) const {
 
 bool
 MSTriggeredRerouter::notifyEnter(SUMOTrafficObject& tObject, MSMoveReminder::Notification reason, const MSLane* /* enteredLane */) {
-    if (myAmOptional) {
+    if (myAmOptional || myRadius != std::numeric_limits<double>::max()) {
         return true;
     }
     return triggerRouting(tObject, reason);
@@ -414,6 +417,9 @@ bool
 MSTriggeredRerouter::triggerRouting(SUMOTrafficObject& tObject, MSMoveReminder::Notification reason) {
     if (!applies(tObject)) {
         return false;
+    }
+    if (myRadius != std::numeric_limits<double>::max() && tObject.getPosition().distanceTo(myPosition) > myRadius) {
+        return true;
     }
     // check whether the vehicle shall be rerouted
     const SUMOTime now = MSNet::getInstance()->getCurrentTimeStep();

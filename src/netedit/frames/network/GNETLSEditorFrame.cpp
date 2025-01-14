@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2024 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -167,16 +167,16 @@ void
 GNETLSEditorFrame::editTLS(GNEViewNetHelper::ViewObjectsSelector& viewObjects, const Position &clickedPosition, const bool shiftKeyPressed) {
     // first check if in viewObjects there is a junction
     if (viewObjects.getJunctionFront()) {
-        // show objects under cursor
-        myOverlappedInspection->showOverlappedInspection(viewObjects, clickedPosition, shiftKeyPressed);
-        // hide if we inspect only one junction
-        if (myOverlappedInspection->getNumberOfOverlappedACs() == 1) {
-            myOverlappedInspection->clearOverlappedInspection();
-        }
         // check if we're adding or removing joined TLSs
         if (myTLSJunction->isJoiningJunctions()) {
             myTLSJunction->toggleJunctionSelected(viewObjects.getJunctionFront());
         } else {
+            // show objects under cursor
+            myOverlappedInspection->showOverlappedInspection(viewObjects, clickedPosition, shiftKeyPressed);
+            // hide if we inspect only one junction
+            if (myOverlappedInspection->getNumberOfOverlappedACs() == 1) {
+                myOverlappedInspection->clearOverlappedInspection();
+            }
             editJunction(viewObjects.getJunctionFront());
         }
     } else if (viewObjects.getAdditionalFront() && myTLSAttributes->isSetDetectorsToggleButtonEnabled() &&

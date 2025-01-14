@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2024 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -73,7 +73,9 @@ RORouteHandler::RORouteHandler(RONet& net, const std::string& file,
     myCurrentVTypeDistribution(nullptr),
     myCurrentAlternatives(nullptr),
     myUseTaz(OptionsCont::getOptions().getBool("with-taz")),
-    myWriteJunctions(OptionsCont::getOptions().getBool("write-trips") && OptionsCont::getOptions().getBool("write-trips.junctions"))
+    myWriteJunctions(OptionsCont::getOptions().exists("write-trips")
+            && OptionsCont::getOptions().getBool("write-trips")
+            && OptionsCont::getOptions().getBool("write-trips.junctions"))
 {
     myActiveRoute.reserve(100);
 }
@@ -612,7 +614,8 @@ RORouteHandler::closeRouteDistribution() {
                     edges.push_back(myCurrentAlternatives->getDestination());
                 }
                 if (ok) {
-                    RORoute* route = new RORoute(myCurrentAlternatives->getID(), 0, 1, edges, nullptr, myActiveRouteStops);
+                    // negative probability indicates that this route should not be written
+                    RORoute* route = new RORoute(myCurrentAlternatives->getID(), 0, -1, edges, nullptr, myActiveRouteStops);
                     myCurrentAlternatives->addLoadedAlternative(route);
                 }
             }

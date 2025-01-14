@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2024 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -725,11 +725,14 @@ NLTriggerBuilder::parseAndBuildRerouter(MSNet& net, const SUMOSAXAttributes& att
     const std::string vTypes = attrs.getOpt<std::string>(SUMO_ATTR_VTYPES, id.c_str(), ok, "");
     const std::string pos = attrs.getOpt<std::string>(SUMO_ATTR_POSITION, id.c_str(), ok, "");
     const double radius = attrs.getOpt<double>(SUMO_ATTR_RADIUS, id.c_str(), ok, std::numeric_limits<double>::max());
+    if (attrs.hasAttribute(SUMO_ATTR_RADIUS) && !attrs.hasAttribute(SUMO_ATTR_POSITION)) {
+        WRITE_WARNINGF(TL("It is strongly advisable to give an explicit position when using radius in the definition of rerouter '%'."), id)
+    }
     Position p = Position::INVALID;
     if (pos != "") {
         const std::vector<std::string> posSplit = StringTokenizer(pos, ",").getVector();
         if (posSplit.size() == 1) {
-            p = edges.front()->getLanes()[0]->geometryPositionAtOffset(StringUtils::toDouble(posSplit[0]));
+            p = edges.front()->getLanes()[0]->geometryPositionAtOffset(StringUtils::toDouble(pos));
         } else if (posSplit.size() == 2) {
             p = Position(StringUtils::toDouble(posSplit[0]), StringUtils::toDouble(posSplit[1]));
         } else if (posSplit.size() == 3) {

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2025-01-06 11:22+0100\n"
-"PO-Revision-Date: 2025-01-08 12:47+0000\n"
+"PO-Revision-Date: 2025-01-13 13:21+0000\n"
 "Last-Translator: Mirko Barthauer <mirko.barthauer@dlr.de>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/eclipse-sumo/"
 "applications/it/>\n"
@@ -550,19 +550,19 @@ msgstr "Verifica dei flussi caricati"
 
 #: src/dfrouter/dfrouter_main.cpp:195
 msgid "Writing emitters"
-msgstr ""
+msgstr "Uscita degli emittenti"
 
 #: src/dfrouter/dfrouter_main.cpp:207
 msgid "Writing emitter pois"
-msgstr ""
+msgstr "Uscita dei punti di interesse emittenti"
 
 #: src/dfrouter/dfrouter_main.cpp:214
 msgid "Writing speed triggers"
-msgstr ""
+msgstr "Uscita dei generatori di velocità"
 
 #: src/dfrouter/dfrouter_main.cpp:221
 msgid "Writing validation detectors"
-msgstr ""
+msgstr "Uscita dei rivelatori di convalida"
 
 #: src/dfrouter/dfrouter_main.cpp:228
 msgid "Writing highway end rerouter"
@@ -571,6 +571,7 @@ msgstr ""
 #: src/dfrouter/dfrouter_main.cpp:248
 msgid "Builds vehicle routes for SUMO using detector values."
 msgstr ""
+"Crea degli itinerari di veicoli per SUMO utilizzando valori di rivelatori."
 
 #: src/duarouter/RODUAFrame.cpp:69
 msgid "Write generated route alternatives to FILE"
@@ -578,7 +579,7 @@ msgstr "Scrivi itinerari alternativi generati in FILE"
 
 #: src/duarouter/RODUAFrame.cpp:72
 msgid "Write edge splits and connectivity to FILE"
-msgstr ""
+msgstr "Scrivi tagli di archi e collegamenti in FILE"
 
 #: src/duarouter/RODUAFrame.cpp:75
 msgid "Write intermodal edges with lengths and travel times to FILE"
@@ -644,10 +645,12 @@ msgstr "Salva la tabella di ricerca astar ALT-variant nel file dato"
 msgid ""
 "Scale demand by the given factor (by discarding or duplicating vehicles)"
 msgstr ""
+"Gradua la domanda con il fattore indicato (raddoppiando oppure scartando "
+"veicoli)"
 
 #: src/duarouter/RODUAFrame.cpp:113 src/microsim/MSFrame.cpp:428
 msgid "Suffix to be added when creating ids for cloned vehicles"
-msgstr ""
+msgstr "Suffisso da aggiungere al codice idenficativo degli veicoli raddoppiati"
 
 #: src/duarouter/RODUAFrame.cpp:124 src/marouter/ROMAFrame.cpp:206
 msgid "Use FLOAT as Gawron's beta"
@@ -762,6 +765,8 @@ msgstr "L'opzione --logit è obsoleta, va usato --route-choice-method logit."
 #: src/duarouter/RODUAFrame.cpp:251
 msgid "Cannot derive file name for alternatives output, skipping it."
 msgstr ""
+"Non si può derivare il nome del file per l'uscita di alternative e perciò "
+"l'uscita va essere omessa."
 
 #: src/duarouter/RODUAFrame.cpp:258
 msgid ""
@@ -1831,11 +1836,11 @@ msgstr ""
 
 #: src/microsim/MSFrame.cpp:212
 msgid "Save aggregated person counts into FILE"
-msgstr ""
+msgstr "Salva censimenti di persone in FILE"
 
 #: src/microsim/MSFrame.cpp:216
 msgid "Save single vehicle trip info into FILE"
-msgstr ""
+msgstr "Salva informazioni sulle corse dei veicoli singoli in FILE"
 
 #: src/microsim/MSFrame.cpp:219
 msgid ""
@@ -1858,7 +1863,7 @@ msgstr "Salva personinfo e containerinfo in FILE"
 
 #: src/microsim/MSFrame.cpp:230
 msgid "Save single vehicle route info into FILE"
-msgstr ""
+msgstr "Salva informazioni sugli itinerari di veicoli singoli in FILE"
 
 #: src/microsim/MSFrame.cpp:234
 msgid "Write the exit times for all edges"
@@ -1930,16 +1935,21 @@ msgstr "Salva blocchi dei segnali ferroviari in FILE"
 #: src/microsim/MSFrame.cpp:288
 msgid "Record entry and exit times of vehicles for railsignal blocks into FILE"
 msgstr ""
+"Registra l'ora di entrata e di uscita di veicoli nei blocchi ferroviari in "
+"FILE"
 
 #: src/microsim/MSFrame.cpp:291
 msgid ""
 "Save bluetooth visibilities into FILE (in conjunction with device.btreceiver "
 "and device.btsender)"
 msgstr ""
+"Salva le visibilità bluetooth in FILE (insieme con device.btreceiver e "
+"device.btsender)"
 
 #: src/microsim/MSFrame.cpp:294
 msgid "Record lane changes and their motivations for all vehicles into FILE"
 msgstr ""
+"Registra i cambi corsia di tutti i veicoli e le loro motivazioni in FILE"
 
 #: src/microsim/MSFrame.cpp:297
 msgid "Record start of lane change manoeuvres"
@@ -2175,24 +2185,35 @@ msgstr ""
 msgid ""
 "Abort the simulation if the given maximum number of teleports is exceeded"
 msgstr ""
+"Interrompi la simulazione se si oltrepassa il numero di teletrasporti "
+"indicato"
 
 #: src/microsim/MSFrame.cpp:431
 msgid ""
 "Specify how long a vehicle may wait until being teleported, defaults to 300, "
 "non-positive values disable teleporting"
 msgstr ""
+"Specifica quanto tempo un veicolo deve aspettare prima di essere "
+"teletrasportato (standard 300) - valori non positivi disattivano il "
+"teletrasporto"
 
 #: src/microsim/MSFrame.cpp:434
 msgid ""
 "The waiting time after which vehicles on a fast road (speed > 69km/h) are "
 "teleported if they are on a non-continuing lane"
 msgstr ""
+"Il tempo di attesa dopodiché i veicoli su una via rapida (limite di velocità "
+"> 69km/h) verranno teletrasportati se si trovono su una corsia senza "
+"successore"
 
 #: src/microsim/MSFrame.cpp:437
 msgid ""
 "The waiting time after which vehicles on a fast road (default: speed > 69km/"
 "h) are teleported if they are on a non-continuing lane"
 msgstr ""
+"Il tempo di attesa dopodiché i veicoli su una via rapida (valore standard: "
+"limite di velocità > 69km/h) verranno teletrasportati se si trovono su una "
+"corsia senza successore"
 
 #: src/microsim/MSFrame.cpp:440
 msgid ""
@@ -2207,6 +2228,8 @@ msgid ""
 "Whether vehicles shall be removed after waiting too long instead of being "
 "teleported"
 msgstr ""
+"Se i veicoli devono essere rimossi dopo aver atteso troppo a lungo invece di "
+"essere teletrasportati"
 
 #: src/microsim/MSFrame.cpp:446
 msgid ""
@@ -2219,11 +2242,16 @@ msgid ""
 "The waiting time after which persons / containers waiting for a pickup are "
 "teleported. Negative values disable teleporting"
 msgstr ""
+"Il tempo di attesa dopodiché le persone / i contenitori in attesa di una "
+"corsa verranno teletrasportato. Può essere disattivato impostando un valore "
+"negativo"
 
 #: src/microsim/MSFrame.cpp:452
 msgid ""
 "The waiting time after which vehicles on bidirectional edges are teleported"
 msgstr ""
+"Il tempo di attesa dopodiché i veicoli sugli archi bidirezionali verranno "
+"teletrasportati"
 
 #: src/microsim/MSFrame.cpp:455
 msgid ""
@@ -12275,10 +12303,10 @@ msgstr "'%' non è un vettore di numeri interi valido."
 
 #: src/utils/options/OptionsCont.cpp:66
 msgid ""
-"Copyright (C) 2001-2024 German Aerospace Center (DLR) and others; https://"
+"Copyright (C) 2001-2025 German Aerospace Center (DLR) and others; https://"
 "sumo.dlr.de"
 msgstr ""
-"Copyright (C) 2001-2024 Deutsches Zentrum für Luft- und Raumfahrt (DLR) e "
+"Copyright (C) 2001-2025 Deutsches Zentrum für Luft- und Raumfahrt (DLR) e "
 "altri; https://sumo.dlr.de"
 
 #: src/utils/options/OptionsCont.cpp:152
