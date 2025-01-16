@@ -1,0 +1,39 @@
+name: Build and Push Docker Image Main
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'docker-build'
+
+jobs:
+  docker:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3      
+      
+      - name: Login to Transcality Docker Registry
+        uses: docker/login-action@v2
+        with:
+          registry: registry.transcality.com
+          username: ${{ secrets.TRANSCALITY_REGISTRY_USER }}
+          password: ${{ secrets.TRANSCALITY_REGISTRY_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            registry.transcality.com/sumo:latest
+            registry.transcality.com/sumo:${{ github.sha }}
