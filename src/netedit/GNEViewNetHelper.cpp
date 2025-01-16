@@ -382,6 +382,12 @@ GNEViewNetHelper::ViewObjectsSelector::updateObjects() {
 
 
 void
+GNEViewNetHelper::ViewObjectsSelector::updateMergingJunctions() {
+    myMergingJunctions = gViewObjectsHandler.getMergingJunctions();
+}
+
+
+void
 GNEViewNetHelper::ViewObjectsSelector::filterAllExcept(GUIGlObjectType exception) {
     // get all elements to filter
     std::vector<const GUIGlObject*> glElements;
@@ -812,19 +818,28 @@ GNEViewNetHelper::ViewObjectsSelector::getEdges() const {
     return myViewObjects.edges;
 }
 
+
 const std::vector<GNETAZ*>&
 GNEViewNetHelper::ViewObjectsSelector::getTAZs() const {
     return myViewObjects.TAZs;
 }
+
 
 const std::vector<GNEAdditional*>&
 GNEViewNetHelper::ViewObjectsSelector::getAdditionals() const {
     return myViewObjects.additionals;
 }
 
+
 const std::vector<GNEDemandElement*>&
 GNEViewNetHelper::ViewObjectsSelector::getDemandElements() const {
     return myViewObjects.demandElements;
+}
+
+
+const std::vector<const GNEJunction*>&
+GNEViewNetHelper::ViewObjectsSelector::getMergingJunctions() const {
+    return myMergingJunctions;
 }
 
 
@@ -2735,11 +2750,11 @@ GNEViewNetHelper::NetworkViewOptions::buildNetworkViewOptionsMenuChecks() {
     menuCheckChangeAllPhases->setChecked(false);
     menuCheckChangeAllPhases->create();
 
-    menuCheckWarnAboutMerge = new MFXCheckableButton(false, gripModes, toolTipMenu,
+    menuCheckMergeAutomatically = new MFXCheckableButton(false, gripModes, toolTipMenu,
             (std::string("\t") + TL("Automatic merging junction") + std::string("\t") + TL("Toggle ask for confirmation before merging junction.")),
-            GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_ASKFORMERGE),
-            myViewNet, MID_GNE_NETWORKVIEWOPTIONS_ASKFORMERGE, GUIDesignMFXCheckableButtonSquare);
-    menuCheckWarnAboutMerge->create();
+            GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_MERGEAUTOMATICALLY),
+            myViewNet, MID_GNE_NETWORKVIEWOPTIONS_MERGEAUTOMATICALLY, GUIDesignMFXCheckableButtonSquare);
+    menuCheckMergeAutomatically->create();
 
     menuCheckShowJunctionBubble = new MFXCheckableButton(false, gripModes, toolTipMenu,
             (std::string("\t") + TL("Show bubbles") + std::string("\t") + TL("Toggle show bubbles over junctions shapes.")),
@@ -2787,7 +2802,7 @@ GNEViewNetHelper::NetworkViewOptions::hideNetworkViewOptionsMenuChecks() {
     menuCheckShowTAZElements->hide();
     menuCheckExtendSelection->hide();
     menuCheckChangeAllPhases->hide();
-    menuCheckWarnAboutMerge->hide();
+    menuCheckMergeAutomatically->hide();
     menuCheckShowJunctionBubble->hide();
     menuCheckMoveElevation->hide();
     menuCheckChainEdges->hide();
@@ -2831,8 +2846,8 @@ GNEViewNetHelper::NetworkViewOptions::getVisibleNetworkMenuCommands(std::vector<
     if (menuCheckChangeAllPhases->shown()) {
         commands.push_back(menuCheckChangeAllPhases);
     }
-    if (menuCheckWarnAboutMerge->shown()) {
-        commands.push_back(menuCheckWarnAboutMerge);
+    if (menuCheckMergeAutomatically->shown()) {
+        commands.push_back(menuCheckMergeAutomatically);
     }
     if (menuCheckShowJunctionBubble->shown()) {
         commands.push_back(menuCheckShowJunctionBubble);

@@ -53,7 +53,7 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.ce
 netedit.modifyAttribute(netedit.attrs.junction.inspectSelectionTLS.tl, "dummyTLS", False)
 
 # change type of junction
-netedit.modifyAttribute(netedit.attrs.junction.inspectSelectionTLS.tl, "D", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectSelectionTLS.tl + 1, "JunctionCenter", False)
 
 # rebuild network
 netedit.rebuildNetwork()

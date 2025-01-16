@@ -1247,6 +1247,9 @@ MSVehicle::getPosition(const double offset) const {
         }
     }
     if (isParking()) {
+        if (myInfluencer != nullptr && myInfluencer->getLastAccessTimeStep() > getNextStopParameter()->started) {
+            return myCachedPosition;
+        }
         if (myStops.begin()->parkingarea != nullptr) {
             return myStops.begin()->parkingarea->getVehiclePosition(*this);
         } else {
@@ -4815,7 +4818,7 @@ MSVehicle::executeFractionalMove(double dist) {
 
 
 void
-MSVehicle::updateState(double vNext) {
+MSVehicle::updateState(double vNext, bool parking) {
     // update position and speed
     double deltaPos; // positional change
     if (MSGlobals::gSemiImplicitEulerUpdate) {
@@ -4865,12 +4868,14 @@ MSVehicle::updateState(double vNext) {
     myState.myLastCoveredDist = deltaPos;
     myNextTurn.first -= deltaPos;
 
-    myCachedPosition = Position::INVALID;
+    if (!parking) {
+        myCachedPosition = Position::INVALID;
+    }
 }
 
 void
 MSVehicle::updateParkingState() {
-    updateState(0);
+    updateState(0, true);
     // deboard while parked
     if (myPersonDevice != nullptr) {
         myPersonDevice->notifyMove(*this, getPositionOnLane(), getPositionOnLane(), 0);
@@ -5648,6 +5653,9 @@ MSVehicle::enterLaneAtInsertion(MSLane* enteredLane, double pos, double speed, d
     // schedule action for the next timestep
     myLastActionTime = MSNet::getInstance()->getCurrentTimeStep() + DELTA_T;
     if (notification != MSMoveReminder::NOTIFICATION_TELEPORT) {
+        if (notification == MSMoveReminder::NOTIFICATION_PARKING && myInfluencer != nullptr) {
+            drawOutsideNetwork(false);
+        }
         // set and activate the new lane's reminders, teleports already did that at enterLaneAtMove
         for (std::vector< MSMoveReminder* >::const_iterator rem = enteredLane->getMoveReminders().begin(); rem != enteredLane->getMoveReminders().end(); ++rem) {
             addReminder(*rem);

@@ -158,7 +158,8 @@ def get_options(args=None):
     op.add_argument("--geh-ok", dest="gehOk", type=float, default=5,
                     help="threshold for acceptable GEH values")
     op.add_argument("--geh-scale", dest="gehScale", type=float, default=None,
-                    help="Should be set to 0.1 when loading traffic for a full day (estimating peak hour traffic as 1/10 of daily traffic)")
+                    help="Should be set to 0.1 when loading traffic for a full day "
+                         "(estimating peak hour traffic as 1/10 of daily traffic)")
     op.add_argument("--turn-ratio-total", dest="turnRatioTotal", type=float, default=1,
                     help="Set value for normalizing turning ratios (default 1)")
     op.add_argument("--turn-ratio-tolerance", dest="turnRatioTolerance", type=float,
@@ -183,6 +184,10 @@ def get_options(args=None):
     if options.writeFlows not in [None, "number", "probability", "poisson"]:
         sys.stderr.write("Options --write-flows only accepts arguments 'number', 'probability' and 'poisson'")
         sys.exit()
+
+    for attr in ["edgeDataAttr", "arrivalAttr", "departAttr", "turnAttr", "turnRatioAttr"]:
+        if getattr(options, attr) not in [None, "None"]:
+            setattr(options, attr, getattr(options, attr).split(","))
 
     options.routeFiles = options.routeFiles.split(',')
     options.turnFiles = options.turnFiles.split(',') if options.turnFiles is not None else []
@@ -320,7 +325,7 @@ class CountData:
             return None
         return i
 
-    def use(self, n = 1):
+    def use(self, n=1):
         self.count -= n
         self.assignedCount += n
 
@@ -427,7 +432,7 @@ def parseTurnCounts(interval, attr, warn):
         for edgeRel in interval.edgeRelation:
             via = [] if edgeRel.via is None else edgeRel.via.split(' ')
             edges = tuple([edgeRel.attr_from] + via + [edgeRel.to])
-            value = getattr(edgeRel, attr)
+            value = [getattr(edgeRel, a) for a in attr]
             yield edges, value
     elif interval.tazRelation is None and warn:
         sys.stderr.write("Warning: No edgeRelations in interval from=%s to=%s\n" % (interval.begin, interval.end))
@@ -437,7 +442,7 @@ def parseTazCounts(interval, attr, warn):
     if interval.tazRelation is not None:
         for tazRel in interval.tazRelation:
             tazs = tuple([tazRel.attr_from] + [tazRel.to])
-            value = getattr(tazRel, attr)
+            value = [getattr(tazRel, a) for a in attr]
             yield tazs, value
     elif interval.edgeRelation is None and warn:
         sys.stderr.write("Warning: No tazRelations in interval from=%s to=%s\n" % (interval.begin, interval.end))
@@ -446,7 +451,7 @@ def parseTazCounts(interval, attr, warn):
 def parseEdgeCounts(interval, attr, warn):
     if interval.edge is not None:
         for edge in interval.edge:
-            yield (edge.id,), getattr(edge, attr)
+            yield (edge.id,), [getattr(edge, a) for a in attr]
     elif warn:
         sys.stderr.write("Warning: No edges in interval from=%s to=%s\n" % (interval.begin, interval.end))
 
@@ -466,7 +471,7 @@ def parseDataIntervals(parseFun, fnames, begin, end, allRoutes, attr, options,
                 # print(begin, end, interval.begin, interval.end, "overlap:", overlap)
                 for edges, value in parseFun(interval, attr, warn):
                     try:
-                        value = float(value)
+                        value = sum([float(v) for v in value])
                     except TypeError:
                         if warn:
                             print("Warning: Missing '%s' value in file '%s' for edge(s) '%s'" %
@@ -482,8 +487,8 @@ def parseDataIntervals(parseFun, fnames, begin, end, allRoutes, attr, options,
                         print("Warning: Edge relation '%s' occurs as turn relation and also as turn-ratio" %
                               ' '.join(edges), file=sys.stderr)
                     elif not warn and overlap == 1 and begin == iBegin and end == iEnd:
-                        # in 'Warn' mode we are parsing the whole time range at once so duplicate occurences are expected.
-                        # Hence we warn only in the context of solveInterval where 'warn=False'
+                        # In 'Warn' mode we are parsing the whole time range at once so duplicate occurences
+                        # are expected. Hence we warn only in the context of solveInterval where 'warn=False'.
                         print("Edge %s'%s' occurs more than once in interval %s-%s" % (
                             "relation " if len(edges) > 1 else "",
                             ' '.join(edges),
@@ -737,10 +742,12 @@ def resetCounts(usedRoutes, routeUsage, countData):
         for i in routeUsage[r]:
             countData[i].use(usage)
 
+
 def negateCounts(countData):
     for cd in countData:
         cd.count *= -1
         cd.assignedCount *= -1
+
 
 def getRouteUsage(routes, countData):
     """store which counting locations are used by each route (using countData index)"""
@@ -1008,7 +1015,7 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
 
     openRoutes, openCounts = initOpen(options, routes, routeUsage, countData, unrestricted)
 
-    routeCounts = [0] * routes.number # hold the use-count for each route
+    routeCounts = [0] * routes.number  # hold the use-count for each route
     numSampled = 0
     if options.initInput:
         for e in routes.all:
@@ -1020,7 +1027,7 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
             negateCounts(countData)
             openRoutes, openCounts = initOpen(options, routes, routeUsage, countData, fully_unrestricted)
             routeCounts, numSampled = sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCounts,
-                                                  None, numSampled, intervalCount, routeCounts, remove=True)
+                                                   None, numSampled, intervalCount, routeCounts, remove=True)
             if numSampled < 0:
                 print("  Removed %s routes from input to reduce overflow" % -numSampled)
             negateCounts(countData)
@@ -1029,7 +1036,7 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
 
     if options.optimize != "full" and not options.noSampling:
         routeCounts, numSampled = sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCounts,
-                                              ratioIndices, numSampled, intervalCount, routeCounts)
+                                               ratioIndices, numSampled, intervalCount, routeCounts)
 
     totalMismatch = sum([cd.count for cd in countData])  # noqa
 
@@ -1146,7 +1153,7 @@ def solveInterval(options, routes, begin, end, intervalPrefix, outf, mismatchf, 
 
 
 def sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCounts,
-                ratioIndices, numSampled, intervalCount, routeCounts, remove=False):
+                 ratioIndices, numSampled, intervalCount, routeCounts, remove=False):
     """pick a random counting location and select a new route that passes it until
        all counts are satisfied or no routes can be used anymore """
     while openCounts:
@@ -1220,7 +1227,7 @@ def sampleRoutes(options, rng, routes, countData, routeUsage, openRoutes, openCo
 
 def writeRoutes(options, rng, outf, routes, routeCounts, begin, end, intervalPrefix):
     outf.write('<!-- begin="%s" end="%s" -->\n' % (begin, end))
-    usedRoutes = [] # simple list of route indices with
+    usedRoutes = []  # simple list of route indices with
     for r, usage in enumerate(routeCounts):
         usedRoutes += [r] * usage
     rng.shuffle(usedRoutes)
@@ -1346,18 +1353,20 @@ def writeMismatch(options, mismatchf, countData, begin, end):
     mismatchf.write('    <interval id="deficit" begin="%s" end="%s">\n' % (begin, end))
     hourFraction = getHourFraction(options, begin, end)
     for cd in countData:
-        geh = None if cd.isRatio else sumolib.miscutils.geh(cd.origCount / hourFraction, (cd.origCount - cd.count) / hourFraction)
+        geh = None if cd.isRatio else sumolib.miscutils.geh(
+            cd.origCount / hourFraction, (cd.origCount - cd.count) / hourFraction)
         if len(cd.edgeTuple) == 1:
             mismatchf.write('        <edge id="%s" measuredCount="%s" deficit="%s" GEH="%.2f"/>\n' % (
                 cd.edgeTuple[0], cd.origCount, cd.count, geh))
         elif len(cd.edgeTuple) == 2:
+            relationPrefix = '        <edgeRelation from="%s" to="%s" ' % cd.edgeTuple
             if cd.isRatio:
                 deficit = setPrecision("%.2f",  options.precision) % (cd.assignedProbability() - cd.origCount)
-                mismatchf.write('        <edgeRelation from="%s" to="%s" measuredProbability="%s" deficit="%s" totalAssignedFromCount="%s"/>\n' % (  # noqa
-                    cd.edgeTuple[0], cd.edgeTuple[1], cd.origCount, deficit, cd.getSiblingCount()))
+                mismatchf.write('%smeasuredProbability="%s" deficit="%s" totalAssignedFromCount="%s"/>\n'
+                                % (relationPrefix, cd.origCount, deficit, cd.getSiblingCount()))
             else:
-                mismatchf.write('        <edgeRelation from="%s" to="%s" measuredCount="%s" deficit="%s" GEH="%.2f"/>\n' % (
-                    cd.edgeTuple[0], cd.edgeTuple[1], cd.origCount, cd.count, geh))
+                mismatchf.write('%smeasuredCount="%s" deficit="%s" GEH="%.2f"/>\n'
+                                % (relationPrefix, cd.origCount, cd.count, geh))
         else:
             print("Warning: output for edge relations with more than 2 edges not supported (%s)" % cd.edgeTuple,
                   file=sys.stderr)

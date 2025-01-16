@@ -230,13 +230,13 @@ GNEJunction::checkDrawToContour() const {
                     const double junctionBubbleRadius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.junctionBubbleRadius;
                     const double radiusTo = getExaggeration(myNet->getViewNet()->getVisualisationSettings()) * junctionBubbleRadius;
                     if (myNBNode->getPosition().distanceSquaredTo2D(movedJunction->getPositionInView()) < (radiusTo * radiusTo)) {
-                        // add it in the list of merging junction (first the moved junction)
+                        // add both it in the list of merging junction
                         gViewObjectsHandler.addMergingJunctions(movedJunction);
                         gViewObjectsHandler.addMergingJunctions(this);
                         return true;
                     }
                 } else if (myNBNode->getShape().around(movedJunction->getNBNode()->getPosition())) {
-                    // add it in the list of merging junction (first the moved junction)
+                    // add both it in the list of merging junction
                     gViewObjectsHandler.addMergingJunctions(movedJunction);
                     gViewObjectsHandler.addMergingJunctions(this);
                     return true;
@@ -773,26 +773,30 @@ GNEJunction::addIncomingGNEEdge(GNEEdge* edge) {
 void
 GNEJunction::addOutgoingGNEEdge(GNEEdge* edge) {
     // Check if outgoing edge was already inserted
-    std::vector<GNEEdge*>::iterator i = std::find(myGNEOutgoingEdges.begin(), myGNEOutgoingEdges.end(), edge);
+    const auto i = std::find(myGNEOutgoingEdges.begin(), myGNEOutgoingEdges.end(), edge);
     if (i != myGNEOutgoingEdges.end()) {
         throw InvalidArgument("Outgoing " + toString(SUMO_TAG_EDGE) + " with ID '" + edge->getID() + "' was already inserted into " + getTagStr() + " with ID " + getID() + "'");
     } else {
         // Add edge into containers
         myGNEOutgoingEdges.push_back(edge);
     }
+    // update centering boundary and grid
+    updateCenteringBoundary(true);
 }
 
 
 void
 GNEJunction::removeIncomingGNEEdge(GNEEdge* edge) {
     // Check if incoming edge was already inserted
-    std::vector<GNEEdge*>::iterator i = std::find(myGNEIncomingEdges.begin(), myGNEIncomingEdges.end(), edge);
+     auto i = std::find(myGNEIncomingEdges.begin(), myGNEIncomingEdges.end(), edge);
     if (i == myGNEIncomingEdges.end()) {
         throw InvalidArgument("Incoming " + toString(SUMO_TAG_EDGE) + " with ID '" + edge->getID() + "' doesn't found into " + getTagStr() + " with ID " + getID() + "'");
     } else {
         // remove edge from containers
         myGNEIncomingEdges.erase(i);
     }
+    // update centering boundary and grid
+    updateCenteringBoundary(true);
 }
 
 
@@ -1412,24 +1416,49 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList
             GNEChange_Attribute::changeAttribute(this, key, value, undoList, true);
             break;
         case SUMO_ATTR_POSITION: {
-            // change Keep Clear attribute in all connections
-            undoList->begin(this, TL("change junction position"));
-            // obtain NBNode position
-            const Position orig = myNBNode->getPosition();
-            // change junction position
-            GNEChange_Attribute::changeAttribute(this, key, value, undoList, true);
-            // calculate delta using new position
-            const Position delta = myNBNode->getPosition() - orig;
-            // set new position of adjacent edges
-            for (const auto& edge : myGNEIncomingEdges) {
-                const Position newEnd = edge->getNBEdge()->getGeometry().back() + delta;
-                GNEChange_Attribute::changeAttribute(edge, GNE_ATTR_SHAPE_END, toString(newEnd), undoList, true);
+            const GNEJunction* junctionToMerge = nullptr;
+            bool alreadyAsked = false;
+            // parse position
+            const Position newPosition = GNEAttributeCarrier::parse<Position>(value);
+            // retrieve all junctions placed in this position
+            myNet->getViewNet()->updateObjectsInPosition(newPosition);
+            for (const auto& junction : myNet->getViewNet()->getViewObjectsSelector().getJunctions()) {
+                // check distance position
+                if ((junctionToMerge == nullptr) && (junction != this) && (junction->getPositionInView().distanceTo2D(newPosition) < POSITION_EPS) &&
+                    myNet->getViewNet()->askMergeJunctions(this, junction, alreadyAsked)) {
+                    junctionToMerge = junction;
+                }
             }
-            for (const auto& edge : myGNEOutgoingEdges) {
-                const Position newStart = edge->getNBEdge()->getGeometry().front() + delta;
-                GNEChange_Attribute::changeAttribute(edge, GNE_ATTR_SHAPE_START, toString(newStart), undoList, true);
+            // also check the merging junctions located during drawGL
+            for (const auto& junction : myNet->getViewNet()->getViewObjectsSelector().getMergingJunctions()) {
+                // check distance position
+                if ((junctionToMerge == nullptr) && (junction != this) && myNet->getViewNet()->askMergeJunctions(this, junction, alreadyAsked)) {
+                    junctionToMerge = junction;
+                }
             }
-            undoList->end();
+            // if we merge the junction, this junction will be removed, therefore we don't have to change the position
+            if (junctionToMerge) {
+                myNet->mergeJunctions(this, junctionToMerge, undoList);
+            } else {
+                // change Keep Clear attribute in all connections
+                undoList->begin(this, TL("change junction position"));
+                // obtain NBNode position
+                const Position orig = myNBNode->getPosition();
+                // change junction position
+                GNEChange_Attribute::changeAttribute(this, key, value, undoList, true);
+                // calculate delta using new position
+                const Position delta = myNBNode->getPosition() - orig;
+                // set new position of adjacent edges
+                for (const auto& edge : myGNEIncomingEdges) {
+                    const Position newEnd = edge->getNBEdge()->getGeometry().back() + delta;
+                    GNEChange_Attribute::changeAttribute(edge, GNE_ATTR_SHAPE_END, toString(newEnd), undoList, true);
+                }
+                for (const auto& edge : myGNEOutgoingEdges) {
+                    const Position newStart = edge->getNBEdge()->getGeometry().front() + delta;
+                    GNEChange_Attribute::changeAttribute(edge, GNE_ATTR_SHAPE_START, toString(newStart), undoList, true);
+                }
+                undoList->end();
+            }
             break;
         }
         case SUMO_ATTR_KEEP_CLEAR:
@@ -1903,7 +1932,11 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value) {
             // mark this connections and all of the junction's Neighbours as deprecated
             markConnectionsDeprecated(true);
             // update centering boundary and grid
-            updateCenteringBoundary(true);
+            if (myGNEIncomingEdges.size() + myGNEOutgoingEdges.size() > 0) {
+                updateCenteringBoundary(false);
+            } else {
+                updateCenteringBoundary(true);
+            }
             break;
         }
         case GNE_ATTR_MODIFICATION_STATUS:
@@ -2010,8 +2043,6 @@ GNEJunction::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoL
         } else {
             setAttribute(SUMO_ATTR_POSITION, toString(moveResult.shapeToUpdate.front()), undoList);
         }
-        // check merge junctions
-        myNet->getViewNet()->checkMergeJunctions();
     }
 }
 

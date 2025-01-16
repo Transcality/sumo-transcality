@@ -19,6 +19,75 @@
 # GENERAL
 # --------------------------------
 
+class toolbar:
+    class file:
+        newNetwork = 1
+        newWindow = 2
+        generateNetwork = 3
+        loadNeteditConfig = 4
+        loadSumoConfig = 5
+        openNetwork = 6
+        openNetconvertConfiguration = 7
+        importForeignNetwork = 8
+        saveNetwork = 9
+        saveNetworkAs = 9
+        savePlainXML = 10
+        saveJoinedJunctions = 11
+        reloadConfig = 12
+        reloadNetwork = 13
+        class neteditConfig:
+            menu = 14
+            save = 1
+            saveAs = 2
+
+        class sumoConfig:
+            menu = 15
+            save = 1
+            saveAs = 2
+
+        class trafficLights:
+            menu = 16
+            load = 1
+            save = 2
+            saveAs = 3
+            reload = 4
+
+        class edgeTypes:
+            menu = 17
+            load = 1
+            save = 2
+            saveAs = 3
+            reload = 4
+
+        class aditionalElements:
+            menu = 18
+            load = 1
+            save = 2
+            saveAs = 3
+            saveJupedsim = 4
+            reload = 5
+
+        class demandElements:
+            menu = 19
+            load = 1
+            save = 2
+            saveAs = 3
+            reload = 4
+
+        class dataElements:
+            menu = 20
+            load = 1
+            save = 2
+            saveAs = 3
+            reload = 4
+
+        class meanDataElements:
+            menu = 21
+            load = 1
+            save = 2
+            saveAs = 3
+            reload = 4
+
 
 class editElements:
     overlapped = 5
@@ -1181,7 +1250,8 @@ class routeProbe:
         name = 7
         file = 8
         begin = 9
-        center = 13
+        vTypes = 10
+        center = 14
 
     class inspect:
         id = 1
@@ -1190,14 +1260,16 @@ class routeProbe:
         name = 4
         file = 5
         begin = 6
-        parameters = 9
+        vTypes = 7
+        parameters = 10
 
     class inspectSelection:
         frequency = 1
         name = 2
         file = 3
         begin = 4
-        parameters = 7
+        vTypes = 5
+        parameters = 8
 
 # vaporizer
 

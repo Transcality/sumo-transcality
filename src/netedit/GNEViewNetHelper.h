@@ -332,6 +332,9 @@ struct GNEViewNetHelper {
         /// @brief update objects (using gViewObjectsHandler)
         void updateObjects();
 
+        /// @brief update merging junctions
+        void updateMergingJunctions();
+
         /// @brief filter all elements except the given GLO type
         void filterAllExcept(GUIGlObjectType exception);
 
@@ -458,6 +461,9 @@ struct GNEViewNetHelper {
         /// @brief get vector with Demand Elements
         const std::vector<GNEDemandElement*>& getDemandElements() const;
 
+        /// @brief get merging junctions
+        const std::vector<const GNEJunction*>& getMergingJunctions() const;
+
     protected:
         /// @brief objects container
         class ViewObjectsContainer {
@@ -545,6 +551,9 @@ struct GNEViewNetHelper {
 
         /// @brief objects container with selected objects
         ViewObjectsContainer myViewObjects;
+
+        /// @brief merging junctions
+        std::vector<const GNEJunction*> myMergingJunctions;
 
     private:
         /// @brief update network elements
@@ -850,8 +859,8 @@ struct GNEViewNetHelper {
         /// @brief checkable button to set change all phases
         MFXCheckableButton* menuCheckChangeAllPhases = nullptr;
 
-        /// @brief checkable button to we should warn about merging junctions
-        MFXCheckableButton* menuCheckWarnAboutMerge = nullptr;
+        /// @brief checkable button to we should't warn about merging junctions
+        MFXCheckableButton* menuCheckMergeAutomatically = nullptr;
 
         /// @brief checkable button to show connection as bubble in "Move" mode.
         MFXCheckableButton* menuCheckShowJunctionBubble = nullptr;

@@ -416,7 +416,7 @@ public:
     long onCmdToggleDrawSpreadVehicles(FXObject*, FXSelector, void*);
 
     /// @brief toggle warn for merge
-    long onCmdToggleWarnAboutMerge(FXObject*, FXSelector, void*);
+    long onCmdToggleMergeAutomatically(FXObject*, FXSelector, void*);
 
     /// @brief toggle show junction bubbles
     long onCmdToggleShowJunctionBubbles(FXObject*, FXSelector, void*);
@@ -587,11 +587,8 @@ public:
     /// @brief return true if junction must be showed as bubbles
     bool showJunctionAsBubbles() const;
 
-    /// @brief try to merge moved junction with another junction in that spot return true if merging did take place
-    bool checkMergeJunctions();
-
     /// @brief ask merge junctions
-    bool askMergeJunctions(const GNEJunction* movedJunction, const GNEJunction* targetJunction);
+    bool askMergeJunctions(const GNEJunction* movedJunction, const GNEJunction* targetJunction, bool &alreadyAsked);
 
     /// @brief ask about change supermode
     bool aksChangeSupermode(const std::string& operation, Supermode expectedSupermode);
