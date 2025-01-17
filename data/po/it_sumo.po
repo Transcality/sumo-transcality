@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2025-01-06 11:22+0100\n"
-"PO-Revision-Date: 2025-01-13 13:21+0000\n"
+"PO-Revision-Date: 2025-01-16 13:38+0000\n"
 "Last-Translator: Mirko Barthauer <mirko.barthauer@dlr.de>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/eclipse-sumo/"
 "applications/it/>\n"
@@ -1075,15 +1075,15 @@ msgstr "Destinazione '%' sconosciuta."
 
 #: src/marouter/ROMAFrame.cpp:71 src/od2trips_main.cpp:121
 msgid "Does not save vtype information"
-msgstr ""
+msgstr "Non salvare informazione del tipo di veicolo"
 
 #: src/marouter/ROMAFrame.cpp:74
 msgid "Writes edge loads and final costs into FILE"
-msgstr ""
+msgstr "Scrivi flussi di arco e costi finali in FILE"
 
 #: src/marouter/ROMAFrame.cpp:77
 msgid "Writes complete distance matrix into FILE"
-msgstr ""
+msgstr "Scrivi matrice di distanze completa in FILE"
 
 #: src/marouter/ROMAFrame.cpp:81 src/od2trips_main.cpp:85
 msgid "Loads O/D-files from FILE(s)"
@@ -1301,6 +1301,8 @@ msgid ""
 "Teleporting vehicle '%'; waited too long%, from edge '%':% to edge '%':%, "
 "time=%."
 msgstr ""
+"Veicolo '%' teletraspotato per causa di attesa troppo lunga%, dall'arco '%':"
+"% all'arco '%':%, alle ore %."
 
 #: src/mesosim/METriggeredCalibrator.cpp:129
 #: src/microsim/trigger/MSCalibrator.cpp:628
@@ -1544,7 +1546,7 @@ msgstr "Il veicolo '%' non supporta il parametro di modello di incroci '%'."
 
 #: src/microsim/MSBaseVehicle.cpp:2382
 msgid "could not interpret routing.mode '%'"
-msgstr ""
+msgstr "non ho potuto analizzare routing.mode '%'"
 
 #: src/microsim/MSBaseVehicle.cpp:2465
 msgid "Invalid device parameter '%' for vehicle '%'."
@@ -1616,6 +1618,8 @@ msgstr "Archi sovrapponibili e ambigui tra gli incroci '%' e '%'."
 #, c-format
 msgid "Edge '%' and bidi edge '%' have no matching bidi lanes"
 msgstr ""
+"L'arco '%' e l'arco bidirezionale '%' non hanno corsie bidirizionale "
+"coincidenti"
 
 #: src/microsim/MSFrame.cpp:78
 msgid "Load road network description from FILE"
@@ -1832,7 +1836,7 @@ msgstr "Salva l'informazione aggregata delle partenze dei veicoli in FILE"
 
 #: src/microsim/MSFrame.cpp:209
 msgid "Save summary-output with the given period"
-msgstr ""
+msgstr "Salva summary-output con l'intervallo indicato"
 
 #: src/microsim/MSFrame.cpp:212
 msgid "Save aggregated person counts into FILE"
@@ -2236,6 +2240,8 @@ msgid ""
 "Whether rail-signal-constraint based deadlocks shall be cleared by removing "
 "a constraint"
 msgstr ""
+"Se dei blocchi causati da restrizioni dei segnali ferroviari possono essere "
+"risolti rimuovendo una restrizione"
 
 #: src/microsim/MSFrame.cpp:449
 msgid ""
@@ -2258,46 +2264,59 @@ msgid ""
 "The waiting time after which vehicles in a rail-signal based deadlock are "
 "teleported"
 msgstr ""
+"Il tempo di attesa dopodiché i veicoli coinvolti in un blocco causato da un "
+"segnale ferroviario verranno teletrasportati"
 
 #: src/microsim/MSFrame.cpp:458
 msgid ""
 "Length of time interval, over which accumulated waiting time is taken into "
 "account (default is 100s.)"
 msgstr ""
+"Durata dell'intervallo in secondi nel quale il tempo di attesa accumulato "
+"viene considerato (valore standard 100)"
 
 #: src/microsim/MSFrame.cpp:461
 msgid "Minimum consecutive waiting time before applying startupDelay"
-msgstr ""
+msgstr "Tempo di attesa consecutivo minimale prima di aggiungere startupDelay"
 
 #: src/microsim/MSFrame.cpp:464
 msgid ""
 "How long vehicles wait for departure before being skipped, defaults to -1 "
 "which means vehicles are never skipped"
 msgstr ""
+"Il tempo di attesa dei veicoli prima della partenza dopodiché esse verranno "
+"omessi - il valore standard -1 significa di mai omettere dei veicoli"
 
 #: src/microsim/MSFrame.cpp:467
 msgid ""
 "Whether insertion on an edge shall not be repeated in same step once failed"
 msgstr ""
+"Se la inserzione su un arco non deve essere ripetuta nello stesso passo di "
+"simulazione dopo essere fallita"
 
 #: src/microsim/MSFrame.cpp:470
 msgid "Whether each vehicle is checked separately for insertion on an edge"
 msgstr ""
+"Se si deve controllare l'inserzione di ogni veicolo su un arco separatamente"
 
 #: src/microsim/MSFrame.cpp:473
 msgid ""
 "Allow inserting a vehicle in a situation which requires emergency braking"
 msgstr ""
+"Permetti di inserire un veicolo in una situazione che richiede il freno "
+"d'emergenza"
 
 #: src/microsim/MSFrame.cpp:476
 msgid "Override default value for vehicle attribute insertionChecks"
-msgstr ""
+msgstr "Sovrascrivi il valore standard del attributo di veicolo insertionChecks"
 
 #: src/microsim/MSFrame.cpp:479
 msgid ""
 "Each vehicle receives a random offset to its depart value drawn uniformly "
 "from [0, TIME]"
 msgstr ""
+"Ogni veicolo riceve un ritardo casuale tirato da [0, TIME] per rispetto alla "
+"sua ora di partenza"
 
 #: src/microsim/MSFrame.cpp:482
 msgid "Duration of a lane change maneuver (default 0)"
@@ -2340,7 +2359,7 @@ msgstr ""
 
 #: src/microsim/MSFrame.cpp:509
 msgid "Do not build blocks longer than FLOAT and issue a warning instead"
-msgstr ""
+msgstr "Non creare blocchi più lunghi di FLOAT e invece emettere un avviso"
 
 #: src/microsim/MSFrame.cpp:512
 msgid ""
@@ -2426,42 +2445,55 @@ msgstr ""
 #: src/microsim/MSFrame.cpp:543
 msgid "Override stop until times with stop ended times when given"
 msgstr ""
+"Sovrascrivi le ore di partenza alle fermate programmate con le ore reali se "
+"disponibili"
 
 #: src/microsim/MSFrame.cpp:546
 msgid "Override stop arrival times with stop started times when given"
 msgstr ""
+"Sovrascrivi le ore di arrivo alle fermate con le ore di inizio fermata se "
+"disponibili"
 
 #: src/microsim/MSFrame.cpp:550
 msgid "Select among pedestrian models ['nonInteracting', 'striping', 'remote']"
-msgstr ""
+msgstr "Scegli tra i modelli di pedoni ['nonInteracting', 'striping', 'remote']"
 
 #: src/microsim/MSFrame.cpp:553
 msgid ""
 "Minimal acceptable gap (in seconds) between two vehicles before starting to "
 "cross"
 msgstr ""
+"Intervallo temporale minimo tra due veicoli prima di entrare nell'incrocio"
 
 #: src/microsim/MSFrame.cpp:556
 msgid ""
 "Width of parallel stripes for segmenting a sidewalk (meters) for use with "
 "model 'striping'"
 msgstr ""
+"Larghezza delle fasce parallele per suddividere un marciapiede (in metri) da "
+"usare con il modello 'striping'"
 
 #: src/microsim/MSFrame.cpp:559
 msgid "Factor for random slow-downs [0,1] for use with model 'striping'"
 msgstr ""
+"Fattore per decelerazione a caso [0,1] da usare con il modello 'striping'"
 
 #: src/microsim/MSFrame.cpp:562
 msgid ""
 "Minimal gap / safety buffer (in meters) from a pedestrian to another vehicle "
 "for use with model 'striping'"
 msgstr ""
+"Intervallo minimo (in metri) tra un pedone e un'altro veicolo da usare nel "
+"modello 'striping'"
 
 #: src/microsim/MSFrame.cpp:565
 msgid ""
 "Time in seconds after which pedestrians start squeezing through a jam when "
 "using model 'striping' (non-positive values disable squeezing)"
 msgstr ""
+"Tempo in secondi dopodiché i pedoni iniziano a premere contro una coda "
+"quando si usa il modello 'striping' (valori non negativi disattivano detto "
+"comportamento)"
 
 #: src/microsim/MSFrame.cpp:567
 msgid ""
@@ -2469,16 +2501,21 @@ msgid ""
 "on a pedestrian crossing when using model 'striping' (non-positive values "
 "disable squeezing)"
 msgstr ""
+"Tempo in secondi dopodiché i pedoni iniziano a premere contro una coda su un "
+"passaggio pedonale quando si usa il modello 'striping' (valori non negativi "
+"disattivano detto comportamento)"
 
 #: src/microsim/MSFrame.cpp:569
 msgid ""
 "Time in seconds after which pedestrians start squeezing through a jam while "
 "on a narrow lane when using model 'striping'"
 msgstr ""
+"Tempo in secondi dopodiché i pedoni iniziano a premere contro una coda su "
+"una corsia stretta quando si usa il modello 'striping'"
 
 #: src/microsim/MSFrame.cpp:572
 msgid "Factor for reducing speed of pedestrian in jammed state"
-msgstr ""
+msgstr "Fattore per ridurre la velocità di marcia nello stato bloccato"
 
 #: src/microsim/MSFrame.cpp:575
 msgid "Fraction of stripes to reserve for oncoming pedestrians"
@@ -2577,7 +2614,7 @@ msgstr "Assegna posizioni a incroci invece di archi"
 
 #: src/microsim/MSFrame.cpp:622 src/router/ROFrame.cpp:169
 msgid "Match positions to taz instead of edges"
-msgstr ""
+msgstr "Assegna posizioni a zone di assegnazione del traffico invece di archi"
 
 #: src/microsim/MSFrame.cpp:633
 msgid ""
@@ -2608,6 +2645,9 @@ msgid ""
 "Distinguish travel time by turn direction and shift a fraction of the "
 "estimated time loss ahead of the intersection onto the internal edges"
 msgstr ""
+"Distingui il tempo di percorrenza secondo la direzione di svolta e sposta "
+"una frazione della stima di tempo morto a valle dell'incrocio sugli archi "
+"interni"
 
 #: src/microsim/MSFrame.cpp:670
 msgid ""
