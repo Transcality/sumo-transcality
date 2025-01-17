@@ -21,3 +21,4 @@ RUN cmake --build build -j$(nproc)
 ENV SUMO_HOME=/sumo
 ENV PATH="/sumo/bin:$PATH"
 ENV PYTHONPATH="/sumo/tools:$PYTHONPATH"
+ENV LD_LIBRARY_PATH=L/sumo/bin/:$LD_LIBRARY_PATH
