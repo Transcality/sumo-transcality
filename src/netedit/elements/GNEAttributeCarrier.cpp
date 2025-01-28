@@ -385,8 +385,9 @@ GNEAttributeCarrier::parse(const std::string& value) {
 template<> std::vector<GNEEdge*>
 GNEAttributeCarrier::parse(GNENet* net, const std::string& value) {
     // Declare string vector
-    std::vector<std::string> edgeIds = GNEAttributeCarrier::parse<std::vector<std::string> > (value);
+    const auto edgeIds = GNEAttributeCarrier::parse<std::vector<std::string> > (value);
     std::vector<GNEEdge*> parsedEdges;
+    parsedEdges.reserve(edgeIds.size());
     // Iterate over edges IDs, retrieve Edges and add it into parsedEdges
     for (const auto& edgeID : edgeIds) {
         GNEEdge* retrievedEdge = net->getAttributeCarriers()->retrieveEdge(edgeID, false);
@@ -404,8 +405,9 @@ GNEAttributeCarrier::parse(GNENet* net, const std::string& value) {
 template<> std::vector<GNELane*>
 GNEAttributeCarrier::parse(GNENet* net, const std::string& value) {
     // Declare string vector
-    std::vector<std::string> laneIds = GNEAttributeCarrier::parse<std::vector<std::string> > (value);
+    const auto laneIds = GNEAttributeCarrier::parse<std::vector<std::string> > (value);
     std::vector<GNELane*> parsedLanes;
+    parsedLanes.reserve(laneIds.size());
     // Iterate over lanes IDs, retrieve Lanes and add it into parsedLanes
     for (const auto& laneID : laneIds) {
         GNELane* retrievedLane = net->getAttributeCarriers()->retrieveLane(laneID, false);
@@ -3750,6 +3752,12 @@ GNEAttributeCarrier::fillDemandElements() {
                                               TL("When defining a repeating route with stops and those stops use the until attribute,") + std::string("\n") +
                                               TL("the times will be shifted forward by 'cycleTime' on each repeat"),
                                               "0");
+        myTagProperties[currentTag].addAttribute(attrProperty);
+
+        attrProperty = GNEAttributeProperties(SUMO_ATTR_PROB,
+                                              GNEAttributeProperties::FLOAT | GNEAttributeProperties::POSITIVE | GNEAttributeProperties::DEFAULTVALUE | GNEAttributeProperties::EXTENDED,
+                                              TL("The probability when being added to a distribution without an explicit probability"),
+                                              "1.0");
         myTagProperties[currentTag].addAttribute(attrProperty);
     }
     currentTag = SUMO_TAG_ROUTE_DISTRIBUTION;

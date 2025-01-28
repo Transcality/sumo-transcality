@@ -87,7 +87,7 @@ GNERouteHandler::~GNERouteHandler() {
 bool
 GNERouteHandler::postParserTasks() {
     // clear all parent plan elements without children
-    for (const auto &parentPlanElement : myParentPlanElements) {
+    for (const auto& parentPlanElement : myParentPlanElements) {
         if (parentPlanElement->getChildDemandElements().empty()) {
             if (myAllowUndoRedo) {
                 myNet->getViewNet()->getUndoList()->begin(parentPlanElement, TLF("delete % '%'", parentPlanElement->getTagStr(), parentPlanElement->getID()));
@@ -109,33 +109,36 @@ GNERouteHandler::buildVType(const CommonXMLStructure::SumoBaseObject* sumoBaseOb
     if (DEFAULT_VTYPES.count(vTypeParameter.id) > 0) {
         // overwrite default vehicle type
         return GNEVType::overwriteVType(myNet->getAttributeCarriers()->retrieveDemandElement(SUMO_TAG_VTYPE, vTypeParameter.id, false), vTypeParameter, myNet->getViewNet()->getUndoList());
-    } else if (!checkValidDemandElementID(SUMO_TAG_VTYPE, vTypeParameter.id)) {
-        return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_VTYPE, {SUMO_TAG_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION}, vTypeParameter.id)) {
-        return false;
     } else {
-        // create vType/pType using myCurrentVType
-        GNEDemandElement* vType = new GNEVType(myNet, vTypeParameter);
-        // check if add this vType to a distribution
-        GNEDemandElement* vTypeDistribution = nullptr;
-        if (sumoBaseObject->getParentSumoBaseObject() && sumoBaseObject->getParentSumoBaseObject()->getTag() == SUMO_TAG_VTYPE_DISTRIBUTION) {
-            vTypeDistribution = myNet->getAttributeCarriers()->retrieveDemandElement(SUMO_TAG_VTYPE_DISTRIBUTION, sumoBaseObject->getParentSumoBaseObject()->getStringAttribute(SUMO_ATTR_ID), false);
-        }
-        if (myAllowUndoRedo) {
-            myNet->getViewNet()->getUndoList()->begin(vType, TL("add ") + vType->getTagStr() + " '" + vTypeParameter.id + "'");
-            myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(vType, true), true);
-            if (vTypeDistribution) {
-                vTypeDistribution->addDistributionKey(vType, vType->getAttributeDouble(SUMO_ATTR_PROB), myNet->getViewNet()->getUndoList());
-            }
-            myNet->getViewNet()->getUndoList()->end();
+        const auto element = retrieveDemandElement({SUMO_TAG_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION}, vTypeParameter.id);
+        if (!checkElement(SUMO_TAG_VTYPE, element)) {
+            return false;
+        } else if (!checkValidDemandElementID(SUMO_TAG_VTYPE, vTypeParameter.id)) {
+            return false;
         } else {
-            myNet->getAttributeCarriers()->insertDemandElement(vType);
-            if (vTypeDistribution) {
-                vTypeDistribution->addDistributionKey(vType, vType->getAttributeDouble(SUMO_ATTR_PROB));
+            // create vType/pType using myCurrentVType
+            GNEDemandElement* vType = new GNEVType(myNet, vTypeParameter);
+            // check if add this vType to a distribution
+            GNEDemandElement* vTypeDistribution = nullptr;
+            if (sumoBaseObject->getParentSumoBaseObject() && sumoBaseObject->getParentSumoBaseObject()->getTag() == SUMO_TAG_VTYPE_DISTRIBUTION) {
+                vTypeDistribution = myNet->getAttributeCarriers()->retrieveDemandElement(SUMO_TAG_VTYPE_DISTRIBUTION, sumoBaseObject->getParentSumoBaseObject()->getStringAttribute(SUMO_ATTR_ID), false);
             }
-            vType->incRef("buildVType");
+            if (myAllowUndoRedo) {
+                myNet->getViewNet()->getUndoList()->begin(vType, TL("add ") + vType->getTagStr() + " '" + vTypeParameter.id + "'");
+                myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(vType, true), true);
+                if (vTypeDistribution) {
+                    vTypeDistribution->addDistributionKey(vType, vType->getAttributeDouble(SUMO_ATTR_PROB), myNet->getViewNet()->getUndoList());
+                }
+                myNet->getViewNet()->getUndoList()->end();
+            } else {
+                myNet->getAttributeCarriers()->insertDemandElement(vType);
+                if (vTypeDistribution) {
+                    vTypeDistribution->addDistributionKey(vType, vType->getAttributeDouble(SUMO_ATTR_PROB));
+                }
+                vType->incRef("buildVType");
+            }
+            return true;
         }
-        return true;
     }
 }
 
@@ -145,10 +148,11 @@ GNERouteHandler::buildVTypeDistribution(const CommonXMLStructure::SumoBaseObject
                                         const std::vector<std::string>& vTypeIDs, const std::vector<double>& probabilities) {
     // declare vector with vType and their probabilities
     std::vector<const GNEDemandElement*> vTypes;
-    // first check conditions
-    if (!checkValidDemandElementID(SUMO_TAG_VTYPE_DISTRIBUTION, id)) {
+    // check conditions
+    const auto element = retrieveDemandElement({SUMO_TAG_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION}, id);
+    if (!checkElement(SUMO_TAG_VTYPE_DISTRIBUTION, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_VTYPE_DISTRIBUTION, {SUMO_TAG_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION}, id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_VTYPE_DISTRIBUTION, id)) {
         return false;
     } else if (getDistributionElements(sumoBaseObject, SUMO_TAG_VTYPE, vTypeIDs, probabilities, vTypes)) {
         return false;
@@ -181,18 +185,19 @@ GNERouteHandler::buildRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseOb
                             const std::vector<std::string>& edgeIDs, const RGBColor& color, const int repeat, const SUMOTime cycleTime,
                             const double probability, const Parameterised::Map& routeParameters) {
     // check conditions
-    if (!checkValidDemandElementID(SUMO_TAG_ROUTE, id)) {
+    const auto element = retrieveDemandElement({SUMO_TAG_ROUTE, SUMO_TAG_ROUTE_DISTRIBUTION}, id);
+    if (!checkElement(SUMO_TAG_ROUTE, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_ROUTE, {SUMO_TAG_ROUTE, SUMO_TAG_ROUTE_DISTRIBUTION}, id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_ROUTE, id)) {
         return false;
     } else {
         // parse edges
         const auto edges = parseEdges(SUMO_TAG_ROUTE, id, edgeIDs);
         if (edges.empty()) {
-            return false;
+            return writeErrorEmptyEdges(SUMO_TAG_ROUTE, id);
         } else {
             // create GNERoute
-            GNEDemandElement* route = new GNERoute(myNet, id, vClass, edges, color, repeat, cycleTime, routeParameters);
+            GNEDemandElement* route = new GNERoute(myNet, id, vClass, edges, color, repeat, cycleTime, probability, routeParameters);
             // check if add this route to a distribution
             GNEDemandElement* routeDistribution = nullptr;
             if (sumoBaseObject && sumoBaseObject->getParentSumoBaseObject() && sumoBaseObject->getParentSumoBaseObject()->getTag() == SUMO_TAG_ROUTE_DISTRIBUTION) {
@@ -222,72 +227,15 @@ GNERouteHandler::buildRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseOb
 
 
 bool
-GNERouteHandler::buildEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const std::vector<std::string>& edgeIDs,
-                                    const RGBColor& color, const int repeat, const SUMOTime cycleTime, const Parameterised::Map& routeParameters) {
-    // first create vehicle/flow
-    const SUMOVehicleParameter& vehicleParameters = sumoBaseObject->getParentSumoBaseObject()->getVehicleParameter();
-    const SumoXMLTag vehicleTag = (sumoBaseObject->getParentSumoBaseObject()->getTag() == SUMO_TAG_VEHICLE) ? GNE_TAG_VEHICLE_WITHROUTE :
-                                  (sumoBaseObject->getParentSumoBaseObject()->getTag() == SUMO_TAG_FLOW) ? GNE_TAG_FLOW_WITHROUTE :
-                                  sumoBaseObject->getParentSumoBaseObject()->getTag();
-
-    // check if ID is duplicated
-    if (!checkValidDemandElementID(vehicleTag, vehicleParameters.id)) {
-        return false;
-    } else if (!checkDuplicatedDemandElement(vehicleTag, myVehicleTags, vehicleParameters.id)) {
-        return false;
-    } else {
-        // parse route edges
-        const auto edges = parseEdges(SUMO_TAG_ROUTE, vehicleParameters.id, edgeIDs);
-        if (edges.empty()) {
-            return false;
-        } else {
-            // obtain  type
-            GNEDemandElement* type = getType(vehicleParameters.vtypeid);
-            if (type == nullptr) {
-                return writeErrorInvalidParent(vehicleTag, vehicleParameters.id, SUMO_TAG_VTYPE, vehicleParameters.vtypeid);
-            } else if (vehicleParameters.wasSet(VEHPARS_DEPARTLANE_SET) && (vehicleParameters.departLaneProcedure == DepartLaneDefinition::GIVEN) && ((int)edges.front()->getLanes().size() < vehicleParameters.departLane)) {
-                return writeError(TLF("Invalid % used in % '%'. % is greater than number of lanes", toString(SUMO_ATTR_DEPARTLANE), toString(vehicleParameters.tag), vehicleParameters.id, toString(vehicleParameters.departLane)));
-            } else if (vehicleParameters.wasSet(VEHPARS_DEPARTSPEED_SET) && (vehicleParameters.departSpeedProcedure == DepartSpeedDefinition::GIVEN) && (type->getAttributeDouble(SUMO_ATTR_MAXSPEED) < vehicleParameters.departSpeed)) {
-                return writeError(TLF("Invalid % used in % '%'. % is greater than type %", toString(SUMO_ATTR_DEPARTSPEED), toString(vehicleParameters.tag), vehicleParameters.id, toString(vehicleParameters.departSpeed), toString(SUMO_ATTR_MAXSPEED)));
-            } else {
-                // create vehicle using vehicleParameters
-                GNEDemandElement* vehicle = new GNEVehicle(vehicleTag, myNet, type, vehicleParameters);
-                // create embedded route
-                GNEDemandElement* route = new GNERoute(myNet, vehicle, edges, color, repeat, cycleTime, routeParameters);
-                if (myAllowUndoRedo) {
-                    myNet->getViewNet()->getUndoList()->begin(route, TL("add ") + route->getTagStr() + " in '" + vehicle->getID() + "'");
-                    myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(vehicle, true), true);
-                    myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(route, true), true);
-                    myNet->getViewNet()->getUndoList()->end();
-                } else {
-                    myNet->getAttributeCarriers()->insertDemandElement(vehicle);
-                    myNet->getAttributeCarriers()->insertDemandElement(route);
-                    type->addChildElement(vehicle);
-                    vehicle->addChildElement(route);
-                    for (const auto& edge : edges) {
-                        edge->addChildElement(route);
-                    }
-                    vehicle->incRef("buildEmbeddedRoute");
-                    route->incRef("buildEmbeddedRoute");
-                }
-                return true;
-            }
-        }
-    }
-}
-
-
-bool
-GNERouteHandler::buildRouteDistribution(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const std::string& id,
-                                        const std::vector<std::string>& routeIDs, const std::vector<double>& probabilities) {
+GNERouteHandler::buildRouteDistribution(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const std::string& id,
+                                        const std::vector<std::string>& /*routeIDs*/, const std::vector<double>& probabilities) {
     // declare vector with route and their probabilities
     std::vector<const GNEDemandElement*> routes;
-    // first check conditions
-    if (!checkValidDemandElementID(SUMO_TAG_ROUTE_DISTRIBUTION, id)) {
+    // check conditions
+    const auto element = retrieveDemandElement({SUMO_TAG_ROUTE, SUMO_TAG_ROUTE_DISTRIBUTION}, id);
+    if (!checkElement(SUMO_TAG_ROUTE_DISTRIBUTION, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_ROUTE_DISTRIBUTION, {SUMO_TAG_ROUTE, SUMO_TAG_ROUTE_DISTRIBUTION}, id)) {
-        return false;
-    } else if (!getDistributionElements(sumoBaseObject, SUMO_TAG_ROUTE, routeIDs, probabilities, routes)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_ROUTE_DISTRIBUTION, id)) {
         return false;
     } else {
         // create distributions
@@ -315,10 +263,11 @@ GNERouteHandler::buildRouteDistribution(const CommonXMLStructure::SumoBaseObject
 
 bool
 GNERouteHandler::buildVehicleOverRoute(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters) {
-    // first check if ID is duplicated
-    if (!checkValidDemandElementID(SUMO_TAG_VEHICLE, vehicleParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(SUMO_TAG_VEHICLE, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_VEHICLE, myVehicleTags, vehicleParameters.id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_VEHICLE, vehicleParameters.id)) {
         return false;
     } else {
         // obtain routes and vtypes
@@ -353,11 +302,64 @@ GNERouteHandler::buildVehicleOverRoute(const CommonXMLStructure::SumoBaseObject*
 
 
 bool
-GNERouteHandler::buildFlowOverRoute(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters) {
-    // first check if ID is duplicated
-    if (!checkValidDemandElementID(GNE_TAG_FLOW_ROUTE, vehicleParameters.id)) {
+GNERouteHandler::buildVehicleEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters,
+        const std::vector<std::string>& edgeIDs, const RGBColor& color, const int repeat, const SUMOTime cycleTime,
+        const double probability, const Parameterised::Map& routeParameters) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_VEHICLE_WITHROUTE, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(GNE_TAG_FLOW_ROUTE, myVehicleTags, vehicleParameters.id)) {
+    } else if (!checkValidDemandElementID(GNE_TAG_VEHICLE_WITHROUTE, vehicleParameters.id)) {
+        return false;
+    } else {
+        // parse route edges
+        const auto edges = parseEdges(GNE_TAG_ROUTE_EMBEDDED, vehicleParameters.id, edgeIDs);
+        if (edges.empty()) {
+            return writeErrorEmptyEdges(GNE_TAG_ROUTE_EMBEDDED, vehicleParameters.id);
+        } else {
+            // obtain  type
+            GNEDemandElement* type = getType(vehicleParameters.vtypeid);
+            if (type == nullptr) {
+                return writeErrorInvalidParent(GNE_TAG_VEHICLE_WITHROUTE, vehicleParameters.id, SUMO_TAG_VTYPE, vehicleParameters.vtypeid);
+            } else if (vehicleParameters.wasSet(VEHPARS_DEPARTLANE_SET) && (vehicleParameters.departLaneProcedure == DepartLaneDefinition::GIVEN) && ((int)edges.front()->getLanes().size() < vehicleParameters.departLane)) {
+                return writeError(TLF("Invalid % used in % '%'. % is greater than number of lanes", toString(SUMO_ATTR_DEPARTLANE), toString(vehicleParameters.tag), vehicleParameters.id, toString(vehicleParameters.departLane)));
+            } else if (vehicleParameters.wasSet(VEHPARS_DEPARTSPEED_SET) && (vehicleParameters.departSpeedProcedure == DepartSpeedDefinition::GIVEN) && (type->getAttributeDouble(SUMO_ATTR_MAXSPEED) < vehicleParameters.departSpeed)) {
+                return writeError(TLF("Invalid % used in % '%'. % is greater than type %", toString(SUMO_ATTR_DEPARTSPEED), toString(vehicleParameters.tag), vehicleParameters.id, toString(vehicleParameters.departSpeed), toString(SUMO_ATTR_MAXSPEED)));
+            } else {
+                // create vehicle using vehicleParameters
+                GNEDemandElement* vehicle = new GNEVehicle(GNE_TAG_VEHICLE_WITHROUTE, myNet, type, vehicleParameters);
+                // create embedded route
+                GNEDemandElement* route = new GNERoute(myNet, vehicle, edges, color, repeat, cycleTime, probability, routeParameters);
+                if (myAllowUndoRedo) {
+                    myNet->getViewNet()->getUndoList()->begin(vehicle, TL("add ") + vehicle->getTagStr() + " '" + vehicleParameters.id + "'");
+                    myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(vehicle, true), true);
+                    myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(route, true), true);
+                    myNet->getViewNet()->getUndoList()->end();
+                } else {
+                    myNet->getAttributeCarriers()->insertDemandElement(vehicle);
+                    myNet->getAttributeCarriers()->insertDemandElement(route);
+                    type->addChildElement(vehicle);
+                    vehicle->addChildElement(route);
+                    for (const auto& edge : edges) {
+                        edge->addChildElement(route);
+                    }
+                    vehicle->incRef("buildVehicleEmbeddedRoute");
+                    route->incRef("buildVehicleEmbeddedRoute");
+                }
+                return true;
+            }
+        }
+    }
+}
+
+
+bool
+GNERouteHandler::buildFlowOverRoute(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_FLOW_ROUTE, element)) {
+        return false;
+    } else if (!checkValidDemandElementID(GNE_TAG_FLOW_ROUTE, vehicleParameters.id)) {
         return false;
     } else {
         // obtain routes and vtypes
@@ -392,21 +394,71 @@ GNERouteHandler::buildFlowOverRoute(const CommonXMLStructure::SumoBaseObject* /*
 
 
 bool
-GNERouteHandler::buildTrip(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters,
-                           const std::string& fromEdgeID, const std::string& toEdgeID) {
-
-    // set via attribute
-    if (sumoBaseObject && sumoBaseObject->hasStringListAttribute(SUMO_ATTR_VIA)) {
-        vehicleParameters.via = sumoBaseObject->getStringListAttribute(SUMO_ATTR_VIA);
-    }
-    // check if exist another vehicle with the same ID (note: Vehicles, Flows and Trips share namespace)
-    if (!checkValidDemandElementID(SUMO_TAG_TRIP, vehicleParameters.id)) {
+GNERouteHandler::buildFlowEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters,
+                                        const std::vector<std::string>& edgeIDs, const RGBColor& color, const int repeat, const SUMOTime cycleTime,
+                                        const double probability, const Parameterised::Map& routeParameters) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_FLOW_WITHROUTE, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_TRIP, myVehicleTags, vehicleParameters.id)) {
-        return false;
-    } else if (!checkViaAttribute(SUMO_TAG_TRIP, vehicleParameters.id, vehicleParameters.via)) {
+    } else if (!checkValidDemandElementID(GNE_TAG_FLOW_WITHROUTE, vehicleParameters.id)) {
         return false;
     } else {
+        // parse route edges
+        const auto edges = parseEdges(GNE_TAG_FLOW_WITHROUTE, vehicleParameters.id, edgeIDs);
+        if (edges.empty()) {
+            return writeErrorEmptyEdges(GNE_TAG_FLOW_WITHROUTE, vehicleParameters.id);
+        } else {
+            // obtain  type
+            GNEDemandElement* type = getType(vehicleParameters.vtypeid);
+            if (type == nullptr) {
+                return writeErrorInvalidParent(GNE_TAG_FLOW_WITHROUTE, vehicleParameters.id, SUMO_TAG_VTYPE, vehicleParameters.vtypeid);
+            } else if (vehicleParameters.wasSet(VEHPARS_DEPARTLANE_SET) && (vehicleParameters.departLaneProcedure == DepartLaneDefinition::GIVEN) && ((int)edges.front()->getLanes().size() < vehicleParameters.departLane)) {
+                return writeError(TLF("Invalid % used in % '%'. % is greater than number of lanes", toString(SUMO_ATTR_DEPARTLANE), toString(vehicleParameters.tag), vehicleParameters.id, toString(vehicleParameters.departLane)));
+            } else if (vehicleParameters.wasSet(VEHPARS_DEPARTSPEED_SET) && (vehicleParameters.departSpeedProcedure == DepartSpeedDefinition::GIVEN) && (type->getAttributeDouble(SUMO_ATTR_MAXSPEED) < vehicleParameters.departSpeed)) {
+                return writeError(TLF("Invalid % used in % '%'. % is greater than type %", toString(SUMO_ATTR_DEPARTSPEED), toString(vehicleParameters.tag), vehicleParameters.id, toString(vehicleParameters.departSpeed), toString(SUMO_ATTR_MAXSPEED)));
+            } else {
+                // create vehicle using vehicleParameters
+                GNEDemandElement* vehicle = new GNEVehicle(GNE_TAG_FLOW_WITHROUTE, myNet, type, vehicleParameters);
+                // create embedded route
+                GNEDemandElement* route = new GNERoute(myNet, vehicle, edges, color, repeat, cycleTime, probability, routeParameters);
+                if (myAllowUndoRedo) {
+                    myNet->getViewNet()->getUndoList()->begin(vehicle, TL("add ") + vehicle->getTagStr() + " '" + vehicleParameters.id + "'");
+                    myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(vehicle, true), true);
+                    myNet->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(route, true), true);
+                    myNet->getViewNet()->getUndoList()->end();
+                } else {
+                    myNet->getAttributeCarriers()->insertDemandElement(vehicle);
+                    myNet->getAttributeCarriers()->insertDemandElement(route);
+                    type->addChildElement(vehicle);
+                    vehicle->addChildElement(route);
+                    for (const auto& edge : edges) {
+                        edge->addChildElement(route);
+                    }
+                    vehicle->incRef("buildFlowEmbeddedRoute");
+                    route->incRef("buildFlowEmbeddedRoute");
+                }
+                return true;
+            }
+        }
+    }
+}
+
+
+bool
+GNERouteHandler::buildTrip(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters,
+                           const std::string& fromEdgeID, const std::string& toEdgeID) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(SUMO_TAG_TRIP, element)) {
+        return false;
+    } else if (!checkValidDemandElementID(SUMO_TAG_TRIP, vehicleParameters.id)) {
+        return false;
+    } else {
+        // set via attribute
+        if (sumoBaseObject && sumoBaseObject->hasStringListAttribute(SUMO_ATTR_VIA)) {
+            vehicleParameters.via = sumoBaseObject->getStringListAttribute(SUMO_ATTR_VIA);
+        }
         // parse edges
         const auto fromEdge = parseEdge(SUMO_TAG_TRIP, vehicleParameters.id, fromEdgeID, sumoBaseObject, true);
         const auto toEdge = parseEdge(SUMO_TAG_TRIP, vehicleParameters.id, toEdgeID, sumoBaseObject, false);
@@ -447,11 +499,11 @@ GNERouteHandler::buildTrip(const CommonXMLStructure::SumoBaseObject* sumoBaseObj
 bool
 GNERouteHandler::buildTripJunctions(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters,
                                     const std::string& fromJunctionID, const std::string& toJunctionID) {
-
-    // check if exist another vehicle with the same ID (note: Vehicles, Flows and Trips share namespace)
-    if (!checkValidDemandElementID(GNE_TAG_TRIP_JUNCTIONS, vehicleParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_TRIP_JUNCTIONS, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(GNE_TAG_TRIP_JUNCTIONS, myVehicleTags, vehicleParameters.id)) {
+    } else if (!checkValidDemandElementID(GNE_TAG_TRIP_JUNCTIONS, vehicleParameters.id)) {
         return false;
     } else {
         // parse junctions
@@ -494,10 +546,11 @@ GNERouteHandler::buildTripJunctions(const CommonXMLStructure::SumoBaseObject* /*
 bool
 GNERouteHandler::buildTripTAZs(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters,
                                const std::string& fromTAZID, const std::string& toTAZID) {
-    // check if exist another vehicle with the same ID (note: Vehicles, Flows and Trips share namespace)
-    if (!checkValidDemandElementID(GNE_TAG_TRIP_TAZS, vehicleParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_TRIP_TAZS, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(GNE_TAG_TRIP_TAZS, myVehicleTags, vehicleParameters.id)) {
+    } else if (!checkValidDemandElementID(GNE_TAG_TRIP_TAZS, vehicleParameters.id)) {
         return false;
     } else {
         // parse TAZs
@@ -540,19 +593,17 @@ GNERouteHandler::buildTripTAZs(const CommonXMLStructure::SumoBaseObject* /*sumoB
 bool
 GNERouteHandler::buildFlow(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters,
                            const std::string& fromEdgeID, const std::string& toEdgeID) {
-
-    // set via attribute
-    if (sumoBaseObject && sumoBaseObject->hasStringListAttribute(SUMO_ATTR_VIA)) {
-        vehicleParameters.via = sumoBaseObject->getStringListAttribute(SUMO_ATTR_VIA);
-    }
-    // check if exist another vehicle with the same ID (note: Vehicles, Flows and Trips share namespace)
-    if (!checkValidDemandElementID(SUMO_TAG_FLOW, vehicleParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(SUMO_TAG_FLOW, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_FLOW, myVehicleTags, vehicleParameters.id)) {
-        return false;
-    } else if (!checkViaAttribute(SUMO_TAG_FLOW, vehicleParameters.id, vehicleParameters.via)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_FLOW, vehicleParameters.id)) {
         return false;
     } else {
+        // set via attribute
+        if (sumoBaseObject && sumoBaseObject->hasStringListAttribute(SUMO_ATTR_VIA)) {
+            vehicleParameters.via = sumoBaseObject->getStringListAttribute(SUMO_ATTR_VIA);
+        }
         // parse edges
         const auto fromEdge = parseEdge(SUMO_TAG_FLOW, vehicleParameters.id, fromEdgeID, sumoBaseObject, true);
         const auto toEdge = parseEdge(SUMO_TAG_FLOW, vehicleParameters.id, toEdgeID, sumoBaseObject, false);
@@ -593,10 +644,11 @@ GNERouteHandler::buildFlow(const CommonXMLStructure::SumoBaseObject* sumoBaseObj
 bool
 GNERouteHandler::buildFlowJunctions(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters,
                                     const std::string& fromJunctionID, const std::string& toJunctionID) {
-    // check if exist another vehicle with the same ID (note: Vehicles, Flows and Trips share namespace)
-    if (!checkValidDemandElementID(GNE_TAG_FLOW_JUNCTIONS, vehicleParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_FLOW_JUNCTIONS, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(GNE_TAG_FLOW_JUNCTIONS, myVehicleTags, vehicleParameters.id)) {
+    } else if (!checkValidDemandElementID(GNE_TAG_FLOW_JUNCTIONS, vehicleParameters.id)) {
         return false;
     } else {
         // parse junctions
@@ -639,10 +691,11 @@ GNERouteHandler::buildFlowJunctions(const CommonXMLStructure::SumoBaseObject* /*
 bool
 GNERouteHandler::buildFlowTAZs(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& vehicleParameters,
                                const std::string& fromTAZID, const std::string& toTAZID) {
-    // check if exist another vehicle with the same ID (note: Vehicles, Flows and Trips share namespace)
-    if (!checkValidDemandElementID(GNE_TAG_FLOW_TAZS, vehicleParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myVehicleTags, vehicleParameters.id);
+    if (!checkElement(GNE_TAG_FLOW_TAZS, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(GNE_TAG_FLOW_TAZS, myVehicleTags, vehicleParameters.id)) {
+    } else if (!checkValidDemandElementID(GNE_TAG_FLOW_TAZS, vehicleParameters.id)) {
         return false;
     } else {
         // parse TAZs
@@ -684,10 +737,11 @@ GNERouteHandler::buildFlowTAZs(const CommonXMLStructure::SumoBaseObject* /*sumoB
 
 bool
 GNERouteHandler::buildPerson(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& personParameters) {
-    // first check if ID is duplicated
-    if (!checkValidDemandElementID(SUMO_TAG_PERSON, personParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myPersonTags, personParameters.id);
+    if (!checkElement(SUMO_TAG_PERSON, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_PERSON, myPersonTags, personParameters.id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_PERSON, personParameters.id)) {
         return false;
     } else {
         // obtain  type
@@ -717,10 +771,11 @@ GNERouteHandler::buildPerson(const CommonXMLStructure::SumoBaseObject* /*sumoBas
 
 bool
 GNERouteHandler::buildPersonFlow(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& personFlowParameters) {
-    // first check if ID is duplicated
-    if (!checkValidDemandElementID(SUMO_TAG_PERSONFLOW, personFlowParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myPersonTags, personFlowParameters.id);
+    if (!checkElement(SUMO_TAG_PERSONFLOW, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_PERSONFLOW, myPersonTags, personFlowParameters.id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_PERSONFLOW, personFlowParameters.id)) {
         return false;
     } else {
         // obtain  type
@@ -858,10 +913,11 @@ GNERouteHandler::buildRide(const CommonXMLStructure::SumoBaseObject* sumoBaseObj
 
 bool
 GNERouteHandler::buildContainer(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& containerParameters) {
-    // first check if ID is duplicated
-    if (!checkValidDemandElementID(SUMO_TAG_CONTAINER, containerParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myContainerTags, containerParameters.id);
+    if (!checkElement(SUMO_TAG_CONTAINER, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_CONTAINER, myContainerTags, containerParameters.id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_CONTAINER, containerParameters.id)) {
         return false;
     } else {
         // obtain  type
@@ -891,10 +947,11 @@ GNERouteHandler::buildContainer(const CommonXMLStructure::SumoBaseObject* /*sumo
 
 bool
 GNERouteHandler::buildContainerFlow(const CommonXMLStructure::SumoBaseObject* /*sumoBaseObject*/, const SUMOVehicleParameter& containerFlowParameters) {
-    // first check if ID is duplicated
-    if (!checkValidDemandElementID(SUMO_TAG_CONTAINERFLOW, containerFlowParameters.id)) {
+    // check conditions
+    const auto element = retrieveDemandElement(myContainerTags, containerFlowParameters.id);
+    if (!checkElement(SUMO_TAG_CONTAINERFLOW, element)) {
         return false;
-    } else if (!checkDuplicatedDemandElement(SUMO_TAG_CONTAINERFLOW, myContainerTags, containerFlowParameters.id)) {
+    } else if (!checkValidDemandElementID(SUMO_TAG_CONTAINERFLOW, containerFlowParameters.id)) {
         return false;
     } else {
         // obtain  type
@@ -1605,17 +1662,8 @@ GNERouteHandler::transformToVehicle(GNEVehicle* originalVehicle, bool createEmbe
         if (createEmbeddedRoute) {
             // change tag in vehicle parameters
             vehicleParameters.tag = GNE_TAG_VEHICLE_WITHROUTE;
-            // create a flow with embebbed routes
-            CommonXMLStructure::SumoBaseObject* vehicleBaseOBject = new CommonXMLStructure::SumoBaseObject(nullptr);
-            CommonXMLStructure::SumoBaseObject* routeBaseOBject = new CommonXMLStructure::SumoBaseObject(vehicleBaseOBject);
-            // fill parameters
-            vehicleBaseOBject->setTag(SUMO_TAG_VEHICLE);
-            vehicleBaseOBject->addStringAttribute(SUMO_ATTR_ID, vehicleParameters.id);
-            vehicleBaseOBject->setVehicleParameter(&vehicleParameters);
             // build embedded route
-            routeHandler.buildEmbeddedRoute(routeBaseOBject, edgeIDs, RGBColor::INVISIBLE, false, 0, {});
-            // delete vehicle base object
-            delete vehicleBaseOBject;
+            routeHandler.buildVehicleEmbeddedRoute(nullptr, vehicleParameters, edgeIDs, RGBColor::INVISIBLE, 0, 0, 1.0, {});
         } else {
             // change tag in vehicle parameters
             vehicleParameters.tag = SUMO_TAG_VEHICLE;
@@ -1708,20 +1756,11 @@ GNERouteHandler::transformToRouteFlow(GNEVehicle* originalVehicle, bool createEm
         if (createEmbeddedRoute) {
             // change tag in vehicle parameters
             vehicleParameters.tag = GNE_TAG_FLOW_WITHROUTE;
-            // create a flow with embebbed routes
-            CommonXMLStructure::SumoBaseObject* vehicleBaseOBject = new CommonXMLStructure::SumoBaseObject(nullptr);
-            CommonXMLStructure::SumoBaseObject* routeBaseOBject = new CommonXMLStructure::SumoBaseObject(vehicleBaseOBject);
-            // fill parameters
-            vehicleBaseOBject->setTag(SUMO_TAG_FLOW);
-            vehicleBaseOBject->addStringAttribute(SUMO_ATTR_ID, vehicleParameters.id);
-            vehicleBaseOBject->setVehicleParameter(&vehicleParameters);
             // build embedded route
-            routeHandler.buildEmbeddedRoute(routeBaseOBject, edgeIDs, RGBColor::INVISIBLE, false, 0, {});
-            // delete vehicle base object
-            delete vehicleBaseOBject;
+            routeHandler.buildFlowEmbeddedRoute(nullptr, vehicleParameters, edgeIDs, RGBColor::INVISIBLE, 0, 0, 1.0, {});
         } else {
             // change tag in vehicle parameters
-            vehicleParameters.tag = GNE_TAG_FLOW_ROUTE;
+            vehicleParameters.tag = SUMO_TAG_FLOW;
             // generate a new route id
             const std::string routeID = net->getAttributeCarriers()->generateDemandElementID(SUMO_TAG_ROUTE);
             // build route
@@ -2350,7 +2389,7 @@ GNERouteHandler::addReverse(GNEDemandElement* element) {
 // ===========================================================================
 
 GNEJunction*
-GNERouteHandler::parseJunction(const SumoXMLTag tag, const std::string &id, const std::string& junctionID) {
+GNERouteHandler::parseJunction(const SumoXMLTag tag, const std::string& id, const std::string& junctionID) {
     GNEJunction* junction = myNet->getAttributeCarriers()->retrieveJunction(junctionID, false);
     // empty junctions aren't allowed. If junction is empty, write error, clear junctions and stop
     if (junction == nullptr) {
@@ -2361,7 +2400,7 @@ GNERouteHandler::parseJunction(const SumoXMLTag tag, const std::string &id, cons
 
 
 GNEAdditional*
-GNERouteHandler::parseTAZ(const SumoXMLTag tag, const std::string &id, const std::string& TAZID) {
+GNERouteHandler::parseTAZ(const SumoXMLTag tag, const std::string& id, const std::string& TAZID) {
     GNEAdditional* TAZ = myNet->getAttributeCarriers()->retrieveAdditional(SUMO_TAG_TAZ, TAZID, false);
     // empty TAZs aren't allowed. If TAZ is empty, write error, clear TAZs and stop
     if (TAZ == nullptr) {
@@ -2372,7 +2411,7 @@ GNERouteHandler::parseTAZ(const SumoXMLTag tag, const std::string &id, const std
 
 
 GNEEdge*
-GNERouteHandler::parseEdge(const SumoXMLTag tag, const std::string &id, const std::string& edgeID,
+GNERouteHandler::parseEdge(const SumoXMLTag tag, const std::string& id, const std::string& edgeID,
                            const CommonXMLStructure::SumoBaseObject* sumoBaseObject,
                            const bool firstEdge) {
     GNEEdge* edge = nullptr;
@@ -2467,7 +2506,7 @@ GNERouteHandler::parseEdgeFromLaneID(const std::string& laneID) const {
 
 
 std::vector<GNEEdge*>
-GNERouteHandler::parseEdges(const SumoXMLTag tag, const std::string &id, const std::vector<std::string>& edgeIDs) {
+GNERouteHandler::parseEdges(const SumoXMLTag tag, const std::string& id, const std::vector<std::string>& edgeIDs) {
     std::vector<GNEEdge*> edges;
     for (const auto& edgeID : edgeIDs) {
         GNEEdge* edge = myNet->getAttributeCarriers()->retrieveEdge(edgeID, false);
@@ -2568,26 +2607,35 @@ GNERouteHandler::getDistributionElements(const CommonXMLStructure::SumoBaseObjec
 }
 
 
-bool
-GNERouteHandler::checkDuplicatedDemandElement(const SumoXMLTag tag, const std::vector<SumoXMLTag> tags, const std::string& id) {
-    for (const auto& tagChecked : tags) {
+GNEDemandElement*
+GNERouteHandler::retrieveDemandElement(const std::vector<SumoXMLTag> tags, const std::string& id) {
+    for (const auto& tag : tags) {
         // retrieve demand element
-        auto demandElement = myNet->getAttributeCarriers()->retrieveDemandElement(tagChecked, id, false);
-        // if demand element exist, check if overwrite (delete)
+        auto demandElement = myNet->getAttributeCarriers()->retrieveDemandElement(tag, id, false);
         if (demandElement) {
-            if (!myAllowUndoRedo) {
-                // only demand element if allow undo-redo
-                return writeErrorDuplicated(tag, id, tagChecked);
-            } else if (myOverwrite) {
-                // delete demand element (and all of their childrens)
-                myNet->deleteDemandElement(demandElement, myNet->getViewNet()->getUndoList());
-            } else {
-                // duplicated demand element
-                return writeErrorDuplicated(tag, id, tagChecked);
-            }
+            return demandElement;
         }
     }
-    return true;
+    return nullptr;
+}
+
+
+bool
+GNERouteHandler::checkElement(const SumoXMLTag tag, GNEDemandElement* demandElement) {
+    if (demandElement) {
+        if (myAllowUndoRedo && myOverwrite) {
+            writeWarningOverwritting(tag, demandElement->getID());
+            // delete element
+            myNet->deleteDemandElement(demandElement, myNet->getViewNet()->getUndoList());
+            // continue creating new element
+            return true;
+        } else {
+            // write warning duplicated demand element
+            return writeWarningDuplicated(tag, demandElement->getID(), demandElement->getTagProperty().getTag());
+        }
+    } else {
+        return true;
+    }
 }
 
 /****************************************************************************/

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2025-01-06 11:22+0100\n"
-"PO-Revision-Date: 2025-01-16 13:38+0000\n"
+"PO-Revision-Date: 2025-01-27 17:57+0000\n"
 "Last-Translator: Mirko Barthauer <mirko.barthauer@dlr.de>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/eclipse-sumo/"
 "applications/it/>\n"
@@ -2867,25 +2867,29 @@ msgstr ""
 
 #: src/microsim/MSFrame.cpp:931
 msgid "The begin time should not be negative."
-msgstr ""
+msgstr "L'ora di inizio non deve essere negativa."
 
 #: src/microsim/MSFrame.cpp:941
 msgid "The end time should be after the begin time."
-msgstr ""
+msgstr "L'ora terminale deve essere posteriore all'ora di inizio."
 
 #: src/microsim/MSFrame.cpp:946
 msgid "the minimum step-length is 0.001."
-msgstr ""
+msgstr "il valore minimo del passo di simulazione è di 0.001."
 
 #: src/microsim/MSFrame.cpp:961
 msgid "The save-state time=% will not be used before simulation end at %."
 msgstr ""
+"L'ora % per salvare lo stato di simulazione non avverrà perché la "
+"simulazione finisce a %."
 
 #: src/microsim/MSFrame.cpp:973
 msgid ""
 "option movereminder-output.vehicles requires option movereminder-output to "
 "be set"
 msgstr ""
+"l'opzione movereminder-output .vehicles richiede di impostare anche "
+"l'opzione movereminder-output"
 
 #: src/microsim/MSFrame.cpp:978
 msgid ""
@@ -2906,6 +2910,8 @@ msgstr ""
 #: src/microsim/MSFrame.cpp:985
 msgid "Sublane dynamics are not supported by mesoscopic simulation."
 msgstr ""
+"La dinamica delle sottocorsie non è disponibile nella simulazione "
+"mesoscopica."
 
 #: src/microsim/MSFrame.cpp:989
 msgid ""
@@ -2934,6 +2940,8 @@ msgid ""
 "Invalid value '%' for option 'default.emergencydecel'. Must be a FLOAT or "
 "'default' or 'decel'."
 msgstr ""
+"Valore invalido '%' dell'opzione 'default.emergencydecel'. Deve essere un "
+"FLOAT oppure 'default' o 'decel'."
 
 #: src/microsim/MSFrame.cpp:1043
 msgid ""
@@ -2947,33 +2955,40 @@ msgstr "C'è bisogno di un valore di ritardo non negativo."
 
 #: src/microsim/MSFrame.cpp:1064
 msgid "Parallel simulation is only possible when compiled with Fox."
-msgstr ""
+msgstr "La simulazione parallela é possibile unicamente se compilato con Fox."
 
 #: src/microsim/MSFrame.cpp:1069
 msgid "You need at least one thread."
-msgstr ""
+msgstr "C'è bisogno di almeno un thread."
 
 #: src/microsim/MSFrame.cpp:1073
 msgid ""
 "Number of threads exceeds number of thread-rngs. Simulation runs with the "
 "same seed may produce different results."
 msgstr ""
+"Il numero di thread eccede il numero di generatori di numeri casuali. "
+"Simulazioni inizializzate con lo stesso seme casuale possono generare "
+"risultati differenti."
 
 #: src/microsim/MSFrame.cpp:1076
 msgid "game.mode must be one of ['tls', 'drt']"
-msgstr ""
+msgstr "game.mode deve essere uno tra ['tls', 'drt']"
 
 #: src/microsim/MSFrame.cpp:1083
 msgid ""
 "Invalid transfer option '%'. Must be one of 'parkingAreas', 'ptStops' or "
 "'allJunctions'."
 msgstr ""
+"Opzione di trasbordo invalida '%'. Deve essere una di 'parkingAreas', "
+"'ptStops' o 'allJunctions'."
 
 #: src/microsim/MSFrame.cpp:1093
 msgid ""
 "Invalid JuPedSim model '%'. Must be one of 'CollisionFreeSpeed', "
 "'CollisionFreeSpeedV2', 'GeneralizedCentrifugalForce' or 'SocialForce'."
 msgstr ""
+"Modello JuPedSim invalido '%'. Deve essere uno di 'CollisionFreeSpeed', "
+"'CollisionFreeSpeedV2', 'GeneralizedCentrifugalForce' o 'SocialForce'."
 
 #: src/microsim/MSFrame.cpp:1154
 msgid ""
@@ -2984,40 +2999,46 @@ msgstr ""
 #: src/microsim/MSInsertionControl.cpp:284 src/router/RONet.cpp:481
 #, c-format
 msgid "Another vehicle with the id '%' exists."
-msgstr ""
+msgstr "Esiste già un veicolo con il codice identificativo '%'."
 
 #: src/microsim/MSInternalJunction.cpp:55
 #, c-format
 msgid "Internal junction % has no incoming lanes"
-msgstr ""
+msgstr "L'incrocio interno % non tiene corsie entranti"
 
 #: src/microsim/MSLane.cpp:334
 msgid "Unequal lengths of neigh lane '%' and lane '%' (% != %)."
-msgstr ""
+msgstr "Lunghezze differenti tra la corsia vicina '%' e la corsia '%' (% != %)."
 
 #: src/microsim/MSLane.cpp:343
 msgid "Unequal lengths of bidi lane '%' and lane '%' (% != %)."
 msgstr ""
+"Lunghezze differenti tra la corsia bidirezionale '%' e la corsia '%' (% != "
+"%)."
 
 #: src/microsim/MSLane.cpp:810
 #, c-format
 msgid "Vehicle '%' is inserted in emergency situation."
-msgstr ""
+msgstr "Il veicolo '%' viene inserito in una situazione di emergenza."
 
 #: src/microsim/MSLane.cpp:816
 msgid "Vehicle '%' will not be able to depart using the given velocity (%)!"
-msgstr ""
+msgstr "Il veicolo '%' non sarà capace di partire con la velocità indicata (%)!"
 
 #: src/microsim/MSLane.cpp:833
 msgid ""
 "Invalid departPos % given for vehicle '%'. Inserting at lane end instead."
 msgstr ""
+"La posizione di partenza (departPos) invalida % è stata data per veicolo "
+"'%'. Pertanto il veicolo verrà inserito alla fine della corsia."
 
 #: src/microsim/MSLane.cpp:1094
 msgid ""
 "Vehicle '%' is inserted too fast and will violate the speed limit on a lane "
 "'%'."
 msgstr ""
+"Il veicolo '%' viene inserito con una velocità troppo elevata e quindi "
+"violerà il limite di velocità della corsia '%'."
 
 #: src/microsim/MSLane.cpp:1098
 msgid ""
@@ -3029,41 +3050,46 @@ msgstr ""
 
 #: src/microsim/MSLane.cpp:2012
 msgid "frontal collision"
-msgstr ""
+msgstr "collisione frontale"
 
 #: src/microsim/MSLane.cpp:2013
 msgid "junction collision"
-msgstr ""
+msgstr "collisione sull'incrocio"
 
 #: src/microsim/MSLane.cpp:2013
 msgid "collision"
-msgstr ""
+msgstr "collisione"
 
 #: src/microsim/MSLane.cpp:2019
 msgid "Vehicle '%'; % with vehicle '%"
-msgstr ""
+msgstr "Veicolo '%'; % con veicolo '%"
 
 #: src/microsim/MSLane.cpp:2076
 msgid "Teleporting vehicle '%'; % with vehicle '%"
-msgstr ""
+msgstr "Teletrasporto di veicolo '%', % con veicolo '%"
 
 #: src/microsim/MSLane.cpp:2081
 msgid "Removing % participants: vehicle '%', vehicle '%"
-msgstr ""
+msgstr "Rimozione di % participanti: veicolo '%', veicolo '%"
 
 #: src/microsim/MSLane.cpp:2094
 msgid "Keeping remote-controlled % participants: vehicle '%', vehicle '%"
 msgstr ""
+"Mantenuti % participanti controllati esternamente: veicolo '%', veicolo '%"
 
 #: src/microsim/MSLane.cpp:2096
 msgid ""
 "Removing % participant: vehicle '%', keeping remote-controlled vehicle '%"
 msgstr ""
+"Il veicolo participante % '%' viene rimosso e mantenuto il veicolo "
+"controllato esternamente '%"
 
 #: src/microsim/MSLane.cpp:2099
 msgid ""
 "Keeping remote-controlled % participant: vehicle '%', removing vehicle '%"
 msgstr ""
+"Il veicolo controllato esternamente % '%' viene rimosso e mantenuto il "
+"veicolo participante '%"
 
 #: src/microsim/MSLane.cpp:2110
 msgid ", latGap="
@@ -3099,18 +3125,25 @@ msgstr ""
 #: src/microsim/MSLane.cpp:2252
 msgid "Removing vehicle '%' after breaking down, lane='%', time=%."
 msgstr ""
+"Il veicolo '%' viene rimosso dopo essere rimasto fermo sulla corsia '%' alle "
+"%."
 
 #: src/microsim/MSLane.cpp:2263
 msgid "Teleporting vehicle '%'; beyond end of lane, target lane='%', time=%."
 msgstr ""
+"Teletrasporto di veicolo '%'; oltre la fine della corsia, corsia di "
+"destinazione='%' alle ore %."
 
 #: src/microsim/MSLane.cpp:2271
 msgid "Removing vehicle '%' after earlier collision, lane='%', time=%."
 msgstr ""
+"Rimozione di veicolo '%' dopo una previa collisione, corsia='%' alle ore %."
 
 #: src/microsim/MSLane.cpp:2276
 msgid "Teleporting vehicle '%' after earlier collision, lane='%', time=%."
 msgstr ""
+"Teletrasporto di veicolo '%' dopo una previa collisione, corsia='%' alle ore "
+"%."
 
 #: src/microsim/MSLane.cpp:2797
 msgid ""
@@ -3163,11 +3196,11 @@ msgstr "Simulazione finita alle ore %."
 
 #: src/microsim/MSNet.cpp:680
 msgid "Reason: "
-msgstr ""
+msgstr "Motivo: "
 
 #: src/microsim/MSNet.cpp:940
 msgid "The final simulation step has been reached."
-msgstr ""
+msgstr "Il passo finale della simulazione è stato raggiunto."
 
 #: src/microsim/MSNet.cpp:942
 msgid "All vehicles have left the simulation."
@@ -3424,6 +3457,8 @@ msgid ""
 "The attribute departPos is no longer supported for walks, please use the "
 "person attribute, the arrivalPos of the previous step or explicit stops."
 msgstr ""
+"L'attributo departPos non si usa più per dei cammini. Invece usa l'attributo "
+"person, quello arrivalPos del passo antecedente o fermate esplicite."
 
 #: src/microsim/MSRouteHandler.cpp:1508
 msgid "Ignoring arrivalPos for % because it is outside the given stop '%'."
@@ -3554,6 +3589,8 @@ msgid ""
 "Vehicle '%' moved by TraCI from % to % (dist %) with implied speed of % "
 "(exceeding maximum speed %). time=%."
 msgstr ""
+"Mosso veicolo '%'attraverso TraCI da % a % (distanza %) con una velocità "
+"implicita di % (eccedendo la velocità massima di %) alle ore %."
 
 #: src/microsim/MSVehicle.cpp:1732
 msgid "Vehicle '%' aborts joining after extension of %s at time %."
@@ -3585,6 +3622,8 @@ msgid ""
 "Vehicle '%' performs emergency stop at the end of lane '%'% (decel=%, offset="
 "%), time=%."
 msgstr ""
+"Il veicolo '%' effettua una frenata d'urgenza alle fine della corsia '%'% ("
+"decel=%, offset=%) alle ore %."
 
 #: src/microsim/MSVehicle.cpp:4729
 msgid "Unexpected end of opposite lane for vehicle '%' at lane '%', time=%."
@@ -3698,16 +3737,20 @@ msgid ""
 "The number of lanes needs to be specified in the attributes of carFollowing-"
 "CC with the \"lanesCount\" attribute"
 msgstr ""
+"Il numero di corsie deve essere specificato negli attributi di carFollowing-"
+"CC sotto l'attributo \"lanesCount\""
 
 #: src/microsim/cfmodels/MSCFModel_Daniel1.cpp:61
 msgid ""
 "Maximum speed of vehicle '%' is lower than the minimum speed (min: %, max: "
 "%)."
 msgstr ""
+"La velocità massima del veicolo '%' è inferiore alla velocità minima (min: "
+"%, max: %)."
 
 #: src/microsim/cfmodels/MSCFModel_Krauss.cpp:58
 msgid "Rounding 'sigmaStep' to % for vType '%'"
-msgstr ""
+msgstr "Arrotondo 'sigmaStep' a % per il tipo di veicolo '%'"
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:86
 msgid "Unknown train type: %. Exiting!"
@@ -3717,52 +3760,68 @@ msgstr "Tipo di treno sconosciuto: %. Uscita!"
 msgid ""
 "Invalid size of speedTable for vType '%' (at least 2 values are required)."
 msgstr ""
+"Misura invalida della tabella di velocità (speedTable) del tipo di veicolo "
+"'%' (bisogna contenere almeno 2 valori)."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:116
 msgid "Mismatching size of speedTable and tractionTable for vType '%'."
 msgstr ""
+"Le misure della tabella di velocità (speedTable) e quella di trazione "
+"(tractionTable) non coincidono nel tipo di veicolo '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:118
 msgid "Mismatching size of speedTable and resistanceTable for vType '%'."
 msgstr ""
+"Le misure della tabella di velocità (speedTable) e quella di resistenza ("
+"resistanceTable ) non coincidono nel tipo di veicolo '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:136
 msgid "Undefined maxPower for vType '%'."
-msgstr ""
+msgstr "Non è stato definito maxPower per il tipo di veicolo '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:138
 msgid "Undefined maxTraction for vType '%'."
-msgstr ""
+msgstr "Non è stato definito maxTraction per il tipo di veicolo '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:141
 msgid ""
 "Ignoring tractionTable because maxPower and maxTraction are set for vType "
 "'%'."
 msgstr ""
+"La tabella di trazione (tractionTable) verrà ignorata perché maxPower e "
+"maxTraction sono stati impostati per il tipo di veicolo '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:150
 msgid ""
 "Some undefined resistance coefficients for vType '%' (requires "
 "resCoef_constant, resCoef_linear and resCoef_quadratic)"
 msgstr ""
+"Ci sono dei coefficenti di resistenza non definiti nel tipo di veicolo '%' ("
+"richiede resCoef_constant, resCoef_linear e resCoef_quadratic)"
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:153
 msgid ""
 "Ignoring resistanceTable because resistance coefficients are set for vType "
 "'%'."
 msgstr ""
+"La tabella di resistenza verrà ignorata perché i coefficienti di resistenza "
+"sono stati impostati per il tipo di veicolo '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:157
 msgid ""
 "Either tractionTable or maxPower must be defined for vType '%' with Rail "
 "model type '%'."
 msgstr ""
+"O la tabelle di trazione (tractionTable) o maxPower deve essere impostato "
+"per il tipo di veicolo '%' con il tipo di modello ferroviario '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:160
 msgid ""
 "Either resistanceTable or resCoef_constant must be defined for vType '%' "
 "with Rail model type '%'."
 msgstr ""
+"O la tabella di resistenza o resCoef_constant deve essere impostato per il "
+"tipo di veicolo '%' con il tipo di modello ferroviario '%'."
 
 #: src/microsim/cfmodels/MSCFModel_Rail.cpp:337
 msgid ""
@@ -3783,7 +3842,7 @@ msgstr "Il raggio del ricevitore Bluetooth"
 
 #: src/microsim/devices/MSDevice_BTreceiver.cpp:68
 msgid "Whether all recognition point shall be written"
-msgstr ""
+msgstr "Se tutti i punti di riconoscimento devono essere scritti"
 
 #: src/microsim/devices/MSDevice_BTreceiver.cpp:71
 msgid "The offtime used for calculating detection probability (in seconds)"
@@ -4089,28 +4148,32 @@ msgstr "L'intervallo dopo cui l'itinerario del veicolo deve essere aggiornato"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:57
 msgid "The rerouting period before depart"
-msgstr ""
+msgstr "L'intervallo di instradamento prima della partenza"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:61
 msgid "The weight of prior edge weights for exponential moving average"
-msgstr ""
+msgstr "La valutazione di pesi di archi previ per la media mobile esponentiale"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:65
 msgid "The number of steps for moving average weight of prior edge weights"
-msgstr ""
+msgstr "Il numero di passi per la media mobile del peso di pesi di archi previ"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:69
 msgid "The interval for updating the edge weights"
-msgstr ""
+msgstr "L'intervallo di aggiornamento dei pesi degli archi"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:74
 msgid "Use zones (districts) as routing start- and endpoints"
 msgstr ""
+"Usa zone (distretti) come punti di inizio e di destinazione "
+"dell'instradamento"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:77
 #: src/microsim/devices/MSTransportableDevice_Routing.cpp:51
 msgid "Set routing flags (8 ignores temporary blockages)"
 msgstr ""
+"Imposta segnali di instradamento (blocchi temporanei verrano ignorati con il "
+"valore 8)"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:80
 msgid ""
@@ -4121,18 +4184,19 @@ msgstr ""
 #: src/microsim/devices/MSDevice_Routing.cpp:84
 msgid "The number of parallel execution threads used for rerouting"
 msgstr ""
+"Il numero di thread di esecuzione paralleli da usare per l'instradamento"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:87
 msgid "Let rerouting happen at the same time for all vehicles"
-msgstr ""
+msgstr "Instrada tutti gli veicolo allo stesso tempo"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:90
 msgid "Allow rerouting triggered by rail signals."
-msgstr ""
+msgstr "Permetti instradamento suscitato da segnali ferroviari."
 
 #: src/microsim/devices/MSDevice_Routing.cpp:93
 msgid "Compute separate average speeds for bicycles"
-msgstr ""
+msgstr "Calcola velocità medie separate per biciclette"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:96
 msgid "Save adapting weights to FILE"
@@ -4143,23 +4207,25 @@ msgid ""
 "Only one of the options 'device.rerouting.adaptation-steps' or 'device."
 "rerouting.adaptation-weight' may be given."
 msgstr ""
+"Si può utilizzare soltanto una delle opzioni 'device.rerouting.adaptation-"
+"steps' e 'device.rerouting.adaptation-weight' alla volta."
 
 #: src/microsim/devices/MSDevice_Routing.cpp:108
 msgid "weights.random-factor cannot be less than 1"
-msgstr ""
+msgstr "weights.random-factor non può essere inferiore di 1"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:112
 msgid "Negative value for device.rerouting.adaptation-interval!"
-msgstr ""
+msgstr "Valore negativo per device.rerouting.adaptation-interval!"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:117
 msgid ""
 "The value for device.rerouting.adaptation-weight must be between 0 and 1!"
-msgstr ""
+msgstr "Il valore di device.rerouting.adaptation-weight deve essere tra 0 e 1!"
 
 #: src/microsim/devices/MSDevice_Routing.cpp:122 src/router/ROFrame.cpp:252
 msgid "Parallel routing is only possible when compiled with Fox."
-msgstr ""
+msgstr "L'instradamento parallelo é possibile unicamente se compilato con Fox."
 
 #: src/microsim/devices/MSDevice_Routing.cpp:127
 msgid "Adapting number of routing threads to number of simulation threads."
@@ -4170,6 +4236,9 @@ msgid ""
 "Specifies which measures will be logged (as a space or comma-separated "
 "sequence of IDs in ('TTC', 'DRAC', 'PET', 'PPET', 'MDRAC'))"
 msgstr ""
+"Specifica quali misure verranno protocollate (da indicare come elenco "
+"separato da spazi oppure virgole di valori in ('TTC', 'DRAC', 'PET', 'PPET', "
+"'MDRAC'))"
 
 #: src/microsim/devices/MSDevice_SSM.cpp:240
 msgid ""
@@ -4177,18 +4246,25 @@ msgid ""
 "measures (see documentation and watch the order!). Only events exceeding the "
 "thresholds will be logged."
 msgstr ""
+"Specifica i valori soglia delle misure specificate separati da spazi o "
+"virgole (vedi la documentazione e fai attenzione all'ordine!). Soltanto "
+"eventi che superano i valori soglia verranno protocollati."
 
 #: src/microsim/devices/MSDevice_SSM.cpp:242
 msgid ""
 "Specifies whether trajectories will be logged (if false, only the extremal "
 "values and times are reported)."
 msgstr ""
+"Specifica se protocollare le traiettorie o meno (se impostato a false "
+"unicamente i valori estremi e le date verranno riportati)."
 
 #: src/microsim/devices/MSDevice_SSM.cpp:244
 msgid ""
 "Specifies the detection range in meters. For vehicles below this distance "
 "from the equipped vehicle, SSM values are traced."
 msgstr ""
+"Specifica il raggio di rivelazione in metri. Valori SSM verranno calcolati "
+"per ogni veicolo entro il raggio indicato dal veicolo attrezzato."
 
 #: src/microsim/devices/MSDevice_SSM.cpp:246
 msgid ""
@@ -4617,29 +4693,33 @@ msgstr ""
 
 #: src/microsim/devices/MSDevice_StationFinder.cpp:765
 msgid "Parameter '%' is not supported for device of type '%'"
-msgstr ""
+msgstr "Il parametro '%' non viene supportato per attrezzi del tipo '%'"
 
 #: src/microsim/devices/MSDevice_StationFinder.cpp:775
 msgid "Setting parameter '%' requires a number for device of type '%'"
-msgstr ""
+msgstr "Il parametro '%' richiede un valore numerico per attrezzi del tipo '%'"
 
 #: src/microsim/devices/MSDevice_StationFinder.cpp:790
 msgid "Setting parameter '%' is not supported for device of type '%'"
-msgstr ""
+msgstr "Il parametro '%' non può essere aggiornato per attrezzi del tipo '%'"
 
 #: src/microsim/devices/MSDevice_Taxi.cpp:86
 msgid ""
 "The dispatch algorithm [greedy|greedyClosest|greedyShared|routeExtension|"
 "traci]"
 msgstr ""
+"L'algoritmo di disposzione "
+"[greedy|greedyClosest|greedyShared|routeExtension|traci]"
 
 #: src/microsim/devices/MSDevice_Taxi.cpp:89
 msgid "Write information from the dispatch algorithm to FILE"
-msgstr ""
+msgstr "Scrivi informazioni del algoritmo di disposizione in FILE"
 
 #: src/microsim/devices/MSDevice_Taxi.cpp:92
 msgid "Load dispatch algorithm parameters in format KEY1:VALUE1[,KEY2:VALUE]"
 msgstr ""
+"Carica parametri del algoritmo di disposizione nel formato KEY1:VALUE1"
+"[,KEY2:VALUE]"
 
 #: src/microsim/devices/MSDevice_Taxi.cpp:95
 msgid "The period between successive calls to the dispatcher"
@@ -4689,7 +4769,7 @@ msgstr "Non ho potuto aggiungere fermata di taxi alle ore %, errore=%"
 
 #: src/microsim/devices/MSDevice_Taxi.cpp:550
 msgid "Taxi '%' aborts waiting for customers: % at time=%."
-msgstr ""
+msgstr "Il taxi '%' smette di aspettare dei passeggeri: % alle ore %."
 
 #: src/microsim/devices/MSDevice_Taxi.cpp:739
 msgid "Taxi '%' reaches scheduled end of service at time=%."

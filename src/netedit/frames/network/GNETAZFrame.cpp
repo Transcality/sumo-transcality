@@ -26,12 +26,13 @@
 #include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
 #include <netedit/GNEApplicationWindow.h>
-#include <netedit/changes/GNEChange_Additional.h>
+#include <netedit/changes/GNEChange_TAZSourceSink.h>
 #include <netedit/elements/additional/GNETAZ.h>
 #include <netedit/elements/additional/GNETAZSourceSink.h>
 #include <netedit/elements/additional/GNEAdditionalHandler.h>
 #include <netedit/GNEUndoList.h>
 #include <utils/options/OptionsCont.h>
+#include <utils/geom/Triangle.h>
 
 #include "GNETAZFrame.h"
 
@@ -262,8 +263,8 @@ GNETAZFrame::CurrentTAZ::refreshTAZEdges() {
         myEditedTAZ->updateTAZStatistic();
         myTAZFrameParent->myTAZCommonStatistics->updateStatistics();
         // iterate over child TAZElements and create TAZEdges
-        for (const auto& TAZElement : myEditedTAZ->getChildAdditionals()) {
-            addTAZChild(dynamic_cast<GNETAZSourceSink*>(TAZElement));
+        for (const auto& TAZSourceSink : myEditedTAZ->getChildTAZSourceSinks()) {
+            addTAZChild(TAZSourceSink);
         }
         // update colors after add all edges
         for (auto& TAZEdgeColor : myTAZEdgeColors) {
@@ -375,7 +376,7 @@ GNETAZFrame::TAZCommonStatistics::updateStatistics() {
         // declare ostringstream for statistics
         std::ostringstream information;
         information
-                << TL("- Number of edges: ") << toString(myTAZFrameParent->myCurrentTAZ->getTAZ()->getChildAdditionals().size() / 2) << "\n"
+                << TL("- Number of edges: ") << toString(myTAZFrameParent->myCurrentTAZ->getTAZ()->getChildTAZSourceSinks().size() / 2) << "\n"
                 << TL("- Min source: ") << myTAZFrameParent->myCurrentTAZ->getTAZ()->getAttribute(GNE_ATTR_MIN_SOURCE) << "\n"
                 << TL("- Max source: ") << myTAZFrameParent->myCurrentTAZ->getTAZ()->getAttribute(GNE_ATTR_MAX_SOURCE) << "\n"
                 << TL("- Average source: ") << myTAZFrameParent->myCurrentTAZ->getTAZ()->getAttribute(GNE_ATTR_AVERAGE_SOURCE) << "\n"
@@ -800,7 +801,7 @@ GNETAZFrame::TAZChildDefaultParameters::onCmdSetZeroFringeProbabilities(FXObject
     // check if we're editing a single TAZ or all TAZs
     if (myTAZFrameParent->myCurrentTAZ->getTAZ() != nullptr) {
         // iterate over source/sinks
-        for (const auto& TAZSourceSink : myTAZFrameParent->myCurrentTAZ->getTAZ()->getChildAdditionals()) {
+        for (const auto& TAZSourceSink : myTAZFrameParent->myCurrentTAZ->getTAZ()->getChildTAZSourceSinks()) {
             if (TAZSourceSink->getTagProperty().getTag() == SUMO_TAG_TAZSOURCE) {
                 // set sink probability to 0 for all edges that have no predecessor
                 if (!TAZSourceSink->getParentEdges().front()->hasSuccessors() &&
@@ -821,7 +822,7 @@ GNETAZFrame::TAZChildDefaultParameters::onCmdSetZeroFringeProbabilities(FXObject
         // iterate over all TAZs
         for (const auto& TAZ : myTAZFrameParent->getViewNet()->getNet()->getAttributeCarriers()->getAdditionals().at(SUMO_TAG_TAZ)) {
             // iterate over source/sinks
-            for (const auto& TAZSourceSink : TAZ.second->getChildAdditionals()) {
+            for (const auto& TAZSourceSink : TAZ.second->getChildTAZSourceSinks()) {
                 if (TAZSourceSink->getTagProperty().getTag() == SUMO_TAG_TAZSOURCE) {
                     // set sink probability to 0 for all edges that have no predecessor
                     if (!TAZSourceSink->getParentEdges().front()->hasSuccessors() &&
@@ -1629,14 +1630,19 @@ GNETAZFrame::shapeDrawed() {
         }
         // check if TAZ has to be created with edges
         if (myTAZParameters->isAddEdgesWithinEnabled()) {
-            // update objects in boundary
-            myViewNet->updateObjectsInBoundary(shape.getBoxBoundary());
-            // get all edge IDs
             std::vector<std::string> edgeIDs;
-            // get only edges with geometry around shape
-            for (const auto& edge : myViewNet->getViewObjectsSelector().getEdges()) {
-                if (myViewNet->getNet()->getAttributeCarriers()->isNetworkElementAroundShape(edge, shape)) {
-                    edgeIDs.push_back(edge->getID());
+            // triangulate shape
+            const auto triangulation = Triangle::triangulate(shape);
+            for (const auto& triangle : triangulation) {
+                // update objects in boundary
+                myViewNet->updateObjectsInBoundary(triangle.getBoundary());
+                // resize to improve efficiency
+                edgeIDs.reserve(edgeIDs.size() + myViewNet->getViewObjectsSelector().getEdges().size());
+                // get only edges with geometry around triangle
+                for (const auto& edge : myViewNet->getViewObjectsSelector().getEdges()) {
+                    if (myViewNet->getNet()->getAttributeCarriers()->isNetworkElementAroundTriangle(edge, triangle)) {
+                        edgeIDs.push_back(edge->getID());
+                    }
                 }
             }
             myBaseTAZ->addStringListAttribute(SUMO_ATTR_EDGES, edgeIDs);
@@ -1644,12 +1650,25 @@ GNETAZFrame::shapeDrawed() {
             // TAZ is created without edges
             myBaseTAZ->addStringListAttribute(SUMO_ATTR_EDGES, std::vector<std::string>());
         }
-        // declare additional handler
-        GNEAdditionalHandler additionalHandler(myViewNet->getNet(), myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), false);
-        // build TAZ
-        additionalHandler.parseSumoBaseObject(myBaseTAZ);
-        // TAZ created, then return true
-        return true;
+        const bool allowUndoRedo = (myBaseTAZ->getStringListAttribute(SUMO_ATTR_EDGES).size() < 2000);
+        // due lack of memory, we need to ask if we're creating a lot of sourcesinks
+        if (allowUndoRedo) {
+            // declare additional handler
+            GNEAdditionalHandler additionalHandler(myViewNet->getNet(), myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), false);
+            // build TAZ
+            additionalHandler.parseSumoBaseObject(myBaseTAZ);
+            // TAZ created, then return true
+            return true;
+        } else if (askCreateMultipleSourceSinks(myBaseTAZ->getStringListAttribute(SUMO_ATTR_EDGES).size())) {
+            // declare additional handler
+            GNEAdditionalHandler additionalHandler(myViewNet->getNet(), false, false);
+            // build TAZ
+            additionalHandler.parseSumoBaseObject(myBaseTAZ);
+            // TAZ created, then return true
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
@@ -1665,10 +1684,10 @@ GNETAZFrame::addOrRemoveTAZMember(GNEEdge* edge) {
                 myTAZSaveChanges->enableButtonsAndBeginUndoList();
                 // remove Source and Sinks using GNEChange_TAZElement
                 if (myViewNet->getNet()->getAttributeCarriers()->retrieveAdditional(TAZEdgeColor.source->getGUIGlObject(), false)) {
-                    myViewNet->getUndoList()->add(new GNEChange_Additional(TAZEdgeColor.source, false), true);
+                    myViewNet->getUndoList()->add(new GNEChange_TAZSourceSink(TAZEdgeColor.source, false), true);
                 }
                 if (myViewNet->getNet()->getAttributeCarriers()->retrieveAdditional(TAZEdgeColor.sink->getGUIGlObject(), false)) {
-                    myViewNet->getUndoList()->add(new GNEChange_Additional(TAZEdgeColor.sink, false), true);
+                    myViewNet->getUndoList()->add(new GNEChange_TAZSourceSink(TAZEdgeColor.sink, false), true);
                 }
                 // always refresh TAZ Edges after removing TAZSources/Sinks
                 myCurrentTAZ->refreshTAZEdges();
@@ -1680,11 +1699,11 @@ GNETAZFrame::addOrRemoveTAZMember(GNEEdge* edge) {
         // if wasn't found, then add it
         myTAZSaveChanges->enableButtonsAndBeginUndoList();
         // create TAZ Sink using GNEChange_TAZElement and value of TAZChild default parameters
-        GNEAdditional* source = new GNETAZSourceSink(SUMO_TAG_TAZSOURCE, myCurrentTAZ->getTAZ(), edge, myTAZChildDefaultParameters->getDefaultTAZSourceWeight());
-        myViewNet->getUndoList()->add(new GNEChange_Additional(source, true), true);
+        GNETAZSourceSink* source = new GNETAZSourceSink(SUMO_TAG_TAZSOURCE, myCurrentTAZ->getTAZ(), edge, myTAZChildDefaultParameters->getDefaultTAZSourceWeight());
+        myViewNet->getUndoList()->add(new GNEChange_TAZSourceSink(source, true), true);
         // create TAZ Sink using GNEChange_TAZElement and value of TAZChild default parameters
-        GNEAdditional* sink = new GNETAZSourceSink(SUMO_TAG_TAZSINK, myCurrentTAZ->getTAZ(), edge, myTAZChildDefaultParameters->getDefaultTAZSinkWeight());
-        myViewNet->getUndoList()->add(new GNEChange_Additional(sink, true), true);
+        GNETAZSourceSink* sink = new GNETAZSourceSink(SUMO_TAG_TAZSINK, myCurrentTAZ->getTAZ(), edge, myTAZChildDefaultParameters->getDefaultTAZSinkWeight());
+        myViewNet->getUndoList()->add(new GNEChange_TAZSourceSink(sink, true), true);
         // always refresh TAZ Edges after adding TAZSources/Sinks
         myCurrentTAZ->refreshTAZEdges();
         // update selected button
@@ -1704,15 +1723,38 @@ GNETAZFrame::dropTAZMembers() {
         myTAZSaveChanges->enableButtonsAndBeginUndoList();
         // remove Source and Sinks using GNEChange_TAZElement
         if (myViewNet->getNet()->getAttributeCarriers()->retrieveAdditional(TAZEdgeColor.source, false)) {
-            myViewNet->getUndoList()->add(new GNEChange_Additional(TAZEdgeColor.source, false), true);
+            myViewNet->getUndoList()->add(new GNEChange_TAZSourceSink(TAZEdgeColor.source, false), true);
         }
         if (myViewNet->getNet()->getAttributeCarriers()->retrieveAdditional(TAZEdgeColor.sink, false)) {
-            myViewNet->getUndoList()->add(new GNEChange_Additional(TAZEdgeColor.sink, false), true);
+            myViewNet->getUndoList()->add(new GNEChange_TAZSourceSink(TAZEdgeColor.sink, false), true);
         }
     }
     // always refresh TAZ Edges after removing TAZSources/Sinks
     myCurrentTAZ->refreshTAZEdges();
 }
 
+bool
+GNETAZFrame::askCreateMultipleSourceSinks(const size_t numSourceSinks) const {
+    // write warning if netedit is running in testing mode
+    WRITE_DEBUG("Opening FXMessageBox 'Ask create multiple sourceSinks'");
+    // open question dialog box
+    const std::string header = TL("Create multiple sourceSinks");
+    const std::string info = TLF("Creation of % cannot be undo. Continue?", toString(numSourceSinks));
+    const auto answer = FXMessageBox::question(myViewNet->getApp(), MBOX_YES_NO, "%s", header.c_str(), "%s", info.c_str());
+    if (answer != 1) { //1:yes, 2:no, 4:esc
+        // write warning if netedit is running in testing mode
+        if (answer == 2) {
+            WRITE_DEBUG("Closed FXMessageBox 'Ask create multiple sourceSinks' with 'No'");
+        } else if (answer == 4) {
+            WRITE_DEBUG("Closed FXMessageBox 'Ask create multiple sourceSinks' with 'ESC'");
+        }
+        // abort recompute with volatile options
+        return false;
+    } else {
+        // write warning if netedit is running in testing mode
+        WRITE_DEBUG("Closed FXMessageBox 'Ask create multiple sourceSinks' with 'Yes'");
+        return true;
+    }
+}
 
 /****************************************************************************/

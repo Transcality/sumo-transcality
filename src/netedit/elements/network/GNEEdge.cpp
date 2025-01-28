@@ -1019,9 +1019,9 @@ GNEEdge::clearGNEConnections() {
 int
 GNEEdge::getRouteProbeRelativePosition(GNERouteProbe* routeProbe) const {
     std::vector<GNEAdditional*> routeProbes;
-    for (auto i : getChildAdditionals()) {
-        if (i->getTagProperty().getTag() == routeProbe->getTagProperty().getTag()) {
-            routeProbes.push_back(i);
+    for (const auto& additional : getChildAdditionals()) {
+        if (additional->getTagProperty().getTag() == routeProbe->getTagProperty().getTag()) {
+            routeProbes.push_back(additional);
         }
     }
     // return index of routeProbe in routeProbes vector
@@ -2510,7 +2510,7 @@ GNEEdge::getVehiclesOverEdgeMap() const {
                     vehicles.insert(std::make_pair(routeChild->getAttributeDouble(SUMO_ATTR_DEPART), routeChild));
                 }
             }
-        } else if ((edgeChild->getTagProperty().getTag() == GNE_TAG_ROUTE_EMBEDDED) && (edgeChild->getParentEdges().front() == this)) {
+        } else if ((edgeChild->getTagProperty().getTag() == GNE_TAG_ROUTE_EMBEDDED) && (edgeChild->getParentEdges().front() == this) && (edgeChild->getParentDemandElements().size() > 0)) {
             vehicles.insert(std::make_pair(edgeChild->getParentDemandElements().front()->getAttributeDouble(SUMO_ATTR_DEPART), edgeChild->getParentDemandElements().front()));
         }
     }
@@ -2542,7 +2542,7 @@ GNEEdge::getPersonsOverEdgeMap() const {
     std::set<std::pair<double, GNEDemandElement*> > persons;
     // first obtain all persons of this edge
     for (const auto& edgeChild : getChildDemandElements()) {
-        if (edgeChild->getTagProperty().isPlanPerson()) {
+        if (edgeChild->getTagProperty().isPlanPerson() && (edgeChild->getParentDemandElements().size() > 0)) {
             persons.insert(std::make_pair(edgeChild->getParentDemandElements().front()->getAttributeDouble(SUMO_ATTR_DEPARTPOS), edgeChild->getParentDemandElements().front()));
         }
     }
@@ -2575,7 +2575,7 @@ GNEEdge::getContainersOverEdgeMap() const {
     std::set<std::pair<double, GNEDemandElement*> > containers;
     // first obtain all containers of this edge
     for (const auto& edgeChild : getChildDemandElements()) {
-        if (edgeChild->getTagProperty().isPlanContainer()) {
+        if (edgeChild->getTagProperty().isPlanContainer() && (edgeChild->getParentDemandElements().size() > 0)) {
             containers.insert(std::make_pair(edgeChild->getParentDemandElements().front()->getAttributeDouble(SUMO_ATTR_DEPARTPOS), edgeChild->getParentDemandElements().front()));
         }
     }
@@ -2910,18 +2910,10 @@ void
 GNEEdge::drawTAZElements(const GUIVisualizationSettings& s) const {
     // first check if draw TAZ Elements is enabled
     if (myNet->getViewNet()->getNetworkViewOptions().showTAZElements()) {
-        std::vector<GNEAdditional*> TAZSourceSinks;
-        // get all TAZ source/sinks vinculated with this edge
-        for (const auto& additional : getChildAdditionals()) {
-            if ((additional->getTagProperty().getTag() == SUMO_TAG_TAZSOURCE) ||
-                    (additional->getTagProperty().getTag() == SUMO_TAG_TAZSINK)) {
-                TAZSourceSinks.push_back(additional);
-            }
-        }
-        if (TAZSourceSinks.size() > 0) {
+        if (getChildTAZSourceSinks().size() > 0) {
             // check if TAZ Source/sink is selected
             bool selected = false;
-            for (const auto& TAZSourceSink : TAZSourceSinks) {
+            for (const auto& TAZSourceSink : getChildTAZSourceSinks()) {
                 if (TAZSourceSink->isAttributeCarrierSelected()) {
                     selected = true;
                 }

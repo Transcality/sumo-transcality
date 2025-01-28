@@ -275,6 +275,9 @@ GNEPoly::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
         }
     }
     GUIDesigns::buildFXMenuCommand(ret, TL("Select elements within polygon"), TL("Select elements within polygon boundary"), nullptr, &parent, MID_GNE_POLYGON_SELECT);
+    if (myShape.size() > 3) {
+        GUIDesigns::buildFXMenuCommand(ret, TL("Triangulate polygon"), TL("Convert the current polygon in triangles"), nullptr, &parent, MID_GNE_POLYGON_TRIANGULATE);
+    }
     // add separator
     new FXMenuSeparator(ret);
     // create a extra FXMenuCommand if mouse is over a vertex
@@ -518,6 +521,27 @@ GNEPoly::simplifyShape(bool allowUndo) {
 }
 
 
+CommonXMLStructure::SumoBaseObject*
+GNEPoly::getSumoBaseObject() const {
+    CommonXMLStructure::SumoBaseObject* polygonBaseObject = new CommonXMLStructure::SumoBaseObject(nullptr);
+    polygonBaseObject->setTag(myTagProperty.getTag());
+    // fill attributes
+    polygonBaseObject->addStringAttribute(SUMO_ATTR_ID, myID);
+    polygonBaseObject->addPositionVectorAttribute(SUMO_ATTR_SHAPE, myShape);
+    polygonBaseObject->addBoolAttribute(SUMO_ATTR_GEO, myGEO);
+    polygonBaseObject->addBoolAttribute(SUMO_ATTR_FILL, myFill);
+    polygonBaseObject->addDoubleAttribute(SUMO_ATTR_LINEWIDTH, myLineWidth);
+    polygonBaseObject->addColorAttribute(SUMO_ATTR_COLOR, getShapeColor());
+    polygonBaseObject->addStringAttribute(SUMO_ATTR_TYPE, getShapeType());
+    polygonBaseObject->addDoubleAttribute(SUMO_ATTR_LAYER, getShapeLayer());
+    polygonBaseObject->addStringAttribute(SUMO_ATTR_IMGFILE, getShapeImgFile());
+    polygonBaseObject->addDoubleAttribute(SUMO_ATTR_ANGLE, getShapeNaviDegree());
+    polygonBaseObject->addStringAttribute(SUMO_ATTR_NAME, getShapeName());
+    polygonBaseObject->addBoolAttribute(SUMO_ATTR_RELATIVEPATH, getShapeRelativePath());
+    return polygonBaseObject;
+}
+
+
 std::string
 GNEPoly::getAttribute(SumoXMLAttr key) const {
     switch (key) {
@@ -663,7 +687,7 @@ GNEPoly::isValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_NAME:
             return SUMOXMLDefinitions::isValidAttribute(value);
         case GNE_ATTR_CLOSE_SHAPE:
-            if (canParse<bool>(value)) {
+            if (canParse<bool>(value) && (myShape.size() > 0)) {
                 bool closePolygon = parse<bool>(value);
                 if (closePolygon && (myShape.begin() == myShape.end())) {
                     // Polygon already closed, then invalid value
@@ -821,8 +845,8 @@ GNEPoly::setAttribute(SumoXMLAttr key, const std::string& value) {
                 myShape.closePolygon();
                 myGeoShape.closePolygon();
             } else {
-                myShape.pop_back();
-                myGeoShape.pop_back();
+                myShape.openPolygon();
+                myGeoShape.openPolygon();
             }
             // disable simplified shape flag
             mySimplifiedShape = false;

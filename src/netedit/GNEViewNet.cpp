@@ -213,6 +213,7 @@ FXDEFMAP(GNEViewNet) GNEViewNetMap[] = {
     FXMAPFUNC(SEL_COMMAND, MID_GNE_POLYGON_CLOSE,                   GNEViewNet::onCmdClosePolygon),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_POLYGON_OPEN,                    GNEViewNet::onCmdOpenPolygon),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_POLYGON_SELECT,                  GNEViewNet::onCmdSelectPolygonElements),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_POLYGON_TRIANGULATE,             GNEViewNet::onCmdTriangulatePolygon),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_POLYGON_SET_FIRST_POINT,         GNEViewNet::onCmdSetFirstGeometryPoint),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_POLYGON_DELETE_GEOMETRY_POINT,   GNEViewNet::onCmdDeleteGeometryPoint),
     // edit custom shapes
@@ -496,6 +497,8 @@ GNEViewNet::updateObjectsInBoundary(const Boundary& boundary) {
     myVisualizationSettings->drawForRectangleSelection = true;
     // draw all GL elements within the small boundary
     drawGLElements(boundary);
+    // swap selected objects (needed after selecting)
+    gViewObjectsHandler.reverseSelectedObjects();
     // restore draw for object under cursor
     myVisualizationSettings->drawForViewObjectsHandler = false;
     myVisualizationSettings->drawForRectangleSelection = false;
@@ -526,6 +529,8 @@ GNEViewNet::updateObjectsInPosition(const Position& pos) {
     myVisualizationSettings->drawForViewObjectsHandler = true;
     // draw all GL elements within the small boundary
     drawGLElements(positionBoundary);
+    // swap selected objects (needed after selecting)
+    gViewObjectsHandler.reverseSelectedObjects();
     // check if filter edges that have the mouse over their geometry points
     if (myEditModes.isCurrentSupermodeNetwork() && myEditModes.networkEditMode == NetworkEditMode::NETWORK_MOVE) {
         gViewObjectsHandler.isolateEdgeGeometryPoints();
@@ -893,7 +898,7 @@ GNEViewNet::showJunctionAsBubbles() const {
 
 
 bool
-GNEViewNet::askMergeJunctions(const GNEJunction* movedJunction, const GNEJunction* targetJunction, bool &alreadyAsked) {
+GNEViewNet::askMergeJunctions(const GNEJunction* movedJunction, const GNEJunction* targetJunction, bool& alreadyAsked) {
     if (alreadyAsked) {
         return false;
     } else if (myNetworkViewOptions.menuCheckMergeAutomatically->amChecked()) {
@@ -2729,35 +2734,67 @@ GNEViewNet::onCmdSelectPolygonElements(FXObject*, FXSelector, void*) {
     GNEPoly* polygonUnderMouse = getPolygonAtPopupPosition();
     // check polygon
     if (polygonUnderMouse) {
-        // get ACs in boundary
-        updateObjectsInBoundary(polygonUnderMouse->getShape().getBoxBoundary());
+        // triangulate shape
+        const auto triangulation = Triangle::triangulate(polygonUnderMouse->getShape());
         // declare filtered ACs
-        std::vector<GNEAttributeCarrier*> filteredACs;
-        // iterate over obtained GUIGlIDs
-        for (const auto& AC : myViewObjectsSelector.getAttributeCarriers()) {
-            if (AC->getTagProperty().getTag() == SUMO_TAG_EDGE) {
-                if (checkSelectEdges() && myNet->getAttributeCarriers()->isNetworkElementAroundShape(AC, polygonUnderMouse->getShape())) {
-                    filteredACs.push_back(AC);
+        std::vector<GNEAttributeCarrier*> ACsUnderPolygon;
+        // iterate over every triangle
+        for (const auto& triangle : triangulation) {
+            // get ACs in boundary
+            updateObjectsInBoundary(triangle.getBoundary());
+            // iterate over obtained GUIGlIDs
+            for (const auto& AC : myViewObjectsSelector.getAttributeCarriers()) {
+                if (myNet->getAttributeCarriers()->isNetworkElementAroundTriangle(AC, triangle)) {
+                    if ((AC->getTagProperty().getTag() == SUMO_TAG_EDGE) && checkSelectEdges()) {
+                        ACsUnderPolygon.push_back(AC);
+                    } else if ((AC->getTagProperty().getTag() == SUMO_TAG_LANE) && !checkSelectEdges()) {
+                        ACsUnderPolygon.push_back(AC);
+                    } else if (!AC->getTagProperty().isSymbol() && (AC != polygonUnderMouse)) {
+                        ACsUnderPolygon.push_back(AC);
+                    }
                 }
-            } else if (AC->getTagProperty().getTag() == SUMO_TAG_LANE) {
-                if (!checkSelectEdges() && myNet->getAttributeCarriers()->isNetworkElementAroundShape(AC, polygonUnderMouse->getShape())) {
-                    filteredACs.push_back(AC);
-                }
-            } else if ((AC != polygonUnderMouse) && myNet->getAttributeCarriers()->isNetworkElementAroundShape(AC, polygonUnderMouse->getShape())) {
-                filteredACs.push_back(AC);
             }
         }
         // continue if there are ACs
-        if (filteredACs.size() > 0) {
+        if (ACsUnderPolygon.size() > 0) {
             // begin undo-list
             myNet->getViewNet()->getUndoList()->begin(GUIIcon::MODESELECT, TL("select within polygon boundary"));
             // iterate over shapes
-            for (const auto& AC : filteredACs) {
+            for (const auto& AC : ACsUnderPolygon) {
                 AC->setAttribute(GNE_ATTR_SELECTED, "true", myUndoList);
             }
             // end undo-list
             myNet->getViewNet()->getUndoList()->end();
         }
+    }
+    return 1;
+}
+
+
+long
+GNEViewNet::onCmdTriangulatePolygon(FXObject*, FXSelector, void*) {
+// get polygon under mouse
+    GNEPoly* polygonUnderMouse = getPolygonAtPopupPosition();
+    // check polygon
+    if (polygonUnderMouse) {
+        // declare additional handler
+        GNEAdditionalHandler additionalHandler(myNet, myViewParent->getGNEAppWindows()->isUndoRedoAllowed(), false);
+        // triangulate shape
+        const auto triangulation = Triangle::triangulate(polygonUnderMouse->getShape());
+        // begin undo-list
+        myNet->getViewNet()->getUndoList()->begin(GUIIcon::POLY, TL("triangulate polygon"));
+        // create every individual triangle
+        for (const auto& triangle : triangulation) {
+            auto basePolygon = polygonUnderMouse->getSumoBaseObject();
+            basePolygon->addStringAttribute(SUMO_ATTR_ID, myNet->getAttributeCarriers()->generateAdditionalID(polygonUnderMouse->getTagProperty().getTag()));
+            basePolygon->addPositionVectorAttribute(SUMO_ATTR_SHAPE, triangle.getShape());
+            // build shape
+            additionalHandler.parseSumoBaseObject(basePolygon);
+        }
+        // delete original polygon
+        myNet->deleteAdditional(polygonUnderMouse, myNet->getViewNet()->getUndoList());
+        // end undo-list
+        myNet->getViewNet()->getUndoList()->end();
     }
     return 1;
 }
@@ -5912,8 +5949,8 @@ GNEViewNet::processLeftButtonPressDemand(void* eventData) {
         case DemandEditMode::DEMAND_INSPECT: {
             // filter locked elements
             myViewObjectsSelector.filterLockedElements();
-                // inspect clicked elements
-                myViewParent->getInspectorFrame()->inspectClickedElements(myViewObjectsSelector, getPositionInformation(), myMouseButtonKeyPressed.shiftKeyPressed());
+            // inspect clicked elements
+            myViewParent->getInspectorFrame()->inspectClickedElements(myViewObjectsSelector, getPositionInformation(), myMouseButtonKeyPressed.shiftKeyPressed());
             // process click
             processClick(eventData);
             break;
