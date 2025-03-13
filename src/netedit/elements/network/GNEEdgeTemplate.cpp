@@ -17,7 +17,6 @@
 ///
 // Template for edges
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/elements/network/GNEEdge.h>
 
@@ -29,7 +28,7 @@
 // ===========================================================================
 
 GNEEdgeTemplate::GNEEdgeTemplate(const GNEEdge* edge) :
-    GNEAttributeCarrier(SUMO_TAG_EDGE, edge->getNet()),
+    GNEAttributeCarrier(SUMO_TAG_EDGE, edge->getNet(), "", false),
     myEdge(edge) {
     // update lane templates
     updateLaneTemplates();
@@ -63,7 +62,7 @@ GNEEdgeTemplate::updateLaneTemplates() {
     }
     myLaneTemplates.clear();
     // now set new laneTemplates
-    for (const auto& lane : myEdge->getLanes()) {
+    for (const auto& lane : myEdge->getChildLanes()) {
         myLaneTemplates.push_back(new GNELaneTemplate(lane));
     }
 }

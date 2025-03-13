@@ -1289,6 +1289,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_LCA_SPEEDGAINRIGHT,
     SUMO_ATTR_LCA_SPEEDGAIN_LOOKAHEAD,
     SUMO_ATTR_LCA_SPEEDGAIN_REMAIN_TIME,
+    SUMO_ATTR_LCA_SPEEDGAIN_URGENCY,
     SUMO_ATTR_LCA_COOPERATIVE_ROUNDABOUT,
     SUMO_ATTR_LCA_COOPERATIVE_SPEED,
     SUMO_ATTR_LCA_MAXSPEEDLATSTANDING,
@@ -1541,6 +1542,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_INTENDED,
     SUMO_ATTR_ONDEMAND,
     SUMO_ATTR_JUMP,
+    SUMO_ATTR_JUMP_UNTIL,
     SUMO_ATTR_USED_ENDED,
     SUMO_ATTR_COLLISION,
     SUMO_ATTR_VALUE,
@@ -1562,7 +1564,6 @@ enum SumoXMLAttr {
     SUMO_ATTR_GUISHAPE,
     SUMO_ATTR_OSGFILE,
     SUMO_ATTR_IMGFILE,
-    SUMO_ATTR_RELATIVEPATH,
     SUMO_ATTR_EMISSIONCLASS,
     SUMO_ATTR_MASS,
     SUMO_ATTR_IMPATIENCE,
@@ -1839,6 +1840,22 @@ enum SumoXMLAttr {
     GNE_ATTR_FLOW_TERMINATE,
     /// @brief flow spacing
     GNE_ATTR_FLOW_SPACING,
+    /// @brief reference position (used creating stoppingPlaces)
+    GNE_ATTR_REFERENCE,
+    /// @brief size (used in stopping places)
+    GNE_ATTR_SIZE,
+    /// @brief size (used in stopping places)
+    GNE_ATTR_FORCESIZE,
+    /// @brief size (used in stopping places)
+    GNE_ATTR_LANELENGTH,
+    /// @brief additional save file
+    GNE_ATTR_ADDITIONAL_FILE,
+    /// @brief demand demand file
+    GNE_ATTR_DEMAND_FILE,
+    /// @brief data data file
+    GNE_ATTR_DATA_FILE,
+    /// @brief meanData data file
+    GNE_ATTR_MEANDATA_FILE,
     // virtual attributes for easier UI
     GNE_ATTR_FROM_BUSSTOP,
     GNE_ATTR_FROM_TRAINSTOP,
@@ -1847,7 +1864,6 @@ enum SumoXMLAttr {
     GNE_ATTR_FROM_PARKINGAREA,
     GNE_ATTR_FROM_ROUTE,
     GNE_ATTR_IS_ROUNDABOUT,
-    GNE_ATTR_CLOSESHAPE,
     GNE_ATTR_FRONTELEMENT,
     // @}
 
@@ -2247,6 +2263,198 @@ enum class POIIcon {
     NONE = 0,
 };
 
+/// @brief Exclude empty
+enum class ExcludeEmpty {
+    TRUES,
+    FALSES,
+    DEFAULTS,
+};
+
+/// @brief Reference position
+enum class ReferencePosition {
+    LEFT,
+    RIGHT,
+    CENTER,
+};
+
+/// @brief XML extension
+enum class XMLFileExtension {
+    XML,
+    ALL,
+};
+
+/// @brief TXT extension
+enum class TXTFileExtension {
+    TXT,
+    ALL,
+};
+
+/// @brief CSV extension
+enum class CSVFileExtension {
+    CSV,
+    ALL,
+};
+
+/// @brief OSG extension
+enum class OSGFileExtension {
+    OSG,
+    ALL,
+};
+
+/// @brief image extension
+enum class ImageFileExtension {
+    IMG,
+    GIF,
+    BMP,
+    XPM,
+    PCX,
+    ICO,
+    RGB,
+    XBM,
+    TGA,
+    PNG,
+    JPG,
+    TIF,
+    PS,
+    EPS,
+    PDF,
+    SVG,
+    TEX,
+    PGF,
+    ALL,
+};
+
+/// @brief image and video extension
+enum class ImageVideoFileExtension {
+    IMG,
+    VIDEO,
+    H264,
+    HEVC,
+    MP4,
+    GIF,
+    BMP,
+    XPM,
+    PCX,
+    ICO,
+    RGB,
+    XBM,
+    TGA,
+    PNG,
+    JPG,
+    TIF,
+    PS,
+    EPS,
+    PDF,
+    SVG,
+    TEX,
+    PGF,
+    ALL,
+};
+
+/// @brief output file extension
+enum class OutputFileExtension {
+    XML,
+    TXT,
+    ALL,
+};
+
+/// @brief view settings file extension
+enum class ViewSettingsFileExtension {
+    XML,
+    ALL,
+};
+
+/// @brief State file extension
+enum class StateFileExtension {
+    XML_GZ,
+    XML,
+    ALL,
+};
+
+/// @brief sumo file extension
+enum class SumoConfigFileExtension {
+    SUMOCONF,
+    XML,
+    ALL,
+};
+
+/// @brief netedit file extension
+enum class NeteditConfigFileExtension {
+    NETECFG,
+    XML,
+    ALL,
+};
+
+/// @brief netconvert file extension
+enum class NetconvertConfigFileExtension {
+    NETCCFG,
+    XML,
+    ALL,
+};
+
+/// @brief OSM file extension
+enum class OSMFileExtension {
+    OSM,
+    XML,
+    ALL,
+};
+
+/// @brief net file extension
+enum class NetFileExtension {
+    NET_XML,
+    XML,
+    ALL,
+};
+
+/// @brief TLS file extension
+enum class TLSFileExtension {
+    TTL_XML,
+    XML,
+    ALL,
+};
+
+/// @brief Junction file extension
+enum class JunctionFileExtension {
+    NOD_XML,
+    XML,
+    ALL,
+};
+
+/// @brief Edge type file extension
+enum class EdgeTypeFileExtension {
+    TYP_XML,
+    XML,
+    ALL,
+};
+
+/// @brief additional file extension
+enum class AdditionalFileExtension {
+    ADD_XML,
+    XML,
+    ALL,
+};
+
+/// @brief route file extension
+enum class RouteFileExtension {
+    ROU_XML,
+    XML,
+    ALL,
+};
+
+/// @brief edge data file extension
+enum class EdgeDataFileExtension {
+    XML,
+    ALL,
+};
+
+/// @brief mean data file extension
+enum class MeanDataFileExtension {
+    MED_ADD_XML,
+    ADD,
+    XML,
+    ALL,
+};
+
 // @}
 
 /**
@@ -2324,6 +2532,76 @@ public:
 
     /// @brief POI icon values
     static StringBijection<POIIcon> POIIcons;
+
+    /// @brief exclude empty values
+    static StringBijection<ExcludeEmpty> ExcludeEmptys;
+
+    /// @brief reference positions (used creating certain elements in netedit)
+    static StringBijection<ReferencePosition> ReferencePositions;
+
+    /// @brief XML file Extensions
+    static StringBijection<XMLFileExtension> XMLFileExtensions;
+
+    /// @brief TXT file Extensions
+    static StringBijection<TXTFileExtension> TXTFileExtensions;
+
+    /// @brief CSV file Extensions
+    static StringBijection<CSVFileExtension> CSVFileExtensions;
+
+    /// @brief OSG file Extensions
+    static StringBijection<OSGFileExtension> OSGFileExtensions;
+
+    /// @brief image file extensions
+    static StringBijection<ImageFileExtension> ImageFileExtensions;
+
+    /// @brief image and videofile extensions
+    static StringBijection<ImageVideoFileExtension> ImageVideoFileExtensions;
+
+    /// @brief output file extensions
+    static StringBijection<OutputFileExtension> OutputFileExtensions;
+
+    /// @brief view settings file extensions
+    static StringBijection<ViewSettingsFileExtension> ViewSettingsFileExtensions;
+
+    /// @brief state file extensions
+    static StringBijection<StateFileExtension> StateFileExtensions;
+
+    /// @brief sumo config file extensions
+    static StringBijection<SumoConfigFileExtension> SumoConfigFileExtensions;
+
+    /// @brief netedit config file extensions
+    static StringBijection<NeteditConfigFileExtension> NeteditConfigFileExtensions;
+
+    /// @brief netconvert config file extensions
+    static StringBijection<NetconvertConfigFileExtension> NetconvertConfigFileExtensions;
+
+    /// @brief OSM file extensions
+    static StringBijection<OSMFileExtension> OSMFileExtensions;
+
+    /// @brief net file extensions
+    static StringBijection<NetFileExtension> NetFileExtensions;
+
+    /// @brief TLS file extensions
+    static StringBijection<TLSFileExtension> TLSFileExtensions;
+
+    /// @brief juntion file extensions
+    static StringBijection<JunctionFileExtension> JunctionFileExtensions;
+
+    /// @brief edge file extensions
+    static StringBijection<EdgeTypeFileExtension> EdgeTypeFileExtensions;
+
+    /// @brief additional file extensions
+    static StringBijection<AdditionalFileExtension> AdditionalFileExtensions;
+
+    /// @brief route file extensions
+    static StringBijection<RouteFileExtension> RouteFileExtensions;
+
+    /// @brief edgedata file extensions
+    static StringBijection<EdgeDataFileExtension> EdgeDataFileExtensions;
+
+    /// @brief mean data file extensions
+    static StringBijection<MeanDataFileExtension> MeanDataFileExtensions;
+
     /// @}
 
     /// @name Helper functions for ID-string manipulations
@@ -2375,6 +2653,7 @@ public:
 
     /// @brief return lane index when given the lane ID
     static int getIndexFromLane(const std::string laneID);
+
     /// @}
 
     /// @brief all allowed characters for phase state
@@ -2437,6 +2716,75 @@ private:
 
     /// @brief POI icon values
     static StringBijection<POIIcon>::Entry POIIconValues[];
+
+    /// @brief Exclude empty values
+    static StringBijection<ExcludeEmpty>::Entry excludeEmptyValues[];
+
+    /// @brief Reference position values
+    static StringBijection<ReferencePosition>::Entry referencePositionValues[];
+
+    /// @brief XML file extension values
+    static StringBijection<XMLFileExtension>::Entry XMLFileExtensionValues[];
+
+    /// @brief TXT file extension values
+    static StringBijection<TXTFileExtension>::Entry TXTFileExtensionValues[];
+
+    /// @brief CSV file extension values
+    static StringBijection<CSVFileExtension>::Entry CSVFileExtensionValues[];
+
+    /// @brief OSG file extension values
+    static StringBijection<OSGFileExtension>::Entry OSGFileExtensionValues[];
+
+    /// @brief image file extension values
+    static StringBijection<ImageFileExtension>::Entry imageFileExtensionValues[];
+
+    /// @brief image and video file extension values
+    static StringBijection<ImageVideoFileExtension>::Entry imageVideoFileExtensionValues[];
+
+    /// @brief output file extension values
+    static StringBijection<OutputFileExtension>::Entry outputFileExtensionValues[];
+
+    /// @brief view settings file extension values
+    static StringBijection<ViewSettingsFileExtension>::Entry viewSettingsFileExtensionValues[];
+
+    /// @brief state file extension values
+    static StringBijection<StateFileExtension>::Entry stateFileExtensionValues[];
+
+    /// @brief sumo config file extension values
+    static StringBijection<SumoConfigFileExtension>::Entry sumoConfigFileExtensionValues[];
+
+    /// @brief netedit config file extension values
+    static StringBijection<NeteditConfigFileExtension>::Entry neteditConfigFileExtensionValues[];
+
+    /// @brief netconvert config file extension values
+    static StringBijection<NetconvertConfigFileExtension>::Entry netconvertConfigFileExtensionValues[];
+
+    /// @brief OSM file extension values
+    static StringBijection<OSMFileExtension>::Entry osmFileExtensionValues[];
+
+    /// @brief net file extension values
+    static StringBijection<NetFileExtension>::Entry netFileExtensionValues[];
+
+    /// @brief TLS file extension values
+    static StringBijection<TLSFileExtension>::Entry TLSFileExtensionValues[];
+
+    /// @brief junction file extension values
+    static StringBijection<JunctionFileExtension>::Entry junctionFileExtensionValues[];
+
+    /// @brief edge file extension values
+    static StringBijection<EdgeTypeFileExtension>::Entry edgeTypeFileExtensionValues[];
+
+    /// @brief additional file extension values
+    static StringBijection<AdditionalFileExtension>::Entry additionalFileExtensionValues[];
+
+    /// @brief route file extension values
+    static StringBijection<RouteFileExtension>::Entry routeFileExtensionsValues[];
+
+    /// @brief edge data file extension values
+    static StringBijection<EdgeDataFileExtension>::Entry edgeDataFileExtensionsValues[];
+
+    /// @brief mean data file extension values
+    static StringBijection<MeanDataFileExtension>::Entry meanDataFileExtensionsValues[];
 
     /// @}
 

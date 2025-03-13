@@ -37,8 +37,10 @@
 class CommonHandler {
 
 public:
-    /// @brief Constructor
-    CommonHandler();
+    /**@brief Constructor
+     * @param[in] filename Name of the parsed file
+     */
+    CommonHandler(const std::string& filename);
 
     /// @brief Destructor
     virtual ~CommonHandler();
@@ -47,6 +49,9 @@ public:
     bool isErrorCreatingElement() const;
 
 protected:
+    /// @brief filename
+    const std::string myFilename;
+
     /// @brief common XML Structure
     CommonXMLStructure myCommonXMLStructure;
 
@@ -56,16 +61,32 @@ protected:
     /// @brief parse generic parameters
     void parseParameters(const SUMOSAXAttributes& attrs);
 
+    /// @brief get embedded route from children
+    CommonXMLStructure::SumoBaseObject* getEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject) const;
+
     /// @name check functions
     /// @{
+
     /// @brief check parsed parents
     void checkParsedParent(const SumoXMLTag currentTag, const std::vector<SumoXMLTag>& parentTags, bool& ok);
 
     /// @brief check list of IDs
     bool checkListOfVehicleTypes(const SumoXMLTag tag, const std::string& id, const std::vector<std::string>& vTypeIDs);
 
+    /// @brief check if the given object is within a distribution (VType or routes)
+    bool checkDistribution(CommonXMLStructure::SumoBaseObject* obj);
+
     /// @brief check vehicle parents
     bool checkVehicleParents(CommonXMLStructure::SumoBaseObject* obj);
+
+    /// @brief check person plan parents
+    bool checkPersonPlanParents(CommonXMLStructure::SumoBaseObject* obj);
+
+    /// @brief check container plan parents
+    bool checkContainerPlanParents(CommonXMLStructure::SumoBaseObject* obj);
+
+    /// @brief check stop parents
+    bool checkStopParents(CommonXMLStructure::SumoBaseObject* obj);
 
     /// @brief check if the given int value is NOT negative
     bool checkNegative(const SumoXMLTag tag, const std::string& id, const SumoXMLAttr attribute, const int value, const bool canBeZero);
@@ -77,7 +98,7 @@ protected:
     bool checkNegative(const SumoXMLTag tag, const std::string& id, const SumoXMLAttr attribute, const SUMOTime value, const bool canBeZero);
 
     /// @brief check if the given filename is valid
-    bool checkFileName(const SumoXMLTag tag, const std::string& id, const SumoXMLAttr attribute, const std::string &value);
+    bool checkFileName(const SumoXMLTag tag, const std::string& id, const SumoXMLAttr attribute, const std::string& value);
 
     /// @brief check if the given additional ID is valid
     bool checkValidAdditionalID(const SumoXMLTag tag, const std::string& value);
@@ -90,14 +111,20 @@ protected:
 
     /// @}
 
+    /// @brief write warning overwritting element
+    void writeWarningOverwritting(const SumoXMLTag tag, const std::string& id);
+
+    /// @brief write warning duplicated element
+    bool writeWarningDuplicated(const SumoXMLTag tag, const std::string& id, const SumoXMLTag checkedTag);
+
     /// @brief write error and enable error creating element
     bool writeError(const std::string& error);
 
     /// @brief write error "invalid position"
     bool writeErrorInvalidPosition(const SumoXMLTag tag, const std::string& id);
 
-    /// @brief write error "duplicated additional"
-    bool writeErrorDuplicated(const SumoXMLTag tag, const std::string& id, const SumoXMLTag checkedTag);
+    /// @brief write error "empty edges"
+    bool writeErrorEmptyEdges(const SumoXMLTag tag, const std::string& id);
 
     /// @brief write error "invalid list of lanes"
     bool writeErrorInvalidLanes(const SumoXMLTag tag, const std::string& id);
@@ -114,9 +141,10 @@ protected:
     /// @brief write error "invalid parent element" without giving IDs
     bool writeErrorInvalidParent(const SumoXMLTag tag, const SumoXMLTag parentTag);
 
-
-
 private:
+    /// @brief invalidate default onstructor
+    CommonHandler() = delete;
+
     /// @brief invalidate copy constructor
     CommonHandler(const CommonHandler& s) = delete;
 

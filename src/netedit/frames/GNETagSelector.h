@@ -20,6 +20,7 @@
 #pragma once
 #include <config.h>
 
+#include <netedit/GNETagProperties.h>
 #include <utils/foxtools/MFXGroupBoxModule.h>
 
 // ===========================================================================
@@ -79,7 +80,7 @@ private:
 
     public:
         /// @brief constructor
-        ACTemplate(GNENet* net, const GNETagProperties tagProperty);
+        ACTemplate(GNENet* net, const GNETagProperties* tagProperty);
 
         /// @brief destructor
         ~ACTemplate();

@@ -39,6 +39,8 @@ def parse_args():
     op.add_argument("--subpart-file", dest="subpart_file", category="processing", type=op.additional_file,
                     help="Restrict counts to routes that contain one of the consecutive edge sequences " +
                          "in the given input file (one sequence per line)")
+    op.add_argument("--subpart.via", action="store_true", default=False, category="processing", dest="subpartVia",
+                    help="Use subpart as via-edges (permit gaps)")
     op.add_argument("-i", "--intermediate", action="store_true", default=False, category="processing",
                     help="count all edges of a route")
     op.add_argument("--taz", action="store_true", default=False, category="processing",
@@ -57,6 +59,8 @@ def parse_args():
                     help="parse net for geo locations of the edges")
     op.add_argument("-p", "--poi-file", category="processing", type=op.additional_file,
                     help="write geo POIs")
+    op.add_argument("-v", "--verbose", action="store_true", default=False,
+                    help="tell me what you are doing")
     op.add_argument("routefiles", nargs="+", category="input", type=op.route_file,
                     help="Set one or more input route files")
 
@@ -106,13 +110,28 @@ def parse_args():
     return options
 
 
-def hasSubpart(edges, subparts):
+def hasVias(edges, vias):
+    if not vias:
+        return True
+    elif len(edges) < len(vias):
+        return False
+    for i, e in enumerate(edges):
+        if e == vias[0] and hasVias(edges[i + 1:], vias[1:]):
+            return True
+    return False
+
+
+def hasSubpart(edges, subparts, isVia):
     if not subparts:
         return True
     for subpart in subparts:
-        for i in range(len(edges)):
-            if edges[i:i + len(subpart)] == subpart:
+        if isVia:
+            if hasVias(edges, subpart):
                 return True
+        else:
+            for i in range(len(edges)):
+                if edges[i:i + len(subpart)] == subpart:
+                    return True
     return False
 
 
@@ -153,6 +172,9 @@ def writeInterval(outf, options, departCounts, arrivalCounts, intermediateCounts
         departStats.add(departCounts[e], e)
     for e in sorted(arrivalCounts.keys()):
         arrivalStats.add(arrivalCounts[e], e)
+    if options.verbose:
+        print("Loaded %s routes" % sum(departCounts.values()))
+
     print(departStats)
     print(arrivalStats)
     if options.intermediate:
@@ -193,7 +215,7 @@ def parseSimple(outf, options):
                     break
             for route in parse_fast(routefile, element, ['edges']):
                 edges = route.edges.split()
-                if not hasSubpart(edges, options.subparts):
+                if not hasSubpart(edges, options.subparts, options.subpartVia):
                     continue
                 departCounts[edges[0]] += 1
                 arrivalCounts[edges[-1]] += 1
@@ -206,14 +228,14 @@ def parseSimple(outf, options):
     if 'trip' in options.elements:
         for routefile in options.routefiles:
             for trip in parse_fast(routefile, 'trip', ['id', fromAttr, toAttr]):
-                if not hasSubpart([trip[1], trip[2]], options.subparts):
+                if not hasSubpart([trip[1], trip[2]], options.subparts, options.subpartVia):
                     continue
                 departCounts[trip[1]] += 1
                 arrivalCounts[trip[2]] += 1
     if 'walk' in options.elements:
         for routefile in options.routefiles:
             for walk in parse_fast(routefile, 'walk', ['from', 'to']):
-                if not hasSubpart([walk[1], walk[2]], options.subparts):
+                if not hasSubpart([walk[1], walk[2]], options.subparts, options.subpartVia):
                     continue
                 departCounts[walk.attr_from] += 1
                 arrivalCounts[walk.to] += 1
@@ -279,7 +301,7 @@ def parseTimed(outf, options):
             number = getFlowNumber(elem) if elem.name == 'flow' else 1
             src, dst, edges = getEdges(elem, options.taz, routeDict)
             filterBy = [src, dst] if options.taz or not edges else edges
-            if not hasSubpart(filterBy, options.subparts):
+            if not hasSubpart(filterBy, options.subparts, options.subpartVia):
                 continue
             departCounts[src] += number
             arrivalCounts[dst] += number

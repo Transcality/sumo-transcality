@@ -36,7 +36,7 @@ DELAY_DRAGDROP = 3
 DELAY_KEY_TAB = 0.2
 DELAY_MOUSE_MOVE = 0.5
 DELAY_MOUSE_CLICK = 1
-DELAY_QUESTION = 3
+DELAY_QUESTION = 2
 DELAY_SAVING = 1
 DELAY_RELOAD = 3
 DELAY_QUIT_NETEDIT = 5
@@ -343,6 +343,24 @@ def leftClickAltShift(referencePosition, position):
     typeKeyUp('alt')
     # Release shift key
     typeKeyUp('shift')
+
+
+def rightClick(referencePosition, position, offsetX=0, offsetY=0):
+    """
+    @brief do right click over a position relative to referencePosition (pink square)
+    """
+    # obtain clicked position
+    clickedPosition = [referencePosition[0] + position.x + offsetX, referencePosition[1] + position.y + offsetY]
+    # move mouse to position
+    pyautogui.moveTo(clickedPosition)
+    # wait after move
+    time.sleep(DELAY_MOUSE_MOVE)
+    # click over position
+    pyautogui.click(button='right')
+    # wait after every operation
+    time.sleep(DELAY_MOUSE_CLICK)
+    # show debug
+    print("TestFunctions: Clicked over position", clickedPosition[0], '-', clickedPosition[1])
 
 
 def dragDrop(referencePosition, x1, y1, x2, y2):
@@ -658,19 +676,20 @@ def setViewport(zoom, x, y, z, r):
 
 def waitQuestion(answer):
     """
-    @brief wait question of Netedit and select a yes/no answer
+    @brief wait question of Netedit and select a yes/no answer (by default yes)
     """
     # wait some second to question dialog
     time.sleep(DELAY_QUESTION)
-    # Answer can be "y" or "n"
-    typeTwoKeys('alt', answer)
+    if (answer == 'n'):
+        typeTab()
+    typeSpace()
 
 
-def reload(NeteditProcess, openNetNonSavedDialog=False, saveNet=False,
-           openAdditionalsNonSavedDialog=False, saveAdditionals=False,
-           openDemandNonSavedDialog=False, saveDemandElements=False,
-           openDataNonSavedDialog=False, saveDataElements=False,
-           openMeanDataNonSavedDialog=False, saveMeanDataElements=False):
+def reload(NeteditProcess, openNetDialog=False, saveNet=False,
+           openAdditionalDialog=False, saveAdditionalElements=False,
+           openDemandDialog=False, saveDemandElements=False,
+           openDataDialog=False, saveDataElements=False,
+           openMeanDataDialog=False, saveMeanDataElements=False):
     """
     @brief reload Netedit
     """
@@ -679,47 +698,35 @@ def reload(NeteditProcess, openNetNonSavedDialog=False, saveNet=False,
     # reload using hotkey
     typeTwoKeys('ctrl', 'r')
     # Check if net must be saved
-    if openNetNonSavedDialog:
-        # Wait some seconds
-        time.sleep(DELAY_QUESTION)
+    if openNetDialog:
         if saveNet:
             waitQuestion('s')
-        # wait for log
-            time.sleep(DELAY_RECOMPUTE)
         else:
-            waitQuestion('d')
+            waitQuestion('n')
     # Check if additionals must be saved
-    if openAdditionalsNonSavedDialog:
-        # Wait some seconds
-        time.sleep(DELAY_QUESTION)
-        if saveAdditionals:
+    if openAdditionalDialog:
+        if saveAdditionalElements:
             waitQuestion('s')
         else:
-            waitQuestion('d')
+            waitQuestion('n')
     # Check if demand elements must be saved
-    if openDemandNonSavedDialog:
-        # Wait some seconds
-        time.sleep(DELAY_QUESTION)
+    if openDemandDialog:
         if saveDemandElements:
             waitQuestion('s')
         else:
-            waitQuestion('d')
+            waitQuestion('n')
     # Check if data elements must be saved
-    if openDataNonSavedDialog:
-        # Wait some seconds
-        time.sleep(DELAY_QUESTION)
+    if openDataDialog:
         if saveDataElements:
             waitQuestion('s')
         else:
-            waitQuestion('d')
+            waitQuestion('n')
     # Check if meanData elements must be saved
-    if openMeanDataNonSavedDialog:
-        # Wait some seconds
-        time.sleep(DELAY_QUESTION)
+    if openMeanDataDialog:
         if saveMeanDataElements:
             waitQuestion('s')
         else:
-            waitQuestion('d')
+            waitQuestion('n')
     # Wait some seconds
     time.sleep(DELAY_RELOAD)
     # check if Netedit was crashed during reloading
@@ -727,11 +734,11 @@ def reload(NeteditProcess, openNetNonSavedDialog=False, saveNet=False,
         print("TestFunctions: Error reloading Netedit")
 
 
-def quit(NeteditProcess, openNetNonSavedDialog=False, saveNet=False,
-         openAdditionalsNonSavedDialog=False, saveAdditionals=False,
-         openDemandNonSavedDialog=False, saveDemandElements=False,
-         openDataNonSavedDialog=False, saveDataElements=False,
-         openMeanDataNonSavedDialog=False, saveMeanDataElements=False):
+def quit(NeteditProcess, openNetDialog=False, saveNet=False,
+         openAdditionalDialog=False, saveAdditionalElements=False,
+         openDemandDialog=False, saveDemandElements=False,
+         openDataDialog=False, saveDataElements=False,
+         openMeanDataDialog=False, saveMeanDataElements=False):
     """
     @brief quit Netedit
     """
@@ -745,47 +752,35 @@ def quit(NeteditProcess, openNetNonSavedDialog=False, saveNet=False,
         # quit using hotkey
         typeTwoKeys('ctrl', 'q')
         # Check if net must be saved
-        if openNetNonSavedDialog:
-            # Wait some seconds
-            time.sleep(DELAY_QUESTION)
+        if openNetDialog:
             if saveNet:
                 waitQuestion('s')
-                # wait for log
-                time.sleep(DELAY_RECOMPUTE)
             else:
-                waitQuestion('d')
+                waitQuestion('n')
         # Check if additionals must be saved
-        if openAdditionalsNonSavedDialog:
-            # Wait some seconds
-            time.sleep(DELAY_QUESTION)
-            if saveAdditionals:
+        if openAdditionalDialog:
+            if saveAdditionalElements:
                 waitQuestion('s')
             else:
-                waitQuestion('d')
+                waitQuestion('n')
         # Check if demand elements must be saved
-        if openDemandNonSavedDialog:
-            # Wait some seconds
-            time.sleep(DELAY_QUESTION)
+        if openDemandDialog:
             if saveDemandElements:
                 waitQuestion('s')
             else:
-                waitQuestion('d')
+                waitQuestion('n')
         # Check if data elements must be saved
-        if openDataNonSavedDialog:
-            # Wait some seconds
-            time.sleep(DELAY_QUESTION)
+        if openDataDialog:
             if saveDataElements:
                 waitQuestion('s')
             else:
-                waitQuestion('d')
+                waitQuestion('n')
         # Check if meanData elements must be saved
-        if openMeanDataNonSavedDialog:
-            # Wait some seconds
-            time.sleep(DELAY_QUESTION)
+        if openMeanDataDialog:
             if saveMeanDataElements:
                 waitQuestion('s')
             else:
-                waitQuestion('q')
+                waitQuestion('n')
         # wait some seconds for netedit to quit
         if hasattr(subprocess, "TimeoutExpired"):
             try:
@@ -823,7 +818,7 @@ def quit(NeteditProcess, openNetNonSavedDialog=False, saveNet=False,
         return
 
 
-def openNetworkAs(useShortcut, waitTime=2):
+def loadNetwork(useShortcut, waitTime=2):
     """
     @brief load network using dialog
     """
@@ -831,7 +826,7 @@ def openNetworkAs(useShortcut, waitTime=2):
         typeTwoKeys('ctrl', 'o')
     else:
         typeTwoKeys('alt', 'f')
-        for _ in range(attrs.toolbar.file.openNetwork):
+        for _ in range(attrs.toolbar.file.loadNetwork):
             typeDown()
         typeSpace()
     # wait for saving
@@ -846,7 +841,7 @@ def openNetworkAs(useShortcut, waitTime=2):
     time.sleep(waitTime)
 
 
-def saveNetwork(referencePosition, clickOverReference=False, offsetX=0, offsetY=0):
+def saveNetwork(useShortcut, referencePosition, clickOverReference=False, offsetX=0, offsetY=0, waitTime=2):
     """
     @brief save network
     """
@@ -854,31 +849,38 @@ def saveNetwork(referencePosition, clickOverReference=False, offsetX=0, offsetY=
     if clickOverReference:
         # click over reference (to avoid problem with undo-redo)
         leftClick(referencePosition, positions.reference, offsetX, offsetY)
-    # save network using hotkey
-    typeTwoKeys('ctrl', 's')
+    if (useShortcut):
+        typeTwoKeys('ctrl', 's')
+    else:
+        typeTwoKeys('alt', 'f')
+        for _ in range(attrs.toolbar.file.saveNetwork):
+            typeDown()
+        typeSpace()
     # wait for debug (due recomputing)
-    time.sleep(DELAY_RECOMPUTE)
+    time.sleep(waitTime)
 
 
 def saveNetworkAs(waitTime=2):
     """
     @brief save network as
     """
-    # open save network as dialog
-    typeThreeKeys('ctrl', 'shift', 's')
+    typeTwoKeys('alt', 'f')
+    for _ in range(attrs.toolbar.file.saveNetworkAs):
+        typeDown()
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
     # jump to filename TextField
     typeTwoKeys('alt', 'f')
     pasteIntoTextField(_TEXTTEST_SANDBOX)
     typeEnter()
-    pasteIntoTextField("net.net.xml")
+    pasteIntoTextField("netAs.net.xml")
     typeEnter()
     # wait for saving
     time.sleep(waitTime)
-    # wait for debug
-    time.sleep(DELAY_RECOMPUTE)
 
 
-def openAdditionalsAs(useShortcut, waitTime=2):
+def loadAdditionalElements(useShortcut, waitTime=2):
     """
     @brief load additional using dialog
     """
@@ -904,7 +906,7 @@ def openAdditionalsAs(useShortcut, waitTime=2):
     time.sleep(waitTime)
 
 
-def saveAdditionals(referencePosition, clickOverReference=False):
+def saveAdditionalElements(useShortcut, referencePosition, clickOverReference=False, waitTime=2):
     """
     @brief save additionals
     """
@@ -912,11 +914,44 @@ def saveAdditionals(referencePosition, clickOverReference=False):
     if clickOverReference:
         # click over reference (to avoid problem with undo-redo)
         leftClick(referencePosition, 0, 0)
-    # save additionals using hotkey
-    typeThreeKeys('ctrl', 'shift', 'a')
+    if (useShortcut):
+        typeThreeKeys('ctrl', 'shift', 'a')
+    else:
+        typeTwoKeys('alt', 'f')
+        for _ in range(attrs.toolbar.file.aditionalElements.menu):
+            typeDown()
+        typeSpace()
+        for _ in range(attrs.toolbar.file.aditionalElements.save):
+            typeDown()
+        typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
 
 
-def openDemandElementsAs(useShortcut, waitTime=2):
+def saveAdditionalElementsAs(waitTime=2):
+    """
+    @brief save additional as
+    """
+    typeTwoKeys('alt', 'f')
+    for _ in range(attrs.toolbar.file.aditionalElements.menu):
+        typeDown()
+    typeSpace()
+    for _ in range(attrs.toolbar.file.aditionalElements.saveAs):
+        typeDown()
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
+    # jump to filename TextField
+    typeTwoKeys('alt', 'f')
+    pasteIntoTextField(_TEXTTEST_SANDBOX)
+    typeEnter()
+    pasteIntoTextField("additionalsAs.add.xml")
+    typeEnter()
+    # wait for saving
+    time.sleep(waitTime)
+
+
+def loadDemandElements(useShortcut, waitTime=2):
     """
     @brief load demand elements using dialog
     """
@@ -942,21 +977,52 @@ def openDemandElementsAs(useShortcut, waitTime=2):
     time.sleep(waitTime)
 
 
-def saveRoutes(referencePosition, clickOverReference=True):
+def saveDemandElements(useShortcut, referencePosition, clickOverReference=False, offsetX=0, offsetY=0, waitTime=2):
     """
     @brief save routes
     """
     # check if clickOverReference is enabled
     if clickOverReference:
         # click over reference (to avoid problem with undo-redo)
-        leftClick(referencePosition, positions.reference, 0, 0)
-    # save routes using hotkey
-    typeThreeKeys('ctrl', 'shift', 'd')
+        leftClick(referencePosition, positions.reference, offsetX, offsetY)
+    if (useShortcut):
+        typeThreeKeys('ctrl', 'shift', 'd')
+    else:
+        typeTwoKeys('alt', 'f')
+        for _ in range(attrs.toolbar.file.demandElements.menu):
+            typeDown()
+        typeSpace()
+        for _ in range(attrs.toolbar.file.demandElements.save):
+            typeDown()
+        typeSpace()
     # wait for saving
-    time.sleep(DELAY_SAVING)
+    time.sleep(waitTime)
 
 
-def openDataElementsAs(useShortcut, waitTime=2):
+def saveDemandElementsAs(waitTime=2):
+    """
+    @brief save demand element as
+    """
+    typeTwoKeys('alt', 'f')
+    for _ in range(attrs.toolbar.file.demandElements.menu):
+        typeDown()
+    typeSpace()
+    for _ in range(attrs.toolbar.file.demandElements.saveAs):
+        typeDown()
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
+    # jump to filename TextField
+    typeTwoKeys('alt', 'f')
+    pasteIntoTextField(_TEXTTEST_SANDBOX)
+    typeEnter()
+    pasteIntoTextField("routesAs.rou.xml")
+    typeEnter()
+    # wait for saving
+    time.sleep(waitTime)
+
+
+def loadDataElements(useShortcut, waitTime=2):
     """
     @brief load data elements using dialog
     """
@@ -982,7 +1048,7 @@ def openDataElementsAs(useShortcut, waitTime=2):
     time.sleep(waitTime)
 
 
-def saveDatas(referencePosition, clickOverReference=True, offsetX=0, offsetY=0):
+def saveDataElements(useShortcut, referencePosition, clickOverReference=False, offsetX=0, offsetY=0, waitTime=2):
     """
     @brief save datas
     """
@@ -990,11 +1056,44 @@ def saveDatas(referencePosition, clickOverReference=True, offsetX=0, offsetY=0):
     if clickOverReference:
         # click over reference (to avoid problem with undo-redo)
         leftClick(referencePosition, positions.reference, offsetX, offsetY)
-    # save datas using hotkey
-    typeThreeKeys('ctrl', 'shift', 'b')
+    if (useShortcut):
+        typeThreeKeys('ctrl', 'shift', 'b')
+    else:
+        typeTwoKeys('alt', 'f')
+        for _ in range(attrs.toolbar.file.dataElements.menu):
+            typeDown()
+        typeSpace()
+        for _ in range(attrs.toolbar.file.dataElements.save):
+            typeDown()
+        typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
 
 
-def openMeanDataElementsAs(waitTime=2):
+def saveDataElementsAs(waitTime=2):
+    """
+    @brief save data element as
+    """
+    typeTwoKeys('alt', 'f')
+    for _ in range(attrs.toolbar.file.dataElements.menu):
+        typeDown()
+    typeSpace()
+    for _ in range(attrs.toolbar.file.dataElements.saveAs):
+        typeDown()
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
+    # jump to filename TextField
+    typeTwoKeys('alt', 'f')
+    pasteIntoTextField(_TEXTTEST_SANDBOX)
+    typeEnter()
+    pasteIntoTextField("datasAs.dat.xml")
+    typeEnter()
+    # wait for saving
+    time.sleep(waitTime)
+
+
+def loadMeanDataElements(waitTime=2):
     """
     @brief load mean data elements using dialog
     """
@@ -1018,7 +1117,7 @@ def openMeanDataElementsAs(waitTime=2):
     time.sleep(waitTime)
 
 
-def saveMeanDatas(referencePosition, clickOverReference=True, offsetX=0, offsetY=0):
+def saveMeanDatas(referencePosition, clickOverReference=False, offsetX=0, offsetY=0):
     """
     @brief save mean datas
     """
@@ -1028,6 +1127,29 @@ def saveMeanDatas(referencePosition, clickOverReference=True, offsetX=0, offsetY
         leftClick(referencePosition, positions.reference, offsetX, offsetY)
     # save datas using hotkey
     typeThreeKeys('ctrl', 'shift', 'm')
+
+
+def saveMeanDatasAs(waitTime=2):
+    """
+    @brief save data element as
+    """
+    typeTwoKeys('alt', 'f')
+    for _ in range(attrs.toolbar.file.meanDataElements.menu):
+        typeDown()
+    typeSpace()
+    for _ in range(attrs.toolbar.file.meanDataElements.saveAs):
+        typeDown()
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
+    # jump to filename TextField
+    typeTwoKeys('alt', 'f')
+    pasteIntoTextField(_TEXTTEST_SANDBOX)
+    typeEnter()
+    pasteIntoTextField("datasAs.med.add.xml")
+    typeEnter()
+    # wait for saving
+    time.sleep(waitTime)
 
 
 def overwritte(value):
@@ -1307,7 +1429,7 @@ def inspectMode():
     time.sleep(DELAY_CHANGEMODE)
 
 
-def modifyAttribute(attributeNumber, value, overlapped):
+def modifyAttribute(attributeIndex, value, overlapped):
     """
     @brief modify attribute of type int/float/string
     """
@@ -1315,10 +1437,10 @@ def modifyAttribute(attributeNumber, value, overlapped):
     focusOnFrame()
     # jump to attribute depending if it's a overlapped element
     if overlapped:
-        for _ in range(attributeNumber + 1 + attrs.editElements.overlapped):
+        for _ in range(attributeIndex + 1 + attrs.editElements.overlapped):
             typeTab()
     else:
-        for _ in range(attributeNumber + 1):
+        for _ in range(attributeIndex + 1):
             typeTab()
     # paste the new value
     pasteIntoTextField(value)
@@ -1326,7 +1448,7 @@ def modifyAttribute(attributeNumber, value, overlapped):
     typeEnter()
 
 
-def modifyBoolAttribute(attributeNumber, overlapped):
+def modifyBoolAttribute(attributeIndex, overlapped):
     """
     @brief modify boolean attribute
     """
@@ -1334,16 +1456,16 @@ def modifyBoolAttribute(attributeNumber, overlapped):
     focusOnFrame()
     # jump to attribute depending if it's a overlapped element
     if overlapped:
-        for _ in range(attributeNumber + 1 + attrs.editElements.overlapped):
+        for _ in range(attributeIndex + 1 + attrs.editElements.overlapped):
             typeTab()
     else:
-        for _ in range(attributeNumber + 1):
+        for _ in range(attributeIndex + 1):
             typeTab()
     # type SPACE to change value
     typeSpace()
 
 
-def modifyColorAttribute(attributeNumber, color, overlapped):
+def modifyColorAttribute(attributeIndex, color, overlapped):
     """
     @brief modify color using dialog
     """
@@ -1351,10 +1473,10 @@ def modifyColorAttribute(attributeNumber, color, overlapped):
     focusOnFrame()
     # jump to attribute depending if it's a overlapped element
     if overlapped:
-        for _ in range(attributeNumber + 1 + attrs.editElements.overlapped):
+        for _ in range(attributeIndex + 1 + attrs.editElements.overlapped):
             typeTab()
     else:
-        for _ in range(attributeNumber + 1):
+        for _ in range(attributeIndex + 1):
             typeTab()
     typeSpace()
     # go to list of colors TextField
@@ -1408,6 +1530,38 @@ def modifyAttributeVClassDialog(attribute, vClass, overlapped, disallowAll=True,
         typeSpace()
 
 
+def modifyAdditionalFileDialog(attributeIndex, overlapped, waitTime=2):
+    """
+    @brief modify default additional file using dialog
+    """
+    # focus current frame
+    focusOnFrame()
+    # jump to attribute depending if it's a overlapped element
+    if overlapped:
+        for _ in range(attributeIndex + 1 + attrs.editElements.overlapped):
+            typeTab()
+    else:
+        for _ in range(attributeIndex + 1):
+            typeTab()
+    # Change current value
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
+    # jump to filename TextField
+    typeTwoKeys('alt', 'f')
+    pasteIntoTextField(_TEXTTEST_SANDBOX)
+    typeEnter()
+    pasteIntoTextField("additional.secondFile.add.xml")
+    typeEnter()
+
+
+def modifyAdditionalFile(attributeIndex, overlapped):
+    """
+    @brief modify default additional file
+    """
+    modifyAttribute(attributeIndex, _TEXTTEST_SANDBOX + "/additional.thirdFile.add.xml", overlapped)
+
+
 def checkUndoRedo(referencePosition, offsetX=0, offsetY=0):
     """
     @brief Check undo-redo
@@ -1418,58 +1572,58 @@ def checkUndoRedo(referencePosition, offsetX=0, offsetY=0):
     redo(referencePosition, 9, offsetY)
 
 
-def checkParameters(referencePosition, attributeNumber, overlapped, offsetX=0, offsetY=0):
+def checkParameters(referencePosition, attributeIndex, overlapped, offsetX=0, offsetY=0):
     """
     @brief Check generic parameters
     """
     # Change generic parameters with an invalid value (dummy)
-    modifyAttribute(attributeNumber, "dummyGenericParameters", overlapped)
+    modifyAttribute(attributeIndex, "dummyGenericParameters", overlapped)
     # Change generic parameters with an invalid value (invalid format)
-    modifyAttribute(attributeNumber, "key1|key2|key3", overlapped)
+    modifyAttribute(attributeIndex, "key1|key2|key3", overlapped)
     # Change generic parameters with a valid value
-    modifyAttribute(attributeNumber, "key1=value1|key2=value2|key3=value3", overlapped)
+    modifyAttribute(attributeIndex, "key1=value1|key2=value2|key3=value3", overlapped)
     # Change generic parameters with a valid value (empty values)
-    modifyAttribute(attributeNumber, "key1=|key2=|key3=", overlapped)
+    modifyAttribute(attributeIndex, "key1=|key2=|key3=", overlapped)
     # Change generic parameters with a valid value (clear parameters)
-    modifyAttribute(attributeNumber, "", overlapped)
+    modifyAttribute(attributeIndex, "", overlapped)
     # Change generic parameters with an valid value (duplicated keys)
-    modifyAttribute(attributeNumber, "key1duplicated=value1|key1duplicated=value2|key3=value3", overlapped)
+    modifyAttribute(attributeIndex, "key1duplicated=value1|key1duplicated=value2|key3=value3", overlapped)
     # Change generic parameters with a valid value (duplicated values)
-    modifyAttribute(attributeNumber, "key1=valueDuplicated|key2=valueDuplicated|key3=valueDuplicated", overlapped)
+    modifyAttribute(attributeIndex, "key1=valueDuplicated|key2=valueDuplicated|key3=valueDuplicated", overlapped)
     # Change generic parameters with an invalid value (invalid key characters)
-    modifyAttribute(attributeNumber, "keyInvalid.;%>%$$=value1|key2=value2|key3=value3", overlapped)
+    modifyAttribute(attributeIndex, "keyInvalid.;%>%$$=value1|key2=value2|key3=value3", overlapped)
     # Change generic parameters with a invalid value (invalid value characters)
-    modifyAttribute(attributeNumber, "key1=valueInvalid%;%$<>$$%|key2=value2|key3=value3", overlapped)
+    modifyAttribute(attributeIndex, "key1=valueInvalid%;%$<>$$%|key2=value2|key3=value3", overlapped)
     # Change generic parameters with a valid value
-    modifyAttribute(attributeNumber, "keyFinal1=value1|keyFinal2=value2|keyFinal3=value3", overlapped)
+    modifyAttribute(attributeIndex, "keyFinal1=value1|keyFinal2=value2|keyFinal3=value3", overlapped)
     # Check undoRedo
     checkUndoRedo(referencePosition, offsetX, offsetY)
 
 
-def checkDoubleParameters(referencePosition, attributeNumber, overlapped, offsetX=0, offsetY=0):
+def checkDoubleParameters(referencePosition, attributeIndex, overlapped, offsetX=0, offsetY=0):
     """
     @brief Check generic parameters
     """
     # Change generic parameters with an invalid value (dummy)
-    modifyAttribute(attributeNumber, "dummyGenericParameters", overlapped)
+    modifyAttribute(attributeIndex, "dummyGenericParameters", overlapped)
     # Change generic parameters with an invalid value (invalid format)
-    modifyAttribute(attributeNumber, "key1|key2|key3", overlapped)
+    modifyAttribute(attributeIndex, "key1|key2|key3", overlapped)
     # Change generic parameters with a valid value
-    modifyAttribute(attributeNumber, "key1=1|key2=2|key3=3", overlapped)
+    modifyAttribute(attributeIndex, "key1=1|key2=2|key3=3", overlapped)
     # Change generic parameters with a valid value (empty values)
-    modifyAttribute(attributeNumber, "key1=|key2=|key3=", overlapped)
+    modifyAttribute(attributeIndex, "key1=|key2=|key3=", overlapped)
     # Change generic parameters with a valid value (clear parameters)
-    modifyAttribute(attributeNumber, "", overlapped)
+    modifyAttribute(attributeIndex, "", overlapped)
     # Change generic parameters with an valid value (duplicated keys)
-    modifyAttribute(attributeNumber, "key1duplicated=1|key1duplicated=2|key3=3", overlapped)
+    modifyAttribute(attributeIndex, "key1duplicated=1|key1duplicated=2|key3=3", overlapped)
     # Change generic parameters with a valid value (duplicated values)
-    modifyAttribute(attributeNumber, "key1=valueDuplicated|key2=valueDuplicated|key3=valueDuplicated", overlapped)
+    modifyAttribute(attributeIndex, "key1=valueDuplicated|key2=valueDuplicated|key3=valueDuplicated", overlapped)
     # Change generic parameters with an invalid value (invalid key characters)
-    modifyAttribute(attributeNumber, "keyInvalid.;%>%$$=1|key2=2|key3=3", overlapped)
+    modifyAttribute(attributeIndex, "keyInvalid.;%>%$$=1|key2=2|key3=3", overlapped)
     # Change generic parameters with a invalid value (invalid value characters)
-    modifyAttribute(attributeNumber, "key1=valueInvalid%;%$<>$$%|key2=2|key3=3", overlapped)
+    modifyAttribute(attributeIndex, "key1=valueInvalid%;%$<>$$%|key2=2|key3=3", overlapped)
     # Change generic parameters with a valid value
-    modifyAttribute(attributeNumber, "keyFinal1=1|keyFinal2=2|keyFinal3=3", overlapped)
+    modifyAttribute(attributeIndex, "keyFinal1=1|keyFinal2=2|keyFinal3=3", overlapped)
     # Check undoRedo
     checkUndoRedo(referencePosition, offsetX, offsetY)
 
@@ -1721,14 +1875,14 @@ def changeElement(element):
     typeEnter()
 
 
-def changeDefaultValue(numTabs, value):
+def changeDefaultValue(attributeIndex, value):
     """
     @brief modify default int/double/string value of an additional, shape, vehicle...
     """
     # focus current frame
     focusOnFrame()
     # go to value TextField
-    for _ in range(numTabs):
+    for _ in range(attributeIndex):
         typeTab()
     # paste new value
     pasteIntoTextField(value)
@@ -1736,23 +1890,25 @@ def changeDefaultValue(numTabs, value):
     typeEnter()
 
 
-def changeDefaultBoolValue(numTabs):
-
+def changeDefaultBoolValue(attributeIndex):
+    """
+    @brief modify default bool value of an additional, shape, vehicle...
+    """
     # focus current frame
     focusOnFrame()
     # place cursor in check Box position
-    for _ in range(numTabs):
+    for _ in range(attributeIndex):
         typeTab()
     # Change current value
     typeSpace()
 
 
-def changeDefaultAllowDisallowValue(numTabs):
+def changeDefaultAllowDisallowValue(attributeIndex):
     """
     @brief modify allow/disallow values
     """
     # open dialog
-    changeDefaultBoolValue(numTabs)
+    changeDefaultBoolValue(attributeIndex)
     # select vtypes
     for _ in range(2):
         typeTab()
@@ -1775,14 +1931,41 @@ def changeDefaultAllowDisallowValue(numTabs):
     typeSpace()
 
 
-def selectAdditionalChild(numTabs, childNumber):
+def changeAdditionalFileDialog(attributeIndex, waitTime=2):
+    """
+    @brief modify default additional file using dialog
+    """
+    # focus current frame
+    focusOnFrame()
+    for _ in range(attributeIndex):
+        typeTab()
+    # Change current value
+    typeSpace()
+    # wait for saving
+    time.sleep(waitTime)
+    # jump to filename TextField
+    typeTwoKeys('alt', 'f')
+    pasteIntoTextField(_TEXTTEST_SANDBOX)
+    typeEnter()
+    pasteIntoTextField("additional.secondFile.add.xml")
+    typeEnter()
+
+
+def changeAdditionalFile(attributeIndex):
+    """
+    @brief modify default additional file
+    """
+    changeDefaultValue(attributeIndex, _TEXTTEST_SANDBOX + "/additional.thirdFile.add.xml")
+
+
+def selectAdditionalChild(attributeIndex, childNumber):
     """
     @brief select child of additional
     """
     # focus current frame
     focusOnFrame()
     # place cursor in the list of childs
-    for _ in range(numTabs + 1):
+    for _ in range(attributeIndex + 1):
         typeTab()
     # select child
     for _ in range(childNumber):
@@ -1938,10 +2121,10 @@ def changePersonPlan(personPlan, flow):
     focusOnFrame()
     # jump to person plan
     if (flow):
-        for _ in range(23):
+        for _ in range(29):
             typeTab()
     else:
-        for _ in range(16):
+        for _ in range(21):
             typeTab()
     # paste the new personPlan
     pasteIntoTextField(personPlan)
@@ -1999,10 +2182,10 @@ def changeContainerPlan(containerPlan, flow):
     focusOnFrame()
     # jump to container plan
     if (flow):
-        for _ in range(23):
+        for _ in range(29):
             typeTab()
     else:
-        for _ in range(16):
+        for _ in range(21):
             typeTab()
     # paste the new containerPlan
     pasteIntoTextField(containerPlan)
@@ -2208,14 +2391,14 @@ def closeVTypeDialog():
     typeTwoKeys('alt', 'a')
 
 
-def modifyVTypeAttribute(attributeNumber, value):
+def modifyVTypeAttribute(attributeIndex, value):
     """
     @brief modify VType attribute of type int/float/string
     """
     # focus dialog
     typeTwoKeys('alt', 'f')
     # jump to attribute
-    for _ in range(attributeNumber):
+    for _ in range(attributeIndex):
         typeTab()
     # paste the new value
     pasteIntoTextField(value)
@@ -2862,14 +3045,14 @@ def createLineShape(referencePosition, position, sizex, sizey, close):
     typeEnter()
 
 
-def changeColorUsingDialog(numTabs, color):
+def changeColorUsingDialog(attributeIndex, color):
     """
     @brief modify default color using dialog
     """
     # focus current frame
     focusOnFrame()
     # go to length TextField
-    for _ in range(numTabs):
+    for _ in range(attributeIndex):
         typeTab()
     typeSpace()
     # go to list of colors TextField

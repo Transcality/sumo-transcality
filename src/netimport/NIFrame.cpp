@@ -203,6 +203,9 @@ NIFrame::fillOptions(OptionsCont& oc, bool forNetedit) {
     oc.doRegister("osm.sidewalks", new Option_Bool(false));
     oc.addDescription("osm.sidewalks", "Formats", TL("Import sidewalks"));
 
+    oc.doRegister("osm.oneway-reverse-sidewalk", new Option_Bool(false));
+    oc.addDescription("osm.oneway-reverse-sidewalk", "Formats", TL("Default to building two sidewalks on oneway streets (may affect divided roads)"));
+
     oc.doRegister("osm.crossings", new Option_Bool(false));
     oc.addDescription("osm.crossings", "Formats", TL("Import crossings"));
 
@@ -231,6 +234,9 @@ NIFrame::fillOptions(OptionsCont& oc, bool forNetedit) {
 
     oc.doRegister("osm.speedlimit-none", new Option_Float(39.4444));
     oc.addDescription("osm.speedlimit-none", "Formats", TL("The speed limit to be set when there is no actual speed limit in reality"));
+
+    oc.doRegister("osm.annotate-defaults", new Option_Bool(false));
+    oc.addDescription("osm.annotate-defaults", "Formats", TL("Whether edges shoulds carry information on the usage of typemap defaults"));
 
     // register matsim options
     oc.doRegister("matsim.keep-length", new Option_Bool(false));

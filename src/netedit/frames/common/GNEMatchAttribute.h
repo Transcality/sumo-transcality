@@ -27,6 +27,12 @@
 // class definitions
 // ===========================================================================
 
+class GNETagProperties;
+
+// ===========================================================================
+// class definitions
+// ===========================================================================
+
 class GNEMatchAttribute : public MFXGroupBoxModule {
     /// @brief FOX-declaration
     FXDECLARE(GNEMatchAttribute)
@@ -108,7 +114,7 @@ private:
     FXButton* myMatchStringButton;
 
     /// @brief vector with tagProperties
-    std::vector<GNETagProperties> myTagPropertiesString;
+    std::vector<const GNETagProperties*> myTagProperties;
 
     /// @brief Invalidated copy constructor.
     GNEMatchAttribute(const GNEMatchAttribute&) = delete;

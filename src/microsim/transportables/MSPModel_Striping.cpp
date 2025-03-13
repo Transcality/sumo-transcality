@@ -1088,11 +1088,11 @@ MSPModel_Striping::moveInDirectionOnLane(Pedestrians& pedestrians, const MSLane*
         const MSLane* nextLane = p.myNLI.lane;
         const MSLink* link = p.myNLI.link;
         const double dist = p.distToLaneEnd();
-        const double speed (p.getStage()->getConfiguredSpeed() >= 0
-                ? p.getStage()->getConfiguredSpeed()
-                : ((nextLane != nullptr && (USE_NET_SPEEDS || nextLane->isNormal() || nextLane->isInternal()))
-                    ? nextLane->getVehicleMaxSpeed(p.getPerson())
-                    : p.getStage()->getMaxSpeed(p.getPerson())));
+        const double speed(p.getStage()->getConfiguredSpeed() >= 0
+                           ? p.getStage()->getConfiguredSpeed()
+                           : ((nextLane != nullptr && (USE_NET_SPEEDS || nextLane->isNormal() || nextLane->isInternal()))
+                              ? nextLane->getVehicleMaxSpeed(p.getPerson())
+                              : p.getStage()->getMaxSpeed(p.getPerson())));
 
 
         if (nextLane != nullptr && dist <= LOOKAHEAD_ONCOMING_DIST) {
@@ -1128,7 +1128,7 @@ MSPModel_Striping::moveInDirectionOnLane(Pedestrians& pedestrians, const MSLane*
                 // only check close before junction, @todo we should take deceleration into account here
                 && dist - p.getMinGap() < LOOKAHEAD_SAMEDIR * speed
                 // persons move before vehicles so we subtract DELTA_TO because they cannot rely on vehicles having passed the intersection in the current time step
-                && (!link->opened(currentTime - DELTA_T, speed, speed, passingLength, p.getImpatience(currentTime), speed, 0, 0, nullptr, p.ignoreRed(link), p.getPerson())
+                && (!link->opened(currentTime - DELTA_T, speed, speed, passingLength, p.getImpatience(), speed, 0, 0, nullptr, p.ignoreRed(link), p.getPerson())
                     || p.stopForYellow(link))) {
             // prevent movement passed a closed link
             Obstacles closedLink(stripes, Obstacle(p.getEdgePos(0) + dir * (dist - NUMERICAL_EPS), 0, OBSTACLE_LINKCLOSED, "closedLink_" + link->getViaLaneOrLane()->getID(), 0));
@@ -1179,7 +1179,7 @@ MSPModel_Striping::moveInDirectionOnLane(Pedestrians& pedestrians, const MSLane*
         }
 
         // walk, taking into account all obstacles
-        p.walk(currentObs, currentTime);
+        p.walk(currentObs);
         gDebugFlag1 = false;
         if (!p.isWaitingToEnter() && !p.isJammed()) {
             Obstacle o(p);
@@ -1899,7 +1899,7 @@ MSPModel_Striping::getReserved(int stripes, double factor) {
 }
 
 void
-MSPModel_Striping::PState::walk(const Obstacles& obs, SUMOTime currentTime) {
+MSPModel_Striping::PState::walk(const Obstacles& obs) {
     const int stripes = (int)obs.size();
     const int sMax =  stripes - 1;
     assert(stripes == numStripes(myLane));
@@ -2116,7 +2116,7 @@ MSPModel_Striping::PState::walk(const Obstacles& obs, SUMOTime currentTime) {
                   << " xd=" << xDist
                   << " yd=" << yDist
                   << " vMax=" << vMax
-                  << " wTime=" << myStage->getWaitingTime(currentTime)
+                  << " wTime=" << myStage->getWaitingTime()
                   << " jammed=" << myAmJammed
                   << "\n";
         if (DEBUGCOND(*this)) {
@@ -2157,9 +2157,9 @@ MSPModel_Striping::PState::walk(const Obstacles& obs, SUMOTime currentTime) {
 
 
 double
-MSPModel_Striping::PState::getImpatience(SUMOTime now) const {
+MSPModel_Striping::PState::getImpatience() const {
     return MAX2(0., MIN2(1., myPerson->getVehicleType().getImpatience()
-                         + STEPS2TIME(myStage->getWaitingTime(now)) / MAX_WAIT_TOLERANCE));
+                         + STEPS2TIME(myStage->getWaitingTime()) / MAX_WAIT_TOLERANCE));
 }
 
 
@@ -2377,6 +2377,7 @@ MSPModel_Striping::PState::moveToXY(MSPerson* p, Position pos, MSLane* lane, dou
             myWalkingAreaPath = nullptr;
             myEdgePos = lanePos;
             myPosLat = lateral_offset - lanePosLat;
+            lane->requireCollisionCheck();
         }
         // guess direction
         const double angleDiff = GeomHelper::getMinAngleDiff(angle, oldAngle);
@@ -2411,7 +2412,9 @@ MSPModel_Striping::PState::moveToXY(MSPerson* p, Position pos, MSLane* lane, dou
 #endif
         }
 #ifdef DEBUG_MOVETOXY
-        std::cout << " newRelPos=" << Position(myEdgePos, myPosLat) << " edge=" << myPerson->getEdge()->getID() << " newPos=" << myPerson->getPosition()
+        std::cout << " newRelPos=" << Position(myEdgePos, myPosLat) << " edge=" << myPerson->getEdge()->getID()
+                  << " newPos=" << myPerson->getPosition()
+                  << " latOffset=" << getLatOffset()
                   << " oldAngle=" << oldAngle << " angleDiff=" << angleDiff << " newDir=" << myDir << "\n";
 #endif
         if (oldLane == myLane) {

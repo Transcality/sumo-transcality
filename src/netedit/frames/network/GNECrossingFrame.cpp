@@ -17,21 +17,20 @@
 ///
 // The Widget for add Crossing elements
 /****************************************************************************/
-#include <config.h>
 
-#include <utils/foxtools/MFXDynamicLabel.h>
-#include <utils/gui/windows/GUIAppEnum.h>
-#include <utils/gui/div/GUIDesigns.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNETagProperties.h>
+#include <netedit/GNETagPropertiesDatabase.h>
+#include <netedit/GNEUndoList.h>
+#include <netedit/GNEViewParent.h>
 #include <netedit/changes/GNEChange_Crossing.h>
 #include <netedit/elements/network/GNECrossing.h>
 #include <netedit/frames/network/GNECreateEdgeFrame.h>
-#include <netedit/GNENet.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEViewParent.h>
-#include <netedit/GNEUndoList.h>
+#include <utils/foxtools/MFXDynamicLabel.h>
+#include <utils/gui/div/GUIDesigns.h>
+#include <utils/gui/windows/GUIAppEnum.h>
 
 #include "GNECrossingFrame.h"
-
 
 // ===========================================================================
 // FOX callback mapping
@@ -220,7 +219,7 @@ GNECrossingFrame::CrossingParameters::~CrossingParameters() {
 void
 GNECrossingFrame::CrossingParameters::enableCrossingParameters(bool hasTLS) {
     // obtain Tag Values
-    const auto& tagProperties = GNEAttributeCarrier::getTagProperty(SUMO_TAG_CROSSING);
+    const auto crossingTagProperties = myCrossingFrameParent->getViewNet()->getNet()->getTagPropertiesDatabase()->getTagProperty(SUMO_TAG_CROSSING);
     // Enable all elements of the crossing frames
     myCrossingEdgesLabel->enable();
     myCrossingEdges->enable();
@@ -240,9 +239,9 @@ GNECrossingFrame::CrossingParameters::enableCrossingParameters(bool hasTLS) {
     if (hasTLS) {
         myCrossingPriorityCheckButton->setCheck(TRUE);
     } else {
-        myCrossingPriorityCheckButton->setCheck(GNEAttributeCarrier::parse<bool>(tagProperties.getDefaultValue(SUMO_ATTR_PRIORITY)));
+        myCrossingPriorityCheckButton->setCheck(crossingTagProperties->getDefaultBoolValue(SUMO_ATTR_PRIORITY));
     }
-    myCrossingWidth->setText(tagProperties.getDefaultValue(SUMO_ATTR_WIDTH).c_str());
+    myCrossingWidth->setText(crossingTagProperties->getDefaultStringValue(SUMO_ATTR_WIDTH).c_str());
     myCrossingWidth->setTextColor(FXRGB(0, 0, 0));
 }
 

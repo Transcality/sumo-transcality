@@ -18,11 +18,6 @@
 // A network change in which a generic data set is created or deleted
 /****************************************************************************/
 
-// ===========================================================================
-// included modules
-// ===========================================================================
-#include <config.h>
-
 #include <netedit/GNENet.h>
 #include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
@@ -34,6 +29,7 @@
 // ===========================================================================
 // FOX-declarations
 // ===========================================================================
+
 FXIMPLEMENT_ABSTRACT(GNEChange_GenericData, GNEChange, nullptr, 0)
 
 // ===========================================================================
@@ -43,7 +39,6 @@ FXIMPLEMENT_ABSTRACT(GNEChange_GenericData, GNEChange, nullptr, 0)
 GNEChange_GenericData::GNEChange_GenericData(GNEGenericData* genericData, bool forward) :
     GNEChange(Supermode::DATA, genericData, forward, genericData->isAttributeCarrierSelected()),
     myGenericData(genericData),
-    myDataSetParent(genericData->getDataIntervalParent()->getDataSetParent()),
     myDataIntervalParent(genericData->getDataIntervalParent()) {
     myGenericData->incRef("GNEChange_GenericData");
 }
@@ -56,8 +51,6 @@ GNEChange_GenericData::~GNEChange_GenericData() {
         if (myGenericData->unreferenced() &&
                 myGenericData->getNet()->getAttributeCarriers()->retrieveDataInterval(myDataIntervalParent, false) &&
                 myGenericData->getNet()->getAttributeCarriers()->retrieveGenericData(myGenericData, false)) {
-            // show extra information for tests
-            WRITE_DEBUG("Deleting unreferenced " + myGenericData->getTagStr());
             // delete generic data from interval parent
             myDataIntervalParent->removeGenericDataChild(myGenericData);
             // delete generic data
@@ -70,27 +63,23 @@ GNEChange_GenericData::~GNEChange_GenericData() {
 void
 GNEChange_GenericData::undo() {
     if (myForward) {
-        // show extra information for tests
-        WRITE_DEBUG("Removing " + myGenericData->getTagStr() + " '" + myGenericData->getID() + "' in GNEChange_GenericData");
         // unselect if mySelectedElement is enabled
         if (mySelectedElement) {
             myGenericData->unselectAttributeCarrier();
         }
         // delete generic data from interval parent
         myDataIntervalParent->removeGenericDataChild(myGenericData);
-        // restore container
-        restoreHierarchicalContainers();
+        // remove element from parent and children
+        removeElementFromParentsAndChildren(myGenericData);
     } else {
-        // show extra information for tests
-        WRITE_DEBUG("Adding " + myGenericData->getTagStr() + " '" + myGenericData->getID() + "' in GNEChange_GenericData");
         // select if mySelectedElement is enabled
         if (mySelectedElement) {
             myGenericData->selectAttributeCarrier();
         }
+        // add element in parent and children
+        addElementInParentsAndChildren(myGenericData);
         // insert generic data into interval parent
         myDataIntervalParent->addGenericDataChild(myGenericData);
-        // restore container
-        restoreHierarchicalContainers();
     }
     // require always save elements
     myGenericData->getNet()->getSavingStatus()->requireSaveDataElements();
@@ -100,26 +89,22 @@ GNEChange_GenericData::undo() {
 void
 GNEChange_GenericData::redo() {
     if (myForward) {
-        // show extra information for tests
-        WRITE_DEBUG("Adding " + myGenericData->getTagStr() + " '" + myGenericData->getID() + "' in GNEChange_GenericData");
         // select if mySelectedElement is enabled
         if (mySelectedElement) {
             myGenericData->selectAttributeCarrier();
         }
+        // add element in parent and children
+        addElementInParentsAndChildren(myGenericData);
         // insert generic data into interval parent
         myDataIntervalParent->addGenericDataChild(myGenericData);
-        // add genericData in parents and children
-        addElementInParentsAndChildren(myGenericData);
     } else {
-        // show extra information for tests
-        WRITE_DEBUG("Removing " + myGenericData->getTagStr() + " '" + myGenericData->getID() + "' in GNEChange_GenericData");
         // unselect if mySelectedElement is enabled
         if (mySelectedElement) {
             myGenericData->unselectAttributeCarrier();
         }
         // delete generic data from interval parent
         myDataIntervalParent->removeGenericDataChild(myGenericData);
-        // remove genericData from parents and children
+        // remove element from parent and children
         removeElementFromParentsAndChildren(myGenericData);
     }
     // require always save elements

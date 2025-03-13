@@ -45,6 +45,7 @@ public:
 
     /// @name inherited from GNEChange
     /// @{
+
     /// @brief get undo Name
     std::string undoName() const;
 
@@ -56,32 +57,8 @@ public:
 
     /// @brief redo action
     void redo();
+
     /// @}
-
-protected:
-    /// @brief add given lane into parents and children
-    void addEdgeLanes();
-
-    /// @brief remove given lane from parents and children
-    void removeEdgeLanes();
-
-    /// @brief vector of references to vector of parent additionals (used by edge lanes)
-    std::vector<std::vector<GNEAdditional*> > myLaneParentAdditionals;
-
-    /// @brief vector of references to vector of parent demand elements (used by edge lanes)
-    std::vector<std::vector<GNEDemandElement*> > myLaneParentDemandElements;
-
-    /// @brief vector of references to vector of parent generic datas (used by edge lanes)
-    std::vector<std::vector<GNEGenericData*> > myLaneParentGenericData;
-
-    /// @brief vector of references to vector of child additional (used by edge lanes)
-    std::vector<std::vector<GNEAdditional*> > myChildLaneAdditionals;
-
-    /// @brief vector of references to vector of child demand elements (used by edge lanes)
-    std::vector<std::vector<GNEDemandElement*> > myChildLaneDemandElements;
-
-    /// @brief vector of references to vector of child generic datas (used by edge lanes)
-    std::vector<std::vector<GNEGenericData*> > myChildLaneGenericData;
 
 private:
     /**@brief full information regarding the edge that is to be created/deleted

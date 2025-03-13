@@ -1279,6 +1279,10 @@ Vehicle::getStopParameter(const std::string& vehID, int nextStopIndex, const std
             return pars.ended < 0 ? "-1" : time2string(pars.ended);
         } else if (param == toString(SUMO_ATTR_ONDEMAND)) {
             return toString(pars.onDemand);
+        } else if (param == toString(SUMO_ATTR_JUMP)) {
+            return pars.jump < 0 ? "-1" : time2string(pars.jump);
+        } else if (param == toString(SUMO_ATTR_JUMP_UNTIL)) {
+            return pars.jumpUntil < 0 ? "-1" : time2string(pars.jumpUntil);
         } else {
             throw ProcessError(TLF("Unsupported parameter '%'", param));
         }
@@ -1414,6 +1418,9 @@ Vehicle::setStopParameter(const std::string& vehID, int nextStopIndex,
         } else if (param == toString(SUMO_ATTR_JUMP)) {
             pars.jump = string2time(value);
             pars.parametersSet |= STOP_JUMP_SET;
+        } else if (param == toString(SUMO_ATTR_JUMP_UNTIL)) {
+            pars.jumpUntil = string2time(value);
+            pars.parametersSet |= STOP_JUMP_UNTIL_SET;
         } else {
             throw ProcessError(TLF("Unsupported parameter '%'", param));
         }
@@ -1769,7 +1776,7 @@ Vehicle::moveToXY(const std::string& vehID, const std::string& edgeID, const int
         const double speed = pos.distanceTo2D(veh->getPosition()); // !!!veh->getSpeed();
         found = Helper::moveToXYMap(pos, maxRouteDistance, mayLeaveNetwork, origID, angle,
                                     speed, veh->getRoute().getEdges(), veh->getRoutePosition(), veh->getLane(), veh->getPositionOnLane(), veh->isOnRoad(),
-                                    vClass, setLateralPos,
+                                    vClass, GeomHelper::naviDegree(veh->getAngle()), setLateralPos,
                                     bestDistance, &lane, lanePos, routeOffset, edges);
     }
     if ((found && bestDistance <= maxRouteDistance) || mayLeaveNetwork) {
@@ -2516,10 +2523,15 @@ Vehicle::setParameter(const std::string& vehID, const std::string& key, const st
             throw TraCIException("Meso Vehicle '" + vehID + "' does not support laneChangeModel parameters.");
         }
         const std::string attrName = key.substr(16);
-        try {
-            microVeh->getLaneChangeModel().setParameter(attrName, value);
-        } catch (InvalidArgument& e) {
-            throw TraCIException("Vehicle '" + vehID + "' does not support laneChangeModel parameter '" + key + "' (" + e.what() + ").");
+        if (attrName == toString(SUMO_ATTR_LCA_CONTRIGHT)) {
+            // special case: not used within lcModel
+            veh->getSingularType().setLcContRight(value);
+        } else {
+            try {
+                microVeh->getLaneChangeModel().setParameter(attrName, value);
+            } catch (InvalidArgument& e) {
+                throw TraCIException("Vehicle '" + vehID + "' does not support laneChangeModel parameter '" + key + "' (" + e.what() + ").");
+            }
         }
     } else if (StringUtils::startsWith(key, "carFollowModel.")) {
         if (microVeh == nullptr) {

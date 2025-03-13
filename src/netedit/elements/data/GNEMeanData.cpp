@@ -17,65 +17,48 @@
 ///
 // Class for representing MeanData
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEViewParent.h>
+#include <netedit/GNETagProperties.h>
 #include <netedit/changes/GNEChange_Attribute.h>
-#include <netedit/elements/data/GNEMeanData.h>
-#include <netedit/frames/common/GNESelectorFrame.h>
-#include <netedit/frames/data/GNEMeanDataFrame.h>
-#include <netedit/frames/data/GNEEdgeDataFrame.h>
-#include <utils/gui/div/GLHelper.h>
-#include <utils/gui/div/GUIParameterTableWindow.h>
-#include <utils/gui/globjects/GLIncludes.h>
-#include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
-#include <utils/gui/div/GUIDesigns.h>
 
 #include "GNEMeanData.h"
-
 
 // ===========================================================================
 // member method definitions
 // ===========================================================================
 
-GNEMeanData::GNEMeanData(GNENet* net, SumoXMLTag tag, const std::string& id) :
-    GNEHierarchicalElement(net, tag, {}, {}, {}, {}, {}, {}),
-myID(id) {
+GNEMeanData::GNEMeanData(SumoXMLTag tag, std::string ID, GNENet* net, const std::string& filename) :
+    GNEAttributeCarrier(tag, net, filename, true),
+    myID(ID) {
     // reset default values
     resetDefaultValues();
-    // set file
-    if (myFile.empty()) {
-        myFile = (myID + ".xml");
-    }
 }
 
 
-GNEMeanData::GNEMeanData(GNENet* net, SumoXMLTag tag, std::string ID, std::string file, SUMOTime period,
-                         SUMOTime begin, SUMOTime end, const bool trackVehicles, const std::vector<SumoXMLAttr>& writtenAttributes,
-                         const bool aggregate, const std::vector<std::string>& edges, const std::string& edgeFile,
-                         std::string excludeEmpty, const bool withInternal, const std::vector<std::string>& detectPersons,
-                         const double minSamples, const double maxTravelTime, const std::vector<std::string>& vTypes, const double speedThreshold) :
-    GNEHierarchicalElement(net, tag, {}, {}, {}, {}, {}, {}),
-myID(ID),
-myFile(file),
-myPeriod(period),
-myBegin(begin),
-myEnd(end),
-myTrackVehicles(trackVehicles),
-myWrittenAttributes(writtenAttributes),
-myAggregate(aggregate),
-myEdges(edges),
-myEdgeFile(edgeFile),
-myExcludeEmpty(excludeEmpty),
-myWithInternal(withInternal),
-myDetectPersons(detectPersons),
-myMinSamples(minSamples),
-myMaxTravelTime(maxTravelTime),
-myVTypes(vTypes),
-mySpeedThreshold(speedThreshold) {
+GNEMeanData::GNEMeanData(SumoXMLTag tag, std::string ID, GNENet* net, const std::string& filename, const std::string& file, const SUMOTime period,
+                         const SUMOTime begin, const SUMOTime end, const bool trackVehicles, const std::vector<SumoXMLAttr>& writtenAttributes,
+                         const bool aggregate, const std::vector<std::string>& edges, const std::string& edgeFile, const std::string& excludeEmpty,
+                         const bool withInternal, const std::vector<std::string>& detectPersons, const double minSamples, const double maxTravelTime,
+                         const std::vector<std::string>& vTypes, const double speedThreshold) :
+    GNEAttributeCarrier(tag, net, filename, false),
+    myID(ID),
+    myFile(file),
+    myPeriod(period),
+    myBegin(begin),
+    myEnd(end),
+    myTrackVehicles(trackVehicles),
+    myWrittenAttributes(writtenAttributes),
+    myAggregate(aggregate),
+    myEdges(edges),
+    myEdgeFile(edgeFile),
+    myExcludeEmpty(excludeEmpty),
+    myWithInternal(withInternal),
+    myDetectPersons(detectPersons),
+    myMinSamples(minSamples),
+    myMaxTravelTime(maxTravelTime),
+    myVTypes(vTypes),
+    mySpeedThreshold(speedThreshold) {
     // set file
     if (myFile.empty()) {
         myFile = (myID + ".xml");
@@ -86,9 +69,15 @@ mySpeedThreshold(speedThreshold) {
 GNEMeanData::~GNEMeanData() {}
 
 
+GNEHierarchicalElement*
+GNEMeanData::getHierarchicalElement() {
+    return this;
+}
+
+
 void
 GNEMeanData::writeMeanData(OutputDevice& device) const {
-    device.openTag(getTagProperty().getTag());
+    device.openTag(getTagProperty()->getTag());
     // write needed attributes
     device.writeAttr(SUMO_ATTR_ID, getID());
     device.writeAttr(SUMO_ATTR_FILE, myFile);
@@ -102,7 +91,7 @@ GNEMeanData::writeMeanData(OutputDevice& device) const {
     if (myEnd != -1) {
         device.writeAttr(SUMO_ATTR_END, STEPS2TIME(myEnd));
     }
-    if (myExcludeEmpty != "default") {
+    if (myExcludeEmpty != myTagProperty->getDefaultStringValue(SUMO_ATTR_EXCLUDE_EMPTY)) {
         device.writeAttr(SUMO_ATTR_EXCLUDE_EMPTY, myExcludeEmpty);
     }
     if (myWithInternal) {
@@ -258,7 +247,7 @@ GNEMeanData::getAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_AGGREGATE:
             return toString(myAggregate);
         default:
-            return getCommonAttribute(key);
+            return getCommonAttribute(this, key);
     }
 }
 
@@ -305,7 +294,7 @@ bool
 GNEMeanData::isValid(SumoXMLAttr key, const std::string& value) {
     switch (key) {
         case SUMO_ATTR_ID:
-            return SUMOXMLDefinitions::isValidNetID(value) && (myNet->getAttributeCarriers()->retrieveMeanData(myTagProperty.getTag(), value, false) == nullptr);
+            return SUMOXMLDefinitions::isValidNetID(value) && (myNet->getAttributeCarriers()->retrieveMeanData(myTagProperty->getTag(), value, false) == nullptr);
         case SUMO_ATTR_FILE:
             return SUMOXMLDefinitions::isValidFilename(value);
         case SUMO_ATTR_PERIOD:
@@ -320,7 +309,7 @@ GNEMeanData::isValid(SumoXMLAttr key, const std::string& value) {
             if (canParse<bool>(value)) {
                 return true;
             } else {
-                return (value == "default");
+                return (value == SUMOXMLDefinitions::ExcludeEmptys.getString(ExcludeEmpty::DEFAULTS));
             }
         case SUMO_ATTR_WITH_INTERNAL:
             return (canParse<bool>(value));
@@ -372,7 +361,7 @@ GNEMeanData::getHierarchyName() const {
 
 const Parameterised::Map&
 GNEMeanData::getACParametersMap() const {
-    return GNEAttributeCarrier::PARAMETERS_EMPTY;
+    return getParametersMap();
 }
 
 
@@ -408,7 +397,13 @@ GNEMeanData::setAttribute(SumoXMLAttr key, const std::string& value) {
             }
             break;
         case SUMO_ATTR_EXCLUDE_EMPTY:
-            myExcludeEmpty = value;
+            if (value == SUMOXMLDefinitions::ExcludeEmptys.getString(ExcludeEmpty::DEFAULTS)) {
+                myExcludeEmpty = value;
+            } else if (parse<bool>(value)) {
+                myExcludeEmpty = SUMOXMLDefinitions::ExcludeEmptys.getString(ExcludeEmpty::TRUES);
+            } else {
+                myExcludeEmpty = SUMOXMLDefinitions::ExcludeEmptys.getString(ExcludeEmpty::FALSES);
+            }
             break;
         case SUMO_ATTR_WITH_INTERNAL:
             myWithInternal = parse<bool>(value);
@@ -448,7 +443,7 @@ GNEMeanData::setAttribute(SumoXMLAttr key, const std::string& value) {
             myAggregate = parse<bool>(value);
             break;
         default:
-            setCommonAttribute(key, value);
+            setCommonAttribute(this, key, value);
             break;
     }
 }

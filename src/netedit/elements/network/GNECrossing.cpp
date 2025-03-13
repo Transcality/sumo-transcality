@@ -17,9 +17,9 @@
 ///
 // A class for visualizing Inner Lanes (used when editing traffic lights)
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
+#include <netedit/GNETagProperties.h>
 #include <netedit/GNEUndoList.h>
 #include <netedit/GNEViewNet.h>
 #include <netedit/changes/GNEChange_Attribute.h>
@@ -32,27 +32,24 @@
 
 #include "GNECrossing.h"
 
-
 // ===========================================================================
 // method definitions
 // ===========================================================================
 
 GNECrossing::GNECrossing(GNENet* net) :
-    GNENetworkElement(net, "", GLO_CROSSING, SUMO_TAG_CROSSING, GUIIconSubSys::getIcon(GUIIcon::CROSSING), {}, {}, {}, {}, {}, {}),
-                  myParentJunction(nullptr),
-myTemplateNBCrossing(new NBNode::Crossing(nullptr, {}, 0, false, 0, 0, {})) {
+    GNENetworkElement(net, "", GLO_CROSSING, SUMO_TAG_CROSSING, GUIIcon::CROSSING),
+    myTemplateNBCrossing(new NBNode::Crossing(nullptr, {}, 0, false, 0, 0, {})) {
     // reset default values
     resetDefaultValues();
 }
 
-GNECrossing::GNECrossing(GNEJunction* parentJunction, std::vector<NBEdge*> crossingEdges) :
-    GNENetworkElement(parentJunction->getNet(), parentJunction->getNBNode()->getCrossing(crossingEdges)->id, GLO_CROSSING,
-                      SUMO_TAG_CROSSING, GUIIconSubSys::getIcon(GUIIcon::CROSSING), {}, {}, {}, {}, {}, {}),
-myParentJunction(parentJunction),
-myCrossingEdges(crossingEdges),
-myTemplateNBCrossing(nullptr) {
-    // update centering boundary without updating grid
-    updateCenteringBoundary(false);
+
+GNECrossing::GNECrossing(GNEJunction* junction, std::vector<NBEdge*> crossingEdges) :
+    GNENetworkElement(junction->getNet(), junction->getNBNode()->getCrossing(crossingEdges)->id, GLO_CROSSING, SUMO_TAG_CROSSING, GUIIcon::CROSSING),
+    myCrossingEdges(crossingEdges),
+    myTemplateNBCrossing(nullptr) {
+    // set parent
+    setParent<GNEJunction*>(junction);
 }
 
 
@@ -206,12 +203,6 @@ GNECrossing::removeGeometryPoint(const Position clickedPosition, GNEUndoList* un
 }
 
 
-GNEJunction*
-GNECrossing::getParentJunction() const {
-    return myParentJunction;
-}
-
-
 const std::vector<NBEdge*>&
 GNECrossing::getCrossingEdges() const {
     return myCrossingEdges;
@@ -223,7 +214,7 @@ GNECrossing::getNBCrossing() const {
     if (myTemplateNBCrossing) {
         return myTemplateNBCrossing;
     } else {
-        return myParentJunction->getNBNode()->getCrossing(myCrossingEdges);
+        return getParentJunctions().front()->getNBNode()->getCrossing(myCrossingEdges);
     }
 }
 
@@ -283,7 +274,7 @@ GNECrossing::updateGLObject() {
 void
 GNECrossing::drawTLSLinkNo(const GUIVisualizationSettings& s, const NBNode::Crossing* crossing) const {
     // check if draw
-    if (s.drawLinkTLIndex.show(myParentJunction)) {
+    if (s.drawLinkTLIndex.show(getParentJunctions().front())) {
         // push matrix
         GLHelper::pushMatrix();
         // move to GLO_Crossing
@@ -310,14 +301,8 @@ GNECrossing::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
         return getShapeEditedPopUpMenu(app, parent, getNBCrossing()->customShape);
     } else {
         GUIGLObjectPopupMenu* ret = new GUIGLObjectPopupMenu(app, parent, *this);
-        buildPopupHeader(ret, app);
-        buildCenterPopupEntry(ret);
-        buildNameCopyPopupEntry(ret);
-        // build selection and show parameters menu
-        myNet->getViewNet()->buildSelectionACPopupEntry(ret, this);
-        buildShowParamsPopupEntry(ret);
-        // build position copy entry
-        buildPositionCopyEntry(ret, app);
+        // build common options
+        buildPopUpMenuCommonOptions(ret, app, myTagProperty->getTag(), mySelected);
         // check if we're in supermode network
         if (myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork()) {
             // create menu commands
@@ -369,10 +354,8 @@ GNECrossing::getAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_SHAPE:
         case SUMO_ATTR_CUSTOMSHAPE:
             return toString(crossing->customShape);
-        case GNE_ATTR_PARAMETERS:
-            return crossing->getParametersStr();
         default:
-            return getCommonAttribute(key);
+            return getCommonAttribute(crossing, key);
     }
 }
 
@@ -404,7 +387,6 @@ GNECrossing::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList
         case SUMO_ATTR_TLLINKINDEX2:
         case SUMO_ATTR_SHAPE:
         case SUMO_ATTR_CUSTOMSHAPE:
-        case GNE_ATTR_PARAMETERS:
             GNEChange_Attribute::changeAttribute(this, key, value, undoList, true);
             break;
         default:
@@ -451,7 +433,7 @@ GNECrossing::isValid(SumoXMLAttr key, const std::string& value) {
                 if (toString(nbEdges) == toString(originalEdges)) {
                     return true;
                 } else {
-                    return !myParentJunction->getNBNode()->checkCrossingDuplicated(nbEdges);
+                    return !getParentJunctions().front()->getNBNode()->checkCrossingDuplicated(nbEdges);
                 }
             } else {
                 return false;
@@ -466,14 +448,12 @@ GNECrossing::isValid(SumoXMLAttr key, const std::string& value) {
             return (isAttributeEnabled(key) &&
                     canParse<int>(value)
                     && (parse<double>(value) >= 0 || parse<double>(value) == -1)
-                    && myParentJunction->getNBNode()->getControllingTLS().size() > 0
-                    && (*myParentJunction->getNBNode()->getControllingTLS().begin())->getMaxValidIndex() >= parse<int>(value));
+                    && getParentJunctions().front()->getNBNode()->getControllingTLS().size() > 0
+                    && (*getParentJunctions().front()->getNBNode()->getControllingTLS().begin())->getMaxValidIndex() >= parse<int>(value));
         case SUMO_ATTR_SHAPE:
         case SUMO_ATTR_CUSTOMSHAPE:
             // empty shapes are allowed
             return canParse<PositionVector>(value);
-        case GNE_ATTR_PARAMETERS:
-            return Parameterised::areParametersValid(value);
         default:
             return isValid(key, value);
     }
@@ -624,7 +604,7 @@ void
 GNECrossing::calculateCrossingContour(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
                                       const double width, const double exaggeration) const {
     // first check if junction parent was inserted with full boundary
-    if (!gViewObjectsHandler.checkBoundaryParentObject(this, getType(), myParentJunction)) {
+    if (!gViewObjectsHandler.checkBoundaryParentObject(this, getType(), getParentJunctions().front())) {
         // check if calculate contour for geometry points
         if (myShapeEdited) {
             myNetworkElementContour.calculateContourAllGeometryPoints(s, d, this, myCrossingGeometry.getShape(),
@@ -636,7 +616,7 @@ GNECrossing::calculateCrossingContour(const GUIVisualizationSettings& s, const G
                                               (myNet->getViewNet()->getEditNetworkElementShapes().getEditedNetworkElement() == this) : true;
             // calculate contour and
             myNetworkElementContour.calculateContourExtrudedShape(s, d, this, myCrossingGeometry.getShape(), getType(),
-                    width, exaggeration, true, true, 0, nullptr, myParentJunction, addToSelectedObjects);
+                    width, exaggeration, true, true, 0, nullptr, getParentJunctions().front(), addToSelectedObjects);
         }
     }
 }
@@ -662,16 +642,12 @@ GNECrossing::setAttribute(SumoXMLAttr key, const std::string& value) {
             // change myCrossingEdges by the new edges
             myCrossingEdges = crossing->edges;
             // update geometry of parent junction
-            myParentJunction->updateGeometry();
+            getParentJunctions().front()->updateGeometry();
             break;
         }
         case SUMO_ATTR_WIDTH:
             // Change width an refresh element
             crossing->customWidth = parse<double>(value);
-            // update boundary
-            if (myParentJunction) {
-                updateCenteringBoundary(false);
-            }
             break;
         case SUMO_ATTR_PRIORITY:
             crossing->priority = parse<bool>(value);
@@ -690,21 +666,14 @@ GNECrossing::setAttribute(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_CUSTOMSHAPE:
             // set custom shape
             crossing->customShape = parse<PositionVector>(value);
-            // update boundary
-            if (myParentJunction) {
-                updateCenteringBoundary(false);
-            }
-            break;
-        case GNE_ATTR_PARAMETERS:
-            crossing->setParametersStr(value);
             break;
         default:
-            setCommonAttribute(key, value);
+            setCommonAttribute(crossing, key, value);
             break;
     }
     // Crossing are a special case and we need ot update geometry of junction instead of crossing
-    if (myParentJunction && (key != SUMO_ATTR_ID) && (key != GNE_ATTR_PARAMETERS) && (key != GNE_ATTR_SELECTED)) {
-        myParentJunction->updateGeometry();
+    if ((getParentJunctions().size() > 0) && (key != SUMO_ATTR_ID) && (key != GNE_ATTR_PARAMETERS) && (key != GNE_ATTR_SELECTED)) {
+        getParentJunctions().front()->updateGeometry();
     }
     // invalidate demand path calculator
     myNet->getDemandPathManager()->getPathCalculator()->invalidatePathCalculator();

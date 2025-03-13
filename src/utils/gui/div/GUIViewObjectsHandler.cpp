@@ -58,9 +58,9 @@ GUIViewObjectsHandler::getSelectionPosition() const {
 }
 
 
-const Boundary&
-GUIViewObjectsHandler::getSelectionBoundary() const {
-    return mySelectionBoundary;
+const Triangle&
+GUIViewObjectsHandler::getSelectionTriangle() const {
+    return mySelectionTriangle;
 }
 
 
@@ -68,19 +68,23 @@ void
 GUIViewObjectsHandler::setSelectionPosition(const Position& pos) {
     // set position selection
     mySelectionPosition = pos;
-    // invalidate selection boundary
-    mySelectionBoundary.reset();
-    mySelectionBoundaryShape.clear();
+    // invalidate selection triangle
+    mySelectionTriangle = Triangle::INVALID;
 }
 
 
 void
-GUIViewObjectsHandler::setSelectionBoundary(const Boundary& boundary) {
+GUIViewObjectsHandler::setSelectionTriangle(const Triangle& triangle) {
     // invalidate position selection
     mySelectionPosition = Position::INVALID;
-    // set selection boundary
-    mySelectionBoundary = boundary;
-    mySelectionBoundaryShape = boundary.getShape(false);
+    // set selection triangle
+    mySelectionTriangle = triangle;
+}
+
+
+bool
+GUIViewObjectsHandler::selectingUsingRectangle() const {
+    return mySelectionTriangle != Triangle::INVALID;
 }
 
 
@@ -88,7 +92,7 @@ bool
 GUIViewObjectsHandler::checkBoundaryParentObject(const GUIGlObject* GLObject, const double layer,
         const GUIGlObject* parent) {
     // first check if we're selecting for boundary
-    if (!mySelectionBoundary.isInitialised()) {
+    if (mySelectionTriangle == Triangle::INVALID) {
         return false;
     }
     // try to find parent in seleted object
@@ -105,7 +109,7 @@ GUIViewObjectsHandler::checkBoundaryParentObject(const GUIGlObject* GLObject, co
 
 bool
 GUIViewObjectsHandler::checkCircleObject(const GUIVisualizationSettings::Detail d, const GUIGlObject* GLObject,
-        const Position& center, const double radius, const Boundary& circleBoundary, const double layer) {
+        const Position& center, const double radius, const double layer) {
     // first check that object doesn't exist
     if (isObjectSelected(GLObject)) {
         return false;
@@ -113,32 +117,18 @@ GUIViewObjectsHandler::checkCircleObject(const GUIVisualizationSettings::Detail 
         // declare squared radius
         const double squaredRadius = (radius * radius);
         // continue depending if we're selecting a position or a boundary
-        if (mySelectionBoundary.isInitialised()) {
+        if (selectingUsingRectangle()) {
             // continue depending of detail level
             if (d <= GUIVisualizationSettings::Detail::PreciseSelection) {
-                // avoid empty boundaries
-                if (!circleBoundary.isInitialised()) {
+                // check if triangle intersect with circle
+                if (mySelectionTriangle.intersectWithCircle(center, radius)) {
+                    return selectObject(GLObject, layer, false, false, nullptr);
+                } else {
                     return false;
                 }
-                // check if selection boundary contains the centering boundary of object
-                if (mySelectionBoundary.contains2D(GLObject->getCenteringBoundary())) {
-                    return selectObject(GLObject, layer, false, true, nullptr);
-                }
-                // check if boundary overlaps
-                if (mySelectionBoundary.overlapsWith(circleBoundary)) {
-                    return selectObject(GLObject, layer, false, false, nullptr);
-                }
-                // check if the four boundary vertex are within circle
-                for (const auto& vertex : mySelectionBoundaryShape) {
-                    if (vertex.distanceSquaredTo2D(center) <= squaredRadius) {
-                        return selectObject(GLObject, layer, false, false, nullptr);
-                    }
-                }
-                // no intersection, then return false
-                return false;
             } else {
-                // check if center is within mySelectionBoundary
-                if (mySelectionBoundary.around2D(center)) {
+                // simply check if center is within triangle
+                if (mySelectionTriangle.isPositionWithin(center)) {
                     return selectObject(GLObject, layer, false, false, nullptr);
                 } else {
                     return false;
@@ -166,32 +156,22 @@ GUIViewObjectsHandler::checkGeometryPoint(const GUIVisualizationSettings::Detail
     // declare squared radius
     const double squaredRadius = (radius * radius);
     // continue depending if we're selecting a position or a boundary
-    if (mySelectionBoundary.isInitialised()) {
+    if (selectingUsingRectangle()) {
         // continue depending of detail level
         if (d <= GUIVisualizationSettings::Detail::PreciseSelection) {
-            // make a boundary using center and radius
+            // calculate boundary for geometry point
             Boundary geometryPointBoundary;
             geometryPointBoundary.add(geometryPointPos);
-            geometryPointBoundary.grow(radius);
-            // check if boundary is whithin selection boundary
-            if (mySelectionBoundary.contains2D(geometryPointBoundary)) {
-                return selectGeometryPoint(GLObject, index, layer);
-            } else if (mySelectionBoundary.overlapsWith(geometryPointBoundary)) {
+            // check if center is within mySelectionBoundary
+            if (mySelectionTriangle.intersectWithCircle(geometryPointPos, radius)) {
                 return selectGeometryPoint(GLObject, index, layer);
             } else {
-                // check if the four boundary vertex are within circle
-                for (const auto& vertex : mySelectionBoundaryShape) {
-                    if (vertex.distanceSquaredTo2D(geometryPointPos) <= squaredRadius) {
-                        return selectGeometryPoint(GLObject, index, layer);
-                    }
-                }
-                // no intersection, then return false
                 return false;
             }
         } else {
-            // check if center is within mySelectionBoundary
-            if (mySelectionBoundary.around2D(geometryPointPos)) {
-                return selectGeometryPoint(GLObject, index, layer);
+            // simply check if center is within triangle
+            if (mySelectionTriangle.isPositionWithin(geometryPointPos)) {
+                return selectObject(GLObject, layer, false, false, nullptr);
             } else {
                 return false;
             }
@@ -235,20 +215,14 @@ GUIViewObjectsHandler::checkShapeObject(const GUIGlObject* GLObject, const Posit
     // first check that object doesn't exist
     if (isObjectSelected(GLObject)) {
         return false;
-    } else if (mySelectionBoundary.isInitialised()) {
+    } else if (selectingUsingRectangle()) {
         // avoid invalid boundaries
         if (!shapeBoundary.isInitialised()) {
             return false;
         }
-        // check if selection boundary contains the centering boundary of object
-        if (mySelectionBoundary.contains2D(shapeBoundary)) {
+        // check if triangle contains the given shape
+        if (mySelectionTriangle.intersectWithShape(shape, shapeBoundary)) {
             return selectObject(GLObject, layer, false, true, segment);
-        }
-        // check if shape crosses to selection boundary
-        for (int i = 1; i < (int)shape.size(); i++) {
-            if (mySelectionBoundary.crosses(shape[i - 1], shape[i])) {
-                return selectObject(GLObject, layer, false, false, segment);
-            }
         }
         // no intersection, then return false
         return false;
@@ -273,7 +247,7 @@ GUIViewObjectsHandler::selectObject(const GUIGlObject* GLObject, const double la
         return false;
     } else {
         auto& layerContainer = mySortedSelectedObjects[layer * -1];
-        layerContainer.insert(layerContainer.begin(), ObjectContainer(GLObject));
+        layerContainer.append(ObjectContainer(GLObject));
         mySelectedObjects[GLObject] = std::make_pair(fullBoundary, segment);
         myNumberOfSelectedObjects++;
         return true;
@@ -302,8 +276,8 @@ GUIViewObjectsHandler::selectGeometryPoint(const GUIGlObject* GLObject, const in
     }
     // no element found then add it
     auto& layerContainer = mySortedSelectedObjects[layer * -1];
-    auto it = layerContainer.insert(layerContainer.begin(), ObjectContainer(GLObject));
-    it->geometryPoints.push_back(newIndex);
+    layerContainer.append(ObjectContainer(GLObject));
+    layerContainer.back().geometryPoints.push_back(newIndex);
     mySelectedObjects[GLObject] = std::make_pair(false, nullptr);
     myNumberOfSelectedObjects++;
     return true;
@@ -330,8 +304,8 @@ GUIViewObjectsHandler::selectPositionOverShape(const GUIGlObject* GLObject, cons
     }
     // no element found then add it
     auto& layerContainer = mySortedSelectedObjects[layer * -1];
-    auto it = layerContainer.insert(layerContainer.begin(), ObjectContainer(GLObject));
-    it->posOverShape = pos;
+    layerContainer.append(ObjectContainer(GLObject));
+    layerContainer.back().posOverShape = pos;
     mySelectedObjects[GLObject] = std::make_pair(false, nullptr);
     myNumberOfSelectedObjects++;
     return true;
@@ -406,6 +380,14 @@ GUIViewObjectsHandler::getNumberOfSelectedObjects() const {
 }
 
 
+void
+GUIViewObjectsHandler::reverseSelectedObjects() {
+    for (auto& layerContainer : mySortedSelectedObjects) {
+        std::reverse(layerContainer.second.begin(), layerContainer.second.end());
+    }
+}
+
+
 const std::set<const GNEPathElement*>&
 GUIViewObjectsHandler::getRedrawPathElements() const {
     return myRedrawPathElements;
@@ -467,7 +449,7 @@ GUIViewObjectsHandler::updateFrontObject(const GUIGlObject* GLObject) {
     }
     // add element again wit a new layer
     if (frontElement.object) {
-        mySortedSelectedObjects[(double)GLO_FRONTELEMENT].push_back(frontElement);
+        mySortedSelectedObjects[(double)GLO_FRONTELEMENT].append(frontElement);
     }
 }
 
@@ -489,8 +471,21 @@ GUIViewObjectsHandler::isolateEdgeGeometryPoints() {
         // clear all selected objects
         mySortedSelectedObjects.clear();
         // add edge with geometry points as front element
-        mySortedSelectedObjects[(double)GLO_FRONTELEMENT].push_back(edgeWithGeometryPoints);
+        mySortedSelectedObjects[(double)GLO_FRONTELEMENT].append(edgeWithGeometryPoints);
     }
+}
+
+
+void
+GUIViewObjectsHandler::ObjectContainerLayer::append(const ObjectContainer& objectContainer) {
+    if (capacity() == size()) {
+        if (size() < 10) {
+            reserve(size() + 10);
+        } else {
+            reserve(size() + 1000);
+        }
+    }
+    push_back(objectContainer);
 }
 
 /****************************************************************************/

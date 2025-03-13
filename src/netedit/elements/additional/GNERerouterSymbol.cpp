@@ -31,16 +31,17 @@
 // ===========================================================================
 
 GNERerouterSymbol::GNERerouterSymbol(GNENet* net) :
-    GNEAdditional("", net, GLO_REROUTER, GNE_TAG_REROUTER_SYMBOL, GUIIconSubSys::getIcon(GUIIcon::REROUTER), "",
-{}, {}, {}, {}, {}, {}) {
+    GNEAdditional("", net, "", GLO_REROUTER, GNE_TAG_REROUTER_SYMBOL, GUIIcon::REROUTER, "") {
     // reset default values
     resetDefaultValues();
 }
 
 
 GNERerouterSymbol::GNERerouterSymbol(GNEAdditional* rerouterParent, GNEEdge* edge) :
-    GNEAdditional(rerouterParent->getNet(), GLO_REROUTER, GNE_TAG_REROUTER_SYMBOL, GUIIconSubSys::getIcon(GUIIcon::REROUTER), "",
-{}, {edge}, {}, {rerouterParent}, {}, {}) {
+    GNEAdditional(rerouterParent, GLO_REROUTER, GNE_TAG_REROUTER_SYMBOL, GUIIcon::REROUTER, "") {
+    // set parents
+    setParent<GNEEdge*>(edge);
+    setParent<GNEAdditional*>(rerouterParent);
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
@@ -103,7 +104,7 @@ GNERerouterSymbol::updateGeometry() {
     mySymbolGeometries.clear();
     // iterate over all lanes
     NBEdge* nbe = getParentEdges().front()->getNBEdge();
-    for (const auto& lane : getParentEdges().front()->getLanes()) {
+    for (const auto& lane : getParentEdges().front()->getChildLanes()) {
         if ((nbe->getPermissions(lane->getIndex()) & ~SVC_PEDESTRIAN) == 0) {
             continue;
         }
@@ -179,32 +180,32 @@ GNERerouterSymbol::getAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_EDGE:
             return getParentEdges().front()->getID();
         default:
-            return getCommonAttribute(key);
+            return getCommonAttribute(nullptr, key);
     }
 }
 
 
 double
 GNERerouterSymbol::getAttributeDouble(SumoXMLAttr /*key*/) const {
-    throw InvalidArgument("Symbols cannot be edited");
+    return 0;
 }
 
 
 const Parameterised::Map&
 GNERerouterSymbol::getACParametersMap() const {
-    return PARAMETERS_EMPTY;
+    return getParametersMap();
 }
 
 
 void
-GNERerouterSymbol::setAttribute(SumoXMLAttr /*key*/, const std::string& /*value*/, GNEUndoList* /*undoList*/) {
-    throw InvalidArgument("Symbols cannot be edited");
+GNERerouterSymbol::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList* undoList) {
+    setCommonAttribute(key, value, undoList);
 }
 
 
 bool
-GNERerouterSymbol::isValid(SumoXMLAttr /*key*/, const std::string& /*value*/) {
-    throw InvalidArgument("Symbols cannot be edited");
+GNERerouterSymbol::isValid(SumoXMLAttr key, const std::string& value) {
+    return isCommonValid(key, value);
 }
 
 
@@ -285,8 +286,8 @@ GNERerouterSymbol::drawRerouterSymbol(const GUIVisualizationSettings& s, const G
 
 
 void
-GNERerouterSymbol::setAttribute(SumoXMLAttr /*key*/, const std::string& /*value*/) {
-    throw InvalidArgument("Symbols cannot be edited");
+GNERerouterSymbol::setAttribute(SumoXMLAttr key, const std::string& value) {
+    setCommonAttribute(this, key, value);
 }
 
 

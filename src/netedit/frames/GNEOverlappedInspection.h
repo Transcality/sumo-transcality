@@ -20,6 +20,7 @@
 #pragma once
 #include <config.h>
 
+#include <netedit/GNEViewNetHelper.h>
 #include <utils/foxtools/MFXGroupBoxModule.h>
 #include <utils/geom/Position.h>
 
@@ -45,7 +46,7 @@ public:
     ~GNEOverlappedInspection();
 
     /// @brief show overlapped inspection
-    void showOverlappedInspection(GNEViewNetHelper::ViewObjectsSelector& viewObjects, const Position &clickedPosition, const bool shiftKeyPressed);
+    void showOverlappedInspection(GNEViewNetHelper::ViewObjectsSelector& viewObjects, const Position& clickedPosition, const bool shiftKeyPressed);
 
     /// @brief show template editor
     void refreshOverlappedInspection();

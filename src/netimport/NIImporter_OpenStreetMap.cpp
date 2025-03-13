@@ -140,6 +140,8 @@ NIImporter_OpenStreetMap::load(const OptionsCont& oc, NBNetBuilder& nb) {
     myImportSidewalks = oc.getBool("osm.sidewalks");
     myImportBikeAccess = oc.getBool("osm.bike-access");
     myImportCrossings = oc.getBool("osm.crossings");
+    myOnewayDualSidewalk = oc.getBool("osm.oneway-reverse-sidewalk");
+    myAnnotateDefaults = oc.getBool("osm.annotate-defaults");
 
     myAllAttributes = OptionsCont::getOptions().getBool("osm.all-attributes");
     std::vector<std::string> extra = OptionsCont::getOptions().getStringVector("osm.extra-attributes");
@@ -496,6 +498,7 @@ NIImporter_OpenStreetMap::insertEdge(Edge* e, int index, NBNode* from, NBNode* t
     const SVCPermissions defaultPermissions = tc.getEdgeTypePermissions(type);
     SVCPermissions extra = myImportBikeAccess ? e->myExtraAllowed : (e->myExtraAllowed & ~SVC_BICYCLE);
     const SVCPermissions extraDis = myImportBikeAccess ? e->myExtraDisallowed : (e->myExtraDisallowed & ~SVC_BICYCLE);
+    std::vector<SumoXMLAttr> defaults;
     // extra permissions are more specific than extra prohibitions except for buses (which come from the less specific psv tag)
     if ((extraDis & SVC_BUS) && (extra & SVC_BUS)) {
         extra = extra & ~SVC_BUS;
@@ -664,9 +667,18 @@ NIImporter_OpenStreetMap::insertEdge(Edge* e, int index, NBNode* from, NBNode* t
         // the total number of lanes is not known but at least one direction
         if (e->myNoLanesForward > 0) {
             numLanesForward = e->myNoLanesForward;
+        } else if ((e->myBuswayType & WAY_FORWARD) != 0 && (extraDis & SVC_PASSENGER) == 0) {
+            // if we have a busway lane, yet cars may drive this implies at least two lanes
+            numLanesForward = MAX2(numLanesForward, 2);
         }
         if (e->myNoLanesForward < 0) {
             numLanesBackward = -e->myNoLanesForward;
+        } else if ((e->myBuswayType & WAY_BACKWARD) != 0 && (extraDis & SVC_PASSENGER) == 0) {
+            // if we have a busway lane, yet cars may drive this implies at least two lanes
+            numLanesBackward = MAX2(numLanesForward, 2);
+        }
+        if (myAnnotateDefaults && e->myNoLanesForward == 0) {
+            defaults.push_back(SUMO_ATTR_NUMLANES);
         }
     }
     // deal with busways that run in the opposite direction of a one-way street
@@ -692,6 +704,8 @@ NIImporter_OpenStreetMap::insertEdge(Edge* e, int index, NBNode* from, NBNode* t
     // if we had been able to extract the maximum speed, override the type's default
     if (e->myMaxSpeed != MAXSPEED_UNGIVEN) {
         speed = e->myMaxSpeed;
+    } else if (myAnnotateDefaults) {
+        defaults.push_back(SUMO_ATTR_SPEED);
     }
     double speedBackward = speed;
     if (e->myMaxSpeedBackward != MAXSPEED_UNGIVEN) {
@@ -725,7 +739,9 @@ NIImporter_OpenStreetMap::insertEdge(Edge* e, int index, NBNode* from, NBNode* t
     WayType sidewalkType = e->mySidewalkType; // make a copy because we do some temporary modifications
     if (sidewalkType == WAY_UNKNOWN && (e->myExtraAllowed & SVC_PEDESTRIAN) != 0 && (permissions & SVC_PASSENGER) != 0) {
         // do not assume shared space unless sidewalk is actively disabled
-        sidewalkType = WAY_BOTH;
+        if (myOnewayDualSidewalk) {
+            sidewalkType = WAY_BOTH;
+        }
     }
     if (addSidewalk || (myImportSidewalks && (permissions & SVC_ROAD_CLASSES) != 0 && defaultPermissions != SVC_PEDESTRIAN)) {
         if (!addForward && (sidewalkType & WAY_FORWARD) != 0) {
@@ -772,6 +788,9 @@ NIImporter_OpenStreetMap::insertEdge(Edge* e, int index, NBNode* from, NBNode* t
         if (tc.getEdgeTypeSpreadType(type) != LaneSpreadFunction::RIGHT) {
             // user defined value overrides defaults
             lsf = tc.getEdgeTypeSpreadType(type);
+        }
+        if (defaults.size() > 0) {
+            e->setParameter("osmDefaults", joinToString(defaults, " "));
         }
 
         id = StringUtils::escapeXML(id);
@@ -1268,6 +1287,7 @@ NIImporter_OpenStreetMap::EdgesHandler::myStartElement(int element, const SUMOSA
                 && key != "bicycle"
                 && key != "oneway:bicycle"
                 && key != "oneway:bus"
+                && key != "oneway:psv"
                 && key != "bus:lanes"
                 && key != "bus:lanes:forward"
                 && key != "bus:lanes:backward"
@@ -1483,7 +1503,7 @@ NIImporter_OpenStreetMap::EdgesHandler::myStartElement(int element, const SUMOSA
             }
         } else if (key == "oneway:bicycle") {
             myCurrentEdge->myExtraTags["oneway:bicycle"] = value;
-        } else if (key == "oneway:bus") {
+        } else if (key == "oneway:bus" || key == "oneway:psv") {
             if (value == "no") {
                 // need to add a bus way in reversed direction of way
                 myCurrentEdge->myBuswayType = WAY_BACKWARD;
@@ -1859,9 +1879,11 @@ NIImporter_OpenStreetMap::RelationHandler::myStartElement(int element, const SUM
             myFromWay = ref;
         } else if (role == "to" && checkEdgeRef(ref)) {
             myToWay = ref;
-        } else if (role == "stop") {
+        } else if (StringUtils::startsWith(role, "stop")) {
+            // permit _entry_only and _exit_only variants
             myStops.push_back(ref);
-        } else if (role == "platform") {
+        } else if (StringUtils::startsWith(role, "platform")) {
+            // permit _entry_only and _exit_only variants
             std::string memberType = attrs.get<std::string>(SUMO_ATTR_TYPE, nullptr, ok);
             if (memberType == "way") {
                 const std::map<long long int, NIImporter_OpenStreetMap::Edge*>::const_iterator& wayIt = myPlatformShapes.find(ref);
@@ -2372,7 +2394,6 @@ NIImporter_OpenStreetMap::reconstructLayerElevation(const double layerElevation,
     // apply node elevations
     for (auto& it : nodeElevation) {
         NBNode* n = it.first;
-        Position pos = n->getPosition();
         n->reinit(n->getPosition() + Position(0, 0, it.second), n->getType());
     }
 

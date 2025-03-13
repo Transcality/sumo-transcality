@@ -19,6 +19,7 @@
 /****************************************************************************/
 #pragma once
 #include <config.h>
+
 #include "GNEAdditional.h"
 
 // ===========================================================================
@@ -33,11 +34,7 @@ class GNERerouterIntervalDialog;
 // class definitions
 // ===========================================================================
 
-/**
- * @class GNERerouter
- * GNERouteProbReroute
- */
-class GNERouteProbReroute : public GNEAdditional {
+class GNERouteProbReroute : public GNEAdditional, public Parameterised {
 
 public:
     /// @brief default constructor

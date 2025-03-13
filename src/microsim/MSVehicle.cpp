@@ -372,6 +372,7 @@ MSVehicle::Influencer::Influencer() :
     myLatDist(0),
     mySpeedAdaptationStarted(true),
     myConsiderSafeVelocity(true),
+    myConsiderSpeedLimit(true),
     myConsiderMaxAcceleration(true),
     myConsiderMaxDeceleration(true),
     myRespectJunctionPriority(true),
@@ -448,7 +449,8 @@ MSVehicle::Influencer::getSpeedMode() const {
             4 * myConsiderMaxDeceleration +
             8 * myRespectJunctionPriority +
             16 * myEmergencyBrakeRedLight +
-            32 * !myRespectJunctionLeaderPriority // inverted!
+            32 * !myRespectJunctionLeaderPriority + // inverted!
+            64 * !myConsiderSpeedLimit // inverted!
            );
 }
 
@@ -500,7 +502,8 @@ MSVehicle::Influencer::influenceSpeed(SUMOTime currentTime, double speed, double
             mySpeedAdaptationStarted = true;
         }
         currentTime += DELTA_T;
-        const double td = STEPS2TIME(currentTime - mySpeedTimeLine[0].first) / STEPS2TIME(mySpeedTimeLine[1].first + DELTA_T - mySpeedTimeLine[0].first);
+        const double td = STEPS2TIME(currentTime - mySpeedTimeLine[0].first) / MAX2(TS, STEPS2TIME(mySpeedTimeLine[1].first - mySpeedTimeLine[0].first));
+
         speed = mySpeedTimeLine[0].second - (mySpeedTimeLine[0].second - mySpeedTimeLine[1].second) * td;
         if (myConsiderSafeVelocity) {
             speed = MIN2(speed, vSafe);
@@ -733,6 +736,10 @@ MSVehicle::Influencer::influenceChangeDecision(const SUMOTime currentTime, const
             // cancel all lcModel requests
             state &= ~LCA_WANTS_LANECHANGE_OR_STAY;
             state &= ~LCA_URGENT;
+            if (changeRequest == REQUEST_NONE) {
+                // also remove all reasons except TRACI
+                state &= ~LCA_CHANGE_REASONS | LCA_TRACI;
+            }
         } else if (mode == LC_NOCONFLICT && changeRequest != REQUEST_NONE) {
             if (
                 ((state & LCA_LEFT) != 0 && changeRequest != REQUEST_LEFT) ||
@@ -790,6 +797,7 @@ MSVehicle::Influencer::setSpeedMode(int speedMode) {
     myRespectJunctionPriority = ((speedMode & 8) != 0);
     myEmergencyBrakeRedLight = ((speedMode & 16) != 0);
     myRespectJunctionLeaderPriority = ((speedMode & 32) == 0); // inverted!
+    myConsiderSpeedLimit = ((speedMode & 64) == 0); // inverted!
 }
 
 
@@ -1823,8 +1831,11 @@ MSVehicle::processNextStop(double currentVelocity) {
                           << "\n";
             }
 #endif
-            if (myState.pos() >= reachedThreshold && fitsOnStoppingPlace && currentVelocity <= stop.getSpeed() + SUMO_const_haltingSpeed && myLane == stop.lane
-                    && (!MSGlobals::gModelParkingManoeuver || myManoeuvre.entryManoeuvreIsComplete(this))) {
+            const bool posReached = myState.pos() >= reachedThreshold && currentVelocity <= stop.getSpeed() + SUMO_const_haltingSpeed && myLane == stop.lane;
+            if (posReached && !fitsOnStoppingPlace && MSStopOut::active()) {
+                MSStopOut::getInstance()->stopBlocked(this, time);
+            }
+            if (fitsOnStoppingPlace && posReached && (!MSGlobals::gModelParkingManoeuver || myManoeuvre.entryManoeuvreIsComplete(this))) {
                 // ok, we may stop (have reached the stop)  and either we are not modelling maneuvering or have completed entry
                 stop.reached = true;
                 if (!stop.startedFromState) {
@@ -2218,7 +2229,7 @@ MSVehicle::planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVecto
     }
     //  speed limits are not emergencies (e.g. when the limit changes suddenly due to TraCI or a variableSpeedSignal)
     laneMaxV = MAX2(laneMaxV, vMinComfortable);
-    if (myInfluencer && !myInfluencer->considerSafeVelocity()) {
+    if (myInfluencer && !myInfluencer->considerSpeedLimit()) {
         laneMaxV = std::numeric_limits<double>::max();
     }
     // v is the initial maximum velocity of this vehicle in this step
@@ -2949,7 +2960,7 @@ MSVehicle::planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVecto
         // get the following lane
         lane = (*link)->getViaLaneOrLane();
         laneMaxV = lane->getVehicleMaxSpeed(this);
-        if (myInfluencer && !myInfluencer->considerSafeVelocity()) {
+        if (myInfluencer && !myInfluencer->considerSpeedLimit()) {
             laneMaxV = std::numeric_limits<double>::max();
         }
         // the link was passed
@@ -5758,6 +5769,10 @@ MSVehicle::leaveLane(const MSMoveReminder::Notification reason, const MSLane* ap
             if (myStops.front().getSpeed() <= 0) {
                 WRITE_WARNINGF(TL("Vehicle '%' skips stop on lane '%' time=%."), getID(), myStops.front().lane->getID(),
                                time2string(MSNet::getInstance()->getCurrentTimeStep()))
+                    if (MSStopOut::active()) {
+                        // clean up if stopBlocked was called
+                        MSStopOut::getInstance()->stopNotStarted(this);
+                    }
                 myStops.pop_front();
             } else {
                 MSStop& stop = myStops.front();
@@ -6098,7 +6113,9 @@ MSVehicle::updateBestLanes(bool forceRebuild, const MSLane* startLane) {
             }
         }
         for (int i = requireChangeToLeftForbidden; i >= 0; i--) {
-            last[i].length = 0;
+            if (last[i].bestLaneOffset > 0) {
+                last[i].length = 0;
+            }
         }
 #ifdef DEBUG_BESTLANES
         if (DEBUG_COND) {

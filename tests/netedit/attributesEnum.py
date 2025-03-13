@@ -26,7 +26,7 @@ class toolbar:
         generateNetwork = 3
         loadNeteditConfig = 4
         loadSumoConfig = 5
-        openNetwork = 6
+        loadNetwork = 6
         openNetconvertConfiguration = 7
         importForeignNetwork = 8
         saveNetwork = 9
@@ -35,6 +35,7 @@ class toolbar:
         saveJoinedJunctions = 11
         reloadConfig = 12
         reloadNetwork = 13
+
         class neteditConfig:
             menu = 14
             save = 1
@@ -63,30 +64,30 @@ class toolbar:
             menu = 18
             load = 1
             save = 2
-            saveAs = 3
-            saveJupedsim = 4
-            reload = 5
+            saveAs = 2
+            saveJupedsim = 3
+            reload = 4
 
         class demandElements:
             menu = 19
             load = 1
             save = 2
-            saveAs = 3
-            reload = 4
+            saveAs = 2
+            reload = 3
 
         class dataElements:
             menu = 20
             load = 1
             save = 2
-            saveAs = 3
-            reload = 4
+            saveAs = 2
+            reload = 3
 
         class meanDataElements:
             menu = 21
             load = 1
             save = 2
-            saveAs = 3
-            reload = 4
+            saveAs = 2
+            reload = 3
 
 
 class editElements:
@@ -504,7 +505,7 @@ class TLS:
             parameters = 14
 
         class staticPhase:
-            numPhases = 5
+            numPhases = 4
             dur = 17 + (0 * numPhases) + 0
             state = 17 + (1 * numPhases) + 1
             nxt = 17 + (2 * numPhases) + 2
@@ -519,7 +520,7 @@ class TLS:
             ungroupSignal = 17 + (8 * numPhases) + 4
 
         class actuatedPhase:
-            numPhases = 5
+            numPhases = 4
             dur = 18 + (0 * numPhases) + 0
             minD = 18 + (1 * numPhases) + 1
             maxD = 18 + (2 * numPhases) + 2
@@ -538,7 +539,7 @@ class TLS:
             ungroupSignal = 18 + (12 * numPhases) + 4
 
         class delayBasedPhase:
-            numPhases = 5
+            numPhases = 4
             dur = 18 + (0 * numPhases) + 0
             minD = 18 + (1 * numPhases) + 1
             maxD = 18 + (2 * numPhases) + 2
@@ -580,71 +581,75 @@ class TLS:
             parameters = 15
 
         class staticPhase:
-            dur = 18 + (0 * 2)
-            state = 18 + (1 * 2)
-            nxt = 18 + (2 * 2)
-            name = 18 + (3 * 2)
-            addButton = 18 + (5 * 2)
-            deleteButton = 18 + (6 * 2)
-            moveUp = 18 + (7 * 2)
-            moveDown = 18 + (8 * 2)
-            cleanStates = 18 + (8 * 2) + 1
-            groupSignal = 18 + (8 * 2) + 2
-            addStates = 18 + (8 * 2) + 3
-            ungroupSignal = 18 + (8 * 2) + 4
+            numPhases = 2
+            dur = 18 + (0 * numPhases)
+            state = 18 + (1 * numPhases)
+            nxt = 18 + (2 * numPhases)
+            name = 18 + (3 * numPhases)
+            addButton = 18 + (5 * numPhases)
+            deleteButton = 18 + (6 * numPhases)
+            moveUp = 18 + (7 * numPhases)
+            moveDown = 18 + (8 * numPhases)
+            cleanStates = 18 + (8 * numPhases) + 1
+            groupSignal = 18 + (8 * numPhases) + 2
+            addStates = 18 + (8 * numPhases) + 3
+            ungroupSignal = 18 + (8 * numPhases) + 4
 
         class actuatedPhase:
-            dur = 19 + (0 * 2)
-            minD = 19 + (1 * 2)
-            maxD = 19 + (2 * 2)
-            state = 19 + (3 * 2)
-            earlyEnd = 19 + (4 * 2)
-            latestEnd = 19 + (5 * 2)
-            nxt = 19 + (6 * 2)
-            name = 19 + (7 * 2)
-            addButton = 19 + (9 * 2)
-            deleteButton = 19 + (10 * 2)
-            moveUp = 19 + (11 * 2)
-            moveDown = 19 + (12 * 2)
-            cleanStates = 19 + (12 * 2) + 1
-            groupSignal = 19 + (12 * 2) + 2
-            addStates = 19 + (12 * 2) + 3
-            ungroupSignal = 19 + (12 * 2) + 4
+            numPhases = 2
+            dur = 19 + (0 * numPhases)
+            minD = 19 + (1 * numPhases)
+            maxD = 19 + (2 * numPhases)
+            state = 19 + (3 * numPhases)
+            earlyEnd = 19 + (4 * numPhases)
+            latestEnd = 19 + (5 * numPhases)
+            nxt = 19 + (6 * numPhases)
+            name = 19 + (7 * numPhases)
+            addButton = 19 + (9 * numPhases)
+            deleteButton = 19 + (10 * numPhases)
+            moveUp = 19 + (11 * numPhases)
+            moveDown = 19 + (12 * numPhases)
+            cleanStates = 19 + (12 * numPhases) + 1
+            groupSignal = 19 + (12 * numPhases) + 2
+            addStates = 19 + (12 * numPhases) + 3
+            ungroupSignal = 19 + (12 * numPhases) + 4
 
         class delayBasedPhase:
-            dur = 19 + (0 * 2)
-            minD = 19 + (1 * 2)
-            maxD = 19 + (2 * 2)
-            state = 19 + (3 * 2)
-            nxt = 19 + (4 * 2)
-            name = 19 + (5 * 2)
-            addButton = 19 + (7 * 2)
-            deleteButton = 19 + (8 * 2)
-            moveUp = 19 + (9 * 2)
-            moveDown = 19 + (10 * 2)
-            cleanStates = 19 + (10 * 2) + 1
-            groupSignal = 19 + (10 * 2) + 2
-            addStates = 19 + (10 * 2) + 3
-            ungroupSignal = 19 + (10 * 2) + 4
+            numPhases = 2
+            dur = 19 + (0 * numPhases)
+            minD = 19 + (1 * numPhases)
+            maxD = 19 + (2 * numPhases)
+            state = 19 + (3 * numPhases)
+            nxt = 19 + (4 * numPhases)
+            name = 19 + (5 * numPhases)
+            addButton = 19 + (7 * numPhases)
+            deleteButton = 19 + (8 * numPhases)
+            moveUp = 19 + (9 * numPhases)
+            moveDown = 19 + (10 * numPhases)
+            cleanStates = 19 + (10 * numPhases) + 1
+            groupSignal = 19 + (10 * numPhases) + 2
+            addStates = 19 + (10 * numPhases) + 3
+            ungroupSignal = 19 + (10 * numPhases) + 4
 
         class NEMAPhase:
-            dur = 19 + (0 * 2)
-            minD = 19 + (1 * 2)
-            maxD = 19 + (2 * 2)
-            state = 19 + (3 * 2)
-            vehext = 19 + (4 * 2)
-            yellow = 19 + (5 * 2)
-            red = 19 + (6 * 2)
-            nxt = 19 + (7 * 2)
-            name = 19 + (8 * 2)
-            addButton = 20 + (9 * 2)
-            deleteButton = 20 + (10 * 2)
-            moveUp = 20 + (11 * 2)
-            moveDown = 20 + (12 * 2)
-            cleanStates = 20 + (13 * 2) + 1
-            groupSignal = 20 + (13 * 2) + 2
-            addStates = 20 + (13 * 2) + 3
-            ungroupSignal = 20 + (13 * 2) + 4
+            numPhases = 2
+            dur = 19 + (0 * numPhases)
+            minD = 19 + (1 * numPhases)
+            maxD = 19 + (2 * numPhases)
+            state = 19 + (3 * numPhases)
+            vehext = 19 + (4 * numPhases)
+            yellow = 19 + (5 * numPhases)
+            red = 19 + (6 * numPhases)
+            nxt = 19 + (7 * numPhases)
+            name = 19 + (8 * numPhases)
+            addButton = 20 + (9 * numPhases)
+            deleteButton = 20 + (10 * numPhases)
+            moveUp = 20 + (11 * numPhases)
+            moveDown = 20 + (12 * numPhases)
+            cleanStates = 20 + (13 * numPhases) + 1
+            groupSignal = 20 + (13 * numPhases) + 2
+            addStates = 20 + (13 * numPhases) + 3
+            ungroupSignal = 20 + (13 * numPhases) + 4
 
     create = 3
     createOverlapped = 4
@@ -675,15 +680,20 @@ class additionals:
 class busStop:
     class create:
         id = 5
-        name = 6
-        friendlyPos = 7
-        lines = 8
-        personCapacity = 9
-        parkingLength = 10
-        colorButton = 11
-        color = 12
-        references = 16
-        length = 18
+        friendlyPos = 6
+        name = 7
+        colorButton = 8
+        color = 9
+        lines = 10
+        personCapacity = 11
+        parkingLength = 12
+        parameters = 14
+        parametersButton = 15
+        size = 17
+        forceSize = 18
+        reference = 19
+        additionalFileButton = 21
+        additionalFile = 22
 
     class inspect:
         id = 1
@@ -691,24 +701,39 @@ class busStop:
         moveLane = 3
         startPos = 4
         endPos = 5
-        name = 6
-        friendlyPos = 7
-        lines = 8
-        personCapacity = 9
-        parkingLength = 10
-        colorButton = 11
-        color = 12
-        parameters = 15
+        friendlyPos = 6
+        name = 7
+        colorButton = 8
+        color = 9
+        lines = 10
+        personCapacity = 11
+        parkingLength = 12
+        parameters = 14
+        parametersButton = 15
+        frontButton = 17
+        size = 18
+        forceSize = 19
+        reference = 20
+        additionalFileButton = 22
+        additionalFile = 23
 
     class inspectSelection:
-        name = 1
-        friendlyPos = 2
-        lines = 3
-        personCapacity = 4
-        parkingLength = 5
-        colorButton = 6
-        color = 7
-        parameters = 10
+        friendlyPos = 1
+        name = 2
+        colorButton = 3
+        color = 4
+        lines = 5
+        personCapacity = 6
+        parkingLength = 7
+        parameters = 9
+        parametersButton = 10
+        frontButton = 12
+        size = 13
+        forceSize = 14
+        reference = 15
+        additionalFileButton = 17
+        additionalFile = 18
+
 
 # trainStop
 
@@ -716,15 +741,20 @@ class busStop:
 class trainStop:
     class create:
         id = 5
-        name = 6
-        friendlyPos = 7
-        lines = 8
-        personCapacity = 9
-        parkingLength = 10
-        colorButton = 11
-        color = 12
-        references = 16
-        length = 18
+        friendlyPos = 6
+        name = 7
+        colorButton = 8
+        color = 9
+        lines = 10
+        personCapacity = 11
+        parkingLength = 12
+        parameters = 14
+        parametersButton = 15
+        size = 17
+        forceSize = 18
+        reference = 19
+        additionalFileButton = 21
+        additionalFile = 22
 
     class inspect:
         id = 1
@@ -732,24 +762,38 @@ class trainStop:
         moveLane = 3
         startPos = 4
         endPos = 5
-        name = 6
-        friendlyPos = 7
-        lines = 8
-        personCapacity = 9
-        parkingLength = 10
-        colorButton = 11
-        color = 12
-        parameters = 15
+        friendlyPos = 6
+        name = 7
+        colorButton = 8
+        color = 9
+        lines = 10
+        personCapacity = 11
+        parkingLength = 12
+        parameters = 14
+        parametersButton = 15
+        frontButton = 17
+        size = 18
+        forceSize = 19
+        reference = 20
+        additionalFileButton = 22
+        additionalFile = 23
 
     class inspectSelection:
-        name = 1
-        friendlyPos = 2
-        lines = 3
-        personCapacity = 4
-        parkingLength = 5
-        colorButton = 6
-        color = 7
-        parameters = 10
+        friendlyPos = 1
+        name = 2
+        colorButton = 3
+        color = 4
+        lines = 5
+        personCapacity = 6
+        parkingLength = 7
+        parameters = 9
+        parametersButton = 10
+        frontButton = 12
+        size = 13
+        forceSize = 14
+        reference = 15
+        additionalFileButton = 17
+        additionalFile = 18
 
 # containerStop
 
@@ -757,15 +801,20 @@ class trainStop:
 class containerStop:
     class create:
         id = 5
-        name = 6
-        friendlyPos = 7
-        lines = 8
-        containerCapacity = 9
-        parkingLength = 10
-        colorButton = 11
-        color = 12
-        references = 16
-        length = 18
+        friendlyPos = 6
+        name = 7
+        colorButton = 8
+        color = 9
+        lines = 10
+        containerCapacity = 11
+        parkingLength = 12
+        parameters = 14
+        parametersButton = 15
+        size = 17
+        forceSize = 18
+        reference = 19
+        additionalFileButton = 21
+        additionalFile = 22
 
     class inspect:
         id = 1
@@ -773,24 +822,40 @@ class containerStop:
         moveLane = 3
         startPos = 4
         endPos = 5
-        name = 6
-        friendlyPos = 7
-        lines = 8
-        containerCapacity = 9
-        parkingLength = 10
-        colorButton = 11
-        color = 12
-        parameters = 15
+        friendlyPos = 6
+        name = 7
+        colorButton = 8
+        color = 9
+        lines = 10
+        containerCapacity = 11
+        parkingLength = 12
+        parameters = 14
+        parametersButton = 15
+        frontButton = 17
+        size = 18
+        forceSize = 19
+        reference = 20
+        additionalFileButton = 22
+        additionalFile = 23
 
     class inspectSelection:
-        name = 1
-        friendlyPos = 2
-        lines = 3
-        containerCapacity = 4
-        parkingLength = 5
-        colorButton = 6
-        color = 7
-        parameters = 10
+        friendlyPos = 1
+        name = 2
+        colorButton = 3
+        color = 4
+        lines = 5
+        containerCapacity = 6
+        parkingLength = 7
+        parameters = 9
+        parametersButton = 10
+        frontButton = 12
+        size = 13
+        forceSize = 14
+        reference = 15
+        additionalFileButton = 17
+        additionalFile = 18
+
+# until here
 
 # chargingStation
 
@@ -807,7 +872,7 @@ class chargingStation:
         chargeType = 12
         waitingTime = 14
         parkingArea = 15
-        references = 19
+        reference = 19
         length = 21
 
     class inspect:
@@ -846,7 +911,8 @@ class access:
     class create:
         length = 5
         friendlyPos = 6
-        parent = 9
+        parameters = 8
+        parent = 10
 
     class inspect:
         lane = 1
@@ -875,7 +941,7 @@ class parkingArea:
         length = 13
         angle = 14
         lefthand = 15
-        references = 19
+        reference = 19
         referencesLength = 21
 
     class inspect:
@@ -1365,7 +1431,6 @@ class poi:
         width = 13
         height = 14
         imgFile = 15
-        relativePath = 16
         angle = 17
 
     class inspect:
@@ -1380,7 +1445,6 @@ class poi:
         width = 10
         height = 11
         imgFile = 12
-        relativePath = 13
         angle = 14
         parameters = 17
 
@@ -1394,7 +1458,6 @@ class poi:
         width = 8
         height = 9
         imgFile = 10
-        relativePath = 11
         angle = 12
         parameters = 15
 
@@ -1413,7 +1476,6 @@ class poiGeo:
         width = 13
         height = 14
         imgFile = 15
-        relativePath = 16
         angle = 17
         lonLat = 22
 
@@ -1428,7 +1490,6 @@ class poiGeo:
         width = 9
         height = 10
         imgFile = 11
-        relativePath = 12
         angle = 13
         lon = 16
         lat = 17
@@ -1444,7 +1505,6 @@ class poiGeo:
         width = 8
         height = 9
         imgFile = 10
-        relativePath = 11
         angle = 12
         parameters = 15
 
@@ -1465,7 +1525,6 @@ class poiLane:
         width = 15
         height = 16
         imgFile = 17
-        relativePath = 18
         angle = 16
 
     class inspect:
@@ -1484,7 +1543,6 @@ class poiLane:
         width = 14
         height = 15
         imgFile = 16
-        relativePath = 17
         angle = 18
         parameters = 21
 
@@ -1500,7 +1558,6 @@ class poiLane:
         width = 10
         height = 11
         imgFile = 12
-        relativePath = 13
         angle = 14
         parameters = 17
 

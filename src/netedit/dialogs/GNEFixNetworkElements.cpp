@@ -18,14 +18,14 @@
 // Dialog used to fix network elements during saving
 /****************************************************************************/
 
-#include <utils/gui/windows/GUIAppEnum.h>
-#include <utils/gui/div/GUIDesigns.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNEViewNet.h>
+#include <netedit/GNETagProperties.h>
 #include <netedit/GNEUndoList.h>
+#include <netedit/GNEViewNet.h>
+#include <utils/gui/div/GUIDesigns.h>
+#include <utils/gui/windows/GUIAppEnum.h>
 
 #include "GNEFixNetworkElements.h"
-
 
 // ===========================================================================
 // FOX callback mapping
@@ -69,9 +69,9 @@ GNEFixNetworkElements::GNEFixNetworkElements(GNEViewNet* viewNet, const std::vec
     std::vector<GNENetworkElement*> invalidEdges, invalidCrossings;
     // fill groups
     for (const auto& invalidNetworkElement : invalidNetworkElements) {
-        if (invalidNetworkElement->getTagProperty().getTag() == SUMO_TAG_EDGE) {
+        if (invalidNetworkElement->getTagProperty()->getTag() == SUMO_TAG_EDGE) {
             invalidEdges.push_back(invalidNetworkElement);
-        } else if (invalidNetworkElement->getTagProperty().getTag() == SUMO_TAG_CROSSING) {
+        } else if (invalidNetworkElement->getTagProperty()->getTag() == SUMO_TAG_CROSSING) {
             invalidCrossings.push_back(invalidNetworkElement);
         }
     }
@@ -186,7 +186,8 @@ GNEFixNetworkElements::FixOptions::setInvalidElements(const std::vector<GNENetwo
 bool
 GNEFixNetworkElements::FixOptions::saveContents() const {
     const FXString file = MFXUtils::getFilename2Write(myTable,
-                          TL("Save list of conflicted items"), ".txt",
+                          TL("Save list of conflicted items"),
+                          SUMOXMLDefinitions::TXTFileExtensions.getMultilineString().c_str(),
                           GUIIconSubSys::getIcon(GUIIcon::SAVE), gCurrentFolder);
     if (file == "") {
         return false;
@@ -200,19 +201,11 @@ GNEFixNetworkElements::FixOptions::saveContents() const {
         }
         // close output device
         dev.close();
-        // write warning if netedit is running in testing mode
-        WRITE_DEBUG("Opening FXMessageBox 'Saving list of conflicted items successfully'");
         // open message box error
         FXMessageBox::information(myTable, MBOX_OK, TL("Saving successfully"), "%s", "List of conflicted items was successfully saved");
-        // write warning if netedit is running in testing mode
-        WRITE_DEBUG("Closed FXMessageBox 'Saving list of conflicted items successfully' with 'OK'");
     } catch (IOError& e) {
-        // write warning if netedit is running in testing mode
-        WRITE_DEBUG("Opening FXMessageBox 'error saving list of conflicted items'");
         // open message box error
         FXMessageBox::error(myTable, MBOX_OK, TL("Saving list of conflicted items failed"), "%s", e.what());
-        // write warning if netedit is running in testing mode
-        WRITE_DEBUG("Closed FXMessageBox 'error saving list of conflicted items' with 'OK'");
     }
     return true;
 }

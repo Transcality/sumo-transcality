@@ -36,6 +36,9 @@ jobs:
       with:
         path: sumo
         fetch-depth: 0
+        # filter: tree:0  # no tree filter because sonar needs to do a git blame
+        # fetching the ref on tag runs to work around actions/checkout#1467
+        ref: ${{ github.ref }}
 
     - name: Preparing Build System
       run: |
@@ -46,7 +49,7 @@ jobs:
 
     - name: Validate CITATION.cff
       if: matrix.build_type == 'full' && github.event_name == 'schedule' && matrix.compiler == 'gcc'
-      uses: dieghernan/cff-validator@v3
+      uses: dieghernan/cff-validator@v4
       with:
         install-r: true
         citation-path: sumo/CITATION.cff

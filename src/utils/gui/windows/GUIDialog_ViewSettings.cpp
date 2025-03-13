@@ -80,10 +80,14 @@ FXDEFMAP(GUIDialog_ViewSettings) GUIDialog_ViewSettingsMap[] = {
 FXIMPLEMENT(GUIDialog_ViewSettings,             FXDialogBox,    GUIDialog_ViewSettingsMap,  ARRAYNUMBER(GUIDialog_ViewSettingsMap))
 FXIMPLEMENT(GUIDialog_ViewSettings::SizePanel,  FXObject,       GUIDialog_SizeMap,          ARRAYNUMBER(GUIDialog_SizeMap))
 
+
 // ===========================================================================
 // method definitions
 // ===========================================================================
-
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GUIDialog_ViewSettings::GUIDialog_ViewSettings(GUISUMOAbstractView* parent, GUIVisualizationSettings* settings) :
     FXDialogBox(parent, TL("View Settings"), GUIDesignViewSettingsMainDialog),
     GUIPersistentWindowPos(this, "VIEWSETTINGS", true, 20, 40, 700, 500, 400, 20),
@@ -144,6 +148,9 @@ GUIDialog_ViewSettings::GUIDialog_ViewSettings(GUISUMOAbstractView* parent, GUIV
     setIcon(GUIIconSubSys::getIcon(GUIIcon::EMPTY));
     loadWindowPos();
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GUIDialog_ViewSettings::~GUIDialog_ViewSettings() {
@@ -1093,7 +1100,9 @@ GUIDialog_ViewSettings::onUpdDeleteSetting(FXObject* sender, FXSelector, void* p
 
 long
 GUIDialog_ViewSettings::onCmdExportSetting(FXObject*, FXSelector, void* /*data*/) {
-    FXString file = MFXUtils::getFilename2Write(this, TL("Export view settings"), ".xml", GUIIconSubSys::getIcon(GUIIcon::SAVE), gCurrentFolder);
+    FXString file = MFXUtils::getFilename2Write(this, TL("Export view settings"),
+                    SUMOXMLDefinitions::XMLFileExtensions.getMultilineString().c_str(),
+                    GUIIconSubSys::getIcon(GUIIcon::SAVE), gCurrentFolder);
     if (file == "") {
         return 1;
     }
@@ -1147,7 +1156,7 @@ GUIDialog_ViewSettings::onCmdImportSetting(FXObject*, FXSelector, void* /*data*/
     FXFileDialog opendialog(this, TL("Import view settings"));
     opendialog.setIcon(GUIIconSubSys::getIcon(GUIIcon::OPEN));
     opendialog.setSelectMode(SELECTFILE_ANY);
-    opendialog.setPatternList("*.xml,*.xml.gz");
+    opendialog.setPatternList(SUMOXMLDefinitions::ViewSettingsFileExtensions.getMultilineString().c_str());
     if (gCurrentFolder.length() != 0) {
         opendialog.setDirectory(gCurrentFolder);
     }
@@ -1164,7 +1173,7 @@ GUIDialog_ViewSettings::onCmdLoadDecal(FXObject*, FXSelector, void* /*data*/) {
     FXFileDialog opendialog(this, TL("Load Decals"));
     opendialog.setIcon(GUIIconSubSys::getIcon(GUIIcon::EMPTY));
     opendialog.setSelectMode(SELECTFILE_ANY);
-    opendialog.setPatternList("*.xml,*.xml.gz");
+    opendialog.setPatternList(SUMOXMLDefinitions::ViewSettingsFileExtensions.getMultilineString().c_str());
     if (gCurrentFolder.length() != 0) {
         opendialog.setDirectory(gCurrentFolder);
     }
@@ -1181,7 +1190,7 @@ GUIDialog_ViewSettings::onCmdLoadXMLDecals(FXObject*, FXSelector, void* /*data*/
     FXFileDialog opendialog(this, TL("Load Decals"));
     opendialog.setIcon(GUIIconSubSys::getIcon(GUIIcon::EMPTY));
     opendialog.setSelectMode(SELECTFILE_ANY);
-    opendialog.setPatternList("*.xml,*.xml.gz");
+    opendialog.setPatternList(SUMOXMLDefinitions::ViewSettingsFileExtensions.getMultilineString().c_str());
     if (gCurrentFolder.length() != 0) {
         opendialog.setDirectory(gCurrentFolder);
     }
@@ -1195,7 +1204,9 @@ GUIDialog_ViewSettings::onCmdLoadXMLDecals(FXObject*, FXSelector, void* /*data*/
 
 long
 GUIDialog_ViewSettings::onCmdSaveXMLDecals(FXObject*, FXSelector, void* /*data*/) {
-    FXString file = MFXUtils::getFilename2Write(this, TL("Save Decals"), ".xml", GUIIconSubSys::getIcon(GUIIcon::EMPTY), gCurrentFolder);
+    FXString file = MFXUtils::getFilename2Write(this, TL("Save Decals"),
+                    SUMOXMLDefinitions::XMLFileExtensions.getMultilineString().c_str(),
+                    GUIIconSubSys::getIcon(GUIIcon::EMPTY), gCurrentFolder);
     if (file == "") {
         return 1;
     }
@@ -1691,10 +1702,11 @@ GUIDialog_ViewSettings::RainbowPanel::RainbowPanel(
     FXMatrix* matrixRainbow = new FXMatrix(parent, 9, GUIDesignViewSettingsMatrix3);
     myColorRainbow = GUIDesigns::buildFXButton(matrixRainbow, TL("Recalibrate Rainbow"), "", "", nullptr, target, MID_SIMPLE_VIEW_COLORCHANGE,
                      (BUTTON_DEFAULT | FRAME_RAISED | FRAME_THICK | LAYOUT_TOP | LAYOUT_LEFT), 0, 0, 0, 0, 20, 20, 4, 4);
-    myRainbowStyle = new MFXComboBoxIcon(matrixRainbow, 5, false, 10, target, MID_SIMPLE_VIEW_RAINBOW_CHANGE, GUIDesignViewSettingsComboBox1);
+    myRainbowStyle = new MFXComboBoxIcon(matrixRainbow, 5, false, 10, target, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsComboBox1);
     for (auto item : GUIVisualizationSettings::RAINBOW_SCHEMES) {
         myRainbowStyle->appendIconItem(item.first.c_str());
     }
+    myRainbowStyle->setCurrentItem(settings.rainbowScheme);
     myHideMinCheck = new FXCheckButton(matrixRainbow, TL("min"), target, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignCheckButtonViewSettings);
     myHideMinCheck->setCheck(settings.hideMin);
     myMinThreshold = new FXRealSpinner(matrixRainbow, 6, target, MID_SIMPLE_VIEW_COLORCHANGE, REALSPIN_NOMIN | GUIDesignViewSettingsSpinDial2);
@@ -1723,7 +1735,8 @@ GUIDialog_ViewSettings::RainbowPanel::getSettings() {
                                         myMaxThreshold->getValue(),
                                         mySetNeutral->getCheck() != FALSE,
                                         myNeutralThreshold->getValue(),
-                                        myFixRange->getCheck() != FALSE);
+                                        myFixRange->getCheck() != FALSE,
+                                        myRainbowStyle->getCurrentItem());
     std::string sName = myRainbowStyle->getItemText(myRainbowStyle->getCurrentItem());
     res.colors = GUIVisualizationSettings::RAINBOW_SCHEMES[sName];
     return res;
@@ -1739,6 +1752,7 @@ GUIDialog_ViewSettings::RainbowPanel::update(const GUIVisualizationRainbowSettin
     mySetNeutral->setCheck(settings.setNeutral);
     myNeutralThreshold->setValue(settings.neutralThreshold);
     myFixRange->setCheck(settings.fixRange);
+    myRainbowStyle->setCurrentItem(settings.rainbowScheme);
 }
 
 void
@@ -1887,7 +1901,7 @@ GUIDialog_ViewSettings::buildStreetsFrame(FXTabBook* tabbook) {
     mySecondaryShape->setCheck(mySettings->secondaryShape);
     new FXLabel(matrixLanes, " ", nullptr, GUIDesignViewSettingsLabel1);
     if (!OptionsCont::getOptions().exists("alternative-net-file") ||
-        !OptionsCont::getOptions().isSet("alternative-net-file")) {
+            !OptionsCont::getOptions().isSet("alternative-net-file")) {
         mySecondaryShape->disable();
     }
 

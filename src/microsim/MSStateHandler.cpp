@@ -299,7 +299,6 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             bool ok;
             const std::vector<std::string>& vehIDs = attrs.get<std::vector<std::string> >(SUMO_ATTR_VALUE, nullptr, ok, false);
             std::vector<SUMOVehicle*> vehs;
-            MSVehicleControl& vc = MSNet::getInstance()->getVehicleControl();
             for (const std::string& id : vehIDs) {
                 SUMOVehicle* v = vc.getVehicle(id);
                 // vehicle could be removed due to options
@@ -353,8 +352,8 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             MSRailSignalConstraint_Predecessor::loadState(attrs);
             break;
         }
-        case SUMO_TAG_DRIVEWAY: 
-        case SUMO_TAG_SUBDRIVEWAY: { 
+        case SUMO_TAG_DRIVEWAY:
+        case SUMO_TAG_SUBDRIVEWAY: {
             MSDriveWay::loadState(attrs, element);
             break;
         }

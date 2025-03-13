@@ -692,7 +692,9 @@ MSRouteHandler::closeVehicle() {
             myVehicleParameter = nullptr;
             if (!MSGlobals::gCheckRoutes) {
                 WRITE_WARNING(e.what());
-                vehControl.fixVehicleCounts();
+                vehControl.deleteVehicle(vehicle, true);
+                myVehicleParameter = nullptr;
+                vehicle = nullptr;
                 return;
             } else {
                 throw;
@@ -1371,7 +1373,7 @@ MSRouteHandler::addStop(const SUMOSAXAttributes& attrs) {
                         edge = myActiveTransportablePlan->back()->getDestination();
                         stop.lane = edge->getLanes()[0]->getID();
                         stop.endPos = myActiveTransportablePlan->back()->unspecifiedArrivalPos() ?
-                            MSStage::ARRIVALPOS_UNSPECIFIED : myActiveTransportablePlan->back()->getArrivalPos();
+                                      MSStage::ARRIVALPOS_UNSPECIFIED : myActiveTransportablePlan->back()->getArrivalPos();
                         stop.startPos = MAX2(0., stop.endPos - MIN_STOP_LENGTH);
                     }
                 } else {
@@ -1430,7 +1432,7 @@ MSRouteHandler::addStop(const SUMOSAXAttributes& attrs) {
             double pos = (stop.startPos + stop.endPos) / 2.;
             if (!myActiveTransportablePlan->empty()) {
                 pos = myActiveTransportablePlan->back()->unspecifiedArrivalPos() ?
-                    MSStage::ARRIVALPOS_UNSPECIFIED : myActiveTransportablePlan->back()->getArrivalPos();
+                      MSStage::ARRIVALPOS_UNSPECIFIED : myActiveTransportablePlan->back()->getArrivalPos();
             }
             myActiveTransportablePlan->push_back(new MSStageWaiting(edge, toStop, stop.duration, stop.until, pos, actType, false));
             result = myActiveTransportablePlan->back();

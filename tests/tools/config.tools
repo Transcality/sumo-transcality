@@ -6,10 +6,12 @@ copy_test_path:routes2.rou.xml
 copy_test_path:net.net.xml
 copy_test_path:net2.net.xml
 copy_test_path:net3.net.xml
+copy_test_path:input.poly.xml
 copy_test_path:input_additional.add.xml
 copy_test_path:input_additional2.add.xml
 copy_test_path:three_split.net.xml
 copy_test_path:input_net.net.xml
+copy_test_path:input_net.net.xml.gz
 copy_test_path:input_edges.edg.xml
 copy_test_path:input_nodes.nod.xml
 copy_test_path:input_plain.tll.xml
@@ -17,6 +19,7 @@ copy_test_path:input_trips.trips.xml
 copy_test_path:input_trips.trips_foo.xml
 copy_test_path:input_trips.trips_bar.xml
 copy_test_path:input_routes.rou.xml
+copy_test_path:input_routes.rou.xml.gz
 copy_test_path:input_routes2.rou.xml
 copy_test_path:input_flows.flows.xml
 copy_test_path:input_turns.xml
@@ -44,6 +47,7 @@ copy_test_path:testLinks.txt
 copy_test_path:routesx.rou.alt.xml
 copy_test_path:routesy.rou.alt.xml
 copy_test_path:input_districts.xml
+copy_test_path:input_districts.xml.gz
 copy_test_path:input_mtx0708.fma
 copy_test_path:vissim.inp
 copy_test_path:e1.add.xml
@@ -68,6 +72,7 @@ copy_test_path:fcd.xml
 copy_test_path:fcd.xml.gz
 copy_test_path:fcd2.xml
 copy_test_path:data.txt
+copy_test_path:data.csv
 copy_test_path:source.csv
 copy_test_path:osm.xml
 copy_test_path:osm_bbox.osm.xml
@@ -135,9 +140,9 @@ diff_xml:diff.xml
 created_sel:diff.created.sel.txt
 deleted_sel:diff.deleted.sel.txt
 changed_sel:diff.changed.sel.txt
-created_shapes:diff.created.shape.xml
-deleted_shapes:diff.deleted.shape.xml
-changed_shapes:diff.changed.shape.xml
+created_shapes:diff.created.shape.add.xml
+deleted_shapes:diff.deleted.shape.add.xml
+changed_shapes:diff.changed.shape.add.xml
 omnet:omnet.xml
 shawn:shawn.xml
 dri:test.dri
@@ -215,6 +220,7 @@ gtfs_routes:gtfs_pt_vehicles.add.xml
 gtfs_additional:gtfs_pt_stops.add.xml
 aggregatebattery:aggregatebattery.xml
 landmarks:landmarks.txt
+outputdata:output_data.txt
 
 [collate_script]
 osmimport:$SUMO_HOME/tests/unzip.py

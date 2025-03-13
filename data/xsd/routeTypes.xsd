@@ -67,6 +67,7 @@
         <xsd:attribute name="lcSpeedGainRight" type="nonNegativeFloatType"/>
         <xsd:attribute name="lcSpeedGainLookahead" type="nonNegativeFloatType"/>
         <xsd:attribute name="lcSpeedGainRemainTime" type="nonNegativeFloatType"/>
+        <xsd:attribute name="lcSpeedGainUrgency" type="nonNegativeFloatType"/>
         <xsd:attribute name="lcCooperativeRoundabout" type="nonNegativeFloatType"/>
         <xsd:attribute name="lcCooperativeSpeed" type="nonNegativeFloatTypeWithErrorValue"/>
         <xsd:attribute name="lcTurnAlignmentDistance" type="nonNegativeFloatType"/>
@@ -859,6 +860,7 @@
         <xsd:attribute name="ended" type="timeTypeWithErrorValue"/>
         <xsd:attribute name="onDemand" type="boolType"/>
         <xsd:attribute name="jump" type="timeTypeWithErrorValue"/>
+        <xsd:attribute name="jumpUntil" type="timeTypeWithErrorValue"/>
         <!-- save-state backward compatibility -->
         <xsd:attribute name="actualArrival" type="timeType"/>
         <xsd:attribute name="depart" type="timeType"/>

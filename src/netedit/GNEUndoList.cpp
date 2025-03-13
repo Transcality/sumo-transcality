@@ -17,16 +17,17 @@
 /// @date    Mar 2011
 ///
 /****************************************************************************/
+
+#include <netedit/GNETagProperties.h>
 #include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
 #include <netedit/changes/GNEChange_Attribute.h>
-#include <netedit/frames/common/GNESelectorFrame.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
+#include <netedit/frames/common/GNESelectorFrame.h>
 #include <utils/gui/div/GUIGlobalViewUpdater.h>
 
 #include "GNEApplicationWindow.h"
 #include "GNEUndoList.h"
-
 
 // ===========================================================================
 // FOX callback mapping
@@ -138,7 +139,6 @@ GNEUndoList::~GNEUndoList() {}
 
 void
 GNEUndoList::undo() {
-    WRITE_DEBUG("Calling GNEUndoList::undo()");
     GNEChange* change = nullptr;
     if (group) {
         throw ProcessError("GNEUndoList::undo() cannot call undo inside begin-end block");
@@ -163,7 +163,6 @@ GNEUndoList::undo() {
 
 void
 GNEUndoList::redo() {
-    WRITE_DEBUG("Calling GNEUndoList::redo()");
     GNEChange* change = nullptr;
     if (group) {
         throw ProcessError("GNEUndoList::redo() cannot call undo inside begin-end block");
@@ -218,7 +217,7 @@ GNEUndoList::begin(GUIIcon icon, const std::string& description) {
 
 void
 GNEUndoList::begin(const GNEAttributeCarrier* AC, const std::string& description) {
-    begin(AC->getTagProperty().getGUIIcon(), description);
+    begin(AC->getTagProperty()->getGUIIcon(), description);
 }
 
 

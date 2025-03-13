@@ -20,43 +20,33 @@
 #pragma once
 #include <config.h>
 
-#include <netedit/frames/GNEFrameAttributeModules.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanCreator.h>
-#include <netedit/frames/GNEAttributesCreator.h>
-#include <netedit/GNENetHelper.h>
-#include <utils/common/SUMOVehicleClass.h>
-#include <utils/vehicle/SUMORouteHandler.h>
-#include <utils/xml/SUMOSAXAttributes.h>
-#include <utils/xml/SUMOSAXHandler.h>
-#include <utils/xml/SUMOXMLDefinitions.h>
 #include <utils/handlers/RouteHandler.h>
-
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 
-class GNEViewNet;
-class GNEEdge;
-class GNETAZ;
-class GNEDemandElement;
-class GNEVehicle;
-class GNEPerson;
+class GNEAttributesEditor;
 class GNEContainer;
+class GNEDemandElement;
+class GNEEdge;
+class GNEJunction;
+class GNEPerson;
+class GNEPlanCreator;
+class GNETAZ;
 class GNEUndoList;
+class GNEVehicle;
+class GNEViewNet;
 
 // ===========================================================================
 // class definitions
 // ===========================================================================
 
-/// @class GNERouteHandler
-/// @brief Builds trigger objects for GNENet (busStops, chargingStations, detectors, etc..)
 class GNERouteHandler : public RouteHandler {
 
 public:
     /// @brief Constructor
-    GNERouteHandler(const std::string& file, GNENet* net, const bool allowUndoRedo, const bool overwrite);
+    GNERouteHandler(GNENet* net, const std::string& file, const bool allowUndoRedo, const bool overwrite);
 
     /// @brief Destructor
     virtual ~GNERouteHandler();
@@ -79,11 +69,6 @@ public:
                     const std::vector<std::string>& edgeIDs, const RGBColor& color, const int repeat, const SUMOTime cycleTime,
                     const double probability, const Parameterised::Map& routeParameters);
 
-    /// @brief build embedded route
-    bool buildEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const std::vector<std::string>& edgeIDs,
-                            const RGBColor& color, const int repeat, const SUMOTime cycleTime,
-                            const Parameterised::Map& routeParameters);
-
     /// @brief build route distribution
     bool buildRouteDistribution(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const std::string& id,
                                 const std::vector<std::string>& routeIDs, const std::vector<double>& probabilities);
@@ -91,8 +76,18 @@ public:
     /// @brief build a vehicle over an existent route
     bool buildVehicleOverRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters);
 
+    /// @brief build a vehicle with an embedded route
+    bool buildVehicleEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters,
+                                   const std::vector<std::string>& edgeIDs, const RGBColor& color, const int repeat, const SUMOTime cycleTime,
+                                   const double probability, const Parameterised::Map& routeParameters);
+
     /// @brief build a flow over an existent route
     bool buildFlowOverRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters);
+
+    /// @brief build a flow with an embedded route
+    bool buildFlowEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters,
+                                const std::vector<std::string>& edgeIDs, const RGBColor& color, const int repeat, const SUMOTime cycleTime,
+                                const double probability, const Parameterised::Map& routeParameters);
 
     /// @brief build trip
     bool buildTrip(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOVehicleParameter& vehicleParameters,
@@ -166,11 +161,11 @@ public:
                    const SUMOVehicleParameter::Stop& stopParameters);
 
     /// @brief build person plan
-    bool buildPersonPlan(const GNEDemandElement* planTemplate, GNEDemandElement* personParent, GNEAttributesCreator* personPlanAttributes,
+    bool buildPersonPlan(const GNEDemandElement* planTemplate, GNEDemandElement* personParent, GNEAttributesEditor* personPlanAttributesEditor,
                          GNEPlanCreator* planCreator, const bool centerAfterCreation);
 
     /// @brief build container plan
-    bool buildContainerPlan(const GNEDemandElement* planTemplate, GNEDemandElement* containerParent, GNEAttributesCreator* containerPlanAttributes,
+    bool buildContainerPlan(const GNEDemandElement* planTemplate, GNEDemandElement* containerParent, GNEAttributesEditor* containerPlanAttributesEditor,
                             GNEPlanCreator* planCreator, const bool centerAfterCreation);
 
     /// @}
@@ -251,13 +246,13 @@ public:
 
 protected:
     /// @brief parse junction
-    GNEJunction* parseJunction(const SumoXMLTag tag, const std::string &id, const std::string& junctionID);
+    GNEJunction* parseJunction(const SumoXMLTag tag, const std::string& id, const std::string& junctionID);
 
     /// @brief parse TAZ
-    GNEAdditional* parseTAZ(const SumoXMLTag tag, const std::string &id, const std::string& TAZID);
+    GNEAdditional* parseTAZ(const SumoXMLTag tag, const std::string& id, const std::string& TAZID);
 
     /// @brief parse edge
-    GNEEdge* parseEdge(const SumoXMLTag tag, const std::string &id, const std::string& edgeID,
+    GNEEdge* parseEdge(const SumoXMLTag tag, const std::string& id, const std::string& edgeID,
                        const CommonXMLStructure::SumoBaseObject* sumoBaseObject,
                        const bool firstEdge);
 
@@ -265,10 +260,10 @@ protected:
     GNEEdge* parseStopEdge(const CommonXMLStructure::SumoBaseObject* sumoBaseObject) const;
 
     /// @brief parse edge from lane ID
-    GNEEdge* parseEdgeFromLaneID(const std::string &laneID) const;
+    GNEEdge* parseEdgeFromLaneID(const std::string& laneID) const;
 
     /// @brief parse edges
-    std::vector<GNEEdge*> parseEdges(const SumoXMLTag tag, const std::string &id, const std::vector<std::string>& edgeIDs);
+    std::vector<GNEEdge*> parseEdges(const SumoXMLTag tag, const std::string& id, const std::vector<std::string>& edgeIDs);
 
     /// @brief get type (Either type o typeDistribution)
     GNEDemandElement* getType(const std::string& id) const;
@@ -284,8 +279,11 @@ protected:
                                  const std::vector<std::string>& distributionElementIDs, const std::vector<double>& probabilities,
                                  std::vector<const GNEDemandElement*>& elements);
 
-    /// @brief check if given ID correspond to a duplicated demand element
-    bool checkDuplicatedDemandElement(const SumoXMLTag tag, const std::vector<SumoXMLTag> tags, const std::string& id);
+    /// @brief get element by ID
+    GNEDemandElement* retrieveDemandElement(const std::vector<SumoXMLTag> tags, const std::string& id);
+
+    /// @brief check if element exist, and if overwritte
+    bool checkElement(const SumoXMLTag tag, GNEDemandElement* demandElement);
 
 private:
     /// @brief pointer to GNENet
@@ -300,7 +298,7 @@ private:
     /// @brief allow undo/redo
     const bool myAllowUndoRedo;
 
-    /// @brief check if overwrite
+    /// @brief flag to check if overwrite elements
     const bool myOverwrite;
 
     /// @brief vehicle tags
@@ -311,4 +309,13 @@ private:
 
     /// @brief container tags
     static const std::vector<SumoXMLTag> myContainerTags;
+
+    /// @brief invalidate default onstructor
+    GNERouteHandler() = delete;
+
+    /// @brief invalidate copy constructor
+    GNERouteHandler(const GNERouteHandler& s) = delete;
+
+    /// @brief invalidate assignment operator
+    GNERouteHandler& operator=(const GNERouteHandler& s) = delete;
 };

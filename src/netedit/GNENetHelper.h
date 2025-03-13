@@ -21,8 +21,6 @@
 #pragma once
 #include <config.h>
 
-#include <unordered_map>
-#include <utils/foxtools/fxheader.h>
 #include <foreign/rtree/SUMORTree.h>
 #include <netbuild/NBEdge.h>
 #include <netbuild/NBTrafficLightLogicCont.h>
@@ -30,8 +28,10 @@
 #include <netedit/changes/GNEChange.h>
 #include <utils/common/IDSupplier.h>
 #include <utils/common/SUMOVehicleClass.h>
+#include <utils/foxtools/fxheader.h>
 #include <utils/geom/Boundary.h>
 #include <utils/geom/PositionVector.h>
+#include <utils/geom/Triangle.h>
 #include <utils/gui/globjects/GUIGlObject.h>
 #include <utils/gui/globjects/GUIShapeContainer.h>
 #include <utils/gui/settings/GUIVisualizationSettings.h>
@@ -87,6 +87,7 @@ struct GNENetHelper {
         friend class GNEChange_Junction;
         friend class GNEChange_EdgeType;
         friend class GNEChange_Edge;
+        friend class GNEChange_TAZSourceSink;
         friend class GNEChange_Additional;
         friend class GNEChange_Shape;
         friend class GNEChange_TAZElement;
@@ -107,8 +108,8 @@ struct GNENetHelper {
         /// @brief remap junction and edge IDs
         void remapJunctionAndEdgeIds();
 
-        /// @brief check if shape of given AC (network element) is around the given shape
-        bool isNetworkElementAroundShape(GNEAttributeCarrier* AC, const PositionVector& shape) const;
+        /// @brief check if shape of given AC (network element) is around the given triangle
+        bool isNetworkElementAroundTriangle(GNEAttributeCarrier* AC, const Triangle& triangle) const;
 
         /// @brief functions related with number of elements sorted by categories
         /// @{
@@ -384,7 +385,7 @@ struct GNENetHelper {
         GNEAdditional* retrieveRerouterInterval(const std::string& rerouterID, const SUMOTime begin, const SUMOTime end) const;
 
         /// @brief get additionals
-        const std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEAdditional*> >& getAdditionals() const;
+        const std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEAdditional*>, std::hash<int> >& getAdditionals() const;
 
         /// @brief get selected additionals
         std::vector<GNEAdditional*> getSelectedAdditionals() const;
@@ -425,14 +426,27 @@ struct GNENetHelper {
         /// @brief get number of selected TAZs
         int getNumberOfSelectedTAZs() const;
 
-        /// @brief get number of selected TAZSources
-        int getNumberOfSelectedTAZSources() const;
-
-        /// @brief get number of selected TAZSinks
-        int getNumberOfSelectedTAZSinks() const;
-
         /// @brief get number of selected Wires
         int getNumberOfSelectedWires() const;
+
+        /// @}
+
+        /// @name function for TAZ sourceSinks
+        /// @{
+        /**@brief Returns the named sourceSink
+         * @param[in] sourceSink The GNETAZSourceSink to retrieve
+         * @param[in] hardFail Whether attempts to retrieve a nonexisting sourceSink should result in an exception
+         */
+        GNETAZSourceSink* retrieveTAZSourceSink(const GNEAttributeCarrier* sourceSink, bool hardFail = true) const;
+
+        /// @brief get sourceSinks
+        const std::unordered_map<SumoXMLTag, std::unordered_map<const GNEAttributeCarrier*, GNETAZSourceSink*>, std::hash<int> >& getTAZSourceSinks() const;
+
+        /// @brief get number of TAZSourceSinks
+        int getNumberOfTAZSourceSinks() const;
+
+        /// @brief clear sourceSinks
+        void clearTAZSourceSinks();
 
         /// @}
 
@@ -462,7 +476,7 @@ struct GNENetHelper {
         std::vector<GNEDemandElement*> getSelectedDemandElements() const;
 
         /// @brief get demand elements
-        const std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEDemandElement*> >& getDemandElements() const;
+        const std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEDemandElement*>, std::hash<int> >& getDemandElements() const;
 
         /// @brief generate demand element id
         std::string generateDemandElementID(SumoXMLTag tag) const;
@@ -558,7 +572,7 @@ struct GNENetHelper {
         std::vector<GNEGenericData*> getSelectedGenericDatas() const;
 
         /// @brief get all generic datas
-        const std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEGenericData*> >& getGenericDatas() const;
+        const std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEGenericData*>, std::hash<int> >& getGenericDatas() const;
 
         /// @brief retrieve generic datas within the given interval
         std::vector<GNEGenericData*> retrieveGenericDatas(const SumoXMLTag genericDataTag, const double begin, const double end);
@@ -595,7 +609,7 @@ struct GNENetHelper {
         GNEMeanData* retrieveMeanData(SumoXMLTag type, const std::string& id, bool hardFail = true) const;
 
         /// @brief get meanDatas
-        const std::unordered_map<SumoXMLTag, std::map<const std::string, GNEMeanData*> >& getMeanDatas() const;
+        const std::unordered_map<SumoXMLTag, std::map<const std::string, GNEMeanData*>, std::hash<int> >& getMeanDatas() const;
 
         /// @brief get number of meanDatas
         int getNumberOfMeanDatas() const;
@@ -710,6 +724,17 @@ struct GNENetHelper {
 
         /// @}
 
+        /// @name TAZ Source Sinks protected functions
+        /// @{
+
+        /// @brief Insert a sourceSink element in container.
+        void insertTAZSourceSink(GNETAZSourceSink* sourceSink);
+
+        /// @brief delete sourceSink element of container
+        void deleteTAZSourceSink(GNETAZSourceSink* sourceSink);
+
+        /// @}
+
         /// @name demand elements protected functions
         /// @{
 
@@ -766,7 +791,7 @@ struct GNENetHelper {
         /// @}
 
         /// @brief update demand element frames (called after insert/delete demand element)
-        void updateDemandElementFrames(const GNETagProperties& tagProperty);
+        void updateDemandElementFrames(const GNETagProperties* tagProperty);
 
     private:
         /// @brief pointer to net
@@ -812,16 +837,19 @@ struct GNENetHelper {
         std::unordered_map<const GUIGlObject*, GNEInternalLane*> myInternalLanes;
 
         /// @brief map with the tag and pointer to additional elements of net, sorted by IDs
-        std::unordered_map<SumoXMLTag, std::map<const std::string, GNEAdditional*> > myAdditionalIDs;
+        std::unordered_map<SumoXMLTag, std::map<const std::string, GNEAdditional*>, std::hash<int> > myAdditionalIDs;
 
         /// @brief map with the tag and pointer to additional elements of net
-        std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEAdditional*> > myAdditionals;
+        std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEAdditional*>, std::hash<int> > myAdditionals;
+
+        /// @brief map with the tag and pointer to TAZSourceSinks elements of net
+        std::unordered_map<SumoXMLTag, std::unordered_map<const GNEAttributeCarrier*, GNETAZSourceSink*>, std::hash<int> > myTAZSourceSinks;
 
         /// @brief map with the tag and pointer to demand elements of net, sorted by IDs
-        std::unordered_map<SumoXMLTag, std::map<const std::string, GNEDemandElement*> > myDemandElementIDs;
+        std::unordered_map<SumoXMLTag, std::map<const std::string, GNEDemandElement*>, std::hash<int> > myDemandElementIDs;
 
-        /// @brief map with the tag and pointer to additional elements of net
-        std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEDemandElement*> > myDemandElements;
+        /// @brief map with the tag and pointer to demand elements elements of net
+        std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEDemandElement*>, std::hash<int> > myDemandElements;
 
         /// @brief map with the ID and pointer to all datasets of net
         std::map<const std::string, GNEDataSet*> myDataSets;
@@ -830,10 +858,13 @@ struct GNENetHelper {
         std::unordered_map<const GNEAttributeCarrier*, GNEDataInterval*> myDataIntervals;
 
         /// @brief map with the tag and pointer to all generic datas
-        std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEGenericData*> > myGenericDatas;
+        std::unordered_map<SumoXMLTag, std::unordered_map<const GUIGlObject*, GNEGenericData*>, std::hash<int> > myGenericDatas;
 
         /// @brief map with the tag and pointer to meanData elements of net
-        std::unordered_map<SumoXMLTag, std::map<const std::string, GNEMeanData*> > myMeanDatas;
+        std::unordered_map<SumoXMLTag, std::map<const std::string, GNEMeanData*>, std::hash<int> > myMeanDatas;
+
+        /// @brief Invalidated default constructor.
+        AttributeCarriers() = delete;
 
         /// @brief Invalidated copy constructor.
         AttributeCarriers(const AttributeCarriers&) = delete;
@@ -842,12 +873,148 @@ struct GNENetHelper {
         AttributeCarriers& operator=(const AttributeCarriers&) = delete;
     };
 
+    /// @brief modul for handling saving files
+    class SavingFilesHandler {
+
+    public:
+        /// @brief typedef used for group ACs by filename
+        typedef std::map<std::string, std::unordered_set<const GNEAttributeCarrier*> > ACsbyFilename;
+
+        /// @brief constructor
+        SavingFilesHandler(GNENet* net);
+
+        /// @brief add template
+        void addTemplate(GNEAttributeCarrier* templateAC);
+
+        /// @brief update netedit config
+        void updateNeteditConfig();
+
+        /// @brief additional elements
+        /// @{
+
+        /// @brief add additional filename
+        void addAdditionalFilename(const GNEAttributeCarrier* additionalElement);
+
+        /// @brief update additional elements with empty filenames with the given file
+        void updateAdditionalEmptyFilenames(const std::string& file);
+
+        /// @brief get vector with additional elements saving files (starting with default)
+        const std::vector<std::string>& getAdditionalFilenames() const;
+
+        /// @brief get additionals sorted by filenames (and also clear unused filenames)
+        ACsbyFilename getAdditionalsByFilename();
+
+        /// @brief check if the given additional file was already registered
+        bool existAdditionalFilename(const std::string& file) const;
+
+        /// @}
+
+        /// @brief demand elements
+        /// @{
+
+        /// @brief add demand filename
+        void addDemandFilename(const GNEAttributeCarrier* demandElement);
+
+        /// @brief update demand elements with empty filenames with the given file
+        void updateDemandEmptyFilenames(const std::string& file);
+
+        /// @brief get vector with demand elements saving files (starting with default)
+        const std::vector<std::string>& getDemandFilenames() const;
+
+        /// @brief get demands sorted by filenames (and also clear unused filenames)
+        ACsbyFilename getDemandsByFilename();
+
+        /// @brief check if the given demand file was already registered
+        bool existDemandFilename(const std::string& file) const;
+
+        /// @}
+
+        /// @brief data elements
+        /// @{
+
+        /// @brief add data filename
+        void addDataFilename(const GNEAttributeCarrier* dataElement);
+
+        /// @brief update data elements with empty filenames with the given file
+        void updateDataEmptyFilenames(const std::string& file);
+
+        /// @brief get vector with data elements saving files (starting with default)
+        const std::vector<std::string>& getDataFilenames() const;
+
+        /// @brief get datas sorted by filenames (and also clear unused filenames)
+        ACsbyFilename getDatasByFilename();
+
+        /// @brief check if the given data file was already registered
+        bool existDataFilename(const std::string& file) const;
+
+        /// @}
+
+        /// @brief meanData elements
+        /// @{
+
+        /// @brief add meanData filename
+        void addMeanDataFilename(const GNEAttributeCarrier* meanDataElement);
+
+        /// @brief update meanData elements with empty filenames with the given file
+        void updateMeanDataEmptyFilenames(const std::string& file);
+
+        /// @brief get vector with meanData elements saving files (starting with default)
+        const std::vector<std::string>& getMeanDataFilenames() const;
+
+        /// @brief get meanDatas sorted by filenames (and also clear unused filenames)
+        ACsbyFilename getMeanDatasByFilename();
+
+        /// @brief check if the given meanData file was already registered
+        bool existMeanDataFilename(const std::string& file) const;
+
+        /// @}
+
+    private:
+        /// @brief pointer to net
+        GNENet* myNet;
+
+        /// @brief vector with attribute carrier templates
+        std::vector<GNEAttributeCarrier*> myTemplateACs;
+
+        /// @brief vector with additional elements saving files
+        std::vector<std::string> myAdditionalElementsSavingFiles;
+
+        /// @brief vector with demand elements saving files
+        std::vector<std::string> myDemandElementsSavingFiles;
+
+        /// @brief vector with data elements saving files
+        std::vector<std::string> myDataElementsSavingFiles;
+
+        /// @brief vector with mean data elements saving files
+        std::vector<std::string> myMeanDataElementsSavingFiles;
+
+        /// @brief parsing saving files
+        std::string parsingSavingFiles(const std::vector<std::string>& savingFiles) const;
+
+        /// @brief Invalidated default constructor.
+        SavingFilesHandler() = delete;
+
+        /// @brief Invalidated copy constructor.
+        SavingFilesHandler(const SavingFilesHandler&) = delete;
+
+        /// @brief Invalidated assignment operator.
+        SavingFilesHandler& operator=(const SavingFilesHandler&) = delete;
+    };
+
     /// @brief modul for Saving status
     class SavingStatus {
 
     public:
+        /// @brief enum used to keep the result of ask about saving elements
+        enum class AskSaving {
+            CONTINUE,   // nothing to save
+            SAVE,       // save elements
+            DISCARD,    // discard saving
+            ABORT,      // abort saving
+        };
+
         /// @brief constructor
-        SavingStatus();
+        SavingStatus(GNENet* net);
 
         /// @name SumoConfig
         /// @{
@@ -975,7 +1142,30 @@ struct GNENetHelper {
 
         /// @}
 
+        /// @name function to ask if save elements before close/quit
+        /// @{
+
+        /// @brief warns about unsaved changes in network and gives the user the option to abort
+        AskSaving askSaveNetwork() const;
+
+        /// @brief warns about unsaved changes in additionals and gives the user the option to abort
+        AskSaving askSaveAdditionalElements() const;
+
+        /// @brief warns about unsaved changes in demand elements and gives the user the option to abort
+        AskSaving askSaveDemandElements() const;
+
+        /// @brief warns about unsaved changes in data elements and gives the user the option to abort
+        AskSaving askSaveDataElements() const;
+
+        /// @brief warns about unsaved changes in meanData elements and gives the user the option to abort
+        AskSaving askSaveMeanDataElements() const;
+
+        /// @}
+
     private:
+        /// @brief pointer to net
+        GNENet* myNet;
+
         /// @brief flag for SumoConfigSumoConfig saved
         bool mySumoConfigSaved = true;
 
@@ -1002,6 +1192,9 @@ struct GNENetHelper {
 
         /// @brief flag for meanData elements saved
         bool myMeanDataElementSaved = true;
+
+        /// @brief invalidate default constructor
+        SavingStatus() = delete;
 
         /// @brief Invalidated copy constructor.
         SavingStatus(const SavingStatus&) = delete;

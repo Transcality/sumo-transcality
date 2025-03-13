@@ -17,7 +17,6 @@
 ///
 // Template for lanes
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/elements/network/GNELane.h>
 
@@ -28,7 +27,7 @@
 // ===========================================================================
 
 GNELaneTemplate::GNELaneTemplate(const GNELane* lane) :
-    GNEAttributeCarrier(SUMO_TAG_LANE, lane->getNet()),
+    GNEAttributeCarrier(SUMO_TAG_LANE, lane->getNet(), "", false),
     myLane(lane) {
 }
 

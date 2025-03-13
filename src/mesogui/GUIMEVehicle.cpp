@@ -41,12 +41,18 @@
 // ===========================================================================
 // method definitions
 // ===========================================================================
-
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GUIMEVehicle::GUIMEVehicle(SUMOVehicleParameter* pars, ConstMSRoutePtr route,
                            MSVehicleType* type, const double speedFactor) :
     MEVehicle(pars, route, type, speedFactor),
     GUIBaseVehicle((MSBaseVehicle&) * this) {
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GUIMEVehicle::~GUIMEVehicle() { }
@@ -319,6 +325,11 @@ GUIMEVehicle::getVisualPosition(bool s2, const double offset) const {
         return shp.positionAtOffset((getPositionOnLane() + offset) * first->getLengthGeometryFactor(s2));
     }
     return MEVehicle::getPosition(offset);
+}
+
+bool
+GUIMEVehicle::isSelected() const {
+    return gSelected.isSelected(GLO_VEHICLE, getGlID());
 }
 
 /****************************************************************************/

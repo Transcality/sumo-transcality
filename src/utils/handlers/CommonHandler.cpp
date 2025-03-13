@@ -30,7 +30,8 @@
 // method definitions
 // ===========================================================================
 
-CommonHandler::CommonHandler() {
+CommonHandler::CommonHandler(const std::string& filename) :
+    myFilename(filename) {
 }
 
 
@@ -67,11 +68,22 @@ CommonHandler::parseParameters(const SUMOSAXAttributes& attrs) {
         } else if (!SUMOXMLDefinitions::isValidParameterKey(key)) {
             writeError(TLF("Error parsing key from % generic parameter. Key contains invalid characters", parentTagStr));
         } else {
-            WRITE_DEBUG("Inserting generic parameter '" + key + "|" + value + "' into " + parentTagStr);
             // insert parameter in SumoBaseObjectParent
             SumoBaseObjectParent->addParameter(key, value);
         }
     }
+}
+
+
+CommonXMLStructure::SumoBaseObject*
+CommonHandler::getEmbeddedRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseObject) const {
+    // locate route in childrens
+    for (const auto& embeddedRoute : sumoBaseObject->getSumoBaseObjectChildren()) {
+        if ((embeddedRoute->getTag() == SUMO_TAG_ROUTE) && (!embeddedRoute->hasStringAttribute(SUMO_ATTR_ID))) {
+            return embeddedRoute;
+        }
+    }
+    return nullptr;
 }
 
 
@@ -81,8 +93,8 @@ CommonHandler::checkParsedParent(const SumoXMLTag currentTag, const std::vector<
         std::string tagsStr;
         for (auto it = parentTags.begin(); it != parentTags.end(); it++) {
             tagsStr.append(toString(*it));
-            if ((it+1) != parentTags.end()) {
-                if ((it+2) != parentTags.end()) {
+            if ((it + 1) != parentTags.end()) {
+                if ((it + 2) != parentTags.end()) {
                     tagsStr.append(", ");
                 } else {
                     tagsStr.append(" or ");
@@ -118,6 +130,20 @@ CommonHandler::checkListOfVehicleTypes(const SumoXMLTag tag, const std::string& 
 
 
 bool
+CommonHandler::checkDistribution(CommonXMLStructure::SumoBaseObject* obj) {
+    if (obj->getParentSumoBaseObject() == nullptr) {
+        return false;
+    } else if (obj->getParentSumoBaseObject()->getTag() == SUMO_TAG_ROUTE_DISTRIBUTION) {
+        return true;
+    } else if (obj->getParentSumoBaseObject()->getTag() == SUMO_TAG_VTYPE_DISTRIBUTION) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+bool
 CommonHandler::checkVehicleParents(CommonXMLStructure::SumoBaseObject* obj) {
     if (obj == nullptr) {
         return false;
@@ -127,23 +153,71 @@ CommonHandler::checkVehicleParents(CommonXMLStructure::SumoBaseObject* obj) {
         SumoXMLTag tag = obj->getTag();
         const std::string id = obj->getStringAttribute(SUMO_ATTR_ID);
         const bool hasRoute = obj->hasStringAttribute(SUMO_ATTR_ROUTE);
-        const bool embeddedRoute = (obj->getSumoBaseObjectChildren().size() > 0) && (obj->getSumoBaseObjectChildren().front()->getTag() == SUMO_TAG_ROUTE);
+        const bool hasEmbeddedRoute = (getEmbeddedRoute(obj) != nullptr);
         const bool overEdges = obj->hasStringAttribute(SUMO_ATTR_FROM) && obj->hasStringAttribute(SUMO_ATTR_TO);
         const bool overJunctions = obj->hasStringAttribute(SUMO_ATTR_FROM_JUNCTION) && obj->hasStringAttribute(SUMO_ATTR_TO_JUNCTION);
         const bool overTAZs = obj->hasStringAttribute(SUMO_ATTR_FROM_TAZ) && obj->hasStringAttribute(SUMO_ATTR_TO_TAZ);
-        if (hasRoute && embeddedRoute) {
+        if (hasRoute && hasEmbeddedRoute) {
             return writeError(TLF("Could not build % with ID '%' in netedit; Cannot have an external route and an embedded route in the same definition.", toString(tag), id));
         }
         if ((overEdges + overJunctions + overTAZs) > 1) {
             return writeError(TLF("Could not build % with ID '%' in netedit; Cannot have multiple from-to attributes.", toString(tag), id));
         }
-        if ((hasRoute + embeddedRoute + overEdges + overJunctions + overTAZs) > 1) {
+        if ((hasRoute + hasEmbeddedRoute + overEdges + overJunctions + overTAZs) > 1) {
             return writeError(TLF("Could not build % with ID '%' in netedit; Cannot have from-to attributes and route attributes in the same definition.", toString(tag), id));
         }
-        if ((hasRoute + embeddedRoute + overEdges + overJunctions + overTAZs) == 0) {
+        if ((hasRoute + hasEmbeddedRoute + overEdges + overJunctions + overTAZs) == 0) {
             return writeError(TLF("Could not build % with ID '%' in netedit; Requiere either a route or an embedded route or a from-to attribute (Edges, junctions or TAZs).", toString(tag), id));
         }
         return true;
+    }
+}
+
+
+bool
+CommonHandler::checkPersonPlanParents(CommonXMLStructure::SumoBaseObject* obj) {
+    const auto parent = obj->getParentSumoBaseObject();
+    if (parent == nullptr) {
+        return false;
+    } else if (!parent->wasCreated()) {
+        return false;
+    } else if ((parent->getTag() == SUMO_TAG_PERSON) || (parent->getTag() == SUMO_TAG_PERSONFLOW)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+bool
+CommonHandler::checkContainerPlanParents(CommonXMLStructure::SumoBaseObject* obj) {
+    const auto parent = obj->getParentSumoBaseObject();
+    if (parent == nullptr) {
+        return false;
+    } else if (!parent->wasCreated()) {
+        return false;
+    } else if ((parent->getTag() == SUMO_TAG_CONTAINER) || (parent->getTag() == SUMO_TAG_CONTAINERFLOW)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+bool
+CommonHandler::checkStopParents(CommonXMLStructure::SumoBaseObject* obj) {
+    const auto parent = obj->getParentSumoBaseObject();
+    if (parent == nullptr) {
+        return false;
+    } else if (!parent->wasCreated()) {
+        return false;
+    } else if ((parent->getTag() == SUMO_TAG_ROUTE) || (parent->getTag() == SUMO_TAG_TRIP) ||
+               (parent->getTag() == SUMO_TAG_VEHICLE) || (parent->getTag() == SUMO_TAG_FLOW) ||
+               (parent->getTag() == SUMO_TAG_PERSON) || (parent->getTag() == SUMO_TAG_PERSONFLOW) ||
+               (parent->getTag() == SUMO_TAG_CONTAINER) || (parent->getTag() == SUMO_TAG_CONTAINERFLOW)) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -203,7 +277,7 @@ CommonHandler::checkNegative(const SumoXMLTag tag, const std::string& id, const 
 
 
 bool
-CommonHandler::checkFileName(const SumoXMLTag tag, const std::string& id, const SumoXMLAttr attribute, const std::string &value) {
+CommonHandler::checkFileName(const SumoXMLTag tag, const std::string& id, const SumoXMLAttr attribute, const std::string& value) {
     if (SUMOXMLDefinitions::isValidFilename(value)) {
         return true;
     } else {
@@ -248,6 +322,18 @@ CommonHandler::checkValidDemandElementID(const SumoXMLTag tag, const std::string
 }
 
 
+void
+CommonHandler::writeWarningOverwritting(const SumoXMLTag tag, const std::string& id) {
+    WRITE_WARNING(TLF("Overwritting % with ID '%'", toString(tag), id));
+}
+
+
+bool
+CommonHandler::writeWarningDuplicated(const SumoXMLTag tag, const std::string& id, const SumoXMLTag checkedTag) {
+    return writeError(TLF("Could not build % with ID '%' in netedit; Found another % with the same ID.", toString(tag), id, toString(checkedTag)));
+}
+
+
 bool
 CommonHandler::writeError(const std::string& error) {
     WRITE_ERROR(error);
@@ -263,8 +349,8 @@ CommonHandler::writeErrorInvalidPosition(const SumoXMLTag tag, const std::string
 
 
 bool
-CommonHandler::writeErrorDuplicated(const SumoXMLTag tag, const std::string& id, const SumoXMLTag checkedTag) {
-    return writeError(TLF("Could not build % with ID '%' in netedit; Found another % with the same ID.", toString(tag), id, toString(checkedTag)));
+CommonHandler::writeErrorEmptyEdges(const SumoXMLTag tag, const std::string& id) {
+    return writeError(TLF("Could not build % with ID '%' in netedit; List of edges cannot be empty.", toString(tag), id));
 }
 
 

@@ -24,15 +24,6 @@
 
 #include "GNEViewNetHelper.h"
 
-
-// ===========================================================================
-// class declaration
-// ===========================================================================
-class GNEFrame;
-class GNENet;
-class GNEUndoList;
-class GNEViewParent;
-
 // ===========================================================================
 // class definitions
 // ===========================================================================
@@ -89,20 +80,14 @@ public:
     /// @brief get move multiple element values
     const GNEViewNetHelper::MoveMultipleElementModul& getMoveMultipleElementValues() const;
 
-    /// @brief get objects in the given boundary
-    void updateObjectsInBoundary(const Boundary& boundary);
-
     /// @brief update objects and boundaries in position
     void updateObjectsInPosition(const Position& pos);
 
+    /// @brief get objects in the given shape (using triangulation)
+    void updateObjectsInShape(const PositionVector& shape);
+
     /// @brief redraw elements only for calculating boundary
     void redrawPathElementContours();
-
-    /** @brief Builds an entry which allows to (de)select the object
-     * @param ret The popup menu to add the entry to
-     * @param AC AttributeCarrier that will be select/unselected
-     */
-    void buildSelectionACPopupEntry(GUIGLObjectPopupMenu* ret, GNEAttributeCarrier* AC);
 
     /// @brief set color scheme
     bool setColorScheme(const std::string& name);
@@ -258,6 +243,9 @@ public:
 
     /// @brief select elements within polygon boundary
     long onCmdSelectPolygonElements(FXObject*, FXSelector, void*);
+
+    /// @brief triangulate polygon
+    long onCmdTriangulatePolygon(FXObject*, FXSelector, void*);
 
     /// @brief set as first geometry point the closes geometry point
     long onCmdSetFirstGeometryPoint(FXObject*, FXSelector, void*);
@@ -588,7 +576,7 @@ public:
     bool showJunctionAsBubbles() const;
 
     /// @brief ask merge junctions
-    bool askMergeJunctions(const GNEJunction* movedJunction, const GNEJunction* targetJunction, bool &alreadyAsked);
+    bool askMergeJunctions(const GNEJunction* movedJunction, const GNEJunction* targetJunction, bool& alreadyAsked);
 
     /// @brief ask about change supermode
     bool aksChangeSupermode(const std::string& operation, Supermode expectedSupermode);

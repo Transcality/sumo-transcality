@@ -37,7 +37,7 @@ class GNEMeanDataHandler : public MeanDataHandler {
 
 public:
     /// @brief Constructor
-    GNEMeanDataHandler(GNENet* net, const bool allowUndoRedo, const bool overwrite);
+    GNEMeanDataHandler(GNENet* net, const std::string& filename, const bool allowUndoRedo, const bool overwrite);
 
     /// @brief Destructor
     virtual ~GNEMeanDataHandler();
@@ -84,7 +84,13 @@ protected:
     /// @brief check if given ID correspond to a duplicated mean data element
     bool checkDuplicatedMeanDataElement(const SumoXMLTag tag, const std::string& id);
 
+    /// @brief check if given excludeEmpty is valid
+    bool checkExcludeEmpty(const SumoXMLTag tag, const std::string& id, const std::string& excludeEmpty);
+
 private:
+    /// @brief invalidate default onstructor
+    GNEMeanDataHandler() = delete;
+
     /// @brief invalidate copy constructor
     GNEMeanDataHandler(const GNEMeanDataHandler& s) = delete;
 
