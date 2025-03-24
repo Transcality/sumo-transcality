@@ -21,6 +21,7 @@
 #include <netedit/GNENet.h>
 #include <netedit/GNETagProperties.h>
 #include <netedit/GNETagPropertiesDatabase.h>
+#include <netedit/GNEUndoList.h>
 #include <netedit/GNEViewNet.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <utils/common/StringTokenizer.h>
@@ -56,9 +57,7 @@ GNEAttributeCarrier::GNEAttributeCarrier(const SumoXMLTag tag, GNENet* net, cons
     myFilename(filename),
     myIsTemplate(isTemplate) {
     // check if add this AC to saving file handler
-    if (isTemplate) {
-        net->getSavingFilesHandler()->addTemplate(this);
-    } else if (myFilename.size() > 0) {
+    if (myFilename.size() > 0) {
         // add filename to saving files handler
         if (myTagProperty->isAdditionalElement()) {
             net->getSavingFilesHandler()->addAdditionalFilename(this);
@@ -215,12 +214,32 @@ GNEAttributeCarrier::checkDrawFrontContour() const {
 
 
 void
-GNEAttributeCarrier::resetDefaultValues() {
-    for (const auto& attrProperty : myTagProperty->getAttributeProperties()) {
-        if (attrProperty->hasDefaultValue()) {
-            setAttribute(attrProperty->getAttr(), attrProperty->getDefaultStringValue());
-            if (attrProperty->isActivatable()) {
-                toggleAttribute(attrProperty->getAttr(), attrProperty->getDefaultActivated());
+GNEAttributeCarrier::resetDefaultValues(const bool allowUndoRedo) {
+    if (allowUndoRedo) {
+        // reset within undo-redo
+        const auto undoList = myNet->getViewNet()->getUndoList();
+        undoList->begin(myTagProperty->getGUIIcon(), TLF("reset %", myTagProperty->getTagStr()));
+        for (const auto& attrProperty : myTagProperty->getAttributeProperties()) {
+            if (!attrProperty->isUnique() && attrProperty->hasDefaultValue()) {
+                setAttribute(attrProperty->getAttr(), attrProperty->getDefaultStringValue(), undoList);
+                if (attrProperty->isActivatable()) {
+                    if (attrProperty->getDefaultActivated()) {
+                        enableAttribute(attrProperty->getAttr(), undoList);
+                    } else {
+                        disableAttribute(attrProperty->getAttr(), undoList);
+                    }
+                }
+            }
+        }
+        undoList->end();
+    } else {
+        // simply reset every
+        for (const auto& attrProperty : myTagProperty->getAttributeProperties()) {
+            if (attrProperty->hasDefaultValue()) {
+                setAttribute(attrProperty->getAttr(), attrProperty->getDefaultStringValue());
+                if (attrProperty->isActivatable()) {
+                    toggleAttribute(attrProperty->getAttr(), attrProperty->getDefaultActivated());
+                }
             }
         }
     }
@@ -322,8 +341,9 @@ GNEAttributeCarrier::parse(const std::string& string) {
 
 template<> Position
 GNEAttributeCarrier::parse(const std::string& string) {
+    // we handle empty strings as position invalids
     if (string.size() == 0) {
-        throw EmptyData();
+        return Position::INVALID;
     } else {
         bool ok = true;
         PositionVector pos = GeomConvHelper::parseShapeReporting(string, "user-supplied position", 0, ok, false, false);
@@ -731,16 +751,6 @@ GNEAttributeCarrier::getTagProperty() const {
 // ===========================================================================
 
 void
-GNEAttributeCarrier::resetAttributes() {
-    for (const auto& attrProperty : myTagProperty->getAttributeProperties()) {
-        if (attrProperty->hasDefaultValue()) {
-            setAttribute(attrProperty->getAttr(), attrProperty->getDefaultStringValue());
-        }
-    }
-}
-
-
-void
 GNEAttributeCarrier::toggleAttribute(SumoXMLAttr /*key*/, const bool /*value*/) {
     throw ProcessError(TL("Nothing to toggle, implement in Children"));
 }
@@ -749,6 +759,13 @@ GNEAttributeCarrier::toggleAttribute(SumoXMLAttr /*key*/, const bool /*value*/) 
 std::string
 GNEAttributeCarrier::getCommonAttribute(const Parameterised* parameterised, SumoXMLAttr key) const {
     switch (key) {
+        case GNE_ATTR_ADDITIONAL_FILE:
+        case GNE_ATTR_DEMAND_FILE:
+        case GNE_ATTR_DATA_FILE:
+        case GNE_ATTR_MEANDATA_FILE:
+            return myFilename;
+        case GNE_ATTR_CENTER_AFTER_CREATION:
+            return toString(myCenterAfterCreation);
         case GNE_ATTR_SELECTED:
             if (mySelected) {
                 return True;
@@ -761,11 +778,6 @@ GNEAttributeCarrier::getCommonAttribute(const Parameterised* parameterised, Sumo
             } else {
                 return False;
             }
-        case GNE_ATTR_ADDITIONAL_FILE:
-        case GNE_ATTR_DEMAND_FILE:
-        case GNE_ATTR_DATA_FILE:
-        case GNE_ATTR_MEANDATA_FILE:
-            return myFilename;
         case GNE_ATTR_PARAMETERS:
             return parameterised->getParametersStr();
         default:
@@ -777,12 +789,11 @@ GNEAttributeCarrier::getCommonAttribute(const Parameterised* parameterised, Sumo
 void
 GNEAttributeCarrier::setCommonAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList* undoList) {
     switch (key) {
-        case GNE_ATTR_SELECTED:
         case GNE_ATTR_ADDITIONAL_FILE:
             GNEChange_Attribute::changeAttribute(this, key, value, undoList);
-            // update filenames of all demand childrens
+            // update filenames of all additional childrens
             for (auto additionalChild : getHierarchicalElement()->getChildAdditionals()) {
-                additionalChild->setAttribute(key, myFilename, undoList);
+                additionalChild->setAttribute(key, value, undoList);
             }
             break;
         case GNE_ATTR_DEMAND_FILE:
@@ -794,6 +805,8 @@ GNEAttributeCarrier::setCommonAttribute(SumoXMLAttr key, const std::string& valu
             break;
         case GNE_ATTR_DATA_FILE:
         case GNE_ATTR_MEANDATA_FILE:
+        case GNE_ATTR_CENTER_AFTER_CREATION:
+        case GNE_ATTR_SELECTED:
         case GNE_ATTR_PARAMETERS:
             GNEChange_Attribute::changeAttribute(this, key, value, undoList);
             break;
@@ -806,13 +819,14 @@ GNEAttributeCarrier::setCommonAttribute(SumoXMLAttr key, const std::string& valu
 bool
 GNEAttributeCarrier::isCommonValid(SumoXMLAttr key, const std::string& value) const {
     switch (key) {
-        case GNE_ATTR_SELECTED:
-            return canParse<bool>(value);
         case GNE_ATTR_ADDITIONAL_FILE:
         case GNE_ATTR_DEMAND_FILE:
         case GNE_ATTR_DATA_FILE:
         case GNE_ATTR_MEANDATA_FILE:
             return SUMOXMLDefinitions::isValidFilename(value);
+        case GNE_ATTR_CENTER_AFTER_CREATION:
+        case GNE_ATTR_SELECTED:
+            return canParse<bool>(value);
         case GNE_ATTR_PARAMETERS:
             return Parameterised::areParametersValid(value);
         default:
@@ -824,13 +838,6 @@ GNEAttributeCarrier::isCommonValid(SumoXMLAttr key, const std::string& value) co
 void
 GNEAttributeCarrier::setCommonAttribute(Parameterised* parameterised, SumoXMLAttr key, const std::string& value) {
     switch (key) {
-        case GNE_ATTR_SELECTED:
-            if (parse<bool>(value)) {
-                selectAttributeCarrier();
-            } else {
-                unselectAttributeCarrier();
-            }
-            break;
         case GNE_ATTR_ADDITIONAL_FILE:
             myFilename = value;
             if (value.empty()) {
@@ -873,6 +880,16 @@ GNEAttributeCarrier::setCommonAttribute(Parameterised* parameterised, SumoXMLAtt
                 }
             } else {
                 myNet->getSavingFilesHandler()->addMeanDataFilename(this);
+            }
+            break;
+        case GNE_ATTR_CENTER_AFTER_CREATION:
+            myCenterAfterCreation = parse<bool>(value);
+            break;
+        case GNE_ATTR_SELECTED:
+            if (parse<bool>(value)) {
+                selectAttributeCarrier();
+            } else {
+                unselectAttributeCarrier();
             }
             break;
         case GNE_ATTR_PARAMETERS:

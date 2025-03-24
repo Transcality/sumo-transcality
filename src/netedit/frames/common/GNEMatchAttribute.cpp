@@ -101,17 +101,17 @@ GNEMatchAttribute::showMatchAttribute(const GNEElementSet::Type type) {
     // get tags for the given element set
     std::vector<const GNETagProperties*> tagPropertiesByType;
     if (type == (GNEElementSet::Type::NETWORK)) {
-        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::NETWORKELEMENT, false);
+        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::NETWORKELEMENT);
     } else if (type == GNEElementSet::Type::ADDITIONAL) {
-        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::ADDITIONALELEMENT, false);
+        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::ADDITIONALELEMENT);
     } else if (type == GNEElementSet::Type::SHAPE) {
-        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::SHAPE, false);
+        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::SHAPE);
     } else if (type == GNEElementSet::Type::TAZ) {
-        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::TAZELEMENT, false);
+        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::TAZELEMENT);
     } else if (type == GNEElementSet::Type::DEMAND) {
-        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::DEMANDELEMENT, true);
+        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::DEMANDELEMENT);
     } else if (type == GNEElementSet::Type::GENERICDATA) {
-        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::GENERICDATA, false);
+        tagPropertiesByType = tagPropertiesDatabase->getTagPropertiesByType(GNETagProperties::TagType::GENERICDATA);
     } else {
         throw ProcessError(TL("Unknown set"));
     }
@@ -146,7 +146,7 @@ GNEMatchAttribute::onCmdSelMBTag(FXObject*, FXSelector, void*) {
     myMatchTagComboBox->setTextColor(FXRGB(255, 0, 0));
     // iterate over tags
     for (const auto& tagProperty : myTagProperties) {
-        if (tagProperty->getFieldString() == myMatchTagComboBox->getText().text()) {
+        if (tagProperty->getSelectorText() == myMatchTagComboBox->getText().text()) {
             // set valid tag
             myCurrentTag = tagProperty->getTag();
             // set valid color
@@ -296,7 +296,7 @@ GNEMatchAttribute::updateTag() {
     // itreate over myTagProperties
     for (int i = 0; i < (int)myTagProperties.size(); i++) {
         // add tag in combo Box
-        myMatchTagComboBox->appendIconItem(myTagProperties.at(i)->getFieldString().c_str(), GUIIconSubSys::getIcon(myTagProperties.at(i)->getGUIIcon()));
+        myMatchTagComboBox->appendIconItem(myTagProperties.at(i)->getSelectorText().c_str(), GUIIconSubSys::getIcon(myTagProperties.at(i)->getGUIIcon()));
         // check tag index
         if (myTagProperties.at(i)->getTag() == myCurrentTag) {
             tagIndex = i;

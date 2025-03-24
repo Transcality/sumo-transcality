@@ -49,8 +49,6 @@ const double GNETAZ::myHintSizeSquared = 0.64;
 GNETAZ::GNETAZ(GNENet* net) :
     GNEAdditional("", net, "", GLO_TAZ, SUMO_TAG_TAZ, GUIIcon::TAZ, ""),
     TesselatedPolygon("", "", RGBColor::BLACK, {}, false, false, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, "") {
-    // reset default values
-    resetDefaultValues();
 }
 
 
@@ -277,7 +275,7 @@ GNETAZ::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
     // create popup
     GUIGLObjectPopupMenu* ret = new GUIGLObjectPopupMenu(app, parent, *this);
     // build common options
-    buildPopUpMenuCommonOptions(ret, app, myTagProperty->getTag(), mySelected, false);
+    buildPopUpMenuCommonOptions(ret, app, myNet->getViewNet(), myTagProperty->getTag(), mySelected, false);
     // create a extra FXMenuCommand if mouse is over a vertex
     const int index = getVertexIndex(myNet->getViewNet()->getPositionInformation(), false);
     if (index != -1) {
@@ -434,6 +432,8 @@ GNETAZ::getAttribute(SumoXMLAttr key) const {
             }
             return toString(edgeIDs);
         }
+        case GNE_ATTR_EDGES_WITHIN:
+            return toString(myEdgesWithin);
         case GNE_ATTR_MIN_SOURCE:
             if (myMinWeightSource == INVALID_DOUBLE) {
                 return "undefined";
@@ -529,6 +529,7 @@ GNETAZ::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList* und
         case SUMO_ATTR_NAME:
         case SUMO_ATTR_FILL:
         case SUMO_ATTR_EDGES:
+        case GNE_ATTR_EDGES_WITHIN:
             GNEChange_Attribute::changeAttribute(this, key, value, undoList);
             break;
         default:
@@ -567,6 +568,8 @@ GNETAZ::isValid(SumoXMLAttr key, const std::string& value) {
             } else {
                 return SUMOXMLDefinitions::isValidListOfTypeID(value);
             }
+        case GNE_ATTR_EDGES_WITHIN:
+            return canParse<bool>(value);
         default:
             return isCommonValid(key, value);
     }
@@ -695,6 +698,9 @@ GNETAZ::setAttribute(SumoXMLAttr key, const std::string& value) {
             resetAdditionalContour();
             break;
         case SUMO_ATTR_EDGES:
+            break;
+        case GNE_ATTR_EDGES_WITHIN:
+            myEdgesWithin = parse<bool>(value);
             break;
         default:
             setCommonAttribute(this, key, value);

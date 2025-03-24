@@ -616,17 +616,39 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "tranship: parkingarea->parkingarea",         GNE_TAG_TRANSHIP_PARKINGAREA_PARKINGAREA },
     { "tranship: edges",                            GNE_TAG_TRANSHIP_EDGES },
     // GNE Container Stops
-    { "stopContainer",                          GNE_TAG_STOPCONTAINER },
-    { "stopContainer: edge",                    GNE_TAG_STOPCONTAINER_EDGE },
-    { "stopContainer: busStop",                 GNE_TAG_STOPCONTAINER_BUSSTOP },
-    { "stopContainer: trainStop",               GNE_TAG_STOPCONTAINER_TRAINSTOP },
-    { "stopContainer: containerStop",           GNE_TAG_STOPCONTAINER_CONTAINERSTOP },
-    { "stopContainer: chargingStation",         GNE_TAG_STOPCONTAINER_CHARGINGSTATION },
-    { "stopContainer: parkingArea",             GNE_TAG_STOPCONTAINER_PARKINGAREA },
+    { "stopContainer",                  GNE_TAG_STOPCONTAINER },
+    { "stopContainer: edge",            GNE_TAG_STOPCONTAINER_EDGE },
+    { "stopContainer: busStop",         GNE_TAG_STOPCONTAINER_BUSSTOP },
+    { "stopContainer: trainStop",       GNE_TAG_STOPCONTAINER_TRAINSTOP },
+    { "stopContainer: containerStop",   GNE_TAG_STOPCONTAINER_CONTAINERSTOP },
+    { "stopContainer: chargingStation", GNE_TAG_STOPCONTAINER_CHARGINGSTATION },
+    { "stopContainer: parkingArea",     GNE_TAG_STOPCONTAINER_PARKINGAREA },
     // root file
-    { "rootFile",                               SUMO_TAG_ROOTFILE },
+    { "rootFile",   SUMO_TAG_ROOTFILE },
+    // netedit sets
+    { "network",        GNE_TAG_SUPERMODE_NETWORK },
+    { "demand",         GNE_TAG_SUPERMODE_DEMAND },
+    { "data",           GNE_TAG_SUPERMODE_DATA },
+    { "stoppingPlaces", GNE_TAG_STOPPINGPLACES },
+    { "detectors",      GNE_TAG_DETECTORS },
+    { "shapes",         GNE_TAG_SHAPES },
+    { "TAZs",           GNE_TAG_TAZS },
+    { "wires",          GNE_TAG_WIRES },
+    { "jupedsim",       GNE_TAG_JUPEDSIM },
+    { "stops",          GNE_TAG_STOPS },
+    { "personPlans",    GNE_TAG_PERSONPLANS },
+    { "personTrips",    GNE_TAG_PERSONTRIPS },
+    { "rides",          GNE_TAG_RIDES },
+    { "walks",          GNE_TAG_WALKS },
+    { "personStops",    GNE_TAG_PERSONSTOPS },
+    { "containerPlans", GNE_TAG_CONTAINERPLANS },
+    { "transports",     GNE_TAG_TRANSPORTS },
+    { "tranships",      GNE_TAG_TRANSHIPS },
+    { "containerStops", GNE_TAG_CONTAINERSTOPS },
+    { "datas",          GNE_TAG_DATAS },
+    { "meanDatas",      GNE_TAG_MEANDATAS },
     // Last element
-    { "",                                       SUMO_TAG_NOTHING }  // -> must be the last one
+    { "",   SUMO_TAG_NOTHING }  // -> must be the last one
 };
 
 
@@ -1355,10 +1377,10 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "close shape",                        GNE_ATTR_CLOSE_SHAPE },
     { "parent",                             GNE_ATTR_PARENT },
     { "dataSet",                            GNE_ATTR_DATASET },
-    { "genericParameter",                   GNE_ATTR_PARAMETERS },
+    { TL("Parameters"),                     GNE_ATTR_PARAMETERS },
     { "flowParameter",                      GNE_ATTR_FLOWPARAMETERS },
     { "defaultVTypeModified",               GNE_ATTR_DEFAULT_VTYPE_MODIFIED },
-    { "centerAfterCreation",                GNE_ATTR_CENTER_AFTER_CREATION },
+    { TL("center view"),                    GNE_ATTR_CENTER_AFTER_CREATION },
     { "opposite",                           GNE_ATTR_OPPOSITE },
     { "shiftLaneIndex",                     GNE_ATTR_SHIFTLANEINDEX },
     { "stopOffset",                         GNE_ATTR_STOPOFFSET },
@@ -1378,12 +1400,12 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "spacing",                            GNE_ATTR_FLOW_SPACING },
     { "reference",                          GNE_ATTR_REFERENCE },
     { "size",                               GNE_ATTR_SIZE },
-    { "force size",                         GNE_ATTR_FORCESIZE },
+    { TL("force size"),                     GNE_ATTR_FORCESIZE },
     { "laneLength",                         GNE_ATTR_LANELENGTH },
-    { "add. file",                          GNE_ATTR_ADDITIONAL_FILE },
-    { "route file",                         GNE_ATTR_DEMAND_FILE },
-    { "data file",                          GNE_ATTR_DATA_FILE },
-    { "mean file",                          GNE_ATTR_MEANDATA_FILE },
+    { TL("add. file"),                      GNE_ATTR_ADDITIONAL_FILE },
+    { TL("route file"),                     GNE_ATTR_DEMAND_FILE },
+    { TL("data file"),                      GNE_ATTR_DATA_FILE },
+    { TL("mean file"),                      GNE_ATTR_MEANDATA_FILE },
     // mapped to additional elements on writing
     { "fromBusStop",                        GNE_ATTR_FROM_BUSSTOP },
     { "fromTrainStop",                      GNE_ATTR_FROM_TRAINSTOP },
@@ -1393,6 +1415,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "fromRoute",                          GNE_ATTR_FROM_ROUTE },
     { "isRoundabout",                       GNE_ATTR_IS_ROUNDABOUT },
     { "frontElement",                       GNE_ATTR_FRONTELEMENT },
+    { TL("edges within"),                   GNE_ATTR_EDGES_WITHIN },
 
     { "carriageLength",     SUMO_ATTR_CARRIAGE_LENGTH },
     { "locomotiveLength",   SUMO_ATTR_LOCOMOTIVE_LENGTH },
@@ -1405,7 +1428,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "xmlns:xsi",                      SUMO_ATTR_XMLNS },
     { "xsi:noNamespaceSchemaLocation",  SUMO_ATTR_SCHEMA_LOCATION },
 
-    //@name RNG state saving attributes
+    // @name RNG state saving attributes
     // @{
     { "routeHandler",      SUMO_ATTR_RNG_ROUTEHANDLER },
     { "insertionControl",  SUMO_ATTR_RNG_INSERTIONCONTROL },

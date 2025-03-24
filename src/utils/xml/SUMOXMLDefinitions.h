@@ -798,6 +798,30 @@ enum SumoXMLTag {
     GNE_TAG_STOPCONTAINER_PARKINGAREA,
     /// @}
 
+    // @brief netedit sets
+    GNE_TAG_SUPERMODE_NETWORK,
+    GNE_TAG_SUPERMODE_DEMAND,
+    GNE_TAG_SUPERMODE_DATA,
+    GNE_TAG_STOPPINGPLACES,
+    GNE_TAG_DETECTORS,
+    GNE_TAG_SHAPES,
+    GNE_TAG_TAZS,
+    GNE_TAG_WIRES,
+    GNE_TAG_JUPEDSIM,
+    GNE_TAG_STOPS,
+    GNE_TAG_PERSONPLANS,
+    GNE_TAG_PERSONTRIPS,
+    GNE_TAG_RIDES,
+    GNE_TAG_WALKS,
+    GNE_TAG_PERSONSTOPS,
+    GNE_TAG_CONTAINERPLANS,
+    GNE_TAG_TRANSPORTS,
+    GNE_TAG_TRANSHIPS,
+    GNE_TAG_CONTAINERSTOPS,
+    GNE_TAG_DATAS,
+    GNE_TAG_MEANDATAS,
+    /// @}
+
     /// @brief invalid tag, must be the last one
     SUMO_TAG_NOTHING,
 };
@@ -1856,7 +1880,7 @@ enum SumoXMLAttr {
     GNE_ATTR_DATA_FILE,
     /// @brief meanData data file
     GNE_ATTR_MEANDATA_FILE,
-    // virtual attributes for easier UI
+    // @brief virtual attributes for easier UI
     GNE_ATTR_FROM_BUSSTOP,
     GNE_ATTR_FROM_TRAINSTOP,
     GNE_ATTR_FROM_CONTAINERSTOP,
@@ -1865,6 +1889,8 @@ enum SumoXMLAttr {
     GNE_ATTR_FROM_ROUTE,
     GNE_ATTR_IS_ROUNDABOUT,
     GNE_ATTR_FRONTELEMENT,
+    /// @brief virtual attribute used for use edges within during TAZ creation
+    GNE_ATTR_EDGES_WITHIN,
     // @}
 
     /// @name train parameters

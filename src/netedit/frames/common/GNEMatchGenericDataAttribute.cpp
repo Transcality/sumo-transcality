@@ -131,11 +131,11 @@ GNEMatchGenericDataAttribute::enableMatchGenericDataAttribute() {
         myEnd->setText(toString(myIntervals.begin()->first.second).c_str());
         myEnd->setTextColor(FXRGB(0, 0, 0));
         // get generic datas
-        const auto tagPropertiesGenericDatas = myElementSet->getSelectorFrameParent()->getViewNet()->getNet()->getTagPropertiesDatabase()->getTagPropertiesByType(GNETagProperties::TagType::GENERICDATA, true);
+        const auto tagPropertiesGenericDatas = myElementSet->getSelectorFrameParent()->getViewNet()->getNet()->getTagPropertiesDatabase()->getTagPropertiesByType(GNETagProperties::TagType::GENERICDATA);
         // fill combo box (only with drawable elements)
         for (const auto& genericDataTag : tagPropertiesGenericDatas) {
             if (genericDataTag->isDrawable()) {
-                myMatchGenericDataTagComboBox->appendIconItem(genericDataTag->getFieldString().c_str(), GUIIconSubSys::getIcon(genericDataTag->getGUIIcon()));
+                myMatchGenericDataTagComboBox->appendIconItem(genericDataTag->getSelectorText().c_str(), GUIIconSubSys::getIcon(genericDataTag->getGUIIcon()));
             }
         }
         // set first item as current item
@@ -292,10 +292,10 @@ GNEMatchGenericDataAttribute::onCmdSelectTag(FXObject*, FXSelector, void*) {
     // First check what type of elementes is being selected
     myCurrentTag = SUMO_TAG_NOTHING;
     // get generic data tags
-    const auto tagPropertiesGenericDatas = myElementSet->getSelectorFrameParent()->getViewNet()->getNet()->getTagPropertiesDatabase()->getTagPropertiesByType(GNETagProperties::TagType::GENERICDATA, true);
+    const auto tagPropertiesGenericDatas = myElementSet->getSelectorFrameParent()->getViewNet()->getNet()->getTagPropertiesDatabase()->getTagPropertiesByType(GNETagProperties::TagType::GENERICDATA);
     // fill myMatchGenericDataTagComboBox
     for (const auto& genericDataTag : tagPropertiesGenericDatas) {
-        if (genericDataTag->isDrawable() && (genericDataTag->getFieldString() == myMatchGenericDataTagComboBox->getText().text())) {
+        if (genericDataTag->isDrawable() && (genericDataTag->getSelectorText() == myMatchGenericDataTagComboBox->getText().text())) {
             myCurrentTag = genericDataTag->getTag();
         }
     }

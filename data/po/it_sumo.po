@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2025-02-13 10:07+0100\n"
-"PO-Revision-Date: 2025-03-13 11:01+0000\n"
+"PO-Revision-Date: 2025-03-19 12:20+0000\n"
 "Last-Translator: Mirko Barthauer <mirko.barthauer@dlr.de>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/eclipse-sumo/"
 "applications/it/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.10.3\n"
+"X-Generator: Weblate 5.11-dev\n"
 
 #: src/activitygen/AGActivityGen.cpp:46
 msgid "Reading input"
@@ -1020,7 +1020,7 @@ msgstr ""
 #: src/libsumo/Vehicle.cpp:1524
 #, c-format
 msgid "Ignoring changeLaneRelative for vehicle '%' that isn't on the road"
-msgstr ""
+msgstr "Si ignora changeLaneRelative per il veicolo '%' trovandosi fuori strada"
 
 #: src/libsumo/Vehicle.cpp:1526
 msgid "Ignoring indexOffset % for vehicle '%' on laneIndex %."
@@ -2877,6 +2877,7 @@ msgstr "Si può ricominciare o uscire alle fine."
 msgid ""
 "The option 'meso-junction-control.limited' implies 'meso-junction-control'."
 msgstr ""
+"L'opzione 'meso-junction-control.limited' implica 'meso-junction-control'."
 
 #: src/microsim/MSFrame.cpp:931
 msgid "The begin time should not be negative."
@@ -3139,7 +3140,7 @@ msgstr ""
 
 #: src/microsim/MSLane.cpp:2183
 msgid " collision with person '%', lane='%', time=%, stage=%."
-msgstr ""
+msgstr " collisione con la persona '%', corsia='%', ore=%, tratto=%."
 
 #: src/microsim/MSLane.cpp:2244
 msgid "Removing vehicle '%' after breaking down, lane='%', time=%."
@@ -3227,7 +3228,7 @@ msgstr "Tutti i veicoli sono usciti dalla simulazione."
 
 #: src/microsim/MSNet.cpp:944
 msgid "TraCI requested termination."
-msgstr ""
+msgstr "TraCI ha richiesto la chiusura."
 
 #: src/microsim/MSNet.cpp:946
 msgid "An error occurred (see log)."
@@ -5467,10 +5468,14 @@ msgid ""
 "Missing yellow phase in tlLogic '%', program '%' for tl-index % when "
 "switching% to phase %."
 msgstr ""
+"Fase di giallo mancante nella logica semaforica '%', programma '%' per "
+"l'indice semaforico % nella transizione% verso fase %."
 
 #: src/microsim/traffic_lights/MSTrafficLightLogic.cpp:204
 msgid "Missing green phase in tlLogic '%', program '%' for tl-index %."
 msgstr ""
+"Fase di verde mancante nella logica semaforica '%', programma '%' per "
+"l'indice semaforico %."
 
 #: src/microsim/traffic_lights/MSTrafficLightLogic.cpp:267
 msgid ""
@@ -5506,6 +5511,8 @@ msgstr ""
 #, c-format
 msgid "NEMA tlLogic '%' is not coordinated but an offset was set."
 msgstr ""
+"La logica semaforica NEMA '%' non è coordinata ma un ritardo è stato "
+"impostato."
 
 #: src/microsim/traffic_lights/NEMAController.cpp:965
 msgid "I am starting in the coordinated phases"
@@ -5788,6 +5795,8 @@ msgid ""
 "Either 'vehsPerHour', 'speed' or 'type' has to be set in flow definition of "
 "calibrator '%'."
 msgstr ""
+"Uno degli attributi seguenti deve essere impostato nella definzioni di "
+"flusso del calibrator '%': 'vehsPerHour, 'speed' oppure 'type\"."
 
 #: src/microsim/trigger/MSCalibrator.cpp:249
 msgid "Type calibration is not supported in meso for calibrator '%'."
@@ -5888,6 +5897,8 @@ msgstr ""
 msgid ""
 "Invalid distance computation for vehicle '%' to stopping place '%' at time=%."
 msgstr ""
+"Calcolo di distanza invalido per veicolo '%' fino al luogo di fermata '%' "
+"alle ore %."
 
 #: src/microsim/trigger/MSStoppingPlaceRerouter.cpp:497
 msgid ""
@@ -6098,6 +6109,8 @@ msgstr ""
 msgid ""
 "Added % bidi-edges between % pairs of railway switches (count by length: %)"
 msgstr ""
+"% archi bidirezionali sono stati aggiunti tra % paia di scambi ferroviari ("
+"numero per lunghezza : %)"
 
 #: src/netbuild/NBAlgorithms_Railway.cpp:978
 msgid ""
@@ -6129,7 +6142,7 @@ msgid ""
 "Added % bidi-edges to ensure connectivity of straight tracks at switches."
 msgstr ""
 "% archi bidirezionali sono stati aggiunti per assicurare il collegamento di "
-"binari dritti nei deviatoi."
+"binari dritti nei scambi ferroviari."
 
 #: src/netbuild/NBAlgorithms_Railway.cpp:1217
 msgid ""
@@ -8465,11 +8478,11 @@ msgstr "Leggi rete ITSUMO da FILE"
 
 #: src/netimport/NIFrame.cpp:134
 msgid "Read heightmap from ArcGIS shapefile"
-msgstr ""
+msgstr "Leggi mappa altimetrica da shapefile ArcGIS"
 
 #: src/netimport/NIFrame.cpp:137
 msgid "Read heightmap from GeoTIFF"
-msgstr ""
+msgstr "Leggi mappa altimetrica da GeoTIFF"
 
 #: src/netimport/NIFrame.cpp:145 src/od2trips_main.cpp:159
 #: src/polyconvert/polyconvert_main.cpp:203
@@ -8626,6 +8639,8 @@ msgstr "Il limite di velocità da impostare laddove in realtà non ce n'è uno"
 msgid ""
 "Whether edges shoulds carry information on the usage of typemap defaults"
 msgstr ""
+"Se gli archi dovrebbero contenere informazioni sull'uso di valori standard "
+"tratti da tipi di arco"
 
 #: src/netimport/NIFrame.cpp:243 src/netimport/NIFrame.cpp:240
 msgid "The edge lengths given in the MATSim-file will be kept"
@@ -8711,7 +8726,7 @@ msgstr "Le lunghezze degli arci tratti dal file DLR Navteq verranno mantenute"
 
 #: src/netimport/NIFrame.cpp:315 src/netimport/NIFrame.cpp:312
 msgid "Structure join offset"
-msgstr ""
+msgstr "Distanza massima di strutture da combinare"
 
 #: src/netimport/NIFrame.cpp:318 src/netimport/NIFrame.cpp:315
 msgid "Use FLOAT as default speed"
@@ -9262,7 +9277,7 @@ msgstr ""
 #: src/netimport/NIImporter_OpenDrive.cpp:1398
 #, c-format
 msgid "While setting connections: incoming road '%' is not known."
-msgstr ""
+msgstr "Nel impostare i collegamenti: la via entrante '%' è sconosciuta."
 
 #: src/netimport/NIImporter_OpenDrive.cpp:1441
 msgid "Could not find node '%'."
@@ -9337,7 +9352,7 @@ msgstr ""
 
 #: src/netimport/NIImporter_OpenDrive.cpp:2818
 msgid "Mismatching parenthesis in geometry definition for road '%'"
-msgstr ""
+msgstr "Parentesi non coincidenti nella definizione di geometria della via '%'"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:2822
 msgid "Double geometry information for road '%'"
@@ -9841,12 +9856,12 @@ msgstr ""
 #: src/netimport/NIImporter_VISUM.cpp:618
 #, c-format
 msgid "The district '%' could not be built."
-msgstr ""
+msgstr "Il distretto '%' non poteva essere costruito."
 
 #: src/netimport/NIImporter_VISUM.cpp:594
 #: src/netimport/NIImporter_VISUM.cpp:629
 msgid "A duplicate edge id occurred (ID='%')."
-msgstr ""
+msgstr "Un codice identificativo raddoppiato si è prodotto (ID='%')."
 
 #: src/netimport/NIImporter_VISUM.cpp:614
 msgid ""
@@ -9857,11 +9872,11 @@ msgstr ""
 #: src/netimport/NIImporter_VISUM.cpp:671
 #: src/netimport/NIImporter_VISUM.cpp:720
 msgid "There is no edge from node '%' to node '%'."
-msgstr ""
+msgstr "Non c'è nessun arco tra il nodo '%' e quello '%'."
 
 #: src/netimport/NIImporter_VISUM.cpp:698
 msgid "Error in geometry description from node '%' to node '%'."
-msgstr ""
+msgstr "Errore nella descrizione di geometria dal nodo '%' al nodo '%'."
 
 #: src/netimport/NIImporter_VISUM.cpp:757
 msgid "A lane number for edge '%' is not numeric (%)."
@@ -10411,7 +10426,7 @@ msgstr ""
 #: src/netimport/vissim/tempstructs/NIVissimDisturbance.cpp:340
 #, c-format
 msgid "Could not build % of % disturbances."
-msgstr ""
+msgstr "% di % perturbazioni non potevano essere costruite."
 
 #: src/netimport/vissim/tempstructs/NIVissimEdge.cpp:439
 msgid "Will not build edge '%'."
@@ -11024,10 +11039,13 @@ msgid ""
 "OpenDRIVE cannot represent oblique lane cuts and should use option "
 "'rectangular-lane-cut'."
 msgstr ""
+"OpenDRIVE non sa come rappresentare dei tagli di corsie trasversali e "
+"dovrebbe usare l'opzione 'rectangular-lane-cut'."
 
 #: src/netwrite/NWFrame.cpp:176
 msgid "public transport lines output requires 'ptstop-output' to be set"
 msgstr ""
+"l'uscita di linee di trasporto pubblico richiede di impostare 'ptstop-output'"
 
 #: src/netwrite/NWFrame.cpp:180
 msgid ""
@@ -12204,16 +12222,20 @@ msgstr "Non ho potuto aprire il file '%' in modo scrittura."
 #: src/tools/emissionsMap_main.cpp:114
 msgid "Builds and writes an emissions map for SUMO's emission models."
 msgstr ""
-"Costruice e scrive corrispondenze di emissions per gli modelli di emissioni "
+"Costruice e scrive corrispondenze di emissioni per gli modelli di emissioni "
 "di SUMO."
 
 #: src/tools/emissionsMap_main.cpp:121
 msgid "If set, maps for all available emissions are written."
 msgstr ""
+"Se impostato vengono scritte corrispondenze per tutte le emissioni "
+"disponibili."
 
 #: src/tools/emissionsMap_main.cpp:124
 msgid "Defines the name of the emission class to generate the map for."
 msgstr ""
+"Definisce il nome della classe di emissioni per la quale si genera una "
+"corrispondenza."
 
 #: src/tools/emissionsMap_main.cpp:133
 msgid "Defines the minimum velocity boundary of the map to generate (in m/s)."
@@ -12260,11 +12282,11 @@ msgstr ""
 
 #: src/tools/emissionsMap_main.cpp:194
 msgid "The emission class (-e) must be given."
-msgstr ""
+msgstr "SI deve provvedere una classe di emissioni (-e)."
 
 #: src/tools/emissionsMap_main.cpp:197
 msgid "The output file (-o) must be given."
-msgstr ""
+msgstr "SI deve provvedere un file di uscita (-o)."
 
 #: src/traci-server/TraCIServer.cpp:362
 msgid "Starting TraCI without using internal lanes!"
