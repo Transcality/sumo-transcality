@@ -18,18 +18,21 @@
 // The Widget for edit distribution elements
 /****************************************************************************/
 
-#include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEViewParent.h>
 #include <netedit/GNEApplicationWindow.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNETagProperties.h>
+#include <netedit/GNEUndoList.h>
+#include <netedit/GNEViewParent.h>
 #include <netedit/changes/GNEChange_DemandElement.h>
-#include <netedit/elements/demand/GNEVTypeDistribution.h>
 #include <netedit/elements/demand/GNERouteDistribution.h>
+#include <netedit/elements/demand/GNEVTypeDistribution.h>
+#include <netedit/frames/GNEAttributesEditor.h>
+#include <utils/foxtools/MFXTextFieldTooltip.h>
 #include <utils/gui/div/GUIDesigns.h>
 
 #include "GNEDistributionFrame.h"
 
+#define TEMPORAL_FILENAME std::string()
 
 // ===========================================================================
 // FOX callback mapping
@@ -109,14 +112,14 @@ GNEDistributionFrame::DistributionEditor::onCmdCreateDistribution(FXObject*, FXS
     // create new distribution
     GNEDemandElement* distribution = nullptr;
     if (myDistributionTag == SUMO_TAG_VTYPE_DISTRIBUTION) {
-        distribution = new GNEVTypeDistribution(myFrameParent->getViewNet()->getNet(), distributionID, -1);
+        distribution = new GNEVTypeDistribution(distributionID, myFrameParent->getViewNet()->getNet(), TEMPORAL_FILENAME, -1);
     } else if (myDistributionTag == SUMO_TAG_ROUTE_DISTRIBUTION) {
-        distribution = new GNERouteDistribution(myFrameParent->getViewNet()->getNet(), distributionID);
+        distribution = new GNERouteDistribution(distributionID, myFrameParent->getViewNet()->getNet(), TEMPORAL_FILENAME);
     } else {
         throw ProcessError("Invalid distribution");
     }
     // add it using undoList (to allow undo-redo)
-    undoList->begin(distribution->getTagProperty().getGUIIcon(), "create distribution");
+    undoList->begin(distribution->getTagProperty()->getGUIIcon(), "create distribution");
     undoList->add(new GNEChange_DemandElement(distribution, true), true);
     undoList->end();
     // refresh selector using created distribution
@@ -131,7 +134,7 @@ GNEDistributionFrame::DistributionEditor::onCmdDeleteDistribution(FXObject*, FXS
     auto currentDistribution = myDistributionSelector->getCurrentDistribution();
     if (currentDistribution) {
         // begin undo list operation
-        undoList->begin(currentDistribution->getTagProperty().getGUIIcon(), "delete " + currentDistribution->getTagProperty().getTagStr() + " distribution");
+        undoList->begin(currentDistribution->getTagProperty()->getGUIIcon(), "delete " + currentDistribution->getTagProperty()->getTagStr() + " distribution");
         // remove distribution
         myFrameParent->getViewNet()->getNet()->deleteDemandElement(myDistributionSelector->getCurrentDistribution(), undoList);
         // end undo list operation
@@ -218,7 +221,7 @@ GNEDistributionFrame::DistributionSelector::refreshDistributionSelector() {
     // continue depending of myCurrentDistribution
     if (myCurrentDistribution) {
         // show modules
-        myAttributesEditor->showAttributesEditor(myCurrentDistribution);
+        myAttributesEditor->showAttributesEditor(myCurrentDistribution, true);
         myDistributionValuesEditor->showDistributionValuesEditor();
     } else {
         // hide modules
@@ -240,10 +243,8 @@ GNEDistributionFrame::DistributionSelector::onCmdSelectDistribution(FXObject*, F
             // set color of myTypeMatchBox to black (valid)
             myDistributionsComboBox->setTextColor(FXRGB(0, 0, 0));
             // show modules
-            myAttributesEditor->showAttributesEditor(distribution.second);
+            myAttributesEditor->showAttributesEditor(distribution.second, true);
             myDistributionValuesEditor->showDistributionValuesEditor();
-            // Write Warning in console if we're in testing mode
-            WRITE_DEBUG(("Selected item '" + myDistributionsComboBox->getText() + "' in DistributionSelector").text());
             // update viewNet
             viewNet->updateViewNet();
             return 1;
@@ -256,8 +257,6 @@ GNEDistributionFrame::DistributionSelector::onCmdSelectDistribution(FXObject*, F
     myDistributionValuesEditor->hideDistributionValuesEditor();
     // set color of myTypeMatchBox to red (invalid)
     myDistributionsComboBox->setTextColor(FXRGB(255, 0, 0));
-    // Write Warning in console if we're in testing mode
-    WRITE_DEBUG("Selected invalid item in DistributionSelector");
     // update viewNet
     viewNet->updateViewNet();
     return 1;

@@ -17,7 +17,6 @@
 ///
 // A network change in which a single lane is created or deleted
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
 #include <netedit/GNEViewNet.h>
@@ -26,12 +25,11 @@
 
 #include "GNEChange_Lane.h"
 
-
 // ===========================================================================
 // FOX-declarations
 // ===========================================================================
-FXIMPLEMENT_ABSTRACT(GNEChange_Lane, GNEChange, nullptr, 0)
 
+FXIMPLEMENT_ABSTRACT(GNEChange_Lane, GNEChange, nullptr, 0)
 
 // ===========================================================================
 // member method definitions
@@ -64,15 +62,11 @@ GNEChange_Lane::~GNEChange_Lane() {
     if (myEdge->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
         myEdge->decRef("GNEChange_Lane");
         if (myEdge->unreferenced()) {
-            // show extra information for tests
-            WRITE_DEBUG("Deleting unreferenced " + myEdge->getTagStr() + " '" + myEdge->getID() + "' in GNEChange_Lane");
             delete myEdge;
         }
         if (myLane) {
             myLane->decRef("GNEChange_Lane");
             if (myLane->unreferenced()) {
-                // show extra information for tests
-                WRITE_DEBUG("Deleting unreferenced " + myLane->getTagStr() + " '" + myLane->getID() + "' in GNEChange_Lane");
                 // delete lane
                 delete myLane;
             }
@@ -84,32 +78,16 @@ GNEChange_Lane::~GNEChange_Lane() {
 void
 GNEChange_Lane::undo() {
     if (myForward) {
-        // show extra information for tests
-        if (myLane != nullptr) {
-            WRITE_DEBUG("Removing " + myLane->getTagStr() + " '" + myLane->getID() + "' from " + toString(SUMO_TAG_EDGE));
-            // unselect if mySelectedElement is enabled
-            if (mySelectedElement) {
-                myLane->unselectAttributeCarrier();
-            }
-            // restore container
-            restoreHierarchicalContainers();
-        } else {
-            WRITE_DEBUG("Removing nullptr " + toString(SUMO_TAG_LANE) + " from " + toString(SUMO_TAG_EDGE));
-        }
         // remove lane from edge (note: myLane can be nullptr)
         myEdge->removeLane(myLane, false);
+        // special case if lane exist
+        if (myLane && mySelectedElement) {
+            myLane->unselectAttributeCarrier();
+        }
     } else {
         // show extra information for tests
-        if (myLane != nullptr) {
-            WRITE_DEBUG("Adding " + myLane->getTagStr() + " '" + myLane->getID() + "' into " + toString(SUMO_TAG_EDGE));
-            // select if mySelectedElement is enabled
-            if (mySelectedElement) {
-                myLane->selectAttributeCarrier();
-            }
-            // restore container
-            restoreHierarchicalContainers();
-        } else {
-            WRITE_DEBUG("Adding nullptr " + toString(SUMO_TAG_LANE) + " into " + toString(SUMO_TAG_EDGE));
+        if (myLane && mySelectedElement) {
+            myLane->selectAttributeCarrier();
         }
         // add lane and their attributes to edge (lane removal is reverted, no need to recompute connections)
         myEdge->addLane(myLane, myLaneAttrs, false);
@@ -123,31 +101,15 @@ void
 GNEChange_Lane::redo() {
     if (myForward) {
         // show extra information for tests
-        if (myLane != nullptr) {
-            WRITE_DEBUG("Adding " + myLane->getTagStr() + " '" + myLane->getID() + "' into " + toString(SUMO_TAG_EDGE));
-            // select if mySelectedElement is enabled
-            if (mySelectedElement) {
-                myLane->selectAttributeCarrier();
-            }
-            // add lane into parents and children
-            addElementInParentsAndChildren(myLane);
-        } else {
-            WRITE_DEBUG("Adding nullptr " + toString(SUMO_TAG_LANE) + " into " + toString(SUMO_TAG_EDGE));
+        if (myLane && mySelectedElement) {
+            myLane->selectAttributeCarrier();
         }
         // add lane and their attributes to edge
         myEdge->addLane(myLane, myLaneAttrs, myRecomputeConnections);
     } else {
-        // show extra information for tests
-        if (myLane != nullptr) {
-            WRITE_DEBUG("Removing " + myLane->getTagStr() + " '" + myLane->getID() + "' from " + toString(SUMO_TAG_EDGE));
-            // unselect if mySelectedElement is enabled
-            if (mySelectedElement) {
-                myLane->unselectAttributeCarrier();
-            }
-            // remove lane from parents and children
-            removeElementFromParentsAndChildren(myLane);
-        } else {
-            WRITE_DEBUG("Removing nullptr " + toString(SUMO_TAG_LANE) + " from " + toString(SUMO_TAG_EDGE));
+        // special case if lane exist
+        if (myLane && mySelectedElement) {
+            myLane->unselectAttributeCarrier();
         }
         // remove lane from edge
         myEdge->removeLane(myLane, myRecomputeConnections);

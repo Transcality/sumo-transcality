@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utils/geom/Triangle.h>
 #include <utils/gui/globjects/GUIGlObject.h>
 #include <utils/gui/settings/GUIVisualizationSettings.h>
 
@@ -87,14 +88,17 @@ public:
     /// @brief get selection position
     const Position& getSelectionPosition() const;
 
-    /// @brief get selection boundary
-    const Boundary& getSelectionBoundary() const;
+    /// @brief get selection triangle
+    const Triangle& getSelectionTriangle() const;
 
     /// @brief set selection position
     void setSelectionPosition(const Position& pos);
 
-    /// @brief set selection boundary
-    void setSelectionBoundary(const Boundary& boundary);
+    /// @brief set selection triangle
+    void setSelectionTriangle(const Triangle& triangle);
+
+    /// @brief return true if we're selecting using a triangle
+    bool selectingUsingRectangle() const;
 
     /// @}
 
@@ -105,8 +109,7 @@ public:
 
     /// @brief check if mouse is within elements geometry (for circles)
     bool checkCircleObject(const GUIVisualizationSettings::Detail d, const GUIGlObject* GLObject,
-                           const Position& center, const double radius, const Boundary& circleBoundary,
-                           const double layer);
+                           const Position& center, const double radius, const double layer);
 
     /// @brief check if mouse is within geometry point
     bool checkGeometryPoint(const GUIVisualizationSettings::Detail d, const GUIGlObject* GLObject,
@@ -223,11 +226,8 @@ protected:
     /// @brief set with path elements marked for redrawing
     std::set<const GNEPathElement*> myRedrawPathElements;
 
-    /// @brief selection boundary
-    Boundary mySelectionBoundary;
-
-    /// @brief selection boundary (shape)
-    PositionVector mySelectionBoundaryShape;
+    /// @brief selection triangle
+    Triangle mySelectionTriangle;
 
     /// @brief position
     Position mySelectionPosition;

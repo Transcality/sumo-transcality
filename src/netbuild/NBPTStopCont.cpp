@@ -385,7 +385,7 @@ NBPTStopCont::alignIdSigns() {
     for (auto& i : stops) {
         std::shared_ptr<NBPTStop> s = i.second;
         const std::string& stopId = s->getID();
-        if (s->getEdgeId() == "") {
+        if (s->getEdgeId() == "" || s->wasLoaded()) {
             continue;
         }
         const char edgeSign = s->getEdgeId().at(0);
@@ -393,6 +393,9 @@ NBPTStopCont::alignIdSigns() {
         if (edgeSign != stopSign && (edgeSign == '-' || stopSign == '-')) {
             const std::string reverseID = getReverseID(stopId);
             std::shared_ptr<NBPTStop> rs = get(reverseID);
+            if (rs != nullptr && rs->wasLoaded()) {
+                continue;
+            }
             s->setPTStopId(reverseID);
             myPTStops.erase(stopId);
             myPTStops[reverseID] = s;

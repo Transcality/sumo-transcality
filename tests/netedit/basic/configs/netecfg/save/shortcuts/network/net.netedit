@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-01-16 16:06:59 by Eclipse SUMO netedit Version v1_21_0+1868-927af3e7845
+<!-- generated on 2025-01-31 13:39:13 by Eclipse SUMO netedit Version v1_21_0+2267-0c493dcd3cb
 This data file and the accompanying materials
 are made available under the terms of the Eclipse Public License v2.0
 which accompanies this distribution, and is available at
@@ -14,16 +14,16 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
 <neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
 
     <input>
-        <additional-files value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\additionals.add.xml"/>
-        <route-files value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\routes.rou.xml"/>
-        <data-files value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\datas.dat.xml"/>
-        <meandata-files value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\datas.med.add.xml"/>
-        <sumo-net-file value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\net.net.xml"/>
+        <additional-files value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/additionals.add.xml"/>
+        <route-files value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/routes.rou.xml"/>
+        <data-files value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/datas.dat.xml"/>
+        <meandata-files value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/datas.med.add.xml"/>
+        <sumo-net-file value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/net.net.xml"/>
     </input>
 
     <output>
         <write-license value="true"/>
-        <output-file value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\net.net.xml"/>
+        <output-file value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/net.net.xml"/>
     </output>
 
     <processing>
@@ -51,16 +51,16 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
     </netedit>
 
     <visualisation>
-        <gui-settings-file value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\gui-settings.xml"/>
+        <gui-settings-file value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/gui-settings.xml"/>
         <window-size value="1280, 720"/>
         <window-pos value="50,50"/>
         <gui-testing value="true"/>
-        <gui-testing.setting-output value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\guisettingsoutput.xml"/>
+        <gui-testing.setting-output value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/guisettingsoutput.xml"/>
     </visualisation>
 
     <report>
         <no-warnings value="true"/>
-        <error-log value="C:\Users\alva_pa\.texttest\tmp\netedit.gui.16Jan160532.1512\netedit.gui\basic\configs\netecfg\save\menu\network\log.txt"/>
+        <error-log value="/home/palcraft/.texttest/tmp/netedit.gui.31Jan133530.5984/netedit.gui/basic/configs/netecfg/save/shortcuts/network/log.txt"/>
     </report>
 
 </neteditConfiguration>

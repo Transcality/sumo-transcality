@@ -18,6 +18,8 @@
 // VehicleType distribution used in netedit
 /****************************************************************************/
 
+#include <netedit/GNETagProperties.h>
+
 #include "GNEVTypeDistribution.h"
 
 // ===========================================================================
@@ -29,8 +31,8 @@ GNEVTypeDistribution::GNEVTypeDistribution(GNENet* net) :
 }
 
 
-GNEVTypeDistribution::GNEVTypeDistribution(GNENet* net, const std::string& ID, const int deterministic) :
-    GNEDistribution(net, GLO_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION, GUIIcon::VTYPEDISTRIBUTION, ID, deterministic) {
+GNEVTypeDistribution::GNEVTypeDistribution(const std::string& ID, GNENet* net, const std::string& filename, const int deterministic) :
+    GNEDistribution(ID, net, filename, GLO_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION, GUIIcon::VTYPEDISTRIBUTION, deterministic) {
 }
 
 
@@ -42,7 +44,7 @@ GNEVTypeDistribution::writeDemandElement(OutputDevice& device) const {
     // only save if there is distribution elements to save
     if (!isDistributionEmpty()) {
         // now write attributes
-        device.openTag(getTagProperty().getTag());
+        device.openTag(getTagProperty()->getTag());
         device.writeAttr(SUMO_ATTR_ID, getID());
         if (myDeterministic >= 0) {
             device.writeAttr(SUMO_ATTR_DETERMINISTIC, myDeterministic);

@@ -71,8 +71,8 @@ MEVehicle::getBackPositionOnLane(const MSLane* /* lane */) const {
 double
 MEVehicle::getPositionOnLane() const {
 // the following interpolation causes problems with arrivals and calibrators
-//    const double fracOnSegment = MIN2(double(1), STEPS2TIME(MSNet::getInstance()->getCurrentTimeStep() - myLastEntryTime) / STEPS2TIME(myEventTime - myLastEntryTime));
-    return mySegment == nullptr ? 0 : (double(mySegment->getIndex()) /* + fracOnSegment */) * mySegment->getLength();
+    const double fracOnSegment = MIN2(double(1), STEPS2TIME(MSNet::getInstance()->getCurrentTimeStep() - myLastEntryTime) / STEPS2TIME(myEventTime - myLastEntryTime));
+    return mySegment == nullptr ? 0 : (double(mySegment->getIndex())  + fracOnSegment ) * mySegment->getLength();
 }
 
 

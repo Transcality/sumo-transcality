@@ -512,7 +512,8 @@ MSStageDriving::setArrived(MSNet* net, MSTransportable* transportable, SUMOTime 
                         // Jitter the position before projection because of possible train curvature.
                         Position direction = randomCarriage->front - randomCarriage->back;
                         direction.norm2D();
-                        randomDoor.add(direction * RandHelper::rand(-0.5 * MSTrainHelper::CARRIAGE_DOOR_WIDTH, 0.5 * MSTrainHelper::CARRIAGE_DOOR_WIDTH));
+                        const double doorWidth = train->getVehicleType().getParameter().carriageDoorWidth;
+                        randomDoor.add(direction * RandHelper::rand(-0.5 * doorWidth, 0.5 * doorWidth));
                         // Project onto the lane.
                         myArrivalPos = lane->getShape().nearest_offset_to_point2D(randomDoor);
                         myArrivalPos = lane->interpolateGeometryPosToLanePos(myArrivalPos);
@@ -570,6 +571,7 @@ MSStageDriving::abort(MSTransportable* t) {
         // jumping out of a moving vehicle!
         myVehicle->removeTransportable(t);
         myDestination = myVehicle->getLane() == nullptr ? myVehicle->getEdge() : &myVehicle->getLane()->getEdge();
+        myArrivalPos = myVehicle->getPositionOnLane();
         // myVehicleDistance and myTimeLoss are updated in subsequent call to setArrived
     } else {
         MSTransportableControl& tc = (t->isPerson() ?
@@ -579,6 +581,7 @@ MSStageDriving::abort(MSTransportable* t) {
         MSDevice_Taxi::removeReservation(t, getLines(), myWaitingEdge, myWaitingPos, myDestination, getArrivalPos(), myGroup);
         myDestination = myWaitingEdge;
         myDestinationStop = myOriginStop;
+        myArrivalPos = myWaitingPos;
     }
 }
 

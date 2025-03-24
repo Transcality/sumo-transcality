@@ -18,12 +18,6 @@
 // Builds meanData objects for netedit
 /****************************************************************************/
 
-// ===========================================================================
-// included modules
-// ===========================================================================
-#include <config.h>
-
-
 #include <netedit/changes/GNEChange_MeanData.h>
 #include <netedit/elements/data/GNEMeanData.h>
 #include <netedit/GNEViewNet.h>
@@ -33,12 +27,12 @@
 
 #include "GNEMeanDataHandler.h"
 
-
 // ===========================================================================
 // member method definitions
 // ===========================================================================
 
-GNEMeanDataHandler::GNEMeanDataHandler(GNENet* net, const bool allowUndoRedo, const bool overwrite) :
+GNEMeanDataHandler::GNEMeanDataHandler(GNENet* net, const std::string& filename, const bool allowUndoRedo, const bool overwrite) :
+    MeanDataHandler(filename),
     myNet(net),
     myAllowUndoRedo(allowUndoRedo),
     myOverwrite(overwrite) {
@@ -83,8 +77,10 @@ GNEMeanDataHandler::buildEdgeMeanData(const CommonXMLStructure::SumoBaseObject* 
         return false;
     } else if (!checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_HALTING_SPEED_THRESHOLD, speedThreshold, true)) {
         return false;
+    } else if (!checkExcludeEmpty(SUMO_TAG_MEANDATA_EDGE, id, excludeEmpty)) {
+        return false;
     } else if ((edges.size() == edgeIDs.size()) && (attributes.size() == writtenAttributes.size())) {
-        GNEMeanData* edgeMeanData = new GNEMeanData(myNet, SUMO_TAG_MEANDATA_EDGE, id, file, period, begin, end,
+        GNEMeanData* edgeMeanData = new GNEMeanData(SUMO_TAG_MEANDATA_EDGE, id, myNet, myFilename, file, period, begin, end,
                 trackVehicles, attributes,  aggregate, edgeIDs, edgeFile, excludeEmpty,  withInternal,
                 detectPersons, minSamples, maxTravelTime, vTypes, speedThreshold);
         if (myAllowUndoRedo) {
@@ -130,8 +126,10 @@ GNEMeanDataHandler::buildLaneMeanData(const CommonXMLStructure::SumoBaseObject* 
         return false;
     } else if (!checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_HALTING_SPEED_THRESHOLD, speedThreshold, true)) {
         return false;
+    } else if (!checkExcludeEmpty(SUMO_TAG_MEANDATA_EDGE, id, excludeEmpty)) {
+        return false;
     } else if ((edges.size() == edgeIDs.size()) && (attributes.size() == writtenAttributes.size())) {
-        GNEMeanData* edgeMeanData = new GNEMeanData(myNet, SUMO_TAG_MEANDATA_LANE, id, file, period, begin, end,
+        GNEMeanData* edgeMeanData = new GNEMeanData(SUMO_TAG_MEANDATA_LANE, id, myNet, myFilename, file, period, begin, end,
                 trackVehicles, attributes,  aggregate, edgeIDs, edgeFile, excludeEmpty,  withInternal,
                 detectPersons, minSamples, maxTravelTime, vTypes, speedThreshold);
         if (myAllowUndoRedo) {
@@ -201,6 +199,18 @@ GNEMeanDataHandler::checkDuplicatedMeanDataElement(const SumoXMLTag tag, const s
         }
     }
     return true;
+}
+
+
+bool
+GNEMeanDataHandler::checkExcludeEmpty(const SumoXMLTag tag, const std::string& id, const std::string& excludeEmpty) {
+    if (GNEAttributeCarrier::canParse<bool>(excludeEmpty)) {
+        return true;
+    } else if (excludeEmpty == SUMOXMLDefinitions::ExcludeEmptys.getString(ExcludeEmpty::DEFAULTS)) {
+        return true;
+    } else {
+        return writeError(TLF("Could not build % with ID '%' in netedit; Invalid value '%' for %.", toString(tag), id, excludeEmpty, toString(SUMO_ATTR_EXCLUDE_EMPTY)));
+    }
 }
 
 /****************************************************************************/

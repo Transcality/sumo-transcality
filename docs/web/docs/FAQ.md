@@ -437,6 +437,11 @@ and simply type `git pull`.
   drivers are correctly installed and configured. It will probably not
   work on machines accessed via RDP or a similar remote desktop protocol.
 
+### The build process aborts with an error on `src/netedit/templates.h`
+
+   Make sure that environment variable SUMO_HOME points at the base folder of the most recent version rather than some older version of SUMO.
+   See https://github.com/eclipse-sumo/sumo/issues/16115
+
 ### Troubleshooting
 
   See [Installing/Linux Build](Installing/Linux_Build.md), [Installing/macOS Build](Installing/MacOS_Build.md) or

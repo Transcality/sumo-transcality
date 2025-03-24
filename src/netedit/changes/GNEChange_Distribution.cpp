@@ -17,9 +17,9 @@
 ///
 // A change in which the distribution attribute of some object is modified
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
+#include <netedit/GNETagProperties.h>
 #include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
 #include <netedit/GNEApplicationWindow.h>
@@ -73,11 +73,9 @@ GNEChange_Distribution::~GNEChange_Distribution() {
     // only continue we have undo-redo mode enabled
     if (myDistribution->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
         // decrease reference
-        myDistribution->decRef("GNEChange_Distribution " + myDistribution->getTagProperty().getTagStr());
+        myDistribution->decRef("GNEChange_Distribution " + myDistribution->getTagProperty()->getTagStr());
         // remove if is unreferenced
         if (myDistribution->unreferenced()) {
-            // show extra information for tests
-            WRITE_DEBUG("Deleting unreferenced " + myDistribution->getTagStr() + " '" + myDistribution->getID() + "' in GNEChange_Distribution");
             // delete distribution
             delete myDistribution;
         }
@@ -87,8 +85,6 @@ GNEChange_Distribution::~GNEChange_Distribution() {
 
 void
 GNEChange_Distribution::undo() {
-    // show extra information for tests
-    WRITE_DEBUG("Setting previous distribution into " + myDistribution->getTagStr() + " '" + myDistribution->getID() + "'");
     // continue depending of flags
     if (myEditingProbability) {
         myDistribution->editDistributionValue(myKey, myOriginalProbability);
@@ -104,8 +100,6 @@ GNEChange_Distribution::undo() {
 
 void
 GNEChange_Distribution::redo() {
-    // show extra information for tests
-    WRITE_DEBUG("Setting new distribution into " + myDistribution->getTagStr() + " '" + myDistribution->getID() + "'");
     // continue depending of flags
     if (myEditingProbability) {
         myDistribution->editDistributionValue(myKey, myNewProbability);
@@ -139,7 +133,7 @@ GNEChange_Distribution::GNEChange_Distribution(GNEDemandElement* distribution, c
     myNewProbability(value),
     myAddKey(addKey),
     myEditingProbability(false) {
-    myDistribution->incRef("GNEChange_Distribution " + myDistribution->getTagProperty().getTagStr());
+    myDistribution->incRef("GNEChange_Distribution " + myDistribution->getTagProperty()->getTagStr());
 }
 
 
@@ -151,7 +145,7 @@ GNEChange_Distribution::GNEChange_Distribution(GNEDemandElement* distribution, c
     myNewProbability(newValue),
     myAddKey(false),
     myEditingProbability(true) {
-    myDistribution->incRef("GNEChange_Distribution " + myDistribution->getTagProperty().getTagStr());
+    myDistribution->incRef("GNEChange_Distribution " + myDistribution->getTagProperty()->getTagStr());
 }
 
 /****************************************************************************/

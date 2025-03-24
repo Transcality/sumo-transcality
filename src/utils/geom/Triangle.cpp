@@ -19,13 +19,19 @@
 /****************************************************************************/
 #include <config.h>
 
+#include <algorithm>
 #include "Triangle.h"
+
+
+// ===========================================================================
+// static member definitions
+// ===========================================================================
+const Triangle Triangle::INVALID = Triangle();
 
 
 // ===========================================================================
 // method definitions
 // ===========================================================================
-
 Triangle::Triangle() {}
 
 
@@ -33,8 +39,7 @@ Triangle::Triangle(const Position& positionA, const Position& positionB, const P
     myA(positionA),
     myB(positionB),
     myC(positionC) {
-    // calculate area and boundary
-    myArea = calculateTriangleArea2D(myA, myB, myC);
+    // calculate boundary
     myBoundary.add(positionA);
     myBoundary.add(positionB);
     myBoundary.add(positionC);
@@ -45,47 +50,66 @@ Triangle::~Triangle() {}
 
 
 bool
-Triangle::isAroundPosition(const Position& pos) const {
-    return isAroundPosition(myA, myB, myC, pos);
+Triangle::isPositionWithin(const Position& pos) const {
+    return isPositionWithin(myA, myB, myC, pos);
 }
 
 
 bool
-Triangle::isAroundShape(const PositionVector& shape) const {
-    if (isBoundaryAround(shape.getBoxBoundary())) {
+Triangle::isBoundaryFullWithin(const Boundary& boundary) const {
+    return isPositionWithin(Position(boundary.xmax(), boundary.ymax())) &&
+           isPositionWithin(Position(boundary.xmin(), boundary.ymin())) &&
+           isPositionWithin(Position(boundary.xmax(), boundary.ymin())) &&
+           isPositionWithin(Position(boundary.xmin(), boundary.ymax()));
+}
+
+
+bool
+Triangle::intersectWithShape(const PositionVector& shape) const {
+    return intersectWithShape(shape, shape.getBoxBoundary());
+}
+
+
+bool
+Triangle::intersectWithShape(const PositionVector& shape, const Boundary& shapeBoundary) const {
+    // check if triangle is within shape
+    if (shape.around(myA) || shape.around(myB) || shape.around(myC)) {
         return true;
-    } else {
-        for (const auto& pos : shape) {
-            if (isAroundPosition(pos)) {
-                return true;
-            }
+    }
+    // check if at leas two corners of the shape boundary are within triangle
+    const int cornerA = isPositionWithin(Position(shapeBoundary.xmax(), shapeBoundary.ymax()));
+    const int cornerB = isPositionWithin(Position(shapeBoundary.xmin(), shapeBoundary.ymin()));
+    if ((cornerA + cornerB) == 2) {
+        return true;
+    }
+    const int cornerC = isPositionWithin(Position(shapeBoundary.xmax(), shapeBoundary.ymin()));
+    if ((cornerA + cornerB + cornerC) == 2) {
+        return true;
+    }
+    const int cornerD = isPositionWithin(Position(shapeBoundary.xmin(), shapeBoundary.ymax()));
+    if ((cornerA + cornerB + cornerC + cornerD) == 2) {
+        return true;
+    }
+    // on this point, whe need to check if every shape line intersect with triangle
+    for (int i = 0; i < ((int)shape.size() - 1); i++) {
+        if (lineIntersectsTriangle(shape[i], shape[i + 1])) {
+            return true;
         }
-        return false;
     }
-}
-
-bool
-Triangle::isBoundaryAround(const Boundary& boundary) const {
-    if (isAroundPosition(Position(boundary.xmin(), boundary.ymin())) &&
-            isAroundPosition(Position(boundary.xmax(), boundary.ymax()))) {
-        return true;
-    } else {
-        return false;
-    }
+    return false;
 }
 
 
 bool
-Triangle::isCircunferenceAround(const Position& center, const double radius) const {
-    if (lineIntersectCircle(myA, myB, center, radius)) {
-        return true;
-    } else if (lineIntersectCircle(myA, myB, center, radius)) {
-        return true;
-    } else if (lineIntersectCircle(myA, myB, center, radius)) {
-        return true;
-    } else {
-        return isAroundPosition(center);
-    }
+Triangle::intersectWithCircle(const Position& center, const double radius) const {
+    const auto squaredRadius = radius * radius;
+    return ((center.distanceSquaredTo2D(myA) <= squaredRadius) ||
+            (center.distanceSquaredTo2D(myB) <= squaredRadius) ||
+            (center.distanceSquaredTo2D(myC) <= squaredRadius) ||
+            isPositionWithin(center) ||
+            lineIntersectCircle(myA, myB, center, radius) ||
+            lineIntersectCircle(myB, myC, center, radius) ||
+            lineIntersectCircle(myC, myA, center, radius));
 }
 
 
@@ -142,14 +166,26 @@ Triangle::triangulate(PositionVector shape) {
 
 
 bool
-Triangle::isAroundPosition(const Position& A, const Position& B, const Position& C, const Position& pos) {
+Triangle::operator==(const Triangle& other) const {
+    return myA == other.myA && myB == other.myB && myC == other.myC;
+}
+
+
+bool
+Triangle::operator!=(const Triangle& other) const {
+    return !(*this == other);
+}
+
+
+bool
+Triangle::isPositionWithin(const Position& A, const Position& B, const Position& C, const Position& pos) {
     // Calculate cross products for each edge of the triangle
     const double crossAB = crossProduct(A, B, pos);
     const double crossBC = crossProduct(B, C, pos);
     const double crossCA = crossProduct(C, A, pos);
     // Check if all cross products have the same sign
-    return (crossAB >= 0 && crossBC >= 0 && crossCA >= 0) ||
-           (crossAB <= 0 && crossBC <= 0 && crossCA <= 0);
+    return ((crossAB >= 0) && (crossBC >= 0) && (crossCA >= 0)) ||
+           ((crossAB <= 0) && (crossBC <= 0) && (crossCA <= 0));
 }
 
 
@@ -161,7 +197,7 @@ Triangle::isEar(const Position& a, const Position& b, const Position& c, const P
     }
     // Check if any other point in the polygon lies inside the triangle
     for (const auto& pos : shape) {
-        if ((pos != a) && (pos != b) && (pos != c) && isAroundPosition(a, b, c, pos)) {
+        if ((pos != a) && (pos != b) && (pos != c) && isPositionWithin(a, b, c, pos)) {
             return false;
         }
     }
@@ -175,9 +211,58 @@ Triangle::crossProduct(const Position& a, const Position& b, const Position& c) 
 }
 
 
-double
-Triangle::calculateTriangleArea2D(const Position& a, const Position& b, const Position& c) const {
-    return std::abs((a.x() * (b.y() - c.y()) + b.x() * (c.y() - a.y()) + c.x() * (a.y() - b.y())) / 2.0);
+int
+Triangle::orientation(const Position& p, const Position& q, const Position& r) const {
+    const double val = (q.y() - p.y()) * (r.x() - q.x()) - (q.x() - p.x()) * (r.y() - q.y());
+    if (val > 0) {
+        // Clockwise
+        return 1;
+    } else if (val < 0) {
+        // Counterclockwise
+        return -1;
+    } else {
+        // Collinear
+        return 0;
+    }
+}
+
+
+bool
+Triangle::onSegment(const Position& p, const Position& q, const Position& r) const {
+    return (q.x() >= std::min(p.x(), r.x()) && q.x() <= std::max(p.x(), r.x()) &&
+            q.y() >= std::min(p.y(), r.y()) && q.y() <= std::max(p.y(), r.y()));
+}
+
+
+bool
+Triangle::segmentsIntersect(const Position& p1, const Position& q1, const Position& p2, const Position& q2) const {
+    const int o1 = orientation(p1, q1, p2);
+    const int o2 = orientation(p1, q1, q2);
+    const int o3 = orientation(p2, q2, p1);
+    const int o4 = orientation(p2, q2, q1);
+    // General case: segments intersect if they have different orientations
+    // Special cases: checking if points are collinear and on segment
+    if ((o1 != o2) && (o3 != o4)) {
+        return true;
+    } else if ((o1 == 0) && onSegment(p1, p2, q1)) {
+        return true;
+    } else if ((o2 == 0) && onSegment(p1, q2, q1)) {
+        return true;
+    } else if ((o3 == 0) && onSegment(p2, p1, q2)) {
+        return true;
+    } else if ((o4 == 0) && onSegment(p2, q1, q2)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+bool
+Triangle::lineIntersectsTriangle(const Position& p1, const Position& p2) const {
+    return segmentsIntersect(p1, p2, myA, myB) ||
+           segmentsIntersect(p1, p2, myB, myC) ||
+           segmentsIntersect(p1, p2, myC, myA);
 }
 
 

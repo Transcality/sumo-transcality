@@ -28,31 +28,37 @@
 #include "GNETranship.h"
 #include "GNERoute.h"
 
+
 // ===========================================================================
 // method definitions
 // ===========================================================================
-
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNETranship::GNETranship(SumoXMLTag tag, GNENet* net) :
-    GNEDemandElement("", net, GLO_TRANSHIP, tag, GUIIconSubSys::getIcon(GUIIcon::TRANSHIP_EDGE),
-                     GNEPathElement::Options::DEMAND_ELEMENT, {}, {}, {}, {}, {}, {}),
-                                GNEDemandElementPlan(this, -1, -1),
-mySpeed(0) {
-    // reset default values
-    resetDefaultValues();
+    GNEDemandElement("", net, "", GLO_TRANSHIP, tag, GUIIcon::TRANSHIP_EDGE, GNEPathElement::Options::DEMAND_ELEMENT),
+    GNEDemandElementPlan(this, -1, -1) {
 }
 
 
 GNETranship::GNETranship(GNENet* net, SumoXMLTag tag, GUIIcon icon, GNEDemandElement* containerParent, const GNEPlanParents& planParameters,
                          const double departPosition, const double arrivalPosition, const double speed, const SUMOTime duration) :
-    GNEDemandElement(containerParent, net, GLO_TRANSHIP, tag, GUIIconSubSys::getIcon(icon),
-                     GNEPathElement::Options::DEMAND_ELEMENT,
-                     planParameters.getJunctions(), planParameters.getEdges(), {},
-planParameters.getAdditionalElements(), planParameters.getDemandElements(containerParent), {}),
-GNEDemandElementPlan(this, departPosition, arrivalPosition),
-mySpeed(speed),
-myDuration(duration) {
+    GNEDemandElement(containerParent, net, GLO_TRANSHIP, tag, icon, GNEPathElement::Options::DEMAND_ELEMENT),
+    GNEDemandElementPlan(this, departPosition, arrivalPosition),
+    mySpeed(speed),
+    myDuration(duration) {
+    // set parents
+    setParents<GNEJunction*>(planParameters.getJunctions());
+    setParents<GNEEdge*>(planParameters.getEdges());
+    setParents<GNEAdditional*>(planParameters.getAdditionalElements());
+    setParents<GNEDemandElement*>(planParameters.getDemandElements(containerParent));
+    // update centering boundary without updating grid
+    updatePlanCenteringBoundary(false);
 }
-
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 GNETranship::~GNETranship() {}
 
@@ -77,11 +83,11 @@ GNETranship::writeDemandElement(OutputDevice& device) const {
     device.openTag(SUMO_TAG_TRANSHIP);
     writeLocationAttributes(device);
     // speed
-    if ((mySpeed > 0) && (toString(mySpeed) != myTagProperty.getDefaultValue(SUMO_ATTR_SPEED))) {
+    if (mySpeed != myTagProperty->getDefaultDoubleValue(SUMO_ATTR_SPEED)) {
         device.writeAttr(SUMO_ATTR_SPEED, mySpeed);
     }
     // duration
-    if (toString(myDuration) != myTagProperty.getDefaultValue(SUMO_ATTR_DURATION)) {
+    if (myDuration != myTagProperty->getDefaultTimeValue(SUMO_ATTR_DURATION)) {
         device.writeAttr(SUMO_ATTR_DURATION, time2string(myDuration));
     }
     device.closeTag();
@@ -145,7 +151,7 @@ GNETranship::getCenteringBoundary() const {
 void
 GNETranship::splitEdgeGeometry(const double /*splitPosition*/, const GNENetworkElement* originalElement, const GNENetworkElement* newElement, GNEUndoList* undoList) {
     // only split geometry of TranshipEdges
-    if (myTagProperty.getTag() == GNE_TAG_TRANSHIP_EDGES) {
+    if (myTagProperty->getTag() == GNE_TAG_TRANSHIP_EDGES) {
         // obtain new list of tranship edges
         std::string newTranshipEdges = getNewListOfParents(originalElement, newElement);
         // update tranship edges

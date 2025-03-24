@@ -17,16 +17,16 @@
 ///
 // Frame for select parents
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
+#include <netedit/GNETagProperties.h>
+#include <netedit/GNETagPropertiesDatabase.h>
 #include <netedit/GNEViewNet.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/windows/GUIAppEnum.h>
 
 #include "GNESelectorParent.h"
-
 
 // ===========================================================================
 // method definitions
@@ -112,9 +112,9 @@ GNESelectorParent::refreshSelectorParentModule() {
         // fill list with IDs
         for (const auto& parentTag : myParentTags) {
             // check type
-            const auto tagProperty = GNEAttributeCarrier::getTagProperty(parentTag);
+            const auto tagProperty = myFrameParent->getViewNet()->getNet()->getTagPropertiesDatabase()->getTagProperty(parentTag);
             // additionals
-            if (tagProperty.isAdditionalElement()) {
+            if (tagProperty->isAdditionalElement()) {
                 for (const auto& additional : myFrameParent->getViewNet()->getNet()->getAttributeCarriers()->getAdditionals().at(parentTag)) {
                     IDs.insert(additional.second->getID().c_str());
                 }

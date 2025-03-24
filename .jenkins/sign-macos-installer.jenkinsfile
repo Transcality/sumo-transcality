@@ -6,6 +6,7 @@ pipeline {
     }
     environment {
         PATH = "${env.PATH}:/opt/homebrew/bin"
+        GITHUB_TOKEN = credentials('github-bot-token')
     }
     stages {
         stage('Clean Workspace') {
@@ -19,18 +20,26 @@ pipeline {
                 git config --global advice.detachedHead false
 
                 # Cloning JuPedSim
-                git clone -q --filter=tree:0 --branch master https://github.com/PedestrianDynamics/jupedsim.git
+                git clone -q --filter=tree:0 --branch v1.2.1 https://github.com/PedestrianDynamics/jupedsim.git
 
                 # Building JuPedSim
-                cmake -D CMAKE_INSTALL_PREFIX=jupedsim-install -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache -B jupedsim-build jupedsim
+                cmake -Wno-dev -D CMAKE_INSTALL_PREFIX=jupedsim-install -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache -B jupedsim-build jupedsim
                 cmake --build jupedsim-build -j16 --config Release
                 cmake --install jupedsim-build --config Release
 
                 # Cloning SUMO
-                git clone -q --filter=tree:0 --branch v1_21_0 https://github.com/eclipse-sumo/sumo.git
+                git clone -q --filter=tree:0 --branch main https://github.com/eclipse-sumo/sumo.git
+                export SUMO_HOME=\${WORKSPACE}/sumo
+
+                # Creating virtual env for Python for the whole process
+                /opt/homebrew/bin/python3.13 -m venv env
+                env/bin/python3 -m pip install --quiet -r sumo/tools/requirements.txt
+                env/bin/python3 -m pip install --quiet dmgbuild delocate
 
                 # Building SUMO & TraaS
-                cmake -D CMAKE_INSTALL_PREFIX=sumo-install -B sumo-build sumo
+                export VIRTUAL_ENV=${WORKSPACE}/env
+                export PATH=${WORKSPACE}/env/bin:\$PATH
+                cmake -Wno-dev -D CMAKE_INSTALL_PREFIX=sumo-install -B sumo-build sumo
                 cmake --build sumo-build -j16
                 cmake --build sumo-build --target traas
               '''
@@ -40,15 +49,11 @@ pipeline {
             steps {
 
                 sh '''
-                    export DYLD_LIBRARY_PATH="${WORKSPACE}/jupedsim-install/lib"
-
-                    /opt/homebrew/bin/python3.11 -m venv env
-                    env/bin/python3 -m pip install --quiet dmgbuild delocate
-
-                    curl -s -o "${WORKSPACE}/sumo/tools/build_config/buildMacOSInstaller.py" https://raw.githubusercontent.com/eclipse-sumo/sumo/main/tools/build_config/buildMacOSInstaller.py
-
                     # Creating the EclipseSUMO framework directory
-                    env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-framework-dir --build-dir sumo-build --framework-dir framework
+                    export DYLD_LIBRARY_PATH="${WORKSPACE}/jupedsim-install/lib"
+                    env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-framework-dir \
+                            --build-dir sumo-build \
+                            --framework-dir framework
                     zip -q -r --symlinks framework-unsigned.zip framework
 
                     # Creating the EclipseSUMO launcher apps directory
@@ -103,23 +108,24 @@ pipeline {
                             for file in framework/EclipseSUMO.framework/EclipseSUMO/${subDir}/*; do
                                 signed_file="\${file}-signed"
                                 curl -s -o "\${signed_file}" -F "file=@\${file}" -F "entitlements=@${entitlementsFile}" https://cbi-staging.eclipse.org/macos/codesign/sign
+                                # keep the original permissions
+                                chmod --reference="\${file}" "\${signed_file}"
                                 mv -v "\${signed_file}" "\${file}"
                             done
                         """
                     }
 
-                    // Sign individual files in share/sumo/tools and the shell scripts of the launchers
+                    // Sign individual files in share/sumo/tools
                     def additionalFiles = [
                         "framework/EclipseSUMO.framework/EclipseSUMO/share/sumo/tools/libsumo/_libsumo.so",
                         "framework/EclipseSUMO.framework/EclipseSUMO/share/sumo/tools/libtraci/_libtraci.so",
-                        "apps/sumo-gui/SUMO sumo-gui.app/Contents/MacOS/SUMO sumo-gui",
-                        "apps/netedit/SUMO netedit.app/Contents/MacOS/SUMO netedit",
-                        "apps/scenario-wizard/SUMO Scenario Wizard.app/Contents/MacOS/SUMO Scenario Wizard"
                     ]
                     additionalFiles.each { file ->
                         sh """
                             signed_file="${file}-signed"
                             curl -s -o "\${signed_file}" -F "file=@${file}" -F "entitlements=@${entitlementsFile}" https://cbi-staging.eclipse.org/macos/codesign/sign
+                            # keep the original permissions
+                            chmod --reference="${file}" "\${signed_file}"
                             mv -v "\${signed_file}" "${file}"
                         """
                     }
@@ -147,11 +153,15 @@ pipeline {
                         unzip -q -o apps-signed.zip -d "${WORKSPACE}"
 
                         rm -rf framework-pkg
-                        env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-framework-pkg --framework-dir framework --framework-pkg-dir framework-pkg
+                        env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-framework-pkg \
+                              --framework-dir framework \
+                              --framework-pkg-dir framework-pkg
                         zip -q -r --symlinks "framework-pkg-unsigned.zip" framework-pkg
 
                         rm -rf apps-pkg
-                        env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-apps-pkg --apps-dir apps --apps-pkg-dir apps-pkg
+                        env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-apps-pkg \
+                              --apps-dir apps \
+                              --apps-pkg-dir apps-pkg
                         zip -q -r --symlinks "apps-pkg-unsigned.zip" apps-pkg
                     """
                 }
@@ -201,13 +211,14 @@ pipeline {
 </dict>
 </plist>
         '''
-                    // Sign all files in the bin and lib folder (binaries and libraries)
                     def subDirs = ["framework-pkg", "apps-pkg"]
                     subDirs.each { subDir ->
                         sh """
                             for file in ${subDir}/*; do
                                 signed_file="\${file}-signed"
                                 curl -s -o "\${signed_file}" -F "file=@\${file}" -F "entitlements=@${entitlementsFile}" https://cbi-staging.eclipse.org/macos/codesign/sign
+                                # keep the original permissions
+                                chmod --reference="\${file}" "\${signed_file}"
                                 mv -v "\${signed_file}" "\${file}"
                             done
                         """
@@ -237,7 +248,9 @@ pipeline {
                         unzip -q -o apps-pkg-signed.zip -d "${WORKSPACE}"
 
                         rm -rf installer
-                        env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-installer-pkg --framework-pkg-dir framework-pkg --apps-pkg-dir apps-pkg
+                        env/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-installer-pkg \
+                            --framework-pkg-dir framework-pkg \
+                            --apps-pkg-dir apps-pkg
                     """
                 }
                 stash name: 'installer-unsigned', includes: 'installer/sumo*.pkg'
@@ -278,10 +291,12 @@ pipeline {
                         script: """
                             file=\$(ls installer/sumo*.pkg)
                             signed_file="\${file}-signed"
-
                             curl -s -o "\$signed_file" -F "file=@\$file" -F "entitlements=@${entitlementsFile}" https://cbi-staging.eclipse.org/macos/codesign/sign
+                            # keep the original permissions
+                            chmod --reference="\${file}" "\${signed_file}"
                             mv "\$signed_file" "\$file"
 
+                            # Start notarization
                             curl -X POST -F file=@"\$file" -F 'options={"primaryBundleId": "org.eclipse.sumo", "staple": true};type=application/json' https://cbi.eclipse.org/macos/xcrun/notarize
                         """,
                         returnStdout: true
@@ -332,12 +347,11 @@ pipeline {
                 }
             }
         }
-        stage('Building DMG') {
+
+        stage('Uploading notarized artifacts to GitHub') {
             steps {
+                // Make sure to have the notarized files in our workspace on the macOS node
                 unstash 'notarized'
-                sh """
-                  ls -lsa
-                """
             }
         }
     }

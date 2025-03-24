@@ -20,43 +20,33 @@
 #pragma once
 #include <config.h>
 
-#include <netedit/frames/GNEFrameAttributeModules.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanCreator.h>
-#include <netedit/frames/GNEAttributesCreator.h>
-#include <netedit/GNENetHelper.h>
-#include <utils/common/SUMOVehicleClass.h>
-#include <utils/vehicle/SUMORouteHandler.h>
-#include <utils/xml/SUMOSAXAttributes.h>
-#include <utils/xml/SUMOSAXHandler.h>
-#include <utils/xml/SUMOXMLDefinitions.h>
 #include <utils/handlers/RouteHandler.h>
-
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 
-class GNEViewNet;
-class GNEEdge;
-class GNETAZ;
-class GNEDemandElement;
-class GNEVehicle;
-class GNEPerson;
+class GNEAttributesEditor;
 class GNEContainer;
+class GNEDemandElement;
+class GNEEdge;
+class GNEJunction;
+class GNEPerson;
+class GNEPlanCreator;
+class GNETAZ;
 class GNEUndoList;
+class GNEVehicle;
+class GNEViewNet;
 
 // ===========================================================================
 // class definitions
 // ===========================================================================
 
-/// @class GNERouteHandler
-/// @brief Builds trigger objects for GNENet (busStops, chargingStations, detectors, etc..)
 class GNERouteHandler : public RouteHandler {
 
 public:
     /// @brief Constructor
-    GNERouteHandler(const std::string& file, GNENet* net, const bool allowUndoRedo, const bool overwrite);
+    GNERouteHandler(GNENet* net, const std::string& file, const bool allowUndoRedo, const bool overwrite);
 
     /// @brief Destructor
     virtual ~GNERouteHandler();
@@ -171,11 +161,11 @@ public:
                    const SUMOVehicleParameter::Stop& stopParameters);
 
     /// @brief build person plan
-    bool buildPersonPlan(const GNEDemandElement* planTemplate, GNEDemandElement* personParent, GNEAttributesCreator* personPlanAttributes,
+    bool buildPersonPlan(const GNEDemandElement* planTemplate, GNEDemandElement* personParent, GNEAttributesEditor* personPlanAttributesEditor,
                          GNEPlanCreator* planCreator, const bool centerAfterCreation);
 
     /// @brief build container plan
-    bool buildContainerPlan(const GNEDemandElement* planTemplate, GNEDemandElement* containerParent, GNEAttributesCreator* containerPlanAttributes,
+    bool buildContainerPlan(const GNEDemandElement* planTemplate, GNEDemandElement* containerParent, GNEAttributesEditor* containerPlanAttributesEditor,
                             GNEPlanCreator* planCreator, const bool centerAfterCreation);
 
     /// @}
@@ -319,4 +309,13 @@ private:
 
     /// @brief container tags
     static const std::vector<SumoXMLTag> myContainerTags;
+
+    /// @brief invalidate default onstructor
+    GNERouteHandler() = delete;
+
+    /// @brief invalidate copy constructor
+    GNERouteHandler(const GNERouteHandler& s) = delete;
+
+    /// @brief invalidate assignment operator
+    GNERouteHandler& operator=(const GNERouteHandler& s) = delete;
 };

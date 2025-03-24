@@ -431,6 +431,10 @@ public:
     /// @brief return index of edge within route
     int getRoutePosition() const;
 
+    int getArrivalPosition() const {
+        return myParameter->arrivalEdge;
+    }
+
     /// @brief reset index of edge within route
     void resetRoutePosition(int index, DepartLaneDefinition departLaneProcedure);
 
@@ -981,6 +985,8 @@ public:
 
     /// @brief apply departEdge and arrivalEdge attributes
     void setDepartAndArrivalEdge();
+
+    int getInsertionChecks() const;
 
     /// @brief interpret stop lane on opposite side of the road
     static MSLane* interpretOppositeStop(SUMOVehicleParameter::Stop& stop);

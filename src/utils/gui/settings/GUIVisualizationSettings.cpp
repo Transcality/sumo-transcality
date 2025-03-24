@@ -286,7 +286,8 @@ GUIVisualizationTextSettings::show(const GUIGlObject* o) const {
 // GUIVisualizationRainbowSettings - methods
 // ---------------------------------------------------------------------------
 
-GUIVisualizationRainbowSettings::GUIVisualizationRainbowSettings(bool _hideMin, double _minThreshold, bool _hideMax, double _maxThreshold, bool _setNeutral, double _neutralThreshold, bool _fixRange) :
+GUIVisualizationRainbowSettings::GUIVisualizationRainbowSettings(bool _hideMin, double _minThreshold, bool _hideMax, double _maxThreshold, bool _setNeutral,
+        double _neutralThreshold, bool _fixRange, int _rainbowScheme) :
     hideMin(_hideMin),
     minThreshold(_minThreshold),
     hideMax(_hideMax),
@@ -294,6 +295,7 @@ GUIVisualizationRainbowSettings::GUIVisualizationRainbowSettings(bool _hideMin, 
     setNeutral(_setNeutral),
     neutralThreshold(_neutralThreshold),
     fixRange(_fixRange),
+    rainbowScheme(_rainbowScheme),
     colors(GUIVisualizationSettings::RAINBOW_SCHEMES["classic"])
 { }
 
@@ -306,7 +308,8 @@ GUIVisualizationRainbowSettings::operator==(const GUIVisualizationRainbowSetting
            (maxThreshold == other.maxThreshold) &&
            (setNeutral == other.setNeutral) &&
            (neutralThreshold == other.neutralThreshold) &&
-           (fixRange == other.fixRange);
+           (fixRange == other.fixRange) &&
+           (rainbowScheme == other.rainbowScheme);
 }
 
 
@@ -325,6 +328,7 @@ GUIVisualizationRainbowSettings::print(OutputDevice& dev, const std::string& nam
     dev.writeAttr(name + "SetNeutral", setNeutral);
     dev.writeAttr(name + "NeutralThreshold", neutralThreshold);
     dev.writeAttr(name + "FixRange", fixRange);
+    dev.writeAttr(name + "RainbowScheme", rainbowScheme);
 }
 
 
@@ -586,7 +590,7 @@ GUIVisualizationSettings::GUIVisualizationSettings(const std::string& _name, boo
     edgeData("speed"),
     edgeDataID(""),
     edgeDataScaling(""),
-    edgeValueRainBow(false, 0, false, 200, false, 0, false),
+    edgeValueRainBow(false, 0, false, 200, false, 0, false, 1),
     vehicleQuality(0), showBlinker(true),
     drawLaneChangePreference(false),
     drawMinGap(false),
@@ -602,6 +606,7 @@ GUIVisualizationSettings::GUIVisualizationSettings(const std::string& _name, boo
     vehicleValue(false, 80, RGBColor::CYAN),
     vehicleScaleValue(false, 80, RGBColor::GREY),
     vehicleText(false, 80, RGBColor::RED),
+    vehicleValueRainBow(false, 0, false, 100, false, 0, false, 1),
     personQuality(netedit ? 2 : 0),
     personSize(1),
     personName(false, 60, RGBColor(0, 153, 204, 255)),
@@ -622,7 +627,7 @@ GUIVisualizationSettings::GUIVisualizationSettings(const std::string& _name, boo
     drawJunctionShape(true),
     drawCrossingsAndWalkingareas(true),
     junctionSize(1),
-    junctionValueRainBow(false, 0, false, 100, false, 0, false),
+    junctionValueRainBow(false, 0, false, 100, false, 0, false, 1),
     addMode(0),
     addSize(1),
     addName(false, 60, RGBColor(255, 0, 128, 255)),
@@ -643,7 +648,7 @@ GUIVisualizationSettings::GUIVisualizationSettings(const std::string& _name, boo
     tazRelWidthExaggeration(1),
     edgeRelWidthExaggeration(1),
     relDataAttr("count"),
-    dataValueRainBow(false, -100, false, 100, false, 0, false),
+    dataValueRainBow(false, -100, false, 100, false, 0, false, 1),
     show3DTLSLinkMarkers(true),
     show3DTLSDomes(true),
     generate3DTLSModels(false),
@@ -2106,6 +2111,7 @@ GUIVisualizationSettings::save(OutputDevice& dev) const {
     dev.writeAttr("vehicleScaleMode", vehicleScaler.getActive());
     dev.writeAttr("vehicleQuality", vehicleQuality);
     vehicleSize.print(dev, "vehicle");
+    vehicleValueRainBow.print(dev, "vehicleValue");
     dev.writeAttr("showBlinker", showBlinker);
     dev.writeAttr("drawMinGap", drawMinGap);
     dev.writeAttr("drawBrakeGap", drawBrakeGap);
@@ -2447,6 +2453,9 @@ GUIVisualizationSettings::operator==(const GUIVisualizationSettings& v2) {
         return false;
     }
     if (vehicleSize != v2.vehicleSize) {
+        return false;
+    }
+    if (vehicleValueRainBow != v2.vehicleValueRainBow) {
         return false;
     }
     if (showBlinker != v2.showBlinker) {

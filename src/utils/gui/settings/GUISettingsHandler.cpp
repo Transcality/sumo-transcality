@@ -161,9 +161,6 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             mySettings.disableHideByZoom = StringUtils::toBool(attrs.getStringSecure("disableHideByZoom", toString(mySettings.disableHideByZoom)));
             mySettings.edgeParam = attrs.getStringSecure("edgeParam", mySettings.edgeParam);
             mySettings.laneParam = attrs.getStringSecure("laneParam", mySettings.laneParam);
-            mySettings.vehicleParam = attrs.getStringSecure("vehicleParam", mySettings.vehicleParam);
-            mySettings.vehicleScaleParam = attrs.getStringSecure("vehicleScaleParam", mySettings.vehicleScaleParam);
-            mySettings.vehicleTextParam = attrs.getStringSecure("vehicleTextParam", mySettings.vehicleTextParam);
             mySettings.edgeData = attrs.getStringSecure("edgeData", mySettings.edgeData);
             mySettings.edgeDataID = attrs.getStringSecure("edgeDataID", mySettings.edgeDataID);
             mySettings.edgeDataScaling = attrs.getStringSecure("edgeDataScaling", mySettings.edgeDataScaling);
@@ -276,6 +273,10 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             mySettings.vehicleValue = parseTextSettings("vehicleValue", attrs, mySettings.vehicleValue);
             mySettings.vehicleScaleValue = parseTextSettings("vehicleScaleValue", attrs, mySettings.vehicleScaleValue);
             mySettings.vehicleText = parseTextSettings("vehicleText", attrs, mySettings.vehicleText);
+            mySettings.vehicleParam = attrs.getStringSecure("vehicleParam", mySettings.vehicleParam);
+            mySettings.vehicleScaleParam = attrs.getStringSecure("vehicleScaleParam", mySettings.vehicleScaleParam);
+            mySettings.vehicleTextParam = attrs.getStringSecure("vehicleTextParam", mySettings.vehicleTextParam);
+            mySettings.vehicleValueRainBow = parseRainbowSettings("vehicleValue", attrs, mySettings.vehicleValueRainBow);
             myCurrentColorer = element;
             break;
         case SUMO_TAG_VIEWSETTINGS_PERSONS:
@@ -503,7 +504,8 @@ GUISettingsHandler::parseRainbowSettings(
                StringUtils::toDouble(attrs.getStringSecure(prefix + "HideThreshold2", toString(defaults.maxThreshold))),
                StringUtils::toBool(attrs.getStringSecure(prefix + "SetNeutral", toString(defaults.hideMax))),
                StringUtils::toDouble(attrs.getStringSecure(prefix + "NeutralThreshold", toString(defaults.neutralThreshold))),
-               StringUtils::toBool(attrs.getStringSecure(prefix + "FixRange", toString(defaults.fixRange))));
+               StringUtils::toBool(attrs.getStringSecure(prefix + "FixRange", toString(defaults.fixRange))),
+               StringUtils::toInt(attrs.getStringSecure(prefix + "RainbowScheme", toString(defaults.rainbowScheme))));
 }
 
 const std::vector<std::string>&

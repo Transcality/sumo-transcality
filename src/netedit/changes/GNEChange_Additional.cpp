@@ -17,7 +17,6 @@
 ///
 // A network change in which a busStop is created or deleted
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
 #include <netedit/GNEViewNet.h>
@@ -29,6 +28,7 @@
 // ===========================================================================
 // FOX-declarations
 // ===========================================================================
+
 FXIMPLEMENT_ABSTRACT(GNEChange_Additional, GNEChange, nullptr, 0)
 
 // ===========================================================================
@@ -47,8 +47,6 @@ GNEChange_Additional::~GNEChange_Additional() {
     if (myAdditional->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
         myAdditional->decRef("GNEChange_Additional");
         if (myAdditional->unreferenced()) {
-            // show extra information for tests
-            WRITE_DEBUG("Deleting unreferenced " + myAdditional->getTagStr());
             // make sure that additional isn't in net before removing
             if (myAdditional->getNet()->getAttributeCarriers()->retrieveAdditional(myAdditional, false)) {
                 // delete additional from net
@@ -63,27 +61,23 @@ GNEChange_Additional::~GNEChange_Additional() {
 void
 GNEChange_Additional::undo() {
     if (myForward) {
-        // show extra information for tests
-        WRITE_DEBUG("Removing " + myAdditional->getTagStr() + " '" + myAdditional->getID() + "' in GNEChange_Additional");
         // unselect if mySelectedElement is enabled
         if (mySelectedElement) {
             myAdditional->unselectAttributeCarrier();
         }
         // delete additional from net
         myAdditional->getNet()->getAttributeCarriers()->deleteAdditional(myAdditional);
-        // restore container
-        restoreHierarchicalContainers();
+        // remove element from parent and children
+        removeElementFromParentsAndChildren(myAdditional);
     } else {
-        // show extra information for tests
-        WRITE_DEBUG("Adding " + myAdditional->getTagStr() + " '" + myAdditional->getID() + "' in GNEChange_Additional");
         // select if mySelectedElement is enabled
         if (mySelectedElement) {
             myAdditional->selectAttributeCarrier();
         }
+        // add element in parent and children
+        addElementInParentsAndChildren(myAdditional);
         // insert additional into net
         myAdditional->getNet()->getAttributeCarriers()->insertAdditional(myAdditional);
-        // restore container
-        restoreHierarchicalContainers();
     }
     // require always save additionals
     myAdditional->getNet()->getSavingStatus()->requireSaveAdditionals();
@@ -93,26 +87,22 @@ GNEChange_Additional::undo() {
 void
 GNEChange_Additional::redo() {
     if (myForward) {
-        // show extra information for tests
-        WRITE_DEBUG("Adding " + myAdditional->getTagStr() + " '" + myAdditional->getID() + "' in GNEChange_Additional");
         // select if mySelectedElement is enabled
         if (mySelectedElement) {
             myAdditional->selectAttributeCarrier();
         }
+        // add element in parent and children
+        addElementInParentsAndChildren(myAdditional);
         // insert additional into net
         myAdditional->getNet()->getAttributeCarriers()->insertAdditional(myAdditional);
-        // add additional in parent elements
-        addElementInParentsAndChildren(myAdditional);
     } else {
-        // show extra information for tests
-        WRITE_DEBUG("Removing " + myAdditional->getTagStr() + " '" + myAdditional->getID() + "' in GNEChange_Additional");
         // unselect if mySelectedElement is enabled
         if (mySelectedElement) {
             myAdditional->unselectAttributeCarrier();
         }
         // delete additional from net
         myAdditional->getNet()->getAttributeCarriers()->deleteAdditional(myAdditional);
-        // remove additional from parents and children
+        // remove element from parent and children
         removeElementFromParentsAndChildren(myAdditional);
     }
     // require always save additionals

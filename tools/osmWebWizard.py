@@ -15,6 +15,7 @@
 # @author  Jakob Stigloher
 # @author  Jakob Erdmann
 # @author  Michael Behrisch
+# @author  Mirko Barthauer
 # @date    2014-14-10
 
 from __future__ import absolute_import
@@ -298,6 +299,7 @@ class Builder(object):
                 "-t", "100",
                 "-d", "background_images",
                 "-l", "-300",
+                "-a", "Mozilla/5.0 (X11; Linux x86_64) osmWebWizard.py/1.0 (+https://github.com/eclipse-sumo/sumo)",
             ]
             try:
                 os.chdir(self.tmp)
@@ -425,6 +427,20 @@ class Builder(object):
         if self.routenames:
             opts += ["-r", ",".join(self.getRelative(self.routenames))]
 
+            # extra output if the scenario contains traffic
+            opts += ["--tripinfo-output", "tripinfos.xml"]
+            opts += ["--statistic-output", "stats.xml"]
+
+            self.filename("outadd", "output.add.xml", False)
+            with open(self.files["outadd"], 'w') as fadd:
+                sumolib.writeXMLHeader(fadd, "$Id$", "additional")
+                fadd.write('   <edgeData id="wizard_example" period="3600" file="edgeData.xml"/>\n')
+                fadd.write("</additional>\n")
+            self.additionalFiles.append(self.files["outadd"])
+
+        if self.data["publicTransport"]:
+            opts += ["--stop-output", "stopinfos.xml"]
+
         if len(self.additionalFiles) > 0:
             opts += ["-a", ",".join(self.getRelative(self.additionalFiles))]
 
@@ -462,7 +478,7 @@ class Builder(object):
                 files += ["poly"]
 
             # translate the pseudo file names to real file names
-            files = map(lambda name: self.files[name], files)
+            files = list(map(lambda name: self.files[name], files))
 
             if self.data["vehicles"]:
                 files += self.routenames

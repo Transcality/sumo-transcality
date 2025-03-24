@@ -20,13 +20,11 @@
 
 #include "GNEPathElement.h"
 
-
 // ===========================================================================
 // member method definitions
 // ===========================================================================
 
-GNEPathElement::GNEPathElement(GUIGlObjectType type, const std::string& microsimID, FXIcon* icon, const int options) :
-    GUIGlObject(type, microsimID, icon),
+GNEPathElement::GNEPathElement(const int options) :
     myOption(options) {
 }
 

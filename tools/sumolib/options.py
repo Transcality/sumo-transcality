@@ -23,7 +23,7 @@ import sys
 import subprocess
 from collections import namedtuple
 import re
-from xml.sax import parse, parseString, handler, saxutils
+from xml.sax import parse, parseString, handler
 import optparse
 import argparse
 import io
@@ -31,6 +31,7 @@ from argparse import RawDescriptionHelpFormatter  # noqa
 from copy import deepcopy
 from functools import wraps
 from .miscutils import openz, parseTime
+from .xml import xmlescape
 
 
 class ConfigurationReader(handler.ContentHandler):
@@ -140,10 +141,6 @@ def readOptions(filename):
     optionReader = OptionReader()
     parse(filename, optionReader)
     return optionReader.opts
-
-
-def xmlescape(value):
-    return saxutils.escape(str(value), {'"': '&quot;'})
 
 
 class ArgumentParser(argparse.ArgumentParser):

@@ -55,6 +55,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/traffic_lights/MSDriveWay.h>
 #include <microsim/lcmodels/MSAbstractLaneChangeModel.h>
+#include <microsim/devices/MSDevice_Taxi.h>
 #include <mesosim/MELoop.h>
 #include "MSNet.h"
 #include "MSVehicleType.h"
@@ -244,6 +245,10 @@ MSLane::AnyVehicleIterator::nextIsMyVehicles() const {
 // ===========================================================================
 // member method definitions
 // ===========================================================================
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 MSLane::MSLane(const std::string& id, double maxSpeed, double friction, double length, MSEdge* const edge,
                int numericalID, const PositionVector& shape, double width,
                SVCPermissions permissions,
@@ -292,6 +297,9 @@ MSLane::MSLane(const std::string& id, double maxSpeed, double friction, double l
         myOutlineShape = new PositionVector(outlineShape);
     }
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 MSLane::~MSLane() {
@@ -705,7 +713,7 @@ MSLane::insertVehicle(MSVehicle& veh) {
         case DepartPosDefinition::LAST:
             return lastInsertion(veh, speed, posLat, patchSpeed);
         case DepartPosDefinition::STOP:
-            if (veh.hasStops() && veh.getNextStop().lane == this) {
+            if (veh.hasStops() && veh.getNextStop().edge == veh.getCurrentRouteEdge()) {
                 // getLastFreePos of stopping place could return negative position to avoid blocking the stop
                 pos = MAX2(0.0, veh.getNextStop().getEndPos(veh));
                 break;
@@ -798,7 +806,7 @@ MSLane::checkFailure(const MSVehicle* aVehicle, double& speed, double& dist, con
             speed = MIN2(nspeed, speed);
             dist = aVehicle->getCarFollowModel().brakeGap(speed) + aVehicle->getVehicleType().getMinGap();
         } else if (speed > 0) {
-            if ((getInsertionChecks(aVehicle) & (int)check) == 0) {
+            if ((aVehicle->getInsertionChecks() & (int)check) == 0) {
                 return false;
             }
             if (MSGlobals::gEmergencyInsert) {
@@ -827,7 +835,7 @@ bool
 MSLane::isInsertionSuccess(MSVehicle* aVehicle,
                            double speed, double pos, double posLat, bool patchSpeed,
                            MSMoveReminder::Notification notification) {
-    int insertionChecks = getInsertionChecks(aVehicle);
+    int insertionChecks = aVehicle->getInsertionChecks();
     if (pos < 0 || pos > myLength) {
         // we may not start there
         WRITE_WARNINGF(TL("Invalid departPos % given for vehicle '%'. Inserting at lane end instead."),
@@ -857,7 +865,8 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
     double dist = cfModel.brakeGap(speed) + aVehicle->getVehicleType().getMinGap();
     const bool isRail = aVehicle->isRail();
     if (isRail && insertionChecks != (int)InsertionCheck::NONE
-            && aVehicle->getParameter().departProcedure != DepartDefinition::SPLIT) {
+            && aVehicle->getParameter().departProcedure != DepartDefinition::SPLIT
+            && MSRailSignalControl::isSignalized(aVehicle->getVClass())) {
         const MSDriveWay* dw = MSDriveWay::getDepartureDriveway(aVehicle);
         MSEdgeVector occupied;
         if (dw->foeDriveWayOccupied(false, aVehicle, occupied)) {
@@ -1296,19 +1305,21 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
         std::stringstream msg;
         msg << "too many lane changes required on lane '" << myID << "'";
         // we need to take into acount one extra actionStep of delay due to #3665
-        double distToStop = MAX2(0.0, aVehicle->getBestLaneDist() - pos - extraReservation - speed * aVehicle->getActionStepLengthSecs());
-        double stopSpeed = cfModel.stopSpeed(aVehicle, speed, distToStop, MSCFModel::CalcReason::FUTURE);
+        double distToStop = aVehicle->getBestLaneDist() - pos - extraReservation - speed * aVehicle->getActionStepLengthSecs();
+        if (distToStop >= 0) {
+            double stopSpeed = cfModel.stopSpeed(aVehicle, speed, distToStop, MSCFModel::CalcReason::FUTURE);
 #ifdef DEBUG_INSERTION
-        if (DEBUG_COND2(aVehicle) || DEBUG_COND) {
-            std::cout << "\nIS_INSERTION_SUCCESS\n"
-                      << SIMTIME << " veh=" << aVehicle->getID() << " bestLaneOffset=" << bestLaneOffset << " bestLaneDist=" << aVehicle->getBestLaneDist() << " extraReservation=" << extraReservation
-                      << " distToStop=" << distToStop << " v=" << speed << " v2=" << stopSpeed << "\n";
-        }
+            if (DEBUG_COND2(aVehicle) || DEBUG_COND) {
+                std::cout << "\nIS_INSERTION_SUCCESS\n"
+                    << SIMTIME << " veh=" << aVehicle->getID() << " bestLaneOffset=" << bestLaneOffset << " bestLaneDist=" << aVehicle->getBestLaneDist() << " extraReservation=" << extraReservation
+                    << " distToStop=" << distToStop << " v=" << speed << " v2=" << stopSpeed << "\n";
+            }
 #endif
-        if (checkFailure(aVehicle, speed, distToStop, MAX2(0.0, stopSpeed),
-                         patchSpeed, msg.str(), InsertionCheck::LANECHANGE)) {
-            // we may not drive with the given velocity - we cannot reserve enough space for lane changing
-            return false;
+            if (checkFailure(aVehicle, speed, distToStop, MAX2(0.0, stopSpeed),
+                        patchSpeed, msg.str(), InsertionCheck::LANECHANGE)) {
+                // we may not drive with the given velocity - we cannot reserve enough space for lane changing
+                return false;
+            }
         }
     }
     // enter
@@ -1355,14 +1366,6 @@ MSLane::forceVehicleInsertion(MSVehicle* veh, double pos, MSMoveReminder::Notifi
     }), notification);
 }
 
-int
-MSLane::getInsertionChecks(const MSVehicle* veh) {
-    if (veh->getParameter().wasSet(VEHPARS_INSERTION_CHECKS_SET)) {
-        return veh->getParameter().insertionChecks;
-    } else {
-        return MSGlobals::gInsertionChecks;
-    }
-}
 
 double
 MSLane::safeInsertionSpeed(const MSVehicle* veh, double seen, const MSLeaderInfo& leaders, double speed) {
@@ -1386,7 +1389,7 @@ MSLane::safeInsertionSpeed(const MSVehicle* veh, double seen, const MSLeaderInfo
                     std::cout << "    leader=" << leader->getID() << " bPos=" << leader->getBackPositionOnLane(this) << " gap=" << gap << "\n";
                 }
 #endif
-                if ((getInsertionChecks(veh) & (int)InsertionCheck::COLLISION) != 0) {
+                if ((veh->getInsertionChecks() & (int)InsertionCheck::COLLISION) != 0) {
                     return INVALID_SPEED;
                 } else {
                     return 0;
@@ -1731,7 +1734,7 @@ MSLane::detectCollisions(SUMOTime timestep, const std::string& stage) {
 #ifdef DEBUG_PEDESTRIAN_COLLISIONS
             if (DEBUG_COND && DEBUG_COND2(v)) {
                 std::cout << SIMTIME << " back=" << back << " right=" << right << " person=" << Named::getIDSecure(leader.first)
-                          << " dist=" << leader.second << " jammed=" << leader.first->isJammed() << "\n";
+                          << " dist=" << leader.second << " jammed=" << (leader.first == nullptr ? false : leader.first->isJammed()) << "\n";
             }
 #endif
             if (leader.first != 0 && leader.second < length && !leader.first->isJammed()) {
@@ -2304,7 +2307,9 @@ MSLane::executeMovements(const SUMOTime t) {
                                        && firstNotStopped->succEdge(1) != nullptr
                                        && firstNotStopped->getEdge()->allowedLanes(*firstNotStopped->succEdge(1), firstNotStopped->getVClass()) == nullptr);
 
-            const bool r1 = ttt > 0 && firstNotStopped->getWaitingTime() > ttt && !disconnected;
+            const bool r1 = ttt > 0 && firstNotStopped->getWaitingTime() > ttt && !disconnected
+                            // never teleport a taxi on the last edge of it's route (where it would exit the simulation)
+                            && (firstNotStopped->getDevice(typeid(MSDevice_Taxi)) == nullptr || firstNotStopped->getRoutePosition() < (firstNotStopped->getRoute().size() - 1));
             const bool r2 = !r1 && MSGlobals::gTimeToGridlockHighways > 0
                             && firstNotStopped->getWaitingTime() > MSGlobals::gTimeToGridlockHighways
                             && getSpeedLimit() > MSGlobals::gGridlockHighwaysSpeed && wrongLane
@@ -4503,7 +4508,7 @@ MSLane::checkForPedestrians(const MSVehicle* aVehicle, double& speed, double& di
         if (leader.first != 0) {
             const double gap = leader.second - aVehicle->getVehicleType().getLengthWithGap();
             const double stopSpeed = aVehicle->getCarFollowModel().stopSpeed(aVehicle, speed, gap, MSCFModel::CalcReason::FUTURE);
-            if ((gap < 0 && (getInsertionChecks(aVehicle) & ((int)InsertionCheck::COLLISION | (int)InsertionCheck::PEDESTRIAN)) != 0)
+            if ((gap < 0 && (aVehicle->getInsertionChecks() & ((int)InsertionCheck::COLLISION | (int)InsertionCheck::PEDESTRIAN)) != 0)
                     || checkFailure(aVehicle, speed, dist, stopSpeed, patchSpeed, "", InsertionCheck::PEDESTRIAN)) {
                 // we may not drive with the given velocity - we crash into the pedestrian
 #ifdef DEBUG_INSERTION

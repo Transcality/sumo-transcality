@@ -431,7 +431,8 @@ Helper::convertCartesianToRoadMap(const Position& pos, const SUMOVehicleClass vC
             MSLane* lane = const_cast<MSLane*>(dynamic_cast<const MSLane*>(named));
             if (lane->allowsVehicleClass(vClass)) {
                 // @todo this may be a place where 3D is required but 2D is used
-                const double newDistance = lane->getShape().distance2D(pos);
+                double newDistance = lane->getShape().distance2D(pos);
+                newDistance = patchShapeDistance(lane, pos, newDistance, false);
                 if (newDistance < minDistance ||
                         (newDistance == minDistance
                          && result.first != nullptr
@@ -1422,7 +1423,7 @@ Helper::postProcessRemoteControl() {
 bool
 Helper::moveToXYMap(const Position& pos, double maxRouteDistance, bool mayLeaveNetwork, const std::string& origID, const double angle,
                     double speed, const ConstMSEdgeVector& currentRoute, const int routePosition, const MSLane* currentLane, double currentLanePos, bool onRoad,
-                    SUMOVehicleClass vClass, bool setLateralPos,
+                    SUMOVehicleClass vClass, double currentAngle, bool setLateralPos,
                     double& bestDistance, MSLane** lane, double& lanePos, int& routeOffset, ConstMSEdgeVector& edges) {
     // collect edges around the vehicle/person
 #ifdef DEBUG_MOVEXY
@@ -1444,6 +1445,7 @@ Helper::moveToXYMap(const Position& pos, double maxRouteDistance, bool mayLeaveN
         const MSEdge* prevEdge = nullptr;
         const MSEdge* nextEdge = nullptr;
         bool onRoute = false;
+        bool useCurrentAngle = false;
         // the next if/the clause sets "onRoute", "prevEdge", and "nextEdge", depending on
         //  whether the currently seen edge is an internal one or a normal one
         if (e->isWalkingArea() || e->isCrossing()) {
@@ -1540,6 +1542,10 @@ Helper::moveToXYMap(const Position& pos, double maxRouteDistance, bool mayLeaveN
             }
             if (prevEdgePos != currentRoute.end() && (prevEdgePos + 1) != currentRoute.end()) {
                 onRoute = *(prevEdgePos + 1) == nextEdge;
+            } else {
+                // we cannot make use of route information and should make
+                // use of the current angle if the user did not supply an angle
+                useCurrentAngle = angle == INVALID_DOUBLE_VALUE;
             }
 #ifdef DEBUG_MOVEXY_ANGLE
             std::cout << "internal:" << e->getID() << " prev:" << Named::getIDSecure(prevEdge) << " next:" << Named::getIDSecure(nextEdge) << "\n";
@@ -1568,10 +1574,12 @@ Helper::moveToXYMap(const Position& pos, double maxRouteDistance, bool mayLeaveN
             double off = laneShape.nearest_offset_to_point2D(pos, true);
             if (off != GeomHelper::INVALID_OFFSET) {
                 perpendicularDist = laneShape.distance2D(pos, true);
+                perpendicularDist = patchShapeDistance(l, pos, perpendicularDist, true);
             }
             off = l->getShape().nearest_offset_to_point2D(pos, perpendicular);
             if (off != GeomHelper::INVALID_OFFSET) {
                 dist = l->getShape().distance2D(pos, perpendicular);
+                dist = patchShapeDistance(l, pos, dist, perpendicular);
                 langle = GeomHelper::naviDegree(l->getShape().rotationAtOffset(off));
             }
             // cannot trust lanePos on walkingArea
@@ -1588,7 +1596,8 @@ Helper::moveToXYMap(const Position& pos, double maxRouteDistance, bool mayLeaveN
                 // ambiguous mapping. Don't trust this
                 dist2 = FAR_AWAY;
             }
-            const double angleDiff = (angle == INVALID_DOUBLE_VALUE || l->getEdge().isWalkingArea() ? 0 : GeomHelper::getMinAngleDiff(angle, langle));
+            const double angle2 = useCurrentAngle ? currentAngle : angle;
+            const double angleDiff = (angle2 == INVALID_DOUBLE_VALUE || l->getEdge().isWalkingArea() ? 0 : GeomHelper::getMinAngleDiff(angle2, langle));
 #ifdef DEBUG_MOVEXY_ANGLE
             std::cout << std::setprecision(gPrecision)
                       << " candLane=" << l->getID() << " lAngle=" << langle << " lLength=" << l->getLength()
@@ -1697,7 +1706,8 @@ Helper::findCloserLane(const MSEdge* edge, const Position& pos, SUMOVehicleClass
             // mapping to shapeless lanes is a bad idea
             continue;
         }
-        const double dist = candidateLane->getShape().distance2D(pos); // get distance
+        double dist = candidateLane->getShape().distance2D(pos);
+        dist = patchShapeDistance(candidateLane, pos, dist, false);
 #ifdef DEBUG_MOVEXY
         std::cout << "   b at lane " << candidateLane->getID() << " dist:" << dist << " best:" << bestDistance << std::endl;
 #endif
@@ -1840,6 +1850,15 @@ Helper::moveToXYMap_matchingRoutePosition(const Position& pos, const std::string
     std::cout << "  b ok lane " << (*lane)->getID() << " lanePos:" << lanePos << std::endl;
 #endif
     return true;
+}
+
+
+double
+Helper::patchShapeDistance(const MSLane* lane, const Position& pos, double dist, bool wasPerpendicular) {
+    if (!lane->isWalkingArea() && (wasPerpendicular || lane->getShape().nearest_offset_to_point25D(pos, true) != GeomHelper::INVALID_OFFSET)) {
+        dist = MAX2(0.0, dist - lane->getWidth() * 0.5);
+    }
+    return dist;
 }
 
 

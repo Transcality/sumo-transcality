@@ -17,7 +17,6 @@
 ///
 // A network change in which a data interval element is created or deleted
 /****************************************************************************/
-#include <config.h>
 
 #include <netedit/GNENet.h>
 #include <netedit/GNEViewNet.h>
@@ -30,6 +29,7 @@
 // ===========================================================================
 // FOX-declarations
 // ===========================================================================
+
 FXIMPLEMENT_ABSTRACT(GNEChange_DataInterval, GNEChange, nullptr, 0)
 
 // ===========================================================================
@@ -51,10 +51,6 @@ GNEChange_DataInterval::~GNEChange_DataInterval() {
         if (myDataInterval->unreferenced() &&
                 myDataInterval->getNet()->getAttributeCarriers()->retrieveDataSet(myDataSetParent->getID(), false) &&
                 myDataInterval->getNet()->getAttributeCarriers()->retrieveDataInterval(myDataInterval, false)) {
-            // show extra information for tests
-            WRITE_DEBUG("Deleting unreferenced " + myDataInterval->getTagStr() + " [" +
-                        myDataInterval->getAttribute(SUMO_ATTR_BEGIN) + ", " +
-                        myDataInterval->getAttribute(SUMO_ATTR_END) + "] in ~GNEChange_DataInterval()");
             // check that data interval don't exist
             myDataSetParent->removeDataIntervalChild(myDataInterval);
             // delete dataInterval
@@ -67,17 +63,9 @@ GNEChange_DataInterval::~GNEChange_DataInterval() {
 void
 GNEChange_DataInterval::undo() {
     if (myForward) {
-        // show extra information for tests
-        WRITE_DEBUG("Removing " + myDataInterval->getTagStr() + " [" +
-                    myDataInterval->getAttribute(SUMO_ATTR_BEGIN) + ", " +
-                    myDataInterval->getAttribute(SUMO_ATTR_END) + "] in GNEChange_DataInterval");
         // remove data interval from data set parent
         myDataSetParent->removeDataIntervalChild(myDataInterval);
     } else {
-        // show extra information for tests
-        WRITE_DEBUG("adding " + myDataInterval->getTagStr() + " [" +
-                    myDataInterval->getAttribute(SUMO_ATTR_BEGIN) + ", " +
-                    myDataInterval->getAttribute(SUMO_ATTR_END) + "] in GNEChange_DataInterval");
         // add data interval into data set parent
         myDataSetParent->addDataIntervalChild(myDataInterval);
     }
@@ -89,17 +77,9 @@ GNEChange_DataInterval::undo() {
 void
 GNEChange_DataInterval::redo() {
     if (myForward) {
-        // show extra information for tests
-        WRITE_DEBUG("adding " + myDataInterval->getTagStr() + " [" +
-                    myDataInterval->getAttribute(SUMO_ATTR_BEGIN) + ", " +
-                    myDataInterval->getAttribute(SUMO_ATTR_END) + "] in GNEChange_DataInterval");
         // add data interval into data set parent
         myDataSetParent->addDataIntervalChild(myDataInterval);
     } else {
-        // show extra information for tests
-        WRITE_DEBUG("Removing " + myDataInterval->getTagStr() + " [" +
-                    myDataInterval->getAttribute(SUMO_ATTR_BEGIN) + ", " +
-                    myDataInterval->getAttribute(SUMO_ATTR_END) + "] in GNEChange_DataInterval");
         // remove data interval from data set parent
         myDataSetParent->removeDataIntervalChild(myDataInterval);
     }

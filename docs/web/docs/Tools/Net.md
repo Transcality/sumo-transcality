@@ -238,3 +238,30 @@ python tools/net/abstractRail.py -n input_net.net.xml --stop-file input_addition
 
 !!! caution
     If option **--skip** is used the original network may be split (under a new name) and the generated abstract network will have the same edges as the split net. The input stop-file will also be adapted for the split net (under a new name) but any traffic demand (route files) have to be adapted for the split network.
+
+
+# remap_additionals.py
+
+Remap infrastructure from one network to another if the networks have similar geometry. The following differences between networks are acceptable:
+
+- changed edge ids
+- changed lane number and permissions
+- changed splits and joins of edges
+- small variations in geometry
+
+In case of changed lanes, permissions are taken into account to select a suitable replacement lane.
+
+Example call:
+```
+python tools/net/remap_additionals.py --orig-net input_net.net.xml --target-net input_net2.net.xml -a input_additional.add.xml -o out.add.xml
+```
+
+## remap_renamed.py
+
+Remap infrastructure or routes from one network to another if the new network has an `origId` param on every lane that reflects the edge id of the original network. A supported use case is converting the origial network with option **--numerical-ids** and then transforming other scenario file so that it can be used with the new network.
+
+Example calls:
+```
+python tools/net/remap_additionals.py -n input_net2.net.xml -r input_routes.rou.xml -o out.rou.xml
+python tools/net/remap_additionals.py -n input_net2.net.xml -a input_additionals.add.xml -o out.add.xml
+```

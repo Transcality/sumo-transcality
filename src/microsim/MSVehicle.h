@@ -1190,7 +1190,7 @@ public:
 
 
     /// @brief whether the vehicle may safely move to the given lane with regard to upcoming links
-    bool unsafeLinkAhead(const MSLane* lane) const;
+    bool unsafeLinkAhead(const MSLane* lane, double zipperDist) const;
 
     /// @brief decide whether the vehicle is passing a minor link or has comitted to do so
     bool passingMinor() const;
@@ -1533,6 +1533,12 @@ public:
             return myConsiderSafeVelocity;
         }
 
+        /// @brief Returns whether speed limits shall be considered
+        bool considerSpeedLimit() const {
+            // backward compatibility (when we ignore safe velocity we implicitly ignore speed limits as well)
+            return myConsiderSpeedLimit && myConsiderSafeVelocity;
+        }
+
         /** @brief Sets speed-constraining behaviors
          * @param[in] value a bitset controlling the different modes
          */
@@ -1619,6 +1625,9 @@ public:
 
         /// @brief Whether the safe velocity shall be regarded
         bool myConsiderSafeVelocity;
+
+        /// @brief Whether the speed limit shall be regarded
+        bool myConsiderSpeedLimit;
 
         /// @brief Whether the maximum acceleration shall be regarded
         bool myConsiderMaxAcceleration;

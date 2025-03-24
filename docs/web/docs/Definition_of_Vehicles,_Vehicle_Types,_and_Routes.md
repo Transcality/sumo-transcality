@@ -95,7 +95,7 @@ A vehicle may be defined using the following attributes:
 | departPosLat    | float(m)/string ("random", "free", "random_free", "left", "right", "center") | The lateral position on the departure lane at which the vehicle shall enter the net; see [Simulation/SublaneModel](Simulation/SublaneModel.md). *default: "center"*                                                                                      |
 | arrivalPosLat   | float(m)/string ("default", "left", "right", "center")                                   | The lateral position on the arrival lane at which the vehicle shall arrive; see [Simulation/SublaneModel](Simulation/SublaneModel.md). by default the vehicle does not care about lateral arrival position                                               |
 | speedFactor   | float > 0                                   | Sets custom speedFactor (factor on road speed limit) and overrides the [speedFactor distribution](#speed_distributions) of the vehicle type                                               |
-| insertionChecks  | string list  |  Sets the list of safety checks to perform during vehicle insertion. Possible values are: `all`, `none`, `collision`, `leaderGap`, `followerGap`, `junction`, `stop`, `arrivalSpeed`, `oncomingTrain`, `speedLimit`, `pedestrians`. default *all* |
+| insertionChecks  | string list  |  Sets the list of safety checks to perform during vehicle insertion. Possible values are: `all`, `none`, `collision`, `leaderGap`, `followerGap`, `junction`, `stop`, `arrivalSpeed`, `oncomingTrain`, `speedLimit`, `pedestrian`. default *all* |
 | parkingBadges | string list | list of keywords to access restricted parking areas (the default empty list will still allow access to unrestricted parking areas) |
 
 !!! caution
@@ -547,7 +547,7 @@ When using the attributes in this way, the default cut-off range [0.2, 2] remain
     The distribution mean must fall within the cut-off range. In order to use mean values below 0.2 or above 2.0, the 4-parameter version must be used to modify the cut-off parameters as well.
 
 !!! caution
-    Attribute `speedFactor` has three different meanings: in a `<vehicle>` it defines the individual speedFactor directly. In a `<vType>` if given as a single floating point value, it defines the mean of the speed distribution and when giving as `norm(...)` / `nomrc(...)`, it defines the whole distribution.
+    Attribute `speedFactor` has three different meanings: in a `<vehicle>` it defines the individual speedFactor directly. In a `<vType>` if given as a single floating point value, it defines the mean of the speed distribution and when giving as `norm(...)` / `normc(...)`, it defines the whole distribution.
 
 ### Vehicle class specific defaults
 
@@ -913,7 +913,7 @@ following table.
 
 | Attribute Value | Description                                                                                              |
 | --------------- | -------------------------------------------------------------------------------------------------------- |
-| LC2013          | The default car following model, developed by Jakob Erdmann based on DK2008 (see [SUMO’s Lane-Changing Model](https://elib.dlr.de/102254/)). This is the default model.    |
+| LC2013          | The default lane changing model, developed by Jakob Erdmann based on DK2008 (see [SUMO’s Lane-Changing Model](https://elib.dlr.de/102254/)). This is the default model.    |
 | SL2015          | Lane-changing model for [sublane-simulation](Simulation/SublaneModel.md) (used by default when setting option **--lateral-resolution** {{DT_FLOAT}}). This model can only be used with the sublane-extension.<br><br>**Caution:** This model may technically be used without activating sublane-simulation but this usage has not been fully tested and may not work as expected.  |
 | DK2008          | The original lane-changing model of sumo until version 0.18.0, developed by Daniel Krajzewicz (see [Traffic Simulation with SUMO – Simulation of Urban Mobility](https://link.springer.com/chapter/10.1007/978-1-4419-6142-6_7)). |
 
@@ -1179,7 +1179,7 @@ Stops can be childs of vehicles, routes, persons or containers.
 | startPos           | float(m)          | \-lane.length < x < lane.length (negative values count backwards from the end of the lane) | endPos-0.2m        | there must be a difference of more than 0.1m between *startPos* and *endPos*                                           |
 | friendlyPos        | bool              | true,false                                                                                   | false              | whether invalid stop positions should be corrected automatically                                                       |
 | duration           | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | minimum duration for stopping                                                                                          |
-| until              | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the time step at which the route continues                                                                             |
+| until              | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the earliest time step at which the route continues                                                                             |
 | arrival            | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the expected time of arrival for the stop. If this value is set, [stop-output]() will include the attribute ''arrivalDelay''. If the vehicles's vType defines attribute `speedFactorPremature`, a vehicle may slow down to prevent premature arrival.                                                                          |
 | ended              | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the time step at which the stop ended (i.e. as recorded by a prior simulation). Can be used to overrule 'until' by setting option **--use-stop-ended** (i.e. when trying to reproduce known timings)                                                                            |
 | started            | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the known time of arrival for the stop (i.e. as recorded by a prior simulation). Can be used to overrule 'arrival' by setting option **--use-stop-started** (i.e. when trying to reproduce known timings)                                                                          |
@@ -1197,6 +1197,7 @@ Stops can be childs of vehicles, routes, persons or containers.
 | posLat             | float            |  | - | lateral offset while stopped |
 | onDemand           | bool             |  | false | whether stopping may be skipped if no person wants to embark or disembark there |
 | jump           | float(s) or HH:MM:SS |  | -1 | when set to a non-negative value, jump to the next *mandatory* route edge (next stop or arrival edge) and spend the given time for the *jump* |
+| jumpUntil      | float(s) or HH:MM:SS |  | -1 | when set to a non-negative value, the jump to the next route edge will last at least until the given time (and possibly longer depnding on the value of `jump`) |
 | split          | string |  | vehicle id | must be set to the id of a vehicle with `depart="split"`. [Splits the train](Simulation/Railways.md#splitting_a_train) upon reaching the stop. |
 | join           | string |  | vehicle id | must be set to the id of a vehicle that stops with `triggered="join"`. [Joins this train to another](Simulation/Railways.md#joining_two_trains) upn reaching the stop |
 
@@ -1309,10 +1310,12 @@ placeholder `<DEVICENAME>` below
 - [toc](ToC_Device.md)
 - [driverstate](Driver_State.md)
 - [fcd](Simulation/Output/FCDOutput.md)
+- [fcdreplay](Simulation/FCDReplay.md)
 - [tripinfo](Simulation/Output/TripInfo.md)
 - [vehroute](Simulation/Output/VehRoutes.md)
 - [taxi](Simulation/Taxi.md)
 - [glosa](Simulation/GLOSA.md)
+- [friction](Simulation/Friction.md)  
 - [example](Developer/How_To/Device.md)
 
 ## Automatic assignment

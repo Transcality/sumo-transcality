@@ -133,15 +133,50 @@ Person::getLanePosition(const std::string& personID) {
     return getPerson(personID)->getEdgePos();
 }
 
+
+double
+Person::getWalkingDistance(const std::string& personID, const std::string& edgeID, double pos, int laneIndex) {
+    MSPerson* p = getPerson(personID);
+    if (p->getCurrentStageType() == MSStageType::WALKING) {
+        const MSStageWalking* walk = dynamic_cast<const MSStageWalking*>(p->getCurrentStage());
+        ConstMSEdgeVector edges = walk->getEdges();
+        edges.erase(edges.begin(), edges.begin() + walk->getRoutePosition());
+        const MSLane* lane = Helper::getLaneChecking(edgeID, laneIndex, pos); 
+        auto it = std::find(edges.begin(), edges.end(), &lane->getEdge());
+        if (it == edges.end()) {
+            // Vehicle would return INVALID_DOUBLE_VALUE;
+            throw TraCIException(TLF("Edge '%' does not occur within remainig walk of person '%'", edgeID, personID));
+
+        }
+        edges.erase(it + 1, edges.end());
+        double distance = 0;
+        MSPedestrianRouter& router = MSNet::getInstance()->getPedestrianRouter(0);
+        router.recomputeWalkCosts(edges, p->getMaxSpeed(), p->getEdgePos(), pos, SIMSTEP, distance);
+        if (distance == std::numeric_limits<double>::max()) {
+            return INVALID_DOUBLE_VALUE;
+        }
+        return distance;
+    } else {
+        // Vehicle would return INVALID_DOUBLE_VALUE;
+        throw TraCIException(TLF("Person '%' is not walking", personID));
+    }
+}
+
+
+double
+Person::getWalkingDistance2D(const std::string& personID, double x, double y) {
+    MSPerson* p = getPerson(personID);
+    std::pair<MSLane*, double> roadPos = Helper::convertCartesianToRoadMap(Position(x, y), p->getVehicleType().getVehicleClass());
+    return getWalkingDistance(personID, roadPos.first->getEdge().getID(), roadPos.second, roadPos.first->getIndex());
+}
+
+
+
 std::vector<TraCIReservation>
 Person::getTaxiReservations(int onlyNew) {
     std::vector<TraCIReservation> result;
     MSDispatch* dispatcher = MSDevice_Taxi::getDispatchAlgorithm();
     if (dispatcher != nullptr) {
-        MSDispatch_TraCI* traciDispatcher = dynamic_cast<MSDispatch_TraCI*>(dispatcher);
-        if (traciDispatcher == nullptr) {
-            throw TraCIException("device.taxi.dispatch-algorithm 'traci' has not been loaded");
-        }
         for (Reservation* res : dispatcher->getReservations()) {
             if (filterReservation(onlyNew, res, result)) {
                 if (res->state == Reservation::NEW) {
@@ -904,7 +939,6 @@ Person::moveToXY(const std::string& personID, const std::string& edgeID, const d
             angle += 360.;
         }
     }
-    Position currentPos = p->getPosition();
 #ifdef DEBUG_MOVEXY
     std::cout << std::endl << "begin person " << p->getID() << " lanePos:" << p->getEdgePos() << " edge:" << Named::getIDSecure(p->getEdge()) << "\n";
     std::cout << " want pos:" << pos << " edgeID:" << edgeID <<  " origAngle:" << origAngle << " angle:" << angle << " keepRoute:" << keepRoute << std::endl;
@@ -945,7 +979,7 @@ Person::moveToXY(const std::string& personID, const std::string& edgeID, const d
         double speed = pos.distanceTo2D(p->getPosition()); // !!!veh->getSpeed();
         found = Helper::moveToXYMap(pos, maxRouteDistance, mayLeaveNetwork, edgeID, angle,
                                     speed, ev, routeIndex, currentLane, p->getEdgePos(), currentLane != nullptr,
-                                    vClass, true,
+                                    vClass, GeomHelper::naviDegree(p->getAngle()), true,
                                     bestDistance, &lane, lanePos, routeOffset, edges);
         if (edges.size() != 0 && ev.size() > 1) {
             // try to rebuild the route
