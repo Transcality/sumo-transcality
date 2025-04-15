@@ -29,6 +29,8 @@
 #include <cstring>
 #include <cerrno>
 #include <chrono>
+#include <unordered_map>
+#include <unordered_set>
 #include <utils/common/StringUtils.h>
 #include <utils/common/UtilExceptions.h>
 #include <utils/common/MsgHandler.h>
@@ -187,49 +189,36 @@ bool OutputDevice_ParquetUnstructured::closeTag(const std::string& comment) {
 
     // Let the formatter process the tag
     try {
-        bool result = formatter->closeTag(getOStream());
+        formatter->closeTag(getOStream());
 
-        // Check if we've reached the buffer threshold and schema isn't finalized yet
-        if (!formatter->isSchemaFinalized() && formatter->getBufferedRowCount() >= myBufferSize) {
-            // Time to finalize schema and create the file
+        // Check various conditions for schema/file management
+        const bool needsSchemaFinalization = !formatter->isSchemaFinalized() && 
+                                            formatter->getBufferedRowCount() >= myBufferSize;
+        const bool needsFileCreation = formatter->isSchemaFinalized() && myFile == nullptr;
+        const bool canWriteDirectly = formatter->isSchemaFinalized() && 
+                                    myFile != nullptr && 
+                                    formatter->getBufferedRowCount() > 0;
+        
+        // Scenario 1: Schema not finalized yet but buffer threshold reached
+        if (needsSchemaFinalization) {
             formatter->finalizeSchema();
             createNewFile();
-
-            // Now write all buffered rows at once after schema finalization
             std::vector<unstructured_parquet::XMLElement> rows = formatter->consumeBufferedRows();
-            if (!rows.empty()) {
-                std::cout << "Writing " << rows.size() << " buffered rows after schema finalization." << std::endl;
-                // Write all buffered rows in one go
-                for (auto& row : rows) {
-                    writeRow(row); // Use the new writeRow method, call corrected
-                }
-            }
+            writeBufferedRows(rows);
         }
-        // If schema is already finalized but we haven't created the file yet
-        else if (formatter->isSchemaFinalized() && myFile == nullptr) {
+        // Scenario 2: Schema finalized but file not created yet
+        else if (needsFileCreation) {
             createNewFile();
-             // Write any buffered rows that might be left over after schema finalization
             std::vector<unstructured_parquet::XMLElement> rows = formatter->consumeBufferedRows();
-            if (!rows.empty()) {
-                std::cout << "Writing remaining " << rows.size() << " buffered rows after file creation." << std::endl;
-                // Write remaining buffered rows
-                for (auto& row : rows) {
-                    writeRow(row); // Use the new writeRow method, call corrected
-                }
-            }
+            writeBufferedRows(rows);
         }
-        // If schema is finalized and file is created, write the current row immediately
-        else if (formatter->isSchemaFinalized() && myFile != nullptr) {
-            // Write the row directly as tags are closed
-            if (formatter->getBufferedRowCount() > 0) {
-                std::vector<unstructured_parquet::XMLElement> rows = formatter->consumeBufferedRows();
-                for (auto& row : rows) {
-                    writeRow(row); // Use the new writeRow method, call corrected
-                }
-            }
+        // Scenario 3: Schema finalized, file exists, and we have buffered rows
+        else if (canWriteDirectly) {
+            std::vector<unstructured_parquet::XMLElement> rows = formatter->consumeBufferedRows();
+            writeBufferedRows(rows);
         }
 
-        return result;
+        return true;
     } catch (const std::exception& e) {
         std::cerr << "Error in OutputDevice_ParquetUnstructured::closeTag: " << e.what() << std::endl;
         return true; // Return true to prevent calling code from breaking
@@ -238,209 +227,50 @@ bool OutputDevice_ParquetUnstructured::closeTag(const std::string& comment) {
 
 OutputDevice_ParquetUnstructured::~OutputDevice_ParquetUnstructured() {
     try {
-        // Start timing
-        auto startTime = std::chrono::high_resolution_clock::now();
-        
         // Get the formatter
         auto formatter = dynamic_cast<ParquetUnstructuredFormatter*>(&this->getFormatter());
         if (formatter == nullptr) {
             return;
         }
         
-        // First check if we have any buffered rows
+        // Process any remaining buffered rows
         if (formatter->getBufferedRowCount() > 0) {
-            // Try to build the schema from buffered rows first
-            formatter->finalizeSchema();
-            
-            // If we have rows but fields are still empty after trying to build the schema,
-            // force schema generation with default types (fallback to strings)
-            if (formatter->getAllFields().empty()) {
-                // Force a build of the node vector from buffer, which should populate fields
-                const auto& nodeVector = formatter->getNodeVector();
+            // Try to build the schema from buffered rows if needed
+            if (!formatter->isSchemaFinalized()) {
+                formatter->finalizeSchema();
                 
-                // If still empty after trying to build, there's nothing we can do
-                if (formatter->getAllFields().empty() || nodeVector.empty()) {
-                    std::cerr << "Warning: Not writing Parquet file with empty schema to " 
-                          << myFilename << std::endl;
-                    return;
+                // If schema is still empty, try to build from node vector
+                if (formatter->getAllFields().empty()) {
+                    const auto& nodeVector = formatter->getNodeVector();
+                    if (formatter->getAllFields().empty() || nodeVector.empty()) {
+                        return; // Can't proceed with empty schema
+                    }
                 }
             }
             
-            // At this point, we should have a valid schema, create the file
+            // Create file if needed
             if (myFile == nullptr) {
                 try {
                     createNewFile();
-                    
-                    // If file creation still failed, return
                     if (myFile == nullptr) {
-                        std::cerr << "Warning: Could not create Parquet file: " << myFilename << std::endl;
-                        return;
+                        return; // File creation failed
                     }
-                } catch (const std::exception& e) {
-                    std::cerr << "Error creating Parquet file " << myFilename << ": " << e.what() << std::endl;
-                    return;
+                } catch (const std::exception&) {
+                    return; // Error in file creation
                 }
             }
             
-            // Get all buffered rows
+            // Write buffered rows
             std::vector<unstructured_parquet::XMLElement> rows = formatter->consumeBufferedRows();
+            writeBufferedRows(rows);
             
-            // Write each row with error handling
+            // End the final row group if needed
             auto parquetStream = dynamic_cast<ParquetUnstructuredStream*>(myStreamDevice.get());
-            if (parquetStream != nullptr) {
-                int rowsWritten = 0;
-                int rowsSkipped = 0;
-
-                // Determine which elements to write based on the SUMO output type
-                // For most outputs, we want to write the leaf elements (those that contain actual data)
-                // but not structural elements like "timestep"
-                std::vector<unstructured_parquet::XMLElement> elementsToWrite;
-                for (auto& row : rows) {
-                    // Skip known container or structural elements that shouldn't be written directly
-                    if (row.getName() == "timestep" || row.getName() == "interval" || 
-                        row.getName() == "meandata" || row.getName() == "data" ||
-                        row.getName() == "summary" || row.getName() == "step" ||
-                        row.getName() == "fcd-export") {
-                        continue;
-                    }
-                    
-                    // Include all data elements
-                    elementsToWrite.push_back(std::move(row));
-                }
-                
-                // Get the schema information once
-                std::set<std::string> knownFields = formatter->getAllFields();
-                int columnCount = parquetStream->getColumnCount();
-                
-                // Write the selected elements
-                for (auto& row : elementsToWrite) {
-                    try {
-                        // Check if this row has attributes that aren't in the schema
-                        // This could happen if new attributes are added during simulation
-                        bool hasNewAttributes = false;
-                        
-                        for (const auto& attr : row.getAttributes()) {
-                            if (knownFields.find(attr->getName()) == knownFields.end()) {
-                                hasNewAttributes = true;
-                                std::cerr << "Found new attribute not in schema: " << attr->getName() << std::endl;
-                                // Add to schema for next file creation if needed
-                                formatter->addFieldToSchema(attr->getName(), attr->getParquetType(), attr->getConvertedType());
-                            }
-                        }
-                        
-                        // Get the list of field names in the schema order
-                        std::set<std::string> processedAttrNames;
-                        std::vector<const unstructured_parquet::AttributeBase*> orderedAttributes;
-                        
-                        // First collect all attributes in the schema order
-                        if (columnCount > 0) {
-                            // Pre-allocate the attributes array with nulls
-                            orderedAttributes.resize(columnCount, nullptr);
-                            
-                            // Get all attributes as a map for faster lookup
-                            std::map<std::string, const unstructured_parquet::AttributeBase*> attrMap;
-                            for (const auto& attr : row.getAttributes()) {
-                                // Only include attributes that are in the current schema
-                                if (knownFields.find(attr->getName()) != knownFields.end()) {
-                                    attrMap[attr->getName()] = attr.get();
-                                }
-                            }
-                            
-                            // Order attributes according to schema column order
-                            int colIndex = 0;
-                            for (const std::string& colName : parquetStream->getColumnNames()) {
-                                if (colIndex >= columnCount) {
-                                    // Safety check to avoid out-of-bounds access
-                                    break;
-                                }
-                                
-                                auto it = attrMap.find(colName);
-                                if (it != attrMap.end()) {
-                                    orderedAttributes[colIndex] = it->second;
-                                    processedAttrNames.insert(colName);
-                                }
-                                colIndex++;
-                            }
-                        }
-                        
-                        // Write attributes in order with explicit column positioning
-                        // Only loop up to the columnCount to avoid out-of-bounds issues
-                        for (int i = 0; i < columnCount && i < static_cast<int>(orderedAttributes.size()); i++) {
-                            try {
-                                // Set column position explicitly before writing
-                                int initialPos = i;
-                                parquetStream->setColumnIndex(initialPos);
-                                
-                                if (orderedAttributes[i] != nullptr) {
-                                    orderedAttributes[i]->print(*myStreamDevice);
-                                } else {
-                                    // Write null for missing attribute
-                                    parquetStream->writeNullOrDefault(initialPos);
-                                }
-                                
-                                // If the parquet stream's column index changed during write, reset it
-                                // to where it should be for the next attribute
-                                int currentPos = parquetStream->getCurrentColumnIndex();
-                                if (currentPos != initialPos && currentPos != initialPos + 1) {
-                                    // Something unexpected happened - fix the position
-                                    parquetStream->setColumnIndex(initialPos + 1);
-                                }
-                            } catch (const std::exception& e) {
-                                std::cerr << "Warning: Failed to write column " << i 
-                                      << " to Parquet file: " << e.what() << std::endl;
-                                // Continue with next column instead of failing the entire row
-                            }
-                        }
-                        
-                        // Don't try to adjust the index at the end - endLine() will handle remaining columns
-                        // and terminate the row correctly
-                        
-                        // End the row
-                        try {
-                            myStreamDevice->endLine();
-                            myRowsInCurrentGroup++;
-                            rowsWritten++;
-                            myTotalRowsWritten++;
-                            
-                            // Create a new row group if needed
-                            if (myRowsInCurrentGroup >= myRowGroupSize) {
-                                parquetStream->endRowGroup();
-                                myRowsInCurrentGroup = 0;
-                            }
-                        } catch (const std::exception& e) {
-                            std::cerr << "Error ending row in Parquet file: " << e.what() << std::endl;
-                            rowsSkipped++;
-                        }
-                    } catch (const std::exception& e) {
-                        std::cerr << "Error writing row to Parquet file: " << e.what() << std::endl;
-                        rowsSkipped++;
-                    }
-                }
-                
-                // End the final row group if needed
-                if (myRowsInCurrentGroup > 0) {
-                    try {
-                        parquetStream->endRowGroup();
-                    } catch (const std::exception& e) {
-                        std::cerr << "Error ending final row group in Parquet file: " << e.what() << std::endl;
-                    }
-                }
-                
-                // If rows were skipped, log a summary
-                if (rowsSkipped > 0) {
-                    std::cerr << "Warning: Skipped " << rowsSkipped << " out of " << (rowsWritten + rowsSkipped) 
-                          << " rows when writing to " << myFilename << std::endl;
-                }
-                
-                if (rowsWritten > 0) {
-                    auto endTime = std::chrono::high_resolution_clock::now();
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-                    double seconds = duration / 1000.0;
-                    double rowsPerSecond = rowsWritten / seconds;
-                    
-                    std::cout << "Successfully wrote " << rowsWritten << " rows to " << myFilename 
-                              << " in " << seconds << " seconds (" 
-                              << static_cast<int>(rowsPerSecond) << " rows/sec)" << std::endl;
+            if (parquetStream != nullptr && myRowsInCurrentGroup > 0) {
+                try {
+                    parquetStream->endRowGroup();
+                } catch (const std::exception&) {
+                    // Ignore errors on ending row group
                 }
             }
         }
@@ -451,44 +281,27 @@ OutputDevice_ParquetUnstructured::~OutputDevice_ParquetUnstructured() {
         if (myFile != nullptr) {
             try {
                 auto status = myFile->Close();
-                if (!status.ok()) {
-                    std::cerr << "Error closing file: " << status.ToString() << std::endl;
-                }
-            } catch (const std::exception& e) {
-                std::cerr << "Exception closing file: " << e.what() << std::endl;
+                (void)status; // Explicitly acknowledge we're ignoring the return value
+            } catch (const std::exception&) {
+                // Ignore errors on close
             }
-            
-            // Clear file pointer after closing
             myFile.reset();
         }
         
 #ifdef HAVE_S3
         // Release S3 filesystem resources
         if (myIsS3 && myS3FileSystem != nullptr) {
-            try {
-                // Release our reference to the filesystem object
-                myS3FileSystem.reset();
-                
-                // Don't call FinalizeS3 here as it's better to let it be handled at program exit
-                // to avoid issues with multiple devices being closed concurrently
-            } catch (const std::exception& e) {
-                std::cerr << "Exception during S3 resource cleanup: " << e.what() << std::endl;
-            }
+            myS3FileSystem.reset();
         }
 #endif
 
-        // Calculate and print statistics
-        auto endTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsedSeconds = endTime - startTime;
-        
+        // Simple stats output
         if (myTotalRowsWritten > 0) {
-            std::cout << "Successfully wrote " << myTotalRowsWritten << " rows to " << myFilename
-                  << " in " << elapsedSeconds.count() << " seconds"
-                  << " (" << static_cast<int>(myTotalRowsWritten / elapsedSeconds.count()) << " rows/sec)" << std::endl;
+            std::cout << "Wrote " << myTotalRowsWritten << " rows to " << myFilename << std::endl;
         }
         
-    } catch (const std::exception& e) {
-        std::cerr << "Exception in ~OutputDevice_ParquetUnstructured: " << e.what() << std::endl;
+    } catch (const std::exception&) {
+        // Ignore all exceptions in destructor
     }
 }
 
@@ -503,131 +316,97 @@ StreamDevice& OutputDevice_ParquetUnstructured::getOStream() {
     return *myStreamDevice;
 }
 
-// New method to write a single row to Parquet
-void OutputDevice_ParquetUnstructured::writeRow(unstructured_parquet::XMLElement& row) {
-    // Get the formatter to access schema information
-    auto formatter = dynamic_cast<ParquetUnstructuredFormatter*>(&this->getFormatter());
-    if (formatter == nullptr || !formatter->isSchemaFinalized()) {
-        std::cerr << "Warning: Cannot write row - schema not finalized" << std::endl;
-        return;
-    }
-
-    // Get the stream device
+// New helper method to efficiently write buffered rows (add before writeRow method)
+void OutputDevice_ParquetUnstructured::writeBufferedRows(const std::vector<unstructured_parquet::XMLElement>& rows) {
+    // Skip if there are no rows to write
+    if (rows.empty()) return;
+    
+    // Get the stream device - fast-fail if not available
     auto parquetStream = dynamic_cast<ParquetUnstructuredStream*>(myStreamDevice.get());
-    if (parquetStream == nullptr) {
-        std::cerr << "Warning: Not a ParquetUnstructuredStream" << std::endl;
+    if (!parquetStream) return;
+
+    // Process only non-container elements
+    static const std::unordered_set<std::string> skipElements = {
+        "timestep", "interval", "meandata", "data", "summary", "step", "fcd-export"
+    };
+    
+    // Write non-container elements directly
+    for (auto& row : const_cast<std::vector<unstructured_parquet::XMLElement>&>(rows)) {
+        // Skip container elements
+        if (skipElements.count(row.getName()) > 0) {
+            continue;
+        }
+        writeRow(row);
+    }
+}
+
+// Optimized writeRow method with better performance
+void OutputDevice_ParquetUnstructured::writeRow(unstructured_parquet::XMLElement& row) {
+    // Fast fail conditions
+    auto formatter = dynamic_cast<ParquetUnstructuredFormatter*>(&this->getFormatter());
+    auto parquetStream = dynamic_cast<ParquetUnstructuredStream*>(myStreamDevice.get());
+    if (!formatter || !formatter->isSchemaFinalized() || !parquetStream) {
         return;
     }
 
-    // Get all fields in schema
-    std::set<std::string> knownFields = formatter->getAllFields();
-    int columnCount = parquetStream->getColumnCount();
-    int rowsWritten = 0;
-    int rowsSkipped = 0;
-
-    // Determine which elements to write (similar logic as in the destructor)
-    std::vector<unstructured_parquet::XMLElement> elementsToWrite;
     // Skip known container elements
-    if (!(row.getName() == "timestep" || row.getName() == "interval" ||
-          row.getName() == "meandata" || row.getName() == "data" ||
-          row.getName() == "summary" || row.getName() == "step" ||
-          row.getName() == "fcd-export")) {
-        elementsToWrite.push_back(std::move(row)); // Write the current row directly, use std::move
+    static const std::unordered_set<std::string> skipElements = {
+        "timestep", "interval", "meandata", "data", "summary", "step", "fcd-export"
+    };
+    if (skipElements.count(row.getName()) > 0) {
+        return;
     }
 
-
-    // Write the selected elements (should be only one element in elementsToWrite now)
-    for (auto& rowToWrite : elementsToWrite) {
-        try {
-            // Process this row similar to how we do in the destructor
-            std::set<std::string> processedAttrNames;
-            std::vector<const unstructured_parquet::AttributeBase*> orderedAttributes;
-
-            // First collect all attributes in the schema order
-            if (columnCount > 0) {
-                // Pre-allocate the attributes array with nulls
-                orderedAttributes.resize(columnCount, nullptr);
-
-                // Get all attributes as a map for faster lookup
-                std::map<std::string, const unstructured_parquet::AttributeBase*> attrMap;
-                for (const auto& attr : rowToWrite.getAttributes()) {
-                    // Only include attributes that are in the current schema
-                    if (knownFields.find(attr->getName()) != knownFields.end()) {
-                        attrMap[attr->getName()] = attr.get();
-                    }
-                }
-
-                // Order attributes according to schema column order
-                int colIndex = 0;
-                for (const std::string& colName : parquetStream->getColumnNames()) {
-                    if (colIndex >= columnCount) {
-                        break;
-                    }
-
-                    auto it = attrMap.find(colName);
-                    if (it != attrMap.end()) {
-                        orderedAttributes[colIndex] = it->second;
-                        processedAttrNames.insert(colName);
-                    }
-                    colIndex++;
-                }
+    try {
+        // Get schema information
+        const std::set<std::string>& knownFields = formatter->getAllFields();
+        int columnCount = parquetStream->getColumnCount();
+        
+        // Pre-allocate attributes array with nulls and build attribute map for O(1) lookups
+        std::vector<const unstructured_parquet::AttributeBase*> orderedAttributes(columnCount, nullptr);
+        std::unordered_map<std::string, const unstructured_parquet::AttributeBase*> attrMap;
+        
+        // Build attribute map
+        for (const auto& attr : row.getAttributes()) {
+            if (knownFields.find(attr->getName()) != knownFields.end()) {
+                attrMap[attr->getName()] = attr.get();
             }
-
-            // Write attributes in order with explicit column positioning
-            // Only loop up to the columnCount to avoid out-of-bounds issues
-            for (int i = 0; i < columnCount && i < static_cast<int>(orderedAttributes.size()); i++) {
-                try {
-                    // Set column position explicitly before writing
-                    int initialPos = i;
-                    parquetStream->setColumnIndex(initialPos);
-
-                    if (orderedAttributes[i] != nullptr) {
-                        orderedAttributes[i]->print(*myStreamDevice);
-                    } else {
-                        // Write null for missing attribute
-                        parquetStream->writeNullOrDefault(initialPos);
-                    }
-
-                    // If the parquet stream's column index changed during write, reset it
-                    // to where it should be for the next attribute
-                    int currentPos = parquetStream->getCurrentColumnIndex();
-                    if (currentPos != initialPos && currentPos != initialPos + 1) {
-                        // Something unexpected happened - fix the position
-                        parquetStream->setColumnIndex(initialPos + 1);
-                    }
-                } catch (const std::exception& e) {
-                    std::cerr << "Warning: Failed to write column " << i
-                          << " to Parquet file: " << e.what() << std::endl;
-                    // Continue with next column instead of failing the entire row
-                }
-            }
-
-            // End the row
-            try {
-                myStreamDevice->endLine();
-                myRowsInCurrentGroup++;
-                rowsWritten++;
-                myTotalRowsWritten++;
-
-                // Create a new row group if needed
-                if (myRowsInCurrentGroup >= myRowGroupSize) {
-                    parquetStream->endRowGroup();
-                    myRowsInCurrentGroup = 0;
-                }
-            } catch (const std::exception& e) {
-                std::cerr << "Warning: Failed to end row in Parquet file: " << e.what() << std::endl;
-                rowsSkipped++;
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Warning: Failed to write row to Parquet file: " << e.what() << std::endl;
-            rowsSkipped++;
         }
-    }
-
-    // Debug output
-    if (rowsSkipped > 0) {
-        std::cerr << "Warning: Skipped " << rowsSkipped << " rows while writing to "
-              << myFilename << std::endl;
+        
+        // Get column names once and organize attributes
+        const auto& columnNames = parquetStream->getColumnNames();
+        for (int i = 0; i < columnCount && i < static_cast<int>(columnNames.size()); i++) {
+            auto it = attrMap.find(columnNames[i]);
+            if (it != attrMap.end()) {
+                orderedAttributes[i] = it->second;
+            }
+        }
+        
+        // Write attributes efficiently
+        for (int i = 0; i < columnCount; i++) {
+            // Set column position explicitly
+            parquetStream->setColumnIndex(i);
+            
+            // Write attribute or null
+            if (orderedAttributes[i]) {
+                orderedAttributes[i]->print(*myStreamDevice);
+            } else {
+                parquetStream->writeNullOrDefault(i);
+            }
+        }
+        
+        // Finish the row and update counters
+        myStreamDevice->endLine();
+        myRowsInCurrentGroup++;
+        myTotalRowsWritten++;
+        
+        // Create a new row group if needed
+        if (myRowsInCurrentGroup >= myRowGroupSize) {
+            parquetStream->endRowGroup();
+            myRowsInCurrentGroup = 0;
+        }
+    } catch (const std::exception&) {
+        // Just continue without error logging for speed
     }
 }
 
@@ -635,10 +414,6 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_ParquetUnstructured::creat
     // If it's an S3 URL, create S3 output stream
     if (myIsS3) {
 #ifdef HAVE_S3
-        // Print debug info about filenames
-        std::cout << "Creating S3 output stream with myFilename: '" << this->myFilename 
-                  << "', myFullName: '" << this->myFullName << "'" << std::endl;
-                  
         // Parse S3 URL
         std::string bucket, key;
         if (!parseS3Url(this->myFilename, bucket, key)) {
@@ -661,23 +436,18 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_ParquetUnstructured::creat
                 // Get S3 options from environment variables
                 arrow::fs::S3Options options = arrow::fs::S3Options::Defaults();
                 
-                // Allow overriding region
+                // Configure S3 with minimal logging
                 const char* region = std::getenv("SUMO_S3_REGION");
                 if (region != nullptr) {
                     options.region = region;
-                    std::cout << "Using S3 region: " << options.region << std::endl;
                 }
                 
-                // Allow overriding endpoint
                 const char* endpoint = std::getenv("SUMO_S3_ENDPOINT");
                 if (endpoint != nullptr) {
                     options.endpoint_override = endpoint;
-                    std::cout << "Using S3 endpoint override: " << options.endpoint_override << std::endl;
                 } else if (!options.region.empty()) {
                     // If no endpoint specified but region is set, construct a regional endpoint
                     options.endpoint_override = "s3." + options.region + ".amazonaws.com";
-                    std::cout << "No endpoint specified, using region-based endpoint: " 
-                              << options.endpoint_override << std::endl;
                 }
                 
                 // Enable automatic address resolving (helps with 301 redirects)
@@ -705,9 +475,6 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_ParquetUnstructured::creat
                 }
                 
                 myS3FileSystem = result.ValueOrDie();
-                
-                std::cout << "S3 filesystem created for region: " << 
-                    (region != nullptr ? region : options.region) << std::endl;
             } catch (const std::exception& e) {
                 throw IOError("Error creating S3 filesystem: " + std::string(e.what()));
             }
@@ -715,22 +482,17 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_ParquetUnstructured::creat
         
         // Create output stream - construct the full S3 path with bucket name
         std::string s3Path = bucket + "/" + key;
-        std::cout << "Opening S3 output stream with full path: " << s3Path << std::endl;
         auto result = myS3FileSystem->OpenOutputStream(s3Path);
         if (!result.ok()) {
             throw IOError("Could not open S3 output stream: " + result.status().ToString());
         }
         
-        std::cout << "Writing to S3 bucket: " << bucket << ", key: " << key << std::endl;
         return result.ValueOrDie();
 #else
         throw IOError("S3 support not enabled in this build");
 #endif
     } else {
         // Regular file output
-        std::cout << "Creating file output stream with myFilename: '" << this->myFilename 
-                  << "', myFullName: '" << this->myFullName << "'" << std::endl;
-                  
         auto result = arrow::io::FileOutputStream::Open(this->myFilename);
         if (!result.ok()) {
             throw IOError("Could not build output file '" + this->myFullName + "' (" + 
@@ -759,16 +521,8 @@ bool OutputDevice_ParquetUnstructured::parseS3Url(const std::string& url, std::s
         key = url.substr(bucketEnd + 1);
     }
     
-    // Debug output
-    std::cout << "Parsed S3 URL: " << url << " -> bucket: " << bucket << ", key: " << key << std::endl;
-    
-    // Error checking - bucket and key should not be empty for writing
-    if (bucket.empty()) {
-        std::cerr << "Error: Empty bucket name in S3 URL: " << url << std::endl;
-        return false;
-    }
-    
-    return true;
+    // Error checking - bucket should not be empty for writing
+    return !bucket.empty();
 }
 
 #endif

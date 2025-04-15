@@ -33,6 +33,9 @@
 #include <parquet/exception.h>
 #include <parquet/stream_writer.h>
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include "OutputFormatter.h"
 #include <utils/common/ToString.h>
 #include "StreamDevices.h"
@@ -612,94 +615,101 @@ public:
      */
     inline bool closeTag(StreamDevice& into, const std::string& comment = "") override {
         UNUSED_PARAMETER(comment);
+        UNUSED_PARAMETER(into);
+        
         if (myXMLStack.empty()) {
             return false;
         }
         
         try {
-            // Always collect attributes from the element being closed
-            if (!myXMLStack.back().getAttributes().empty()) {
-                for (const auto& attr : myXMLStack.back().getAttributes()) {
-                    if (fields.find(attr->getName()) == fields.end()) {
-                        // This is a new field, add it to the schema
-                        fields.insert(attr->getName());
-                    }
+            unstructured_parquet::XMLElement& currentElement = myXMLStack.back();
+            
+            // Quick collection of field names 
+            for (const auto& attr : currentElement.getAttributes()) {
+                const std::string& name = attr->getName();
+                if (fields.find(name) == fields.end()) {
+                    fields.insert(name);
                 }
             }
             
-            // Handle parent-child attribute propagation
+            // Only do attribute propagation if there are multiple elements in stack
             if (myXMLStack.size() > 1) {
-                unstructured_parquet::XMLElement& currentElement = myXMLStack.back();
-                
-                // Check if this is a lane element (typically has "_0" suffix in meandata)
-                bool isLaneElement = false;
-                const std::string& elemName = currentElement.getName();
-                if (elemName == "lane" || currentElement.getName().find("_") != std::string::npos) {
-                    isLaneElement = true;
-                }
-                
-                // Identify time interval attributes from any parent in the stack
-                // These are especially important for meandata where intervals apply to all children
-                for (int i = myXMLStack.size() - 2; i >= 0; i--) {
-                    unstructured_parquet::XMLElement& parentElement = myXMLStack[i];
-                    
-                    // These attributes should always be inherited from parent to child
-                    const std::vector<std::string> inheritableAttrs = {"begin", "end", "interval", "id"};
-                    
-                    for (const auto& attr : parentElement.getAttributes()) {
-                        const std::string& attrName = attr->getName();
-                        
-                        // Special handling for time attributes which should be inherited
-                        // Only propagate if child doesn't already have this attribute or it's empty
-                        bool shouldPropagate = std::find(inheritableAttrs.begin(), inheritableAttrs.end(), 
-                                                       attrName) != inheritableAttrs.end();
-                        
-                        if (shouldPropagate) {
-                            // Check if attribute is missing or empty in the current element
-                            bool isEmpty = false;
-                            if (currentElement.hasAttribute(attrName)) {
-                                // Check if it's empty
-                                std::string childValue = currentElement.getAttributeAsString(attrName);
-                                isEmpty = childValue.empty();
-                            }
-                            
-                            // Only propagate if the attribute doesn't exist or is empty
-                            if (!currentElement.hasAttribute(attrName) || isEmpty) {
-                                std::string attrValue = attr->toString();
-                                if (!attrValue.empty()) {
-                                    std::unique_ptr<unstructured_parquet::AttributeBase> attrCopy = 
-                                        std::make_unique<unstructured_parquet::Attribute<std::string>>(attrName, attrValue);
-                                    currentElement.addAttribute(std::move(attrCopy));
-                                    
-                                    // Also add to schema if needed
-                                    if (fields.find(attrName) == fields.end()) {
-                                        fields.insert(attrName);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                propagateParentAttributes(currentElement);
             }
             
-            // Buffer the current row (last element in stack) for later writing
-            if (!myXMLStack.back().written()) {
+            // Buffer element for later writing 
+            if (!currentElement.written()) {
                 bufferedRows.push_back(std::move(myXMLStack.back()));
+            } else {
+                myXMLStack.pop_back();
             }
             
-            // Pop the row we just processed
-            myXMLStack.pop_back();
-            return true;
-        } catch (const std::exception& e) {
-            // Log the error but don't crash
-            std::cerr << "Error in ParquetUnstructuredFormatter::closeTag: " << e.what() << std::endl;
+            // If we moved the element, no need to pop
+            if (myXMLStack.size() > 0 && &myXMLStack.back() == &currentElement) {
+                myXMLStack.pop_back();
+            }
             
-            // Clear the stack to avoid further issues
+            return true;
+        } catch (const std::exception&) {
+            // Just clear the stack on error and continue
             myXMLStack.clear();
             return false;
         }
     }
 
+    /** @brief Helper method to propagate attributes from parent elements
+     * 
+     * @param[in,out] currentElement The element to propagate attributes to
+     */
+    void propagateParentAttributes(unstructured_parquet::XMLElement& currentElement) {
+        // These attributes should always be inherited from parent to child
+        static const std::vector<std::string> inheritableAttrs = {"begin", "end", "interval", "id"};
+        
+        // Track which attributes need to be inherited
+        std::unordered_set<std::string> missingAttrs;
+        for (const auto& attrName : inheritableAttrs) {
+            if (!currentElement.hasAttribute(attrName)) {
+                missingAttrs.insert(attrName);
+            }
+        }
+        
+        // If nothing is missing, return early
+        if (missingAttrs.empty()) {
+            return;
+        }
+        
+        // Traverse up the stack looking for attributes to inherit
+        for (int i = myXMLStack.size() - 2; i >= 0 && !missingAttrs.empty(); i--) {
+            const unstructured_parquet::XMLElement& parentElement = myXMLStack[i];
+            for (const auto& attr : parentElement.getAttributes()) {
+                const std::string& attrName = attr->getName();
+                
+                // Check if this is an attribute we're looking for
+                if (missingAttrs.find(attrName) != missingAttrs.end()) {
+                    std::string attrValue = attr->toString();
+                    if (!attrValue.empty()) {
+                        // Add this attribute to the current element
+                        std::unique_ptr<unstructured_parquet::AttributeBase> attrCopy = 
+                            std::make_unique<unstructured_parquet::Attribute<std::string>>(attrName, attrValue);
+                        currentElement.addAttribute(std::move(attrCopy));
+                        
+                        // Add to schema if needed
+                        if (fields.find(attrName) == fields.end()) {
+                            fields.insert(attrName);
+                        }
+                        
+                        // Remove from missing list
+                        missingAttrs.erase(attrName);
+                        
+                        // If nothing left to find, stop early
+                        if (missingAttrs.empty()) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /** @brief writes a preformatted tag to the device but ensures that any
      * pending tags are closed
@@ -757,76 +767,63 @@ public:
         }
     }
 
-    /** @brief Build node vector from buffered rows
+    /** @brief Build node vector from buffered rows in one pass
      * This analyzes all buffered rows to create a complete schema
      */
     void buildNodeVectorFromBuffer() {
+        // Skip if there are no rows to process
+        if (bufferedRows.empty()) return;
+        
         // Clear existing node vector
         myNodeVector.clear();
         
         // Create a map to track attribute types by field name
-        std::map<std::string, std::pair<parquet::Type::type, parquet::ConvertedType::type>> fieldTypes;
+        std::unordered_map<std::string, std::pair<parquet::Type::type, parquet::ConvertedType::type>> fieldTypes;
         
-        // First pass: collect all field names and their types from the buffer
+        // Process all buffered rows in a single pass
         for (const auto& row : bufferedRows) {
             for (const auto& attr : row.getAttributes()) {
                 const std::string& name = attr->getName();
                 if (fields.find(name) == fields.end()) {
+                    // Add to fields set
                     fields.insert(name);
                     
-                    // Try to get type information from the attribute
-                    parquet::Type::type pType = attr->getParquetType();
-                    parquet::ConvertedType::type cType = attr->getConvertedType();
-                    
                     // Store the type information
-                    fieldTypes[name] = std::make_pair(pType, cType);
+                    fieldTypes[name] = std::make_pair(
+                        attr->getParquetType(), 
+                        attr->getConvertedType()
+                    );
                 }
             }
         }
         
-        // Second pass: create schema nodes with the collected type information
+        // Reserve space for the schema nodes
+        myNodeVector.reserve(fields.size());
+        
+        // Create schema nodes
         for (const auto& field : fields) {
             auto it = fieldTypes.find(field);
             if (it != fieldTypes.end()) {
-                // Use the detected type information
-                parquet::Type::type pType = it->second.first;
-                parquet::ConvertedType::type cType = it->second.second;
-                
-                // Create the appropriate node based on the type
-                if (pType == parquet::Type::DOUBLE) {
-                    myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
-                        field, parquet::Repetition::OPTIONAL, pType, cType));
-                } else if (pType == parquet::Type::INT32 || pType == parquet::Type::INT64) {
-                    myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
-                        field, parquet::Repetition::OPTIONAL, pType, cType));
-                } else if (pType == parquet::Type::BOOLEAN) {
-                    myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
-                        field, parquet::Repetition::OPTIONAL, pType, cType));
-                } else {
-                    // Default to BYTE_ARRAY for everything else
-                    myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
-                        field, parquet::Repetition::OPTIONAL, parquet::Type::BYTE_ARRAY,
-                        parquet::ConvertedType::UTF8));
-                }
+                // Create node with the detected type
+                myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
+                    field, parquet::Repetition::OPTIONAL, it->second.first, it->second.second));
             } else {
-                // Fallback to string type if no type info is available
+                // Default to string type
                 myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
                     field, parquet::Repetition::OPTIONAL, parquet::Type::BYTE_ARRAY,
                     parquet::ConvertedType::UTF8));
             }
         }
         
-        // If we have rows but no fields were found (unlikely but possible),
-        // create a dummy field to ensure we have a valid schema
-        if (!bufferedRows.empty() && myNodeVector.empty()) {
-            // Add a dummy field to ensure we have a valid schema
+        // Ensure we have at least one field
+        if (myNodeVector.empty() && !bufferedRows.empty()) {
             myNodeVector.push_back(parquet::schema::PrimitiveNode::Make(
                 "dummy", parquet::Repetition::OPTIONAL, parquet::Type::BYTE_ARRAY,
                 parquet::ConvertedType::UTF8));
             fields.insert("dummy");
         }
         
-        // Mark schema as finalized
+        // Mark as finalized
         schemaFinalized = true;
     }
 

@@ -200,6 +200,9 @@ private:
 
     // New method to write a single row to Parquet
     void writeRow(unstructured_parquet::XMLElement& row);
+    
+    // Helper method to efficiently write buffered rows
+    void writeBufferedRows(const std::vector<unstructured_parquet::XMLElement>& rows);
 };
 
 #endif // HAVE_PARQUET

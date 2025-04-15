@@ -51,8 +51,46 @@
 // ===========================================================================
 OutputDevice_Parquet::OutputDevice_Parquet(const std::string& fullName)
     : OutputDevice(fullName, new ParquetFormatter()), myFullName(fullName) {
-    // set the type of compression. TODO this should be based on the build options
-    builder.compression(parquet::Compression::ZSTD);
+    // Default to ZSTD compression but allow for environment variable override
+    const char* compressionEnv = std::getenv("SUMO_PARQUET_COMPRESSION");
+    parquet::Compression::type compression = parquet::Compression::ZSTD;
+    
+    if (compressionEnv != nullptr) {
+        std::string compressionStr = compressionEnv;
+        if (compressionStr == "SNAPPY") {
+            compression = parquet::Compression::SNAPPY; // Faster but less compression
+        } else if (compressionStr == "NONE" || compressionStr == "UNCOMPRESSED") {
+            compression = parquet::Compression::UNCOMPRESSED; // Maximum speed
+        } else if (compressionStr == "GZIP") {
+            compression = parquet::Compression::GZIP; // Better compression but slower
+        } else if (compressionStr != "ZSTD") {
+            std::cerr << "Unknown compression type: " << compressionStr << ", using ZSTD" << std::endl;
+        }
+    }
+    
+    // Set the row group size from environment
+    const char* rowGroupEnv = std::getenv("SUMO_PARQUET_ROWGROUP_SIZE");
+    if (rowGroupEnv != nullptr) {
+        try {
+            int size = std::stoi(rowGroupEnv);
+            if (size > 0) {
+                myRowGroupSize = size;
+            }
+        } catch (...) {
+            // Ignore invalid values
+        }
+    }
+    
+    // Apply the compression setting
+    builder.compression(compression);
+    
+    // Use these writer properties for better performance
+    builder.version(parquet::ParquetVersion::PARQUET_2_6);
+    builder.data_page_version(parquet::ParquetDataPageVersion::V2);
+    builder.enable_dictionary(); // Enable dictionary encoding for better compression
+    
+    // Use large write batch size for better performance
+    builder.write_batch_size(10000); // Default is 1000
     
     // Check if this is an S3 URL
     myIsS3 = fullName.substr(0, 5) == "s3://";
@@ -71,6 +109,8 @@ bool OutputDevice_Parquet::closeTag(const std::string& comment) {
         // this is critical for the file to be written correctly
         return false;
     }
+    
+    // Lazily initialize file when first needed
     if (myFile == nullptr) {
         if (formatter == nullptr) {
             throw IOError("Formatter is not a ParquetFormatter");
@@ -95,53 +135,83 @@ bool OutputDevice_Parquet::closeTag(const std::string& comment) {
             throw IOError("Could not build output file '" + this->myFullName + "'");
         }
     }
-    // now actually write the data
-    return formatter->closeTag(getOStream());
+    
+    // Write the data to the file
+    bool result = formatter->closeTag(getOStream());
+    
+    // Count written rows
+    if (result) {
+        myRowsInCurrentGroup++;
+        myTotalRowsWritten++;
+        
+        // End row group if needed
+        if (myRowsInCurrentGroup >= myRowGroupSize) {
+            try {
+                auto parquetStream = dynamic_cast<ParquetStream*>(myStreamDevice.get());
+                if (parquetStream != nullptr) {
+                    parquetStream->endRowGroup();
+                    myRowsInCurrentGroup = 0;
+                }
+            } catch (const std::exception&) {
+                // Ignore errors on row group ending
+            }
+        }
+    }
+    
+    return result;
 }
 
 
 OutputDevice_Parquet::~OutputDevice_Parquet() {
-    // have to delete the stream device before the file. This dumps unwritten data to the file
-    myStreamDevice.reset();
-    // close the file (if open)
-    if (this->myFile.get() != nullptr) {
-        try {
-            arrow::Status status = this->myFile->Close();
-            if (!status.ok()) {
-                std::cerr << "Error closing file: " << status.ToString() << std::endl;
+    try {
+        // Finalize last row group if needed
+        if (myRowsInCurrentGroup > 0 && myStreamDevice != nullptr) {
+            try {
+                auto parquetStream = dynamic_cast<ParquetStream*>(myStreamDevice.get());
+                if (parquetStream != nullptr) {
+                    parquetStream->endRowGroup();
+                }
+            } catch (const std::exception&) {
+                // Ignore errors on row group ending
             }
-        } catch (const std::exception& e) {
-            std::cerr << "Exception closing file: " << e.what() << std::endl;
         }
         
-        // Clear file pointer after closing
-        myFile.reset();
-    }
-    
-#ifdef HAVE_S3
-    // Finalize S3 if we used it
-    if (myIsS3 && myS3FileSystem != nullptr) {
-        try {
-            // Release our reference to the filesystem object
-            myS3FileSystem.reset();
+        // have to delete the stream device before the file. This dumps unwritten data to the file
+        myStreamDevice.reset();
+        
+        // close the file (if open)
+        if (this->myFile != nullptr) {
+            try {
+                auto status = this->myFile->Close();
+                (void)status; // Explicitly acknowledge we're ignoring the return value
+            } catch (const std::exception&) {
+                // Ignore errors on close
+            }
             
-            // We don't call FinalizeS3 here as it's better to let it be handled at program exit
-            // to avoid issues with multiple devices being closed concurrently
-        } catch (const std::exception& e) {
-            std::cerr << "Exception during S3 resource cleanup: " << e.what() << std::endl;
+            // Clear file pointer after closing
+            myFile.reset();
         }
-    }
+        
+#ifdef HAVE_S3
+        // Release S3 filesystem resources
+        if (myIsS3 && myS3FileSystem != nullptr) {
+            myS3FileSystem.reset();
+        }
 #endif
+
+        // Simple stats output
+        if (myTotalRowsWritten > 0) {
+            std::cout << "Wrote " << myTotalRowsWritten << " rows to " << myFilename << std::endl;
+        }
+    } catch (const std::exception&) {
+        // Ignore all exceptions in destructor
+    }
 }
 
 std::shared_ptr<arrow::io::OutputStream> OutputDevice_Parquet::createOutputStream() {
     // If it's an S3 URL, create S3 output stream
     if (myIsS3) {
 #ifdef HAVE_S3
-        // Print debug info about filenames
-        std::cout << "Creating S3 output stream with myFilename: '" << this->myFilename 
-                  << "', myFullName: '" << this->myFullName << "'" << std::endl;
-        
         // Parse S3 URL
         std::string bucket, key;
         if (!parseS3Url(this->myFilename, bucket, key)) {
@@ -168,19 +238,15 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_Parquet::createOutputStrea
                 const char* region = std::getenv("SUMO_S3_REGION");
                 if (region != nullptr) {
                     options.region = region;
-                    std::cout << "Using S3 region: " << options.region << std::endl;
                 }
                 
                 // Allow overriding endpoint
                 const char* endpoint = std::getenv("SUMO_S3_ENDPOINT");
                 if (endpoint != nullptr) {
                     options.endpoint_override = endpoint;
-                    std::cout << "Using S3 endpoint override: " << options.endpoint_override << std::endl;
                 } else if (!options.region.empty()) {
                     // If no endpoint specified but region is set, construct a regional endpoint
                     options.endpoint_override = "s3." + options.region + ".amazonaws.com";
-                    std::cout << "No endpoint specified, using region-based endpoint: " 
-                              << options.endpoint_override << std::endl;
                 }
                 
                 // Enable automatic address resolving (helps with 301 redirects)
@@ -208,9 +274,6 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_Parquet::createOutputStrea
                 }
                 
                 myS3FileSystem = result.ValueOrDie();
-                
-                std::cout << "S3 filesystem created for region: " << 
-                    (region != nullptr ? region : options.region) << std::endl;
             } catch (const std::exception& e) {
                 throw IOError("Error creating S3 filesystem: " + std::string(e.what()));
             }
@@ -218,22 +281,17 @@ std::shared_ptr<arrow::io::OutputStream> OutputDevice_Parquet::createOutputStrea
         
         // Create output stream - construct the full S3 path with bucket name
         std::string s3Path = bucket + "/" + key;
-        std::cout << "Opening S3 output stream with full path: " << s3Path << std::endl;
         auto result = myS3FileSystem->OpenOutputStream(s3Path);
         if (!result.ok()) {
             throw IOError("Could not open S3 output stream: " + result.status().ToString());
         }
         
-        std::cout << "Writing to S3 bucket: " << bucket << ", key: " << key << std::endl;
         return result.ValueOrDie();
 #else
         throw IOError("S3 support not enabled in this build");
 #endif
     } else {
         // Regular file output
-        std::cout << "Creating file output stream with myFilename: '" << this->myFilename 
-                  << "', myFullName: '" << this->myFullName << "'" << std::endl;
-        
         auto result = arrow::io::FileOutputStream::Open(this->myFilename);
         if (!result.ok()) {
             throw IOError("Could not build output file '" + this->myFullName + "' (" + 
@@ -262,16 +320,8 @@ bool OutputDevice_Parquet::parseS3Url(const std::string& url, std::string& bucke
         key = url.substr(bucketEnd + 1);
     }
     
-    // Debug output
-    std::cout << "Parsed S3 URL: " << url << " -> bucket: " << bucket << ", key: " << key << std::endl;
-    
-    // Error checking - bucket and key should not be empty for writing
-    if (bucket.empty()) {
-        std::cerr << "Error: Empty bucket name in S3 URL: " << url << std::endl;
-        return false;
-    }
-    
-    return true;
+    // Error checking - bucket should not be empty for writing
+    return !bucket.empty();
 }
 
 #endif

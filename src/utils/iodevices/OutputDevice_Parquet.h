@@ -49,6 +49,17 @@
  *
  * Please note that the device is responsible for the stream and deletes
  *  it (it should not be deleted elsewhere).
+ *
+ * Performance can be tuned using the following environment variables:
+ * - SUMO_PARQUET_COMPRESSION: compression type (ZSTD, SNAPPY, GZIP, NONE)
+ * - SUMO_PARQUET_ROWGROUP_SIZE: number of rows per row group (default: 1000000)
+ * 
+ * For S3 output:
+ * - SUMO_S3_REGION: AWS region
+ * - SUMO_S3_ACCESS_KEY: AWS access key
+ * - SUMO_S3_SECRET_KEY: AWS secret key
+ * - SUMO_S3_SESSION_TOKEN: AWS session token (optional)
+ * - SUMO_S3_ENDPOINT: Custom endpoint for S3-compatible storage (optional)
  */
 class OutputDevice_Parquet : public OutputDevice {
 public:
@@ -78,6 +89,15 @@ public:
     void setOSFlags(std::ios_base::fmtflags flags) override {
         UNUSED_PARAMETER(flags);
     };
+    
+    /** @brief Set the row group size for Parquet file writing
+     * @param[in] size The number of rows per row group
+     */
+    void setRowGroupSize(int size) {
+        if (size > 0) {
+            myRowGroupSize = size;
+        }
+    }
 
 protected:
 
@@ -102,6 +122,15 @@ private:
 
     /// my full name
     std::string myFullName;
+
+    /// @brief Row group size configuration
+    int myRowGroupSize = 1000000;
+    
+    /// @brief Current number of rows in the current row group
+    int myRowsInCurrentGroup = 0;
+    
+    /// @brief Total rows written
+    int myTotalRowsWritten = 0;
 
     parquet::schema::NodeVector myNodeVector;
     

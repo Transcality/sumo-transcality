@@ -331,6 +331,23 @@ public:
         }
         return *this;
     }
+    
+    // End the current row group and start a new one
+    // This allows creating multiple row groups without closing and reopening the writer
+    void endRowGroup() {
+        if (myStream) {
+            try {
+                // Finish the current row group
+                myStream->EndRowGroup();
+                
+                // Start a new row group
+                // The StreamWriter interface automatically starts a new row group 
+                // after EndRowGroup() is called
+            } catch (const std::exception& e) {
+                std::cerr << "Error ending row group: " << e.what() << std::endl;
+            }
+        }
+    }
 
 #else
 public:
