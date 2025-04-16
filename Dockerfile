@@ -5,20 +5,56 @@ FROM python:3.10.14-slim-bookworm
 RUN apt-get update && apt-get install -y \
     build-essential git cmake python3 g++ \
     libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev \
-    libgl2ps-dev python3-dev swig default-jdk maven libeigen3-dev vim
+    libgl2ps-dev python3-dev swig default-jdk maven libeigen3-dev vim \
+    # Dependencies for Arrow and Parquet
+    libboost-all-dev libssl-dev libcurl4-openssl-dev \
+    rapidjson-dev libgflags-dev libsnappy-dev libz-dev \
+    libre2-dev liblz4-dev libzstd-dev libbrotli-dev
 
-# Clone SUMO, checkout desired commit
-RUN git clone https://github.com/eclipse-sumo/sumo.git /sumo
+# Install Arrow and Parquet
+RUN git clone https://github.com/apache/arrow.git /arrow && \
+    cd /arrow && \
+    mkdir build && \
+    cd build && \
+    cmake -DARROW_S3=ON -DARROW_PARQUET=ON -DARROW_DATASET=ON -DARROW_WITH_SNAPPY=ON \
+          -DARROW_WITH_ZLIB=ON -DARROW_WITH_ZSTD=ON -DARROW_WITH_BROTLI=ON -DARROW_WITH_LZ4=ON \
+          -DCMAKE_BUILD_TYPE=Release ../cpp && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
+
+# Install fmt library
+RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
+    cd /fmt && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make install
+
+# Create directory for SUMO
+RUN mkdir -p /sumo
 WORKDIR /sumo
-RUN git fetch origin db977ec3e8fab289cd095628a87b0912ff0bedf3
-RUN git checkout db977ec3e8fab289cd095628a87b0912ff0bedf3
 
-# Build SUMO
-RUN cmake -B build . \
-      -DCMAKE_INSTALL_PREFIX=/sumo/build/install 
-RUN cmake --build build -j$(nproc)
+# Copy local SUMO files instead of cloning
+COPY . /sumo/
+
+# Build SUMO with Parquet, S3 and Azure support
+RUN mkdir -p build && cd build && \
+    cmake \
+      -DHAVE_PARQUET=ON \
+      -DWITH_PARQUET=ON \
+      -DHAVE_S3=ON \
+      -DARROW_S3=ON \
+      -DHAVE_AZURE=ON \
+      -DCMAKE_C_COMPILER=/usr/bin/gcc \
+      -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
+      -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
+      .. && \
+    make -j$(nproc) sumo
+
 # Expose environment variables for SUMO
 ENV SUMO_HOME=/sumo
 ENV PATH="/sumo/bin:$PATH"
 ENV PYTHONPATH="/sumo/tools:$PYTHONPATH"
-ENV LD_LIBRARY_PATH=L/sumo/bin/:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH="/sumo/bin/:$LD_LIBRARY_PATH"
