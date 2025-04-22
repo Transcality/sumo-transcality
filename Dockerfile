@@ -11,15 +11,7 @@ RUN apt-get update && apt-get install -y \
     # Dependencies for Arrow and Parquet
     libboost-all-dev libssl-dev libcurl4-openssl-dev \
     rapidjson-dev libgflags-dev libsnappy-dev libz-dev \
-    libre2-dev liblz4-dev libzstd-dev libbrotli-dev \
-    # Install newer gcc/g++ for better C++17 support
-    software-properties-common
-
-# Install gcc/g++ 10 for better C++17 support
-RUN apt-get update && \
-    apt-get install -y g++-10 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
+    libre2-dev liblz4-dev libzstd-dev libbrotli-dev
 
 # Install Arrow and Parquet with C++17 support
 RUN git clone https://github.com/apache/arrow.git /arrow && \
