@@ -1,71 +1,75 @@
-
-FROM gcc:16 AS builder
-
-# 1) Install build-time dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential cmake git python3.10 python3.10-dev python3-pip swig \
-      default-jdk maven \
-      libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev libgl2ps-dev \
-      libboost-all-dev libssl-dev libcurl4-openssl-dev \
-      rapidjson-dev libgflags-dev libsnappy-dev zlib1g-dev liblz4-dev libzstd-dev libbrotli-dev libre2-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# 2) Build and install Apache Arrow C++ (pin to a stable tag)
-ARG ARROW_VERSION=15.0.0
-RUN git clone --branch apache-arrow-${ARROW_VERSION} --depth 1 \
-        https://github.com/apache/arrow.git /arrow && \
-    mkdir -p /arrow/cpp/build && cd /arrow/cpp/build && \
-    cmake -DARROW_PARQUET=ON -DARROW_DATASET=ON -DARROW_S3=ON \
-          -DARROW_WITH_SNAPPY=ON -DARROW_WITH_ZLIB=ON \
-          -DARROW_WITH_ZSTD=ON    -DARROW_WITH_BROTLI=ON -DARROW_WITH_LZ4=ON \
-          -DCMAKE_BUILD_TYPE=Release .. && \
-    make -j$(nproc) && make install && ldconfig && \
-    rm -rf /arrow
-
-# 3) Build and install fmt (pin to a stable tag)
-ARG FMT_VERSION=10.1.0
-RUN git clone --branch ${FMT_VERSION} --depth 1 \
-        https://github.com/fmtlib/fmt.git /fmt && \
-    mkdir /fmt/build && cd /fmt/build && \
-    cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    make -j$(nproc) && make install && \
-    rm -rf /fmt
-
-# 4) Build and install SUMO itself
-WORKDIR /sumo
-COPY . /sumo
-RUN mkdir build && cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release \
-          -DWITH_PARQUET=ON -DHAVE_PARQUET=ON \
-          -DWITH_S3=ON -DARROW_S3=ON \
-          -DWITH_AZURE=ON \
-          -DCMAKE_INSTALL_PREFIX=/usr/local \
-          .. && \
-    make -j$(nproc) sumo && make install
-
-#
-# ─── STAGE 2: RUNTIME IMAGE ───────────────────────────────────────────────────
-#
 FROM python:3.10.14-slim-bookworm
 
-# 5) Only the dynamic libraries SUMO needs at runtime
+# Set C++17 as the standard for all builds
+ENV CXXFLAGS="-std=c++17"
+
+# Install dependencies needed to compile SUMO
+RUN apt-get update && apt-get install -y \
+    build-essential git cmake python3 g++ \
+    libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev \
+    libgl2ps-dev python3-dev swig default-jdk maven libeigen3-dev vim \
+    # Dependencies for Arrow and Parquet
+    libboost-all-dev libssl-dev libcurl4-openssl-dev \
+    rapidjson-dev libgflags-dev libsnappy-dev libz-dev \
+    libre2-dev liblz4-dev libzstd-dev libbrotli-dev \
+    # Install newer gcc/g++ for better C++17 support
+    software-properties-common
+
+# Install gcc/g++ 10 for better C++17 support
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      libxerces-c3 libfox-1.6-0v5 libgdal-dev libproj-dev libgl2ps0 \
-      libboost-all-dev libssl-dev libcurl4-openssl-dev \
-      rapidjson-dev libgflags-dev libsnappy-dev zlib1g liblz4-1 libzstd1 libbrotli1 libre2-dev \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y g++-10 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
 
-# 6) Copy in all of Arrow, fmt and SUMO from the builder
-COPY --from=builder /usr/local /usr/local
+# Install Arrow and Parquet with C++17 support
+RUN git clone https://github.com/apache/arrow.git /arrow && \
+    cd /arrow && \
+    mkdir build && \
+    cd build && \
+    cmake -DARROW_S3=ON -DARROW_PARQUET=ON -DARROW_DATASET=ON -DARROW_WITH_SNAPPY=ON \
+          -DARROW_WITH_ZLIB=ON -DARROW_WITH_ZSTD=ON -DARROW_WITH_BROTLI=ON -DARROW_WITH_LZ4=ON \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_STANDARD=17 \
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+          ../cpp && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
 
-# 7) Environment
-ENV SUMO_HOME=/usr/local
-ENV PATH="$SUMO_HOME/bin:$PATH"
-ENV PYTHONPATH="$SUMO_HOME/tools:$PYTHONPATH"
-ENV LD_LIBRARY_PATH="$SUMO_HOME/bin:$LD_LIBRARY_PATH"
+# Install fmt library with C++17 support
+RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
+    cd /fmt && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON .. && \
+    make -j$(nproc) && \
+    make install
 
+# Create directory for SUMO
+RUN mkdir -p /sumo
 WORKDIR /sumo
-ENTRYPOINT ["sumo"]
-CMD ["--help"]
+
+# Copy local SUMO files instead of cloning
+COPY . /sumo/
+
+# Build SUMO with Parquet, S3 and Azure support and C++17
+RUN mkdir -p build && cd build && \
+    cmake \
+      -DHAVE_PARQUET=ON \
+      -DWITH_PARQUET=ON \
+      -DHAVE_S3=ON \
+      -DARROW_S3=ON \
+      -DHAVE_AZURE=ON \
+      -DCMAKE_C_COMPILER=/usr/bin/gcc \
+      -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
+      -DCMAKE_CXX_STANDARD=17 \
+      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+      -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
+      .. && \
+    make -j$(nproc) sumo
+
+# Expose environment variables for SUMO
+ENV SUMO_HOME=/sumo
+ENV PATH="/sumo/bin:$PATH"
+ENV PYTHONPATH="/sumo/tools:$PYTHONPATH"
+ENV LD_LIBRARY_PATH="/sumo/bin/:$LD_LIBRARY_PATH"
