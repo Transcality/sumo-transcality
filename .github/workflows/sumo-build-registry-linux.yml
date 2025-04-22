@@ -1,4 +1,4 @@
-name: Build and Push Docker Image Main
+name: Build and Push Docker Image Main Linux
 
 on:
   push:
