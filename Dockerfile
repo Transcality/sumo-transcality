@@ -59,6 +59,8 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
       .. && \
     make -j$(nproc) sumo
+    make install 
+
 
 # Expose environment variables for SUMO
 ENV SUMO_HOME=/sumo
