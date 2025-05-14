@@ -42,7 +42,26 @@ set(netedit_SRCS
    netedit_main.cpp
    templates.h
 )
-
+if(WITH_PARQUET)
+        find_package(Arrow)
+        find_package(Parquet)
+        if (Arrow_FOUND AND Parquet_FOUND)
+            set(HAVE_PARQUET 1)
+            set(ENABLED_FEATURES "${ENABLED_FEATURES} PARQUET")
+            set(PARQUET_LIBRARY ${Parquet_LIBRARIES} ${Arrow_LIBRARIES} arrow_shared parquet_shared arrow_fs arrow_s3)
+            # if (GTEST_FOUND)
+            #     add_definitions("GTest_SOURCE=Bundled")
+            # endif()
+            # this is for gtest compatibility
+        else()
+            message(WARNING "Parquet support requested but Arrow or Parquet libraries not found. Disabling Parquet support.")
+            set(PARQUET_LIBRARY "")
+            set(HAVE_PARQUET 0)
+        endif()
+    else()
+        set(PARQUET_LIBRARY "")
+        set(HAVE_PARQUET 0)
+    endif()
 # create netedit executable using the main netedit source code files defined previously in netedit_SRCS
 # and icon defined in file netedit.rc
 add_executable(netedit ${netedit_SRCS} netedit.rc)

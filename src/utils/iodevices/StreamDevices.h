@@ -325,6 +325,15 @@ public:
         }
     }
 
+    // Specialization for unsigned long to avoid ambiguity
+    template <>
+    void print<unsigned long>(const unsigned long& t) {
+        if (myStream) {
+            // Explicitly cast to uint64_t which has a direct operator<< overload
+            (*myStream) << static_cast<uint64_t>(t);
+        }
+    }
+
     StreamDevice& endLine() override {
         if (myStream) {
             myStream->EndRow();

@@ -4,7 +4,26 @@ set(netconvertlibs
 if(WITH_PARQUET)
     FIND_LIBRARY(PARQUET_LIBRARY NAMES parquet)
 endif()
-
+if(WITH_PARQUET)
+        find_package(Arrow)
+        find_package(Parquet)
+        if (Arrow_FOUND AND Parquet_FOUND)
+            set(HAVE_PARQUET 1)
+            set(ENABLED_FEATURES "${ENABLED_FEATURES} PARQUET")
+            set(PARQUET_LIBRARY Parquet::parquet_shared)
+            # if (GTEST_FOUND)
+            #     add_definitions("GTest_SOURCE=Bundled")
+            # endif()
+            # this is for gtest compatibility
+        else()
+            message(WARNING "Parquet support requested but Arrow or Parquet libraries not found. Disabling Parquet support.")
+            set(PARQUET_LIBRARY "")
+            set(HAVE_PARQUET 0)
+        endif()
+    else()
+        set(PARQUET_LIBRARY "")
+        set(HAVE_PARQUET 0)
+    endif()
 set(sumolibs
         traciserver netload microsim_cfmodels microsim_engine microsim_lcmodels microsim_devices microsim_trigger microsim_output microsim_transportables microsim_actions
         microsim_traffic_lights microsim mesosim ${commonvehiclelibs} ${GEOS_LIBRARY} ${PARQUET_LIBRARY})
