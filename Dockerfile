@@ -58,7 +58,7 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
       ..
-RUN make -j$(nproc) sumo 
+RUN make -j$(nproc)
 RUN make install 
 
 
