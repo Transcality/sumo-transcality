@@ -57,9 +57,9 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_STANDARD=17 \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
-      .. && \
-    make -j$(nproc) sumo \
-    && make install 
+      ..
+RUN make -j$(nproc) sumo 
+RUN make install 
 
 
 # Expose environment variables for SUMO
