@@ -35,7 +35,7 @@ RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
     cd build && \
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON .. && \
     make -j$(nproc) && \
-    make install
+    make install 
 
 # Create directory for SUMO
 RUN mkdir -p /sumo
@@ -58,8 +58,8 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
       .. && \
-    make -j$(nproc) sumo
-    make install 
+    make -j$(nproc) sumo \
+    && make install 
 
 
 # Expose environment variables for SUMO
