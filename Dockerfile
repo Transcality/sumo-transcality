@@ -30,7 +30,7 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_COMPILER=clang++ \
       -DCMAKE_CXX_STANDARD=17 \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-      -DCMAKE_INSTALL_PREFIX=/sumo-official/install \
+      -DCMAKE_INSTALL_PREFIX=/sumo/install \
       .. && \
     make -j$(nproc) && \
     make install
@@ -91,10 +91,10 @@ RUN mkdir -p build && \
       -DCMAKE_INSTALL_PREFIX=/sumo-local/install \
       . && \
     cd build && make -j$(nproc) sumo && \
-    cp /sumo-local/bin/sumo /sumo-official/bin/
+    cp /sumo-local/bin/sumo /sumo/bin/
 
 # Set up final SUMO environment
-WORKDIR /sumo-official
+WORKDIR /sumo
 
 # Initialize environment variables
 ENV PYTHONPATH="" 
