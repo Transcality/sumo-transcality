@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
 
 
 # Create directories for both SUMOs
-RUN mkdir -p /sumo-official /sumo-local
-WORKDIR /sumo-official
+RUN mkdir -p /sumo /sumo-local
+WORKDIR /sumo
 
 # Clone official SUMO repository
 RUN git clone --recursive https://github.com/eclipse-sumo/sumo.git .
