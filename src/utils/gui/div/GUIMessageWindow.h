@@ -126,8 +126,8 @@ private:
             myMsgWindow(msgWindow),
             myType(type){ 
                 /// @todo We should design a new formatter type for this.
-                myFormatter = new PlainXMLFormatter();
-                myStreamDevice = new OStreamDevice(new std::ostringstream());
+                myFormatter.reset(new PlainXMLFormatter());
+                myStreamDevice.reset(new OStreamDevice(new std::ostringstream()));
             }
 
         /// @brief destructor
