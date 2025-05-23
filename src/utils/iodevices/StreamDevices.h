@@ -321,7 +321,23 @@ public:
     template <typename T>
     void print(const T& t) {
         if (myStream) {
-            (*myStream) << t;
+            // Convert all types to string to avoid operator<< conflicts with parquet::StreamWriter
+            std::string str_value;
+            if constexpr (std::is_same_v<T, std::string>) {
+                str_value = t;
+            } else if constexpr (std::is_same_v<T, const char*>) {
+                str_value = std::string(t);
+            } else if constexpr (std::is_arithmetic_v<T>) {
+                str_value = std::to_string(t);
+            } else {
+                // For complex types, use toString
+                try {
+                    str_value = ::toString(t);
+                } catch (...) {
+                    str_value = "";
+                }
+            }
+            (*myStream) << str_value;
         }
     }
 

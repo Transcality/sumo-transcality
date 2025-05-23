@@ -90,8 +90,9 @@ RUN mkdir -p build && \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo-local/install \
       . && \
-    cd build && make -j$(nproc) sumo && \
-    cp /sumo-local/bin/sumo /sumo/bin/
+    cd build && make -j$(nproc) sumo libsumo && \
+    cp /sumo-local/bin/sumo /sumo/bin/ && \
+    cp -r /sumo-local/tools/libsumo /sumo/tools/
 
 # Set up final SUMO environment
 WORKDIR /sumo

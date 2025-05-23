@@ -51,7 +51,7 @@ OutputDevice_Network::OutputDevice_Network(const std::string& host,
             std::this_thread::sleep_for(std::chrono::seconds(wait));
         }
     }
-    myStreamDevice = new StringStream();
+    myStreamDevice.reset(new StringStream());
 }
 
 
