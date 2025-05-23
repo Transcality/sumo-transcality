@@ -12,29 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 
 # Create directories for both SUMOs
-RUN mkdir -p /sumo /sumo-local
-WORKDIR /sumo
-
-# Clone official SUMO repository
-RUN git clone --recursive https://github.com/eclipse-sumo/sumo.git .
-
-# Build all targets from official repo
-RUN mkdir -p build && cd build && \
-    cmake \
-      -DHAVE_PARQUET=ON \
-      -DWITH_PARQUET=ON \
-      -DHAVE_S3=ON \
-      -DARROW_S3=ON \
-      -DHAVE_AZURE=ON \
-      -DCMAKE_C_COMPILER=clang \
-      -DCMAKE_CXX_COMPILER=clang++ \
-      -DCMAKE_CXX_STANDARD=17 \
-      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-      -DCMAKE_INSTALL_PREFIX=/sumo/install \
-      .. && \
-    make -j$(nproc) && \
-    make install
-
+RUN mkdir -p /sumo 
 
 # Set C++17 as the standard for all builds
 ENV CXXFLAGS="-std=c++17"
@@ -68,18 +46,18 @@ RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
     make install 
 
 # Now build only the 'sumo' target from local files
-WORKDIR /sumo-local
+WORKDIR /sumo
 
 # Copy all files to local SUMO directory
-COPY . /sumo-local/
+COPY . /sumo
 
 # Clean any pre-existing build artifacts that might have been copied
 RUN rm -rf build/ CMakeFiles/ CMakeCache.txt cmake_install.cmake Makefile *.cmake
 
 # Build the sumo target using clang
-RUN mkdir -p build && \
-    cmake -B build \
-      -DHAVE_PARQUET=ON \
+RUN mkdir -p build && cd build && \
+    cmake \
+        -DHAVE_PARQUET=ON \
       -DWITH_PARQUET=ON \
       -DHAVE_S3=ON \
       -DARROW_S3=ON \
@@ -88,11 +66,10 @@ RUN mkdir -p build && \
       -DCMAKE_CXX_COMPILER=clang++ \
       -DCMAKE_CXX_STANDARD=17 \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-      -DCMAKE_INSTALL_PREFIX=/sumo-local/install \
-      . && \
-    cd build && make -j$(nproc) sumo libsumo && \
-    cp /sumo-local/bin/sumo /sumo/bin/ && \
-    cp -r /sumo-local/tools/libsumo /sumo/tools/
+      -DCMAKE_INSTALL_PREFIX=/sumo/install \
+      .. && \
+      make -j$(nproc) && \
+      make install
 
 # Set up final SUMO environment
 WORKDIR /sumo
@@ -102,9 +79,9 @@ ENV PYTHONPATH=""
 ENV LD_LIBRARY_PATH=""
 
 # Expose environment variables for SUMO
-ENV SUMO_HOME=/sumo-official
-ENV PATH="/sumo-official/bin:${PATH}"
-ENV PYTHONPATH="/sumo-official/tools:${PYTHONPATH}"
-ENV LD_LIBRARY_PATH="/sumo-official/bin/:${LD_LIBRARY_PATH}"
+ENV SUMO_HOME=/sumo
+ENV PATH="/sumo/bin:${PATH}"
+ENV PYTHONPATH="/sumo/tools:${PYTHONPATH}"
+ENV LD_LIBRARY_PATH="/sumo/bin/:${LD_LIBRARY_PATH}"
 
 
