@@ -3,6 +3,7 @@
 #include <fstream> 
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #ifdef HAVE_PARQUET
 #include <arrow/io/file.h>
@@ -321,23 +322,50 @@ public:
     template <typename T>
     void print(const T& t) {
         if (myStream) {
-            // Convert all types to string to avoid operator<< conflicts with parquet::StreamWriter
-            std::string str_value;
-            if constexpr (std::is_same_v<T, std::string>) {
-                str_value = t;
+            // Handle different type categories to avoid operator<< ambiguity
+            if constexpr (std::is_same_v<T, bool>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, int8_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, uint8_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, int16_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, uint16_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, int32_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, uint32_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, int64_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, uint64_t>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, float>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, double>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, char>) {
+                (*myStream) << t;
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                (*myStream) << t;
             } else if constexpr (std::is_same_v<T, const char*>) {
-                str_value = std::string(t);
-            } else if constexpr (std::is_arithmetic_v<T>) {
-                str_value = std::to_string(t);
+                (*myStream) << t;
+            } else if constexpr (std::is_integral_v<T>) {
+                // Convert other integral types to int64_t to avoid ambiguity
+                (*myStream) << static_cast<int64_t>(t);
+            } else if constexpr (std::is_floating_point_v<T>) {
+                // Convert other floating point types to double to avoid ambiguity
+                (*myStream) << static_cast<double>(t);
             } else {
-                // For complex types, use toString
+                // For complex types, convert to string
                 try {
-                    str_value = ::toString(t);
+                    std::string str_value = ::toString(t);
+                    (*myStream) << str_value;
                 } catch (...) {
-                    str_value = "";
+                    (*myStream) << std::string("");
                 }
             }
-            (*myStream) << str_value;
         }
     }
 

@@ -116,11 +116,29 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
         const int len = (int)name.length();
         if (file_ext == ".parquet" || file_ext == ".prq") {
 #ifdef HAVE_PARQUET
-            // Use the unstructured Parquet writer for all Parquet outputs
-            // The unstructured formatter is more robust and handles type variations
-            // that can occur between regular sumo and libsumo usage
-            std::cout << "Creating unstructured Parquet writer for output: " << name2 << std::endl;
-            dev = new OutputDevice_ParquetUnstructured(name2);
+            // Check if this is an FCD output file
+            bool isFCDOutput = false;
+            // Check if we're handling the fcd-output option
+            if (OptionsCont::getOptions().isSet("fcd-output")) {
+                const std::string fcdOutput = OptionsCont::getOptions().getString("fcd-output");
+                if (name == fcdOutput) {
+                    isFCDOutput = true;
+                }
+            }
+            // Also check if the filename contains "fcd"
+            if (!isFCDOutput && (name.find("fcd") != std::string::npos || name2.find("fcd") != std::string::npos)) {
+                isFCDOutput = true;
+            }
+            
+            if (isFCDOutput) {
+                // Use the structured Parquet writer for FCD outputs
+                std::cout << "Creating structured Parquet writer for FCD output: " << name2 << std::endl;
+                dev = new OutputDevice_Parquet(name2);
+            } else {
+                // Use the unstructured Parquet writer for all other outputs
+                std::cout << "Creating unstructured Parquet writer for output: " << name2 << std::endl;
+                dev = new OutputDevice_ParquetUnstructured(name2);
+            }
 #else
             throw IOError(TL("Parquet output is not supported in this build."));
 #endif
