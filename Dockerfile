@@ -16,9 +16,10 @@ RUN mkdir -p /sumo
 
 # Set C++17 as the standard for all builds
 ENV CXXFLAGS="-std=c++17"
-# Install Arrow and Parquet with C++17 support
+# Install Arrow and Parquet with C++17 support - FORCED TO VERSION 19
 RUN git clone https://github.com/apache/arrow.git /arrow && \
     cd /arrow && \
+    git checkout apache-arrow-19.0.0 && \
     mkdir build && \
     cd build && \
     cmake -DARROW_S3=ON -DARROW_PARQUET=ON -DARROW_DATASET=ON -DARROW_WITH_SNAPPY=ON \
@@ -53,6 +54,9 @@ COPY . /sumo
 
 # Clean any pre-existing build artifacts that might have been copied
 RUN rm -rf build/ CMakeFiles/ CMakeCache.txt cmake_install.cmake Makefile *.cmake
+
+# Set SUMO Parquet configuration
+ENV SUMO_PARQUET_ROWGROUP_SIZE=10000
 
 # Build the sumo target using clang
 RUN mkdir -p build && cd build && \
