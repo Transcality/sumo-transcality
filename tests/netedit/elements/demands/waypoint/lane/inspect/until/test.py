@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointLane")
+netedit.changeElement("stopFrame", "waypointLane")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.stopLane)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointLane.inspect.durationEnable, True)
+netedit.modifyBoolAttributeOverlapped(netedit.attrs.waypointLane.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointLane.inspect.untilEnable, True)
+netedit.modifyBoolAttributeOverlapped(netedit.attrs.waypointLane.inspect.untilEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspect.until, "dummyValue", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspect.until, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspect.until, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspect.until, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspect.until, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspect.until, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspect.until, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspect.until, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspect.until, "3.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspect.until, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

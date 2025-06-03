@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect container
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.container)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.containerFlow.inspectSelection.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.containerFlow.inspectSelection.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

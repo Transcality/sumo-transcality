@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "flow (from-to TAZs)")
 
 # create trip using two TAZs
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.flowTAZ.inspect.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.flowTAZ.inspect.colorButton, 5)
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "")
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "dummyColor")
 
 # change color with an valid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "cyan", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "cyan")
 
 # change color with a valid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "12,13,14", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.color, "12,13,14")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

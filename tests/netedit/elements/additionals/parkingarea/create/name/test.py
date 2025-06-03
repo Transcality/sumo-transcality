@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # set invalid name
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.name, "&&>>><<<")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.name, "&&>>><<<")
 
 # try to create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set name
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.name, "custon name")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.name, "custon name")
 
 # create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

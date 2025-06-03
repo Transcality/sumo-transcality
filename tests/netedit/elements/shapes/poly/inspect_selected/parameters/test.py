@@ -28,7 +28,7 @@ import neteditTestFunctions as netedit  # noqa
 # Open netedit
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
@@ -37,13 +37,13 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shap
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.poly.inspectSelection.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.poly.inspectSelection.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopContainerStop")
+netedit.changeElement("stopFrame", "stopContainerStop")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.extensionEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.extensionEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "-5", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "0", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.extension, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POILane in list of shapes
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # create POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.poiLane.inspect.parameters, True)
+netedit.checkParametersOverlapped(referencePosition, netedit.attrs.poiLane.inspect.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("multiLaneAreaDetector")
+netedit.changeElement("additionalFrame", "multiLaneAreaDetector")
 
 # select lanes
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -43,22 +43,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # set invalid frequency
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.period, "dummyFreq")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.period, "dummyFreq")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid frequency
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.period, "-30")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.period, "-30")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid frequency
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.period, "120")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.period, "120")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

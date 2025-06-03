@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to edges)")
+netedit.changeElement("vehicleFrame", "flow (from-to edges)")
 
 # create flow using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change from with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "")
 
 # change from with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "dummyEdge", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "dummyEdge")
 
 # change from with an valid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "EdgeCenter0", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "EdgeCenter0")
 
 # change from with an valid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "Edge2", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.via, "Edge2")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

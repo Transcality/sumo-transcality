@@ -29,46 +29,46 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopChargingStation")
+netedit.changeElement("stopFrame", "stopChargingStation")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.stopChargingStation.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.stopChargingStation.create.durationEnable)
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # enable duration
-netedit.changeDefaultBoolValue(netedit.attrs.stopChargingStation.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.stopChargingStation.create.durationEnable)
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopChargingStation.create.duration, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.create.duration, "dummyValue")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopChargingStation.create.duration, "-20")
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.create.duration, "-20")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopChargingStation.create.duration, "0")
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.create.duration, "0")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopChargingStation.create.duration, "22.33")
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.create.duration, "22.33")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)

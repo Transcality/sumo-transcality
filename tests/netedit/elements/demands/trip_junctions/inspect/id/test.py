@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("trip (from-to junctions)")
+netedit.changeElement("vehicleFrame", "trip (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, ";;;;;;;;", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, ";;;;;;;;")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "id with spaces", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "id with spaces")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "duplicatedVehicle", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "duplicatedVehicle")
 
 # change ID with an invalid value (empty)
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "customID", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.id, "customID")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

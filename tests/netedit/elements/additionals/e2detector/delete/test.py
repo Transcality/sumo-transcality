@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # create E2
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete created E2
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2Detector)
@@ -47,7 +47,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2De
 netedit.undo(referencePosition, 2)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # try to delete lane with the second loaded busStop (doesn't allowed)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -56,7 +56,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.waitDeleteWarning()
 
 # disable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # try to delete lane with the second loaded busStop (doesn't allowed)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

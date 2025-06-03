@@ -29,33 +29,33 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select trip over junctions
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # set invalid vType
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.type, "blue")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.type, "blue")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid vType
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.type, "custom_vType")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.type, "custom_vType")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

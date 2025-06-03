@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("multiLaneAreaDetector")
+netedit.changeElement("additionalFrame", "multiLaneAreaDetector")
 
 # create E2 with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # create second  with default parameters (for ID)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge4)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge5)
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to additional mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E2
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2MultilaneDetector)
 
 # Change parameter id with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspect.id, "e2_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspect.id, "e2_1")
 
 # Change parameter id with a non valid value (Invalid ID)
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspect.id, "Id with spaces", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspect.id, "Id with spaces")
 
 # Change parameter id with a valid value
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspect.id, "correctID", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspect.id, "correctID")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

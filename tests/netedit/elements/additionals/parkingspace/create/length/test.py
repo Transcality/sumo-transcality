@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select space
-netedit.changeElement("space")
+netedit.changeElement("additionalFrame", "space")
 
 # set invalid length (dummy)
 netedit.selectAdditionalChild(netedit.attrs.parkingSpace.create.parent, 0)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.length, "dummyLenght")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.length, "dummyLenght")
 
 # try to create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set invalid height (empty)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.length, "")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.length, "")
 
 # try to create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set invalid height (negative)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.length, "-4")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.length, "-4")
 
 # try to create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)
 
 # set valid height
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.length, "3.1")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.length, "3.1")
 
 # create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)

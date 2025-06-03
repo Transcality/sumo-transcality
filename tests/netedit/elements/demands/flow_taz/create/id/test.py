@@ -29,60 +29,60 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select trip over TAZs
-netedit.changeElement("flow (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "flow (from-to TAZs)")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid id
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.id, "%%;;%%%%")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.id, "%%;;%%%%")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid id
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.id, "")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.id, "")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set empty id
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.id, "f_0")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.id, "f_0")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set empty id
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.id, "customID")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.id, "customID")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

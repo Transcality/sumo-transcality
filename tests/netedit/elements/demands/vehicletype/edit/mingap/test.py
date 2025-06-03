@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create vType
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "dummyMinGap", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "dummyMinGap")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "-30", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "-30")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "20.5", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.minGap, "20.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

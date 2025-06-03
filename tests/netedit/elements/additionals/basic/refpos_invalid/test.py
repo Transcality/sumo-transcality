@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # set invalid reference (dummy)
-netedit.changeDefaultValue(netedit.attrs.busStop.create.references, "dummy reference")
+netedit.modifyAttribute(netedit.attrs.busStop.create.references, "dummy reference")
 
 # try to create busStop with the dummy reference
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid reference
-netedit.changeDefaultValue(netedit.attrs.busStop.create.references, "Reference Right")
+netedit.modifyAttribute(netedit.attrs.busStop.create.references, "Reference Right")
 
 # create busStop with the valid reference
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)

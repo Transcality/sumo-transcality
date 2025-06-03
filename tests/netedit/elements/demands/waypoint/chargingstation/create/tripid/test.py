@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointChargingStation")
+netedit.changeElement("stopFrame", "waypointChargingStation")
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointChargingStation.create.tripID, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.create.tripID, ";;;;;;;;;;")
 
 # try to create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointChargingStation.create.tripID, "")
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.create.tripID, "")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointChargingStation.create.tripID, "tripID")
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.create.tripID, "tripID")
 
 # create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.chargingStation)

@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointBusStop")
+netedit.changeElement("stopFrame", "waypointBusStop")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointBusStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointBusStop.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointBusStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointBusStop.inspect.durationEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "-5", False)
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "0", False)
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.inspect.duration, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

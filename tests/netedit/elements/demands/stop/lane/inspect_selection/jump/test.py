@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.stopLane)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.jump, "dummyValue", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.jump, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.jump, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.jump, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.jump, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.jump, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.jump, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.jump, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.jump, "3.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.jump, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

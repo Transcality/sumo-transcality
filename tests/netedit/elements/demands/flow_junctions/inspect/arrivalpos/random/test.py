@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "")
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "dummyPos", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "dummyPos")
 
 # change departColor with a valid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "500", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "500")
 
 # change arrivalPos with a valid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "random", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.arrivalPos, "random")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

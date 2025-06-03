@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointChargingStation")
+netedit.changeElement("stopFrame", "waypointChargingStation")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "-42", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "-42")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "1.15", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspect.speed, "1.15")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

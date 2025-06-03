@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.stopLane)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.triggered, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.triggered, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.triggered, "person", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.triggered, "person")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspectSelection.expected, "personA personB", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspectSelection.expected, "personA personB")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

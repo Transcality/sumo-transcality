@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # change angle (invalid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.angle, "dummyAngle")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.angle, "dummyAngle")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change angle (valid, but > 360)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.angle, "500")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.angle, "500")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # change angle (valid, < 0)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.angle, "-27")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.angle, "-27")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeC)
 
 # change angle (valid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.angle, "45")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.angle, "45")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeD)

@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,37 +40,37 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow over route
-netedit.changeElement("flow (over route)")
+netedit.changeElement("vehicleFrame", "flow (over route)")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspect.terminate, "dummyTerminate", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspect.terminate, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspect.terminate, "end", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspect.terminate, "end")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspect.terminateOption, "dummyEnd", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspect.terminateOption, "dummyEnd")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspect.terminateOption, "12.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspect.terminateOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspect.terminateOption, "23", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspect.terminateOption, "23")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

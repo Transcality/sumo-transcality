@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create busStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busStop)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.busStop.inspect.parameters, True)
+netedit.checkParametersOverlapped(referencePosition, netedit.attrs.busStop.inspect.parameters)
 
 # save netedit config
 netedit.saveNeteditConfig(referencePosition)

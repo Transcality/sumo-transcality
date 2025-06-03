@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change Person
-netedit.changeElement("personFlow")
+netedit.changeElement("personFrame", "personFlow")
 
 # create person using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change vType with a valid value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.type, "custom_vType", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.type, "custom_vType")
 
 # inspect vtype
-netedit.modifyBoolAttribute(netedit.attrs.personFlow.inspect.typeButton, False)
+netedit.modifyBoolAttribute(netedit.attrs.personFlow.inspect.typeButton)
 
 # change color with a valid value
-netedit.modifyAttribute(netedit.attrs.type.color, "12,13,14", False)
+netedit.modifyAttribute(netedit.attrs.type.color, "12,13,14")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

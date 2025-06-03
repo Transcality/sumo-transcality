@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # set friendlyPos
-netedit.changeDefaultBoolValue(netedit.attrs.parkingArea.create.friendlyPos)
+netedit.modifyBoolAttribute(netedit.attrs.parkingArea.create.friendlyPos)
 
 # create parkingArea in mode "Reference Left" with different friendly pos
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

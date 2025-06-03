@@ -29,14 +29,14 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect three times
 netedit.leftClick(referencePosition, netedit.positions.overlappedTest)
 netedit.leftClickShift(referencePosition, netedit.positions.overlappedTest)
 
 # Change parameter 15 with a valid value
-netedit.modifyAttribute(netedit.attrs.edge.inspect.name, "my own name", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.edge.inspect.name, "my own name")
 
 # Check undos
 netedit.undo(referencePosition, 1)

@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,34 +40,34 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow over route
-netedit.changeElement("flow (over route)")
+netedit.changeElement("vehicleFrame", "flow (over route)")
 
 # set invalid depart pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.departPosLat, "dummyPos")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.departPosLat, "dummyPos")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid depart pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.departPosLat, "-12")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.departPosLat, "-12")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid depart pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.departPosLat, "random_free")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.departPosLat, "random_free")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid depart pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.departPosLat, "20")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.departPosLat, "20")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

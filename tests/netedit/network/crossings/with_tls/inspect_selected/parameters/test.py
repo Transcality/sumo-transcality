@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
@@ -41,13 +41,13 @@ netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.right)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.crossing.inspectSelectionTLS.parameters, True)
+netedit.checkParametersOverlapped(referencePosition, netedit.attrs.crossing.inspectSelectionTLS.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

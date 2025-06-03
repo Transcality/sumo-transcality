@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1
-netedit.changeElement("inductionLoop")
+netedit.changeElement("additionalFrame", "inductionLoop")
 
 # Change friendlyPos
-netedit.changeDefaultBoolValue(netedit.attrs.E1.create.friendlyPos)
+netedit.modifyBoolAttribute(netedit.attrs.E1.create.friendlyPos)
 
 # create E1 with different friendly position
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

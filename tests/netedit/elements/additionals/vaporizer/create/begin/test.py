@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select vaporizer
-netedit.changeElement("vaporizer")
+netedit.changeElement("additionalFrame", "vaporizer")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.vaporizer.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.vaporizer.create.center)
 
 # set invalid start
-netedit.changeDefaultValue(netedit.attrs.vaporizer.create.begin, "-12")
+netedit.modifyAttribute(netedit.attrs.vaporizer.create.begin, "-12")
 
 # try to create vaporizer
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # set valid start
-netedit.changeDefaultValue(netedit.attrs.vaporizer.create.begin, "10")
+netedit.modifyAttribute(netedit.attrs.vaporizer.create.begin, "10")
 
 # create vaporizer (camera will be moved)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

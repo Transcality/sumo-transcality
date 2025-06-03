@@ -29,20 +29,20 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poly")
+netedit.changeElement("shapeFrame", "poly")
 
 # change type with invalid XML characters (but the are allowed)
-netedit.changeDefaultValue(netedit.attrs.poly.create.type, "<<poly_test>>")
+netedit.modifyAttribute(netedit.attrs.poly.create.type, "<<poly_test>>")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change type
-netedit.changeDefaultValue(netedit.attrs.poly.create.type, "poly_test")
+netedit.modifyAttribute(netedit.attrs.poly.create.type, "poly_test")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeC,

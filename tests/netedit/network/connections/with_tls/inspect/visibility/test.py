@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # show connections
 netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
@@ -38,25 +38,25 @@ netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
 netedit.leftClick(referencePosition, netedit.positions.network.connection.connectionA)
 
 # Change visibility with an invalid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.visibility, "dummyVisibility", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.visibility, "dummyVisibility")
 
 # Change visibility with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.visibility, "-4", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.visibility, "-4")
 
 # Change visibility with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.visibility, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.visibility, "0")
 
 # Change visibility with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.visibility, "11", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.visibility, "11")
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 4)
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 4)

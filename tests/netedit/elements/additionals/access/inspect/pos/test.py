@@ -29,44 +29,44 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select BusStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create BusStop with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select Access
-netedit.changeElement("access")
+netedit.changeElement("additionalFrame", "access")
 
 # Create Access
 netedit.selectAdditionalChild(netedit.attrs.access.create.parent, 0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # Change parameter pos with a non valid value (dummy position X)
-netedit.modifyAttribute(netedit.attrs.access.inspect.pos, "dummy position", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.pos, "dummy position")
 
 # Change parameter pos with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.access.inspect.pos, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.pos, "")
 
 # Change parameter pos with a valid value (negative)
-netedit.modifyAttribute(netedit.attrs.access.inspect.pos, "-1000", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.pos, "-1000")
 
 # Change parameter pos with a valid value (greater than lane length)
-netedit.modifyAttribute(netedit.attrs.access.inspect.pos, "1000", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.pos, "1000")
 
 # Change parameter pos with a valid value (greater than lane length)
-netedit.modifyAttribute(netedit.attrs.access.inspect.pos, "random", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.pos, "random")
 
 # Change parameter pos with a valid value (middle lane)
-netedit.modifyAttribute(netedit.attrs.access.inspect.pos, "2.1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.pos, "2.1")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

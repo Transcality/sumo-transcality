@@ -32,13 +32,13 @@ neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 netedit.changeEditMode(netedit.attrs.modes.network.selectLane)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.lane.inspect.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.lane.inspect.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

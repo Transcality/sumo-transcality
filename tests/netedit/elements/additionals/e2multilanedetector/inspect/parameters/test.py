@@ -29,27 +29,27 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("multiLaneAreaDetector")
+netedit.changeElement("additionalFrame", "multiLaneAreaDetector")
 
 # create E2 with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to additional mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect E2
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2MultilaneDetector)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.E2Multilane.inspect.parameters, True)
+netedit.checkParametersOverlapped(referencePosition, netedit.attrs.E2Multilane.inspect.parameters)
 
 # save netedit config
 netedit.saveNeteditConfig(referencePosition)

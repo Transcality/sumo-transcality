@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "-5", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "0", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.jump, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

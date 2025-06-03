@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create vType
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.accel, "", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.accel, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.accel, "dummyAcel", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.accel, "dummyAcel")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.accel, "-30", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.accel, "-30")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.edit.accel, "20.5", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.accel, "20.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

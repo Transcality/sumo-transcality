@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select calibratorLane
-netedit.changeElement("calibratorLane")
+netedit.changeElement("additionalFrame", "calibratorLane")
 
 # create calibratorLane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

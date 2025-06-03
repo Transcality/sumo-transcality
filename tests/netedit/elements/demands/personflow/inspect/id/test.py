@@ -29,48 +29,48 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change Person
-netedit.changeElement("personFlow")
+netedit.changeElement("personFrame", "personFlow")
 
 # create person using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # create person using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, ";;;;;;;;", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, ";;;;;;;;")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "id with spaces", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "id with spaces")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "pf_1", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "pf_1")
 
 # change ID with an invalid value (empty)
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "customID", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.id, "customID")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

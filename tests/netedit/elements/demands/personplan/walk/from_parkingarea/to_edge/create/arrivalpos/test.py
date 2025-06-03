@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change person plan
 netedit.changePersonPlan("walk", False)
@@ -42,28 +42,28 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to walk.busStop.edge mode
-netedit.personPlanMode()
+netedit.changeMode("personPlan")
 
 # go to walk.busStop.edge mode
-netedit.changePersonPlanMode("walk")
+netedit.changeElement("personPlanFrame", "walk")
 
 # create walk.busStop.edge
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.walk.busStop.edge.create.arrivalPos, "dummy")
+netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.create.arrivalPos, "dummy")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.walk.busStop.edge.create.arrivalPos, "12.5")
+netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.create.arrivalPos, "12.5")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

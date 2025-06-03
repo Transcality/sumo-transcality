@@ -29,32 +29,32 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E3
-netedit.changeElement("entryExitDetector")
+netedit.changeElement("additionalFrame", "entryExitDetector")
 
 # set invalid file
-netedit.changeDefaultValue(netedit.attrs.E3.create.file, "%%%$$%%$%")
+netedit.modifyAttribute(netedit.attrs.E3.create.file, "%%%$$%%$%")
 
 # try to create E3 with invalid file
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set valid file
-netedit.changeDefaultValue(netedit.attrs.E3.create.file, "myOwnFile.txt")
+netedit.modifyAttribute(netedit.attrs.E3.create.file, "myOwnFile.txt")
 
 # create E3 with valid file
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # select entry detector
-netedit.changeElement("detExit")
+netedit.changeElement("additionalFrame", "detExit")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select exit detector
-netedit.changeElement("detEntry")
+netedit.changeElement("additionalFrame", "detEntry")
 
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

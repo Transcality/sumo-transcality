@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to poly mode and select poly
-netedit.changeElement("poly")
+netedit.changeElement("shapeFrame", "poly")
 
 # create first polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
@@ -43,22 +43,22 @@ netedit.createSquaredShape(referencePosition, netedit.positions.elements.additio
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 0 with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "poly_1", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "poly_1")
 
 # Change parameter 0 with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "")
 
 # Change parameter 0 with a non valid value (invalid)
-netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "ID with spaces", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "ID with spaces")
 
 # Change parameter 0 with a valid value
-netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "newID", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.id, "newID")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

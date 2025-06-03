@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect routeProbes
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
 
 # Change parameter 1 with an non valid value
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.name, "%%%;:..&&%$%$", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.name, "%%%;:..&&%$%$")
 
 # Change parameter 1 with a duplicated value
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.name, "customName", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.name, "customName")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

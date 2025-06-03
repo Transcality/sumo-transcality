@@ -29,29 +29,29 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 16 with a valid value (default)
-netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffset, "4", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffset, "4")
 
 # Change parameter 8 with an non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "dummyException", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "dummyException")
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "")
 
 # Change parameter 8 with a valid value (different separators)
-netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "authority  army, passenger; taxi. tram", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "authority  army, passenger; taxi. tram")
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException, "")
 
 # Change parameter 8 with a valid value (empty)
 netedit.modifyAttribute(netedit.attrs.edge.inspect.stopOffsetException,
-                        "authority army vip passenger hov taxi bus coach tram bicycle", False)
+                        "authority army vip passenger hov taxi bus coach tram bicycle")
 
 # Check undos
 netedit.undo(referencePosition, 4)

@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "dummySpeed", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "dummySpeed")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "500", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "500")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "-10", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "-10")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "20", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.departSpeed, "20")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

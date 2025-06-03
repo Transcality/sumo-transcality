@@ -29,66 +29,66 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow with embedded route
-netedit.changeElement("flow (embedded route)")
+netedit.changeElement("vehicleFrame", "flow (embedded route)")
 
 # set invalid arrival pos
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.terminate, "dummyTerminate")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminate, "dummyTerminate")
 
 # try to create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid arrival pos
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.terminate, "number")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminate, "number")
 
 # create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.terminateOption, "dummy")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminateOption, "dummy")
 
 # create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.terminateOption, "-30")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminateOption, "-30")
 
 # create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.terminateOption, "20.5")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminateOption, "20.5")
 
 # create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.terminateOption, "22")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminateOption, "22")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

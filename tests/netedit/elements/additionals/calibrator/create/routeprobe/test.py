@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select calibrator
-netedit.changeElement("calibrator")
+netedit.changeElement("additionalFrame", "calibrator")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.calibrator.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.calibrator.create.center)
 
 # change routeprobe with a invalid routeProbe ID
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.routeProbe, ";;;;;%%;;;;")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.routeProbe, ";;;;;%%;;;;")
 
 # create calibrator with a different routeProbe in other lane
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # change frequency with a different routeProbe (Valid, empty)
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.routeProbe, "")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.routeProbe, "")
 
 # create calibrator with a valid parameter in other lane
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # change routeprobe with a different routeProbe
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.routeProbe, "routeProbe_0")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.routeProbe, "routeProbe_0")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

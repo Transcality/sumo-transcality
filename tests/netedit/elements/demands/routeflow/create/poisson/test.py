@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,40 +40,40 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow over route
-netedit.changeElement("flow (over route)")
+netedit.changeElement("vehicleFrame", "flow (over route)")
 
 # set invalid arrival pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.spacing, "dummySpacing")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.spacing, "dummySpacing")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid arrival pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.spacing, "poisson")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.spacing, "poisson")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.spacingOption, "dummy")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.spacingOption, "dummy")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.spacingOption, "-30")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.spacingOption, "-30")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.spacingOption, "2.5")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.spacingOption, "2.5")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # change type of junction (should not be possible due is a dead_end)
-netedit.modifyAttribute(netedit.attrs.junction.inspect.type, "unknown", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspect.type, "unknown")
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 1)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 1)

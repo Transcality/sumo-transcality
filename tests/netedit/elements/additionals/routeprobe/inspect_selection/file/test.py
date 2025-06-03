@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect routeProbes
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
 
 # Change parameter 2 with a non valid value (invalid characters)
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.file, "$$$$$$$$", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.file, "$$$$$$$$")
 
 # Change parameter 2 with a valid value
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.file, "fileA.txt", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.file, "fileA.txt")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

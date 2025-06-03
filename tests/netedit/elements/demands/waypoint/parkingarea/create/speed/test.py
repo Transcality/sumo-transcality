@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointParkingArea")
+netedit.changeElement("stopFrame", "waypointParkingArea")
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.speed, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.speed, ";;;;;;;;;;")
 
 # try to create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.speed, "")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.speed, "")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.speed, "-12")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.speed, "-12")
 
 # create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.speed, "32.5")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.speed, "32.5")
 
 # create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)

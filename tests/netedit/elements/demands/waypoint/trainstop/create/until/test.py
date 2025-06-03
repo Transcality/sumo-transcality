@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointTrainStop")
+netedit.changeElement("stopFrame", "waypointTrainStop")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.waypointTrainStop.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointTrainStop.create.durationEnable)
 
 # enable until
-netedit.changeDefaultBoolValue(netedit.attrs.waypointTrainStop.create.untilEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointTrainStop.create.untilEnable)
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointTrainStop.create.until, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.create.until, "dummyValue")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointTrainStop.create.until, "-20")
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.create.until, "-20")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointTrainStop.create.until, "0")
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.create.until, "0")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointTrainStop.create.until, "22.33")
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.create.until, "22.33")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)

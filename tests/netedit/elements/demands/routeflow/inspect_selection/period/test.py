@@ -29,37 +29,37 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.terminate, "end", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.terminate, "end")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.spacing, "dummyTerminate", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.spacing, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.spacing, "period", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.spacing, "period")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.spacingOption, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.spacingOption, "dummy")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.spacingOption, "12.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.spacingOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.spacingOption, "26", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.spacingOption, "26")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

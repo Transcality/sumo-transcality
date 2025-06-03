@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # set valid vclass
-netedit.changeRouteVClass("bus")
+netedit.changeParentElement("routeFrame", "bus")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge5)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter repeat with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "", False)
+netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "")
 
 # Change parameter repeat with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "dummyRepeat", False)
+netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "dummyRepeat")
 
 # Change parameter repeat with a valid value
-netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "-12.5", False)
+netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "-12.5")
 
 # Change parameter repeat with a valid value
-netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "13", False)
+netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "13")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

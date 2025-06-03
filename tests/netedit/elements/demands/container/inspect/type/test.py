@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # create container using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create container
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect container
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.container)
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.type, ";;;;;", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.type, ";;;;;")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.type, "", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.type, "")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.type, "dummyType", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.type, "dummyType")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.type, "custom_vType", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.type, "custom_vType")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

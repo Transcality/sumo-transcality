@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointTrainStop")
+netedit.changeElement("stopFrame", "waypointTrainStop")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointTrainStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointTrainStop.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointTrainStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointTrainStop.inspect.durationEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "-5", False)
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "0", False)
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.waypointTrainStop.inspect.duration, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

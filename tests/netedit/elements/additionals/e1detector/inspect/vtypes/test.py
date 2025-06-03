@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1
-netedit.changeElement("inductionLoop")
+netedit.changeElement("additionalFrame", "inductionLoop")
 
 # create E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter vtypes with a invalid value
-netedit.modifyAttribute(netedit.attrs.E1.inspect.vTypes, "Type%%%%%1 T;;yp$2 Type3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspect.vTypes, "Type%%%%%1 T;;yp$2 Type3")
 
 # Change parameter vtypes with a valid value
-netedit.modifyAttribute(netedit.attrs.E1.inspect.vTypes, "Type1 Type2 Type3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspect.vTypes, "Type1 Type2 Type3")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

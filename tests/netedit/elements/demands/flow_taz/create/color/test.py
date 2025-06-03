@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select trip over TAZs
-netedit.changeElement("flow (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "flow (from-to TAZs)")
 
 # set color using dialog
 netedit.changeColorUsingDialog(netedit.attrs.flowTAZ.create.colorButton, 5)
@@ -45,37 +45,37 @@ netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid color
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.color, "dummyColor")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.color, "dummyColor")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid color
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.color, "cyan")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.color, "cyan")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid color
-netedit.changeDefaultValue(netedit.attrs.flowTAZ.create.color, "12,13,14")
+netedit.modifyAttribute(netedit.attrs.flowTAZ.create.color, "12,13,14")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

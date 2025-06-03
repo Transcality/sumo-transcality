@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POI in list of shapes
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # create first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 6 with a non valid value
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.name, "customName", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.name, "customName")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

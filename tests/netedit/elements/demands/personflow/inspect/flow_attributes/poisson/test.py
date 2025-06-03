@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change Person
-netedit.changeElement("personFlow")
+netedit.changeElement("personFrame", "personFlow")
 
 # create person using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "dummyTerminate", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "poisson", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "poisson")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacingOption, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacingOption, "dummy")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacingOption, "12.5", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacingOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacingOption, "2.6", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacingOption, "2.6")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

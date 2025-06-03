@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointParkingArea")
+netedit.changeElement("stopFrame", "waypointParkingArea")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointParking.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointParking.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointParking.inspect.untilEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointParking.inspect.untilEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "-5", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "0", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.until, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

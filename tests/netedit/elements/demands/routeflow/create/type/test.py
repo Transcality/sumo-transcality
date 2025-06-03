@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,22 +40,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow over route
-netedit.changeElement("flow (over route)")
+netedit.changeElement("vehicleFrame", "flow (over route)")
 
 # set invalid vType
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.type, "blue")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.type, "blue")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid vType
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.type, "custom_vType")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.type, "custom_vType")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

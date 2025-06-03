@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poi")
+netedit.changeElement("shapeFrame", "poi")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete created poi
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)

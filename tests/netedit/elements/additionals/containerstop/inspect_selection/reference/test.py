@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect busstops
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.containerStop)
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspectSelection.reference, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspectSelection.reference, "dummy")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspectSelection.reference, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspectSelection.reference, "")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspectSelection.reference, "left", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspectSelection.reference, "left")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspectSelection.reference, "center", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspectSelection.reference, "center")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspectSelection.reference, "right", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspectSelection.reference, "right")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

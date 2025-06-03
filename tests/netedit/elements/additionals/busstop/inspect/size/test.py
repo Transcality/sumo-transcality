@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create busStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busStop)
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.size, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.size, "dummy")
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.size, "-12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.size, "-12")
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.size, "60000", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.size, "60000")
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.size, "7.12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.size, "7.12")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

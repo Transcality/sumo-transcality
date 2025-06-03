@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopTrainStop")
+netedit.changeElement("stopFrame", "stopTrainStop")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
@@ -50,7 +50,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainSto
 netedit.checkUndoRedo(referencePosition)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -59,7 +59,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.checkUndoRedo(referencePosition)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)

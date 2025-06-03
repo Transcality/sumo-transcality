@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # first recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2MultilaneDetector)
 
 # Change parameter Frequency with a non valid value (non numeral)
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspectSelection.tl, ";;;;", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspectSelection.tl, ";;;;")
 
 # Change parameter Frequency with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspectSelection.tl, "Junction1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspectSelection.tl, "Junction1")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

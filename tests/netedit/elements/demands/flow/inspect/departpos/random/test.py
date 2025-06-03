@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to edges)")
+netedit.changeElement("vehicleFrame", "flow (from-to edges)")
 
 # create flow using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change departLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.departPos, "", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.departPos, "")
 
 # change departLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.departPos, "dummyPos", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.departPos, "dummyPos")
 
 # change departLane with a valid value
-netedit.modifyAttribute(netedit.attrs.flow.inspect.departPos, "random", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspect.departPos, "random")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

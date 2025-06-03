@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change container plan
 netedit.changeContainerPlan("transport", False)
@@ -42,22 +42,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create container
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect container
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.container)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.depart, "", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.depart, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.depart, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.depart, "dummyDepart")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.depart, "triggered", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.depart, "triggered")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

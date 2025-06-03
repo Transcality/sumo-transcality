@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # copy vType
-netedit.copyVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.copy)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

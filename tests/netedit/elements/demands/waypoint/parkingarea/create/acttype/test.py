@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointParkingArea")
+netedit.changeElement("stopFrame", "waypointParkingArea")
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.actType, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.actType, ";;;;;;;;;;")
 
 # try to create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.actType, "")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.actType, "")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.actType, "dummy Act")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.actType, "dummy Act")
 
 # create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.actType, "singing")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.actType, "singing")
 
 # create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)

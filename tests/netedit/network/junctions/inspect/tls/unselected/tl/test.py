@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # set invalid value
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.tl, "dummyTLS", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.tl, "dummyTLS")
 
 # change type of junction
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.tl, "D", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.tl, "D")
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 1)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 1)

@@ -29,50 +29,50 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select vehicle with embedded route
-netedit.changeElement("vehicle (embedded route)")
+netedit.changeElement("vehicleFrame", "vehicle (embedded route)")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid depart
-netedit.changeDefaultValue(netedit.attrs.vehicleEmbedded.create.depart, "-12")
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.create.depart, "-12")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid depart
-netedit.changeDefaultValue(netedit.attrs.vehicleEmbedded.create.depart, "30")
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.create.depart, "30")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid depart (output will be changed)
-netedit.changeDefaultValue(netedit.attrs.vehicleEmbedded.create.depart, "20")
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.create.depart, "20")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

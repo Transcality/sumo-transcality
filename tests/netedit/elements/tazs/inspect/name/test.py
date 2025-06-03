@@ -29,20 +29,20 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TAZ mode
-netedit.TAZMode()
+netedit.changeMode("TAZ")
 
 # create first TAZ
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first TAZ
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 6 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspect.name, "customName", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspect.name, "customName")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

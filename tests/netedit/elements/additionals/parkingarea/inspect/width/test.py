@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first parkingArea
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)
 
 # Change parameter Width with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.width, "dummyWidth", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.width, "dummyWidth")
 
 # Change parameter Width with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.width, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.width, "-5")
 
 # Change parameter Width with a non valid value (0)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.width, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.width, "0")
 
 # Change parameter Width with a valid value
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.width, "2.3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.width, "2.3")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopBusStop")
+netedit.changeElement("stopFrame", "stopBusStop")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.stopBusStop.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.stopBusStop.create.durationEnable)
 
 # enable until
-netedit.changeDefaultBoolValue(netedit.attrs.stopBusStop.create.untilEnable)
+netedit.modifyBoolAttribute(netedit.attrs.stopBusStop.create.untilEnable)
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.until, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.until, "dummyValue")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.until, "-20")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.until, "-20")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.until, "0")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.until, "0")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.until, "22.33")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.until, "22.33")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)

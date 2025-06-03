@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("jupedsim.walkable_area")
+netedit.changeElement("shapeFrame", "jupedsim.walkable_area")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # set invalid ID
-netedit.changeDefaultValue(netedit.attrs.jpsWalkableArea.create.id, ";;;;;;")
+netedit.modifyAttribute(netedit.attrs.jpsWalkableArea.create.id, ";;;;;;")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # set invalid ID
-netedit.changeDefaultValue(netedit.attrs.jpsWalkableArea.create.id, "jps.walkable_area_0")
+netedit.modifyAttribute(netedit.attrs.jpsWalkableArea.create.id, "jps.walkable_area_0")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # set invalid ID
-netedit.changeDefaultValue(netedit.attrs.jpsWalkableArea.create.id, "custom_ID")
+netedit.modifyAttribute(netedit.attrs.jpsWalkableArea.create.id, "custom_ID")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,

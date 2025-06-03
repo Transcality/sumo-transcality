@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.rightBot)
 
 # press space
-netedit.typeSpace()
+netedit.typeKey('space')
 
 # enable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # delete edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
@@ -50,19 +50,19 @@ netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.up)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undos
 netedit.undo(referencePosition, 2)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redos
 netedit.redo(referencePosition, 2)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

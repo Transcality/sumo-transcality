@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # set dummy value
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.fringe, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.fringe, "dummyValue")
 
 # set valid value
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.fringe, "outer", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.fringe, "outer")
 
 # set valid value
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.fringe, "inner", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.fringe, "inner")
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 1)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 1)

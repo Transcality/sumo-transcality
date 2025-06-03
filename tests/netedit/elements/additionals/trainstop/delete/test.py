@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select trainStop
-netedit.changeElement("trainStop")
+netedit.changeElement("additionalFrame", "trainStop")
 
 # create trainStop in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete created trainStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.trainStop)
@@ -47,7 +47,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.trai
 netedit.undo(referencePosition, 2)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # try to delete lane with the second loaded trainStop (doesn't allowed)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -56,7 +56,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.waitDeleteWarning()
 
 # disable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # try to delete lane with the second loaded trainStop (doesn't allowed)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (embedded route)")
+netedit.changeElement("vehicleFrame", "flow (embedded route)")
 
 # create flow with embedded route using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change arrivalLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "")
 
 # change arrivalLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "dummyLane", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "dummyLane")
 
 # change departColor with a valid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "500", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "500")
 
 # change arrivalLane with a valid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "0", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspect.arrivalLane, "0")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

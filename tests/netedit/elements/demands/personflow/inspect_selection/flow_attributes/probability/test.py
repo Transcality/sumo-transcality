@@ -29,37 +29,37 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacing, "dummyTerminate", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacing, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacing, "probability", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacing, "probability")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "dummy")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "12.5", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "26", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "26")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "0.3", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.spacingOption, "0.3")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

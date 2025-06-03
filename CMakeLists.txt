@@ -4,6 +4,7 @@ cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0054 NEW)
 # find python by path
 set(Python_FIND_STRATEGY LOCATION)
+set(Python_FIND_REGISTRY NEVER)
 # Options
 option(CHECK_OPTIONAL_LIBS "Try to download / enable all optional libraries (use only EPL clean libraries, if set to false)" ON)
 option(MULTITHREADED_BUILD "Use all available cores for building (applies to Visual Studio only)" ON)
@@ -314,10 +315,10 @@ if (SUMO_LIBRARIES AND WIN32)
                                  "${ZLIB_PATH}/bin/*.dll"
                                  "${FREETYPE_PATH}/bin/*.dll"
                                  "${GETTEXT_PATH}/bin/*.dll"
-								 "${GDAL_PATH}/bin/*.dll"
+                                 "${GDAL_PATH}/bin/*.dll"
                                  "${SUMO_LIBRARIES}/libspatialite-*/bin/*.dll"
+                                 "${SUMO_LIBRARIES}/geos-*/bin/*.dll"
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/geos-*/bin/*.dll"
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/curl-*/bin/*.dll"
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/libpng-*/bin/*.dll"
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/libssh2-*/bin/*.dll"
@@ -332,7 +333,6 @@ if (SUMO_LIBRARIES AND WIN32)
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/libexpat-*/bin/*.dll"
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/librttopo-*/bin/*.dll"
                                  "${SUMO_LIBRARIES}/3rdPartyLibs/minizip-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-*/bin/*.dll"
                                  )
     # check if MSVC dll runtimes have to be copied
     if (INSTALL_DLL_RUNTIMES)
@@ -341,7 +341,7 @@ if (SUMO_LIBRARIES AND WIN32)
     endif(INSTALL_DLL_RUNTIMES)
     if (MSVC_VERSION GREATER 1919)
         # fmt in SUMOLibraries only works with MSVC 2019 and later
-        file(GLOB fmt_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/fmt-??.?.?")
+        file(GLOB fmt_PATH "${SUMO_LIBRARIES}/fmt-??.?.?")
     endif ()
     # declare flag for use google test
     set(USE_GOOGLETEST true)
@@ -367,7 +367,6 @@ if (SUMO_LIBRARIES AND WIN32)
     endif ()
     file(GLOB SWIG_EXECUTABLE "${SUMO_LIBRARIES}/swigwin-*/swig.exe")
     file(GLOB MVN_EXECUTABLE "${SUMO_LIBRARIES}/apache-maven-*/bin/mvn.cmd")
-    file(GLOB TEXTTEST_EXECUTABLE "${SUMO_LIBRARIES}/TextTest-*/texttest.exe")
 else ()
     # for Linux and Mac only
     find_package(GTest)
@@ -477,7 +476,7 @@ if (CHECK_OPTIONAL_LIBS)
     file(GLOB FFMPEG_PATH "${SUMO_LIBRARIES}/FFMPEG-?.?.?")
     file(GLOB OSG_PATH "${SUMO_LIBRARIES}/OSG-?.?.?")
     file(GLOB GL2PS_PATH "${SUMO_LIBRARIES}/gl2ps-?.?.?")
-    file(GLOB GEOS_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/geos-*")
+    file(GLOB GEOS_PATH "${SUMO_LIBRARIES}/geos-?.??.?")
     set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${GDAL_PATH};${FFMPEG_PATH};${OSG_PATH};${GL2PS_PATH};${GEOS_PATH}")
     file(GLOB SUMO_OPTIONAL_LIBRARIES_DLL "${GDAL_PATH}/bin/*.dll" "${FFMPEG_PATH}/bin/*.dll" "${OSG_PATH}/bin/*.dll" "${GL2PS_PATH}/bin/*.dll" "${JUPEDSIM_CUSTOMDIR}/bin/*.dll")
 
@@ -816,14 +815,6 @@ add_subdirectory(src)
 if (GTEST_FOUND)
     add_subdirectory(unittest)
 endif ()
-if (TEXTTEST_EXECUTABLE AND EXISTS ${CMAKE_SOURCE_DIR}/tests/runCiTests.bat)
-    add_test(NAME texttest COMMAND ${CMAKE_SOURCE_DIR}/tests/runCiTests.bat ${TEXTTEST_EXECUTABLE} $<CONFIG>)
-else ()
-    find_program(TEXTTEST_FOUND "texttest")
-    if (TEXTTEST_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/tests/runTests.sh)
-        add_test(texttest ${CMAKE_SOURCE_DIR}/tests/runTests.sh -b ci -v ci)
-    endif()
-endif()
 
 # example and dist targets
 add_custom_target(examples

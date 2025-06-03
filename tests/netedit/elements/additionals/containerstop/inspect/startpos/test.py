@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select containerStop
-netedit.changeElement("containerStop")
+netedit.changeElement("additionalFrame", "containerStop")
 
 # create containerStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.containerStop)
 
 # Change parameter startPos with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.startPos, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.startPos, "")
 
 # Change parameter startPos with a valid value (< 0)
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.startPos, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.startPos, "-5")
 
 # Change parameter startPos with a non valid value (> endPos)
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.startPos, "400", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.startPos, "400")
 
 # Change parameter startPos with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.startPos, "20", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.startPos, "20")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

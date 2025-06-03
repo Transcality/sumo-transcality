@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POI in list of shapes
-netedit.changeElement("poi")
+netedit.changeElement("shapeFrame", "poi")
 
 # create first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 7 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poi.inspect.width, "dummyWidth", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspect.width, "dummyWidth")
 
 # Change parameter 7 with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poi.inspect.width, "-2", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspect.width, "-2")
 
 # Change parameter 7 with a valid value
-netedit.modifyAttribute(netedit.attrs.poi.inspect.width, "5", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspect.width, "5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

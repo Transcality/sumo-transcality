@@ -29,20 +29,20 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poly")
+netedit.changeElement("shapeFrame", "poly")
 
 # change layer (invalid)
-netedit.changeDefaultValue(netedit.attrs.poly.create.name, "%%%%%%$$$$")
+netedit.modifyAttribute(netedit.attrs.poly.create.name, "%%%%%%$$$$")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change layer (valid, negative)
-netedit.changeDefaultValue(netedit.attrs.poly.create.name, "customName")
+netedit.modifyAttribute(netedit.attrs.poly.create.name, "customName")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,

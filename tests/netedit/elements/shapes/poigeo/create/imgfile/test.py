@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # change imgfile (invalid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.imgFile, "%%$%$&$%$%$")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.imgFile, "%%$%$&$%$%$")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change imgfile (non exist)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.imgFile, "paris.ico")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.imgFile, "paris.ico")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # change imgfile (valid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.imgFile, "berlin_icon.ico")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.imgFile, "berlin_icon.ico")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeC)

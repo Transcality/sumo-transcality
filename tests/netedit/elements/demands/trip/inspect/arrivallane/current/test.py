@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-# netedit.changeElement("trip")
+# netedit.changeElement("vehicleFrame", "trip")
 
 # create flow using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change arrivalLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.trip.inspect.arrivalLane, "", False)
+netedit.modifyAttribute(netedit.attrs.trip.inspect.arrivalLane, "")
 
 # change arrivalLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.trip.inspect.arrivalLane, "dummyLane", False)
+netedit.modifyAttribute(netedit.attrs.trip.inspect.arrivalLane, "dummyLane")
 
 # change arrivalLane with a valid value
-netedit.modifyAttribute(netedit.attrs.trip.inspect.arrivalLane, "current", False)
+netedit.modifyAttribute(netedit.attrs.trip.inspect.arrivalLane, "current")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect flow over route
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.containerNumber, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.containerNumber, "")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.containerNumber, "dummyNumber", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.containerNumber, "dummyNumber")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.containerNumber, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.containerNumber, "-5")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.containerNumber, "2.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.containerNumber, "2.5")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.containerNumber, "3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.containerNumber, "3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,40 +29,40 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminate, "end", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminate, "end")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacing, "dummyTerminate", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacing, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacing, "probability", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacing, "probability")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "dummy")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "12.5", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "26", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "26")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "0.3", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.spacingOption, "0.3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

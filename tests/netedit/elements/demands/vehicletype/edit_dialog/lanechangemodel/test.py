@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create vType
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # open dialog
 netedit.openVTypeDialog()
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.laneChangeModel, "dummy")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.laneChangeModel, "dummy")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.laneChangeModel, "")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.laneChangeModel, "")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.laneChangeModel, "SL2015")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.laneChangeModel, "SL2015")
 
 # close dialog
-netedit.closeVTypeDialog()
+netedit.typeTwoKeys('alt', 'a')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

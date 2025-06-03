@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect E2s
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2Detector)
 
 # Change parameter length with a non valid value(dummy)
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.length, "dummyLength", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.length, "dummyLength")
 
 # Change parameter length with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.length, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.length, "-5")
 
 # Change parameter length with a non valid value (0)
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.length, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.length, "0")
 
 # Change parameter length with a valid value (> lane length)
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.length, "500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.length, "500")
 
 # Change parameter length with a valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.length, "5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.length, "5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

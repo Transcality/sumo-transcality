@@ -29,20 +29,20 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("jupedsim.walkable_area")
+netedit.changeElement("shapeFrame", "jupedsim.walkable_area")
 
 # change layer (invalid)
-netedit.changeDefaultValue(netedit.attrs.jpsWalkableArea.create.name, "%%%%%%$$$$")
+netedit.modifyAttribute(netedit.attrs.jpsWalkableArea.create.name, "%%%%%%$$$$")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change layer (valid, negative)
-netedit.changeDefaultValue(netedit.attrs.jpsWalkableArea.create.name, "customName")
+netedit.modifyAttribute(netedit.attrs.jpsWalkableArea.create.name, "customName")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,

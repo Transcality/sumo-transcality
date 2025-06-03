@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopTrainStop")
+netedit.changeElement("stopFrame", "stopTrainStop")
 
 # change triggered
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.triggered, "join")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.triggered, "join")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # change triggered
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.join, ";;;")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.join, ";;;")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # change triggered
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.join, "customJoin")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.join, "customJoin")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)

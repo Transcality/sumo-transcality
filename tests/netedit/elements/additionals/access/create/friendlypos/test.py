@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select BusStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create BusStop with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select Access detector
-netedit.changeElement("access")
+netedit.changeElement("additionalFrame", "access")
 
 # change friendly position
-netedit.changeDefaultBoolValue(netedit.attrs.access.create.friendlyPos)
+netedit.modifyBoolAttribute(netedit.attrs.access.create.friendlyPos)
 
 # Create access
 netedit.selectAdditionalChild(netedit.attrs.access.create.parent, 0)

@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select vaporizer
-netedit.changeElement("vaporizer")
+netedit.changeElement("additionalFrame", "vaporizer")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.vaporizer.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.vaporizer.create.center)
 
 # create vaporizer (camera will be moved)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.vaporizer)
 
 # Change parameter 2 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "dummy")
 
 # Change parameter 2 with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "-10", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "-10")
 
 # Change parameter 2 with a non valid value (minor than startTime)
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "2", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "2")
 
 # Change parameter 2 with a valid value
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "20", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.end, "20")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

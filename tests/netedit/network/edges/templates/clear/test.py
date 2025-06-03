@@ -29,51 +29,51 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Change to create mode
-netedit.createEdgeMode()
+netedit.changeMode("createEdge")
 
 # set attribute
-netedit.changeDefaultValue(netedit.attrs.edge.create.numLanes, "3")
+netedit.modifyAttribute(netedit.attrs.edge.create.numLanes, "3")
 
 # set attribute
-netedit.changeDefaultValue(netedit.attrs.edge.create.priority, "15")
+netedit.modifyAttribute(netedit.attrs.edge.create.priority, "15")
 
 # set attribute
-netedit.changeDefaultValue(netedit.attrs.edge.create.allow, "pedestrian bus")
+netedit.modifyAttribute(netedit.attrs.edge.create.allow, "pedestrian bus")
 
 # Create two nodes
 netedit.leftClick(referencePosition, netedit.positions.tmp)
 netedit.leftClick(referencePosition, netedit.positions.tmp)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect
 netedit.leftClick(referencePosition, netedit.positions.tmp)
 
 # create template
-netedit.changeDefaultBoolValue(netedit.attrs.edge.template.create)
+netedit.modifyBoolAttribute(netedit.attrs.edge.template.create)
 
 # Change to create mode
-netedit.createEdgeMode()
+netedit.changeMode("createEdge")
 
 # Create two nodes
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionA)
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionB)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect
 netedit.leftClick(referencePosition, netedit.positions.network.edge.centerA)
 
 # clear template
-netedit.changeDefaultBoolValue(netedit.attrs.edge.template.clear)
+netedit.modifyBoolAttribute(netedit.attrs.edge.template.clear)
 
 # Check undo and redo
 netedit.checkUndoRedo(referencePosition)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

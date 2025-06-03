@@ -29,40 +29,40 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extensionEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extensionEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extensionEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extensionEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "-5", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "0", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.waypointChargingStation.inspectSelection.extension, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

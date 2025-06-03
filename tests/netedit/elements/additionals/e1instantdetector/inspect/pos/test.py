@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1Instant
-netedit.changeElement("instantInductionLoop")
+netedit.changeElement("additionalFrame", "instantInductionLoop")
 
 # create E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter friendlyPos with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.pos, "dummyPos", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.pos, "dummyPos")
 
 # Change parameter friendlyPos with a valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.pos, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.pos, "-5")
 
 # Change parameter friendlyPos with a valid value (> lane length)
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.pos, "400", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.pos, "400")
 
 # Change parameter friendlyPos with a valid value
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.pos, "20", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.pos, "20")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

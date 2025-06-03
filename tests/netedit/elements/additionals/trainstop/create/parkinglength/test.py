@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select trainStop
-netedit.changeElement("trainStop")
+netedit.changeElement("additionalFrame", "trainStop")
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.trainStop.create.parkingLength, "dummyLenght")
+netedit.modifyAttribute(netedit.attrs.trainStop.create.parkingLength, "dummyLenght")
 
 # try to create trainStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.trainStop.create.parkingLength, "-7.5")
+netedit.modifyAttribute(netedit.attrs.trainStop.create.parkingLength, "-7.5")
 
 # try to create trainStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.trainStop.create.parkingLength, "3")
+netedit.modifyAttribute(netedit.attrs.trainStop.create.parkingLength, "3")
 
 # create trainStop in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter file with a non valid value (invalid)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspectSelection.name, "%$$%%%%%", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.name, "%$$%%%%%")
 
 # Change parameter file with a non valid value (no exist)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspectSelection.name, "customName", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.name, "customName")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

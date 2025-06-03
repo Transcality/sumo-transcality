@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POI in list of shapes
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # create first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
@@ -41,22 +41,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shap
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 0 with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "poi_1", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "poi_1")
 
 # Change parameter 0 with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "")
 
 # Change parameter 0 with a non valid value (invalid)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "ID with spaces", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "ID with spaces")
 
 # Change parameter 0 with a valid value
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "newID", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.id, "newID")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

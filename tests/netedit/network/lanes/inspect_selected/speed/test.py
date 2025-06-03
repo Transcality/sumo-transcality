@@ -32,28 +32,28 @@ neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 netedit.changeEditMode(netedit.attrs.modes.network.selectLane)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selected edges
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 0 with a non valid value (empty speed)
-netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "")
 
 # Change parameter 0 with a non valid value (dummy speed)
-netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "dummySpeed", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "dummySpeed")
 
 # Change parameter 0 with a non valid value (negative speed)
-netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "-13", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "-13")
 
 # Change parameter 0 with a valid value
-netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "120.5", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.speed, "120.5")
 
 # Check undo
 netedit.undo(referencePosition, 1)

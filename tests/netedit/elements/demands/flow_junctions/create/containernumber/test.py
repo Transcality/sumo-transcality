@@ -29,53 +29,53 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select trip over junctions
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # set invalid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.containerNumber, "dummyContainerNumber")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.containerNumber, "dummyContainerNumber")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.containerNumber, "-12")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.containerNumber, "-12")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.containerNumber, "3.5")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.containerNumber, "3.5")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.containerNumber, "13")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.containerNumber, "13")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

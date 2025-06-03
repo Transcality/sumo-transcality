@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TLS mode
-netedit.selectTLSMode()
+netedit.changeMode("TLS")
 
 # select junction
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # set attribute
-netedit.modifyAttribute(netedit.attrs.TLS.join.NEMAPhase.state, "dummyDur", False)
+netedit.modifyAttribute(netedit.attrs.TLS.join.NEMAPhase.state, "dummyDur")
 
 # set attribute
-netedit.modifyAttribute(netedit.attrs.TLS.join.NEMAPhase.state, "", False)
+netedit.modifyAttribute(netedit.attrs.TLS.join.NEMAPhase.state, "")
 
 # set attribute
-netedit.modifyAttribute(netedit.attrs.TLS.join.NEMAPhase.state, "ryryryryryryryryryryryryryryryryryryryry", False)
+netedit.modifyAttribute(netedit.attrs.TLS.join.NEMAPhase.state, "ryryryryryryryryryryryryryryryryryryryry")
 
 # type enter to save changes
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # Check undo
 netedit.undo(referencePosition, 1)

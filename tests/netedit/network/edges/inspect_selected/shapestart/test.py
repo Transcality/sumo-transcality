@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selected edges
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 14 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "dummyShapeStart", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "dummyShapeStart")
 
 # Change parameter 14 with a non valid value (incomplete)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "34", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "34")
 
 # Change parameter 14 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "")
 
 # Change parameter 14 with a valid value
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "14,15.5", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.shapeStart, "14,15.5")
 
 # Check undos
 netedit.undo(referencePosition, 1)

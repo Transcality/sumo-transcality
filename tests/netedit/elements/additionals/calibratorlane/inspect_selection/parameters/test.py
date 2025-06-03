@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect calibratorLane
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.calibratorLane)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.calibrator.inspectSelection.parameters, True)
+netedit.checkParametersOverlapped(referencePosition, netedit.attrs.calibrator.inspectSelection.parameters)
 
 # save netedit config
 netedit.saveNeteditConfig(referencePosition)

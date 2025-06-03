@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select vaporizer
-netedit.changeElement("vaporizer")
+netedit.changeElement("additionalFrame", "vaporizer")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.vaporizer.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.vaporizer.create.center)
 
 # create vaporizer
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

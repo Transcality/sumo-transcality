@@ -29,53 +29,53 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # disable select trip due this is the first vehicle in the list
-# netedit.changeElement("trip")
+# netedit.changeElement("vehicleFrame", "trip")
 
 # set invalid arrival pos
-netedit.changeDefaultValue(netedit.attrs.trip.create.arrivalPos, "dummyPos")
+netedit.modifyAttribute(netedit.attrs.trip.create.arrivalPos, "dummyPos")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid arrival pos
-netedit.changeDefaultValue(netedit.attrs.trip.create.arrivalPos, "-12")
+netedit.modifyAttribute(netedit.attrs.trip.create.arrivalPos, "-12")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.trip.create.arrivalPos, "random_free")
+netedit.modifyAttribute(netedit.attrs.trip.create.arrivalPos, "random_free")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival pos
-netedit.changeDefaultValue(netedit.attrs.trip.create.arrivalPos, "20")
+netedit.modifyAttribute(netedit.attrs.trip.create.arrivalPos, "20")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

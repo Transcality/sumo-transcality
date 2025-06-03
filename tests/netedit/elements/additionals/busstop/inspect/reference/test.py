@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create busStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busStop)
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.reference, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.reference, "dummy")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.reference, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.reference, "")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.reference, "left", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.reference, "left")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.reference, "center", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.reference, "center")
 
 # Change parameter name with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.reference, "right", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.reference, "right")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

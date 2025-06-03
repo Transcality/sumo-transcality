@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
@@ -38,16 +38,16 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shap
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 7 with a non valid value (invalid)
-netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.name, "%$$%%%%%", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.name, "%$$%%%%%")
 
 # Change parameter 7 with a non valid value (non exist)
-netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.name, "customName", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.name, "customName")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

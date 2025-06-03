@@ -29,29 +29,29 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to poly mode and select poly
-netedit.changeElement("poly")
+netedit.changeElement("shapeFrame", "poly")
 
 # create first polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 6 with a non valid value
-netedit.modifyAttribute(netedit.attrs.poly.inspect.layer, "dummyLayer", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.layer, "dummyLayer")
 
 # Change parameter 6 with a valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poly.inspect.layer, "-2", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.layer, "-2")
 
 # Change parameter 6 with a valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poly.inspect.layer, "2.5", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspect.layer, "2.5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

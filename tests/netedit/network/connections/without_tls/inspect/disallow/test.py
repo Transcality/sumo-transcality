@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # show connections
 netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
@@ -38,29 +38,29 @@ netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
 netedit.leftClick(referencePosition, netedit.positions.network.connection.connectionA)
 
 # Change parameter 8 with an non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.connection.inspect.disallow, "DummyAllowed", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspect.disallow, "DummyAllowed")
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.connection.inspect.disallow, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspect.disallow, "")
 
 # Change parameter 8 with a valid value (different separators)
-netedit.modifyAttribute(netedit.attrs.connection.inspect.disallow, "authority  army, passenger; taxi. tram", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspect.disallow, "authority  army, passenger; taxi. tram")
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.connection.inspect.disallow, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspect.disallow, "")
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.connection.inspect.disallow,
-                        "authority army vip passenger hov taxi bus coach tram bicycle", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspect.disallow,
+                                  "authority army vip passenger hov taxi bus coach tram bicycle")
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 4)
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 4)

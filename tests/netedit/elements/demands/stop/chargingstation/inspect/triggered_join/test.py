@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopChargingStation")
+netedit.changeElement("stopFrame", "stopChargingStation")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.triggered, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.triggered, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.triggered, "join", False)
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.triggered, "join")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.join, ";;;", False)
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.join, ";;;")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.join, "customJoin", False)
+netedit.modifyAttribute(netedit.attrs.stopChargingStation.inspect.join, "customJoin")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

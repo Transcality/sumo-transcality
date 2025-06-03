@@ -29,53 +29,53 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select trip over junctions
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # set invalid arrival lane
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.arrivalSpeed, "dummySpeed")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.arrivalSpeed, "dummySpeed")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid arrival speed
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.arrivalSpeed, "-12")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.arrivalSpeed, "-12")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival speed
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.arrivalSpeed, "max")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.arrivalSpeed, "max")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival speed
-netedit.changeDefaultValue(netedit.attrs.flowJunction.create.arrivalSpeed, "20")
+netedit.modifyAttribute(netedit.attrs.flowJunction.create.arrivalSpeed, "20")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 

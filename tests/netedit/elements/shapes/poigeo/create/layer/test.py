@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # change layer (invalid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.layer, "dummyLayer")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.layer, "dummyLayer")
 
 # try to create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change layer (valid, negative)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.layer, "-2")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.layer, "-2")
 
 # create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # change layer (valid, positive)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.layer, "6.5")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.layer, "6.5")
 
 # create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeC)

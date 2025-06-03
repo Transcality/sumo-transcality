@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change Person
-netedit.changeElement("personFlow")
+netedit.changeElement("personFrame", "personFlow")
 
 # change person plan
 netedit.changePersonPlan("walk", True)
@@ -48,23 +48,23 @@ netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 netedit.changeColorUsingDialog(netedit.attrs.personFlow.create.colorButton, 5)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid personFlow number
-netedit.changeDefaultValue(netedit.attrs.personFlow.create.color, "Vlue")
+netedit.modifyAttribute(netedit.attrs.personFlow.create.color, "Vlue")
 
 # create route using edge and busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid personFlow number
-netedit.changeDefaultValue(netedit.attrs.personFlow.create.color, "red")
+netedit.modifyAttribute(netedit.attrs.personFlow.create.color, "red")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1
-netedit.changeElement("inductionLoop")
+netedit.changeElement("additionalFrame", "inductionLoop")
 
 # create E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter lane with a non valid value (dummy lane)
-netedit.modifyAttribute(netedit.attrs.E1.inspect.lane, "dummy lane", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspect.lane, "dummy lane")
 
 # Change parameter lane with a valid value (different edge)
-netedit.modifyAttribute(netedit.attrs.E1.inspect.lane, "EdgeCenter0_0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspect.lane, "EdgeCenter0_0")
 
 # Change parameter lane with a valid value (original edge, same lane)
-netedit.modifyAttribute(netedit.attrs.E1.inspect.lane, "EdgeCenter1_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspect.lane, "EdgeCenter1_1")
 
 # Change parameter lane with a valid value (original edge, different lane)
-netedit.modifyAttribute(netedit.attrs.E1.inspect.lane, "EdgeCenter1_0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspect.lane, "EdgeCenter1_0")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

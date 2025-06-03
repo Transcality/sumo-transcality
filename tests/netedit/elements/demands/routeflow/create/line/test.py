@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,28 +40,28 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow over route
-netedit.changeElement("flow (over route)")
+netedit.changeElement("vehicleFrame", "flow (over route)")
 
 # set invalid line
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.line, "%%%%%%")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.line, "%%%%%%")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid Line
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.line, "")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.line, "")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set empty line
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.line, "customLine")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.line, "customLine")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

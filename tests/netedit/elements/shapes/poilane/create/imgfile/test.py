@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # change imgfile (invalid)
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.imgFile, "%%$%$&$%$%$")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.imgFile, "%%$%$&$%$%$")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # change imgfile (non exist)
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.imgFile, "paris.ico")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.imgFile, "paris.ico")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # change imgfile (valid)
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.imgFile, "berlin_icon.ico")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.imgFile, "berlin_icon.ico")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

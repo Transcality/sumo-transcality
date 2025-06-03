@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # first recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2MultilaneDetector)
 
 # Change parameter JamThreshold with a non valid value
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspectSelection.jamThreshold, "dummyJamThreshold", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspectSelection.jamThreshold, "dummyJamThreshold")
 
 # Change parameter JamThreshold with a non valid value
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspectSelection.jamThreshold, "-11.1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspectSelection.jamThreshold, "-11.1")
 
 # Change parameter JamThreshold with a valid value
-netedit.modifyAttribute(netedit.attrs.E2Multilane.inspectSelection.jamThreshold, "7.3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2Multilane.inspectSelection.jamThreshold, "7.3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

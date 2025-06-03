@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # create flow with embedded route using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacing, "dummyTerminate", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacing, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacing, "vehsPerHour", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacing, "vehsPerHour")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacingOption, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacingOption, "dummy")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacingOption, "12.5", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacingOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacingOption, "26", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.spacingOption, "26")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

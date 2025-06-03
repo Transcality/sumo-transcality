@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select BusStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create BusStop with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select Access
-netedit.changeElement("access")
+netedit.changeElement("additionalFrame", "access")
 
 # Create two Access
 netedit.selectAdditionalChild(netedit.attrs.access.create.parent, 0)
@@ -46,22 +46,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2Ped)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # Change parameter lane with a non valid value (dummy Lane)
-netedit.modifyAttribute(netedit.attrs.access.inspect.lane, "dummyLane", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.lane, "dummyLane")
 
 # Change parameter lane with a non valid value (Empty lane)
-netedit.modifyAttribute(netedit.attrs.access.inspect.lane, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.lane, "")
 
 # Change parameter lane with a non valid value (There is another Access in the same edge)
-netedit.modifyAttribute(netedit.attrs.access.inspect.lane, "E1_0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.lane, "E1_0")
 
 # Change parameter lane with a valid value (other lane)
-netedit.modifyAttribute(netedit.attrs.access.inspect.lane, "E4_0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspect.lane, "E4_0")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
@@ -70,7 +70,7 @@ netedit.checkUndoRedo(referencePosition)
 netedit.saveNeteditConfig(referencePosition)
 
 # set friendlyPos
-netedit.typeSpace()
+netedit.typeKey('space')
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect E2s
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2Detector)
 
 # Change parameter TimeTreshold with a non valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.timeThreshold, "dummyTimeTreshold", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.timeThreshold, "dummyTimeTreshold")
 
 # Change parameter TimeTreshold with a non valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.timeThreshold, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.timeThreshold, "-5")
 
 # Change parameter TimeTreshold with a valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.timeThreshold, "4.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.timeThreshold, "4.5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

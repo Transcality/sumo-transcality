@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E3
-netedit.changeElement("entryExitDetector")
+netedit.changeElement("additionalFrame", "entryExitDetector")
 
 # create E3 with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # select entry detector
-netedit.changeElement("detExit")
+netedit.changeElement("additionalFrame", "detExit")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select exit detector
-netedit.changeElement("detEntry")
+netedit.changeElement("additionalFrame", "detEntry")
 
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E3
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # Change parameter TimeTreshold with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.E3.inspect.timeThreshold, "dummyTimeTreshold", False)
+netedit.modifyAttribute(netedit.attrs.E3.inspect.timeThreshold, "dummyTimeTreshold")
 
 # Change parameter TimeTreshold with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E3.inspect.timeThreshold, "-5", False)
+netedit.modifyAttribute(netedit.attrs.E3.inspect.timeThreshold, "-5")
 
 # Change parameter TimeTreshold with a valid value
-netedit.modifyAttribute(netedit.attrs.E3.inspect.timeThreshold, "4.2", False)
+netedit.modifyAttribute(netedit.attrs.E3.inspect.timeThreshold, "4.2")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

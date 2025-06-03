@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select routeProbe
-netedit.changeElement("routeProbe")
+netedit.changeElement("additionalFrame", "routeProbe")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.routeProbe.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.routeProbe.create.center)
 
 # create routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.routeProbe.inspect.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.routeProbe.inspect.parameters)
 
 # save netedit config
 netedit.saveNeteditConfig(referencePosition)

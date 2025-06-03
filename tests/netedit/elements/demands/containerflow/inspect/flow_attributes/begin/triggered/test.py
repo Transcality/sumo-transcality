@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change container plan
 netedit.changeContainerPlan("transport", False)
 
 # change Container
-netedit.changeElement("containerFlow")
+netedit.changeElement("containerFrame", "containerFlow")
 
 # create container using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create container
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect container
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.container)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.containerFlow.inspect.begin, "", False)
+netedit.modifyAttribute(netedit.attrs.containerFlow.inspect.begin, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.containerFlow.inspect.begin, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.containerFlow.inspect.begin, "dummyDepart")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.containerFlow.inspect.begin, "triggered", False)
+netedit.modifyAttribute(netedit.attrs.containerFlow.inspect.begin, "triggered")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

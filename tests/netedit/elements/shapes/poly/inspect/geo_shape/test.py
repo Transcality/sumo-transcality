@@ -29,27 +29,27 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to poly mode and select poly
-netedit.changeElement("poly")
+netedit.changeElement("shapeFrame", "poly")
 
 # create first polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change boolean parameter 13
-netedit.modifyBoolAttribute(netedit.attrs.poly.inspect.geo, False)
+netedit.modifyBoolAttribute(netedit.attrs.poly.inspect.geo)
 
 # Change parameter 12 with a valid value
 netedit.modifyAttribute(netedit.attrs.poly.inspect.geoshape,
                         "-13.00,8.00 -8.00,13.00 -13.00,18.00 -18.00,23.00 -23.00,18.00 " +
-                        "-28.00,13.00 -23.00,8.00 -18.00,3.00 -13.00,8.00", False)
+                        "-28.00,13.00 -23.00,8.00 -18.00,3.00 -13.00,8.00")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

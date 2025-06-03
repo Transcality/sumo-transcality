@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("trip (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "trip (from-to TAZs)")
 
 # create trip using two TAZs
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "dummySpeed", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "dummySpeed")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "500", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "500")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "-10", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "-10")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "20", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.departSpeed, "20")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

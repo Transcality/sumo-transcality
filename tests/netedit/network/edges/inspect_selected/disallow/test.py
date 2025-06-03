@@ -29,33 +29,33 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selected edges
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 7 with an non valid value
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "DummyDisallowed", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "DummyDisallowed")
 
 # Change parameter 7 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "")
 
 # Change parameter 7 with a valid value (different separators)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "authority  army, passenger; taxi. tram", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "authority  army, passenger; taxi. tram")
 
 # Change parameter 7 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow, "")
 
 # Change parameter 7 with a valid value (empty)
 netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow,
                         "emergency authority army vip passenger hov bus coach tram rail_urban rail " +
-                        "rail_electric motorcycle moped pedestrian custom1", False)
+                        "rail_electric motorcycle moped pedestrian custom1")
 
 # Check undos
 netedit.undo(referencePosition, 3)
@@ -67,7 +67,7 @@ netedit.redo(referencePosition, 3)
 netedit.saveNeteditConfig(referencePosition)
 
 # fix routes
-netedit.typeSpace()
+netedit.typeKey('space')
 
 # quit netedit
 netedit.quit(neteditProcess)

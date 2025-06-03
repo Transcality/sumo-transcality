@@ -29,53 +29,53 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select trip over TAZs
-netedit.changeElement("trip (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "trip (from-to TAZs)")
 
 # set invalid depart lane
-netedit.changeDefaultValue(netedit.attrs.tripTAZ.create.departLane, "dummyLane")
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.departLane, "dummyLane")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid depart lane
-netedit.changeDefaultValue(netedit.attrs.tripTAZ.create.departLane, "-12")
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.departLane, "-12")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid depart lane
-netedit.changeDefaultValue(netedit.attrs.tripTAZ.create.departLane, "random")
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.departLane, "random")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid depart lane
-netedit.changeDefaultValue(netedit.attrs.tripTAZ.create.departLane, "0")
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.departLane, "0")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

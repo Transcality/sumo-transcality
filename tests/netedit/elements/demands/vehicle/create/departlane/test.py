@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,34 +40,34 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select vehicle
-netedit.changeElement("vehicle (over route)")
+netedit.changeElement("vehicleFrame", "vehicle (over route)")
 
 # set invalid depart lane
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departLane, "dummyLane")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departLane, "dummyLane")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid depart lane
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departLane, "-12")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departLane, "-12")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid depart lane
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departLane, "random")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departLane, "random")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid depart lane
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departLane, "20")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departLane, "20")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

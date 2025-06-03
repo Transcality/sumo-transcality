@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E3
-netedit.changeElement("entryExitDetector")
+netedit.changeElement("additionalFrame", "entryExitDetector")
 
 # create E3 with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # select entry detector
-netedit.changeElement("detEntry")
+netedit.changeElement("additionalFrame", "detEntry")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select exit detector
-netedit.changeElement("detExit")
+netedit.changeElement("additionalFrame", "detExit")
 
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter position with a non valid value (dummy position X)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspect.pos, "dummy position", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspect.pos, "dummy position")
 
 # Change parameter position with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspect.pos, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspect.pos, "")
 
 # Change parameter position with a valid value (different position X)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspect.pos, "25", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspect.pos, "25")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # create E2
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E2
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2Detector)
 
 # Change parameter period with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.E2.inspect.period, "dummyFrequency", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.period, "dummyFrequency")
 
 # Change parameter period with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E2.inspect.period, "-100", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.period, "-100")
 
 # Change parameter period with a valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspect.period, "120.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.period, "120.5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

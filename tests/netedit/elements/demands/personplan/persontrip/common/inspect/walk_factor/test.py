@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change person plan
 netedit.changePersonPlan("walk", False)
@@ -41,34 +41,34 @@ netedit.changePersonPlan("walk", False)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to personTrip.edge.edge mode
-netedit.personPlanMode()
+netedit.changeMode("personPlan")
 
 # go to personTrip.edge.edge mode
-netedit.changePersonPlanMode("personTrip")
+netedit.changeElement("personPlanFrame", "personTrip")
 
 # create personTrip.edge.edge
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # now inspect plan top
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.planEdge2Ped)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspect.walkFactor, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspect.walkFactor, "dummy")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspect.walkFactor, "-13", False)
+netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspect.walkFactor, "-13")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspect.walkFactor, "11.23", False)
+netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspect.walkFactor, "11.23")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

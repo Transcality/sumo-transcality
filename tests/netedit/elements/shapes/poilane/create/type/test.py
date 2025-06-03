@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # change type
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.type, "<<poi_test>>")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.type, "<<poi_test>>")
 
 # create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # change type
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.type, "custom type")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.type, "custom type")
 
 # create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)

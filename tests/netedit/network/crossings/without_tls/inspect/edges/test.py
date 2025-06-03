@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # set crossing mode
-netedit.crossingMode()
+netedit.changeMode("crossing")
 
 # select central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
@@ -40,28 +40,28 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.ce
 # select two left edges and create crossing in edges 3 and 7
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftTop)
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 
 # set invalid edge
-netedit.modifyAttribute(netedit.attrs.crossing.inspect.edges, "dummy Edges", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspect.edges, "dummy Edges")
 
 # Change set
-netedit.modifyAttribute(netedit.attrs.crossing.inspect.edges, "E2 -E2", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspect.edges, "E2 -E2")
 
 # Change Edges adding a new edge
-netedit.modifyAttribute(netedit.attrs.crossing.inspect.edges, "E0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspect.edges, "E0")
 
 # Change Edges adding a new edge
-netedit.modifyAttribute(netedit.attrs.crossing.inspect.edges, "E0 -E0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspect.edges, "E0 -E0")
 
 # Check undos
 netedit.undo(referencePosition, 3)

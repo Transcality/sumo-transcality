@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # set crossing mode
-netedit.crossingMode()
+netedit.changeMode("crossing")
 
 # select central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
@@ -40,19 +40,19 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.ce
 # select two left edges and create crossing in edges 3 and 7
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftTop)
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.crossing.inspectTLS.parameters, True)
+netedit.checkParametersOverlapped(referencePosition, netedit.attrs.crossing.inspectTLS.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

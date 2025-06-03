@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # change width (invalid, dummy)
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.width, "dummyWidth")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.width, "dummyWidth")
 
 # try to create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # change width (invalid, negative)
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.width, "-2")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.width, "-2")
 
 # try to create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # change width (valid)
-netedit.changeDefaultValue(netedit.attrs.poiLane.create.width, "2.5")
+netedit.modifyAttribute(netedit.attrs.poiLane.create.width, "2.5")
 
 # create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

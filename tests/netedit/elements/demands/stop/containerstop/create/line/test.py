@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopContainerStop")
+netedit.changeElement("stopFrame", "stopContainerStop")
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopContainerStop.create.line, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.create.line, ";;;;;;;;;;")
 
 # try to create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopContainerStop.create.line, "")
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.create.line, "")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopContainerStop.create.line, "customLine")
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.create.line, "customLine")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.containerStop)

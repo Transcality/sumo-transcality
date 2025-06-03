@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # change type
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.type, "<<poi_test>>")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.type, "<<poi_test>>")
 
 # change type
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.type, "custom type")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.type, "custom type")
 
 # create poi
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)

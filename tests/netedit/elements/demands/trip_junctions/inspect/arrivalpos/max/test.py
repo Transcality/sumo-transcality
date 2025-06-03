@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("trip (from-to junctions)")
+netedit.changeElement("vehicleFrame", "trip (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.arrivalPos, "", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.arrivalPos, "")
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.arrivalPos, "dummyPos", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.arrivalPos, "dummyPos")
 
 # change arrivalPos with a valid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.arrivalPos, "max", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.arrivalPos, "max")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

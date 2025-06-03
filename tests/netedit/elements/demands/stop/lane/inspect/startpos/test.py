@@ -29,37 +29,37 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopLane")
+netedit.changeElement("stopFrame", "stopLane")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.stopLane)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.startPos, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.startPos, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.startPos, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.startPos, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.startPos, "500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.startPos, "500")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.startPos, "-600", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.startPos, "-600")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.startPos, "16", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.startPos, "16")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

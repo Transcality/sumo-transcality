@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,37 +40,37 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select vehicle
-netedit.changeElement("vehicle (over route)")
+netedit.changeElement("vehicleFrame", "vehicle (over route)")
 
 # try create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid id
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.id, "%%%%;;%%")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.id, "%%%%;;%%")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid id
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.id, "")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.id, "")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set empty id
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.id, "v_0")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.id, "v_0")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set empty id
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.id, "customID")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.id, "customID")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

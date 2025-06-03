@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1Instant
-netedit.changeElement("instantInductionLoop")
+netedit.changeElement("additionalFrame", "instantInductionLoop")
 
 # create E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter file with an non valid value
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.file, "%%%;:..&&%$%$", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.file, "%%%;:..&&%$%$")
 
 # Change parameter file with a valid value
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.file, "myOwnOutput.txt", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.file, "myOwnOutput.txt")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

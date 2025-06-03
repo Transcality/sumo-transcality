@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # create poiGeo
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeC)
 
 # change color to white (To see icon)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.color, "white")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.color, "white")
 
 # Change parameter width with a valid value (To see icon)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.width, "10")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.width, "10")
 
 # Change parameter height with a valid value (To see icon)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.height, "10")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.height, "10")
 
 # change imgfile (valid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.imgFile, "berlin_icon.ico")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.imgFile, "berlin_icon.ico")
 
 # create poiGeo
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeD)
 
 # go to move mode
-netedit.moveMode()
+netedit.changeMode("move")
 
 # move
 netedit.moveElementHorizontal(referencePosition, netedit.positions.elements.additionals.shapeC,

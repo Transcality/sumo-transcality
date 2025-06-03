@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopLane")
+netedit.changeElement("stopFrame", "stopLane")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.stopLane)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.lane, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.lane, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.lane, "Edge2_0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.lane, "Edge2_0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopLane.inspect.lane, "Edge0_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.stopLane.inspect.lane, "Edge0_1")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

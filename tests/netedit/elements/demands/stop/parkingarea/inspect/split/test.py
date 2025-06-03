@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopParkingArea")
+netedit.changeElement("stopFrame", "stopParkingArea")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspect.split, ";;;;", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspect.split, ";;;;")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspect.split, "", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspect.split, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspect.split, "customSplit", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspect.split, "customSplit")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

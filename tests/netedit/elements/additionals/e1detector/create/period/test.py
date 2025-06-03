@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1
-netedit.changeElement("inductionLoop")
+netedit.changeElement("additionalFrame", "inductionLoop")
 
 # set a invalid  frequency (dummy)
-netedit.changeDefaultValue(netedit.attrs.E1.create.period, "dummyFrequency")
+netedit.modifyAttribute(netedit.attrs.E1.create.period, "dummyFrequency")
 
 # try to create E1 with invalid frequency
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set a invalid  frequency
-netedit.changeDefaultValue(netedit.attrs.E1.create.period, "-30")
+netedit.modifyAttribute(netedit.attrs.E1.create.period, "-30")
 
 # try to create E1 with invalid frequency
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set a valid frequency
-netedit.changeDefaultValue(netedit.attrs.E1.create.period, "150")
+netedit.modifyAttribute(netedit.attrs.E1.create.period, "150")
 
 # create E1 with valid frequency
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.triggered, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.triggered, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.triggered, "join", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.triggered, "join")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.join, ";;;;", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.join, ";;;;")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.join, "customJoin", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspectSelection.join, "customJoin")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

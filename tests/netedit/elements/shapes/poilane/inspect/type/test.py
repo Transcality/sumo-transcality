@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POILane in list of shapes
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # create POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter type with a valid value
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.type, "<<myOwnType>>", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.type, "<<myOwnType>>")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

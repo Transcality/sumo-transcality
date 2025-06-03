@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POILane in list of shapes
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # create POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter Height with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.height, "dummyHeight", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.height, "dummyHeight")
 
 # Change parameter Height with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.height, "-3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.height, "-3")
 
 # Change parameter Height with a valid value
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.height, "6.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.height, "6.5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

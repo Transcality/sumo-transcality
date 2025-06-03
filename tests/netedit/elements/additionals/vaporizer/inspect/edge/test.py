@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select vaporizer
-netedit.changeElement("vaporizer")
+netedit.changeElement("additionalFrame", "vaporizer")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.vaporizer.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.vaporizer.create.center)
 
 # create vaporizer (camera will be moved)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -44,19 +44,19 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.vaporizer)
 
 # Change parameter 0 with a non valid value (dummy edge)
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.edge, "dummyEdge", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.edge, "dummyEdge")
 
 # Change parameter 0 with a valid value (different edge)
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.edge, "Edge1", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.edge, "Edge1")
 
 # Change parameter 0 with a valid value (different edge)
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.edge, "Edge2", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspect.edge, "Edge2")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

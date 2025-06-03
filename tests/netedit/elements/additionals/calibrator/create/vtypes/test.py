@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select calibrator
-netedit.changeElement("calibrator")
+netedit.changeElement("additionalFrame", "calibrator")
 
 # change center view
-netedit.changeDefaultBoolValue(netedit.attrs.calibrator.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.calibrator.create.center)
 
 # change vTypes with an invalid value
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.vTypes, "%%%%##;;#!!!")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.vTypes, "%%%%##;;#!!!")
 
 # create calibrator with a valid parameter in other lane
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # change vTypes with an valid value
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.vTypes, "type1 type2")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.vTypes, "type1 type2")
 
 # create calibrator with a valid parameter in other lane
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

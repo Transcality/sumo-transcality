@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Go to data supermode
-netedit.supermodeData()
+netedit.changeSupermode("data")
 
 # change to edgeData
-netedit.meanData()
+netedit.changeMode("meanData")
 
 # create two mean datas
 netedit.createMeanData()
 
 # modify meanData
-netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.writeAttributes, "%%%%", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.writeAttributes, "%%%%")
 
 # modify meanData
-netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.writeAttributes, "attributeA", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.writeAttributes, "attributeA")
 
 # modify meanData
-netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.writeAttributes, "id shape", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.writeAttributes, "id shape")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

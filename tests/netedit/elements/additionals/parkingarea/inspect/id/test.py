@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea 1 in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -41,19 +41,19 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first parkingArea
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)
 
 # Change parameter id with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.id, "pa_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.id, "pa_1")
 
 # Change parameter id with a non valid value (Invalid ID)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.id, "Id with spaces", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.id, "Id with spaces")
 
 # Change parameter id with a valid value
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.id, "correctID", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.id, "correctID")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

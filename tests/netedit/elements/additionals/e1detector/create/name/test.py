@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1
-netedit.changeElement("inductionLoop")
+netedit.changeElement("additionalFrame", "inductionLoop")
 
 # set invalid name
-netedit.changeDefaultValue(netedit.attrs.E1.create.name, "\"\"\";;")
+netedit.modifyAttribute(netedit.attrs.E1.create.name, "\"\"\";;")
 
 # try to create E1 with invalid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set valid name
-netedit.changeDefaultValue(netedit.attrs.E1.create.name, "customName")
+netedit.modifyAttribute(netedit.attrs.E1.create.name, "customName")
 
 # create E1 with valid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

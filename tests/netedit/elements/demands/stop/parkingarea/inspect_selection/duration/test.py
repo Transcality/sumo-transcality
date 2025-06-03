@@ -29,40 +29,40 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopParkingArea.inspectSelection.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopParkingArea.inspectSelection.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopParkingArea.inspectSelection.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopParkingArea.inspectSelection.durationEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "-5", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "0", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.inspectSelection.duration, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

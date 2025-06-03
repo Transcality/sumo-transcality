@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select containerStop
-netedit.changeElement("containerStop")
+netedit.changeElement("additionalFrame", "containerStop")
 
 # create containerStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.containerStop)
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.lines, "line1, line2", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.lines, "line1, line2")
 
 # Change parameter 5 with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.lines, "line1 line2", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.lines, "line1 line2")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

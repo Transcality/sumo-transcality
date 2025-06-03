@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POILane in list of shapes
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # create POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter Angle with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.angle, "dummyAngle", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.angle, "dummyAngle")
 
 # Change parameter Angle with a valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.angle, "-12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.angle, "-12")
 
 # Change parameter Angle with a valid value (> 360)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.angle, "500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.angle, "500")
 
 # Change parameter Angle with a valid value
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.angle, "30", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.angle, "30")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

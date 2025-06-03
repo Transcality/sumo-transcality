@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change container plan
 netedit.changeContainerPlan("tranship", False)
@@ -42,28 +42,28 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to transport.busStop.edge mode
-netedit.containerPlanMode()
+netedit.changeMode("containerPlan")
 
 # go to transport.busStop.edge mode
-netedit.changeContainerPlanMode("transport")
+netedit.changeElement("containerPlanFrame", "transport")
 
 # create transport.busStop.edge
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set invalid container number
-netedit.changeDefaultValue(netedit.attrs.transport.busStop.edge.create.arrivalPos, "dummy")
+netedit.modifyAttribute(netedit.attrs.transport.busStop.edge.create.arrivalPos, "dummy")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid container number
-netedit.changeDefaultValue(netedit.attrs.transport.busStop.edge.create.arrivalPos, "12.5")
+netedit.modifyAttribute(netedit.attrs.transport.busStop.edge.create.arrivalPos, "12.5")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

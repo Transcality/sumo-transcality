@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create vType
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # open dialog
 netedit.openVTypeDialog()
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.height, "dummy")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.height, "dummy")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.height, "")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.height, "")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.height, "-7")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.height, "-7")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.height, "8.5")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.height, "8.5")
 
 # close dialog
-netedit.closeVTypeDialog()
+netedit.typeTwoKeys('alt', 'a')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

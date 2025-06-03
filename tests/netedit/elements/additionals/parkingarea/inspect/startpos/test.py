@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first parkingArea
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)
 
 # Change parameter StartPos with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.startPos, "dummyStartPos", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.startPos, "dummyStartPos")
 
 # Change parameter StartPos with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.startPos, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.startPos, "")
 
 # Change parameter StartPos with a valid value (< 0)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.startPos, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.startPos, "-5")
 
 # Change parameter StartPos with a non valid value (> endPos)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.startPos, "400", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.startPos, "400")
 
 # Change parameter StartPos with a valid value
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.startPos, "20", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.startPos, "20")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

@@ -29,33 +29,33 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # disable select trip due this is the first vehicle in the list
-# netedit.changeElement("trip")
+# netedit.changeElement("vehicleFrame", "trip")
 
 # set invalid vType
-netedit.changeDefaultValue(netedit.attrs.trip.create.type, "blue")
+netedit.modifyAttribute(netedit.attrs.trip.create.type, "blue")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid vType
-netedit.changeDefaultValue(netedit.attrs.trip.create.type, "custom_vType")
+netedit.modifyAttribute(netedit.attrs.trip.create.type, "custom_vType")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create trip
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

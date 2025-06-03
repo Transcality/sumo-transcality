@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # create E2
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E2
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2Detector)
 
 # Change parameter length with a non valid value(dummy)
-netedit.modifyAttribute(netedit.attrs.E2.inspect.length, "dummyLength", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.length, "dummyLength")
 
 # Change parameter length with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E2.inspect.length, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.length, "-5")
 
 # Change parameter length with a non valid value (0)
-netedit.modifyAttribute(netedit.attrs.E2.inspect.length, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.length, "0")
 
 # Change parameter length with a valid value (> lane length)
-netedit.modifyAttribute(netedit.attrs.E2.inspect.length, "500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.length, "500")
 
 # Change parameter length with a valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspect.length, "5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspect.length, "5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

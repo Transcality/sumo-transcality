@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change container plan
 netedit.changeContainerPlan("tranship", False)
@@ -41,28 +41,28 @@ netedit.changeContainerPlan("tranship", False)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to transport.edge.edge mode
-netedit.containerPlanMode()
+netedit.changeMode("containerPlan")
 
 # go to transport.edge.edge mode
-netedit.changeContainerPlanMode("transport")
+netedit.changeElement("containerPlanFrame", "transport")
 
 # create transport.edge.edge
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # now inspect plan top
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.planEdge2Ped)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.transport.edge.edge.inspect.group, "custom group", False)
+netedit.modifyAttribute(netedit.attrs.transport.edge.edge.inspect.group, "custom group")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TAZ mode
-netedit.TAZMode()
+netedit.changeMode("TAZ")
 
 # change color using dialog
 netedit.changeColorUsingDialog(netedit.attrs.TAZ.create.colorButton, 5)
@@ -39,14 +39,14 @@ netedit.createSquaredShape(referencePosition, netedit.positions.elements.additio
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change color manually (invalid)
-netedit.changeDefaultValue(netedit.attrs.TAZ.create.color, "Vlue")
+netedit.modifyAttribute(netedit.attrs.TAZ.create.color, "Vlue")
 
 # try to create TAZ
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change color manually (valid)
-netedit.changeDefaultValue(netedit.attrs.TAZ.create.color, "red")
+netedit.modifyAttribute(netedit.attrs.TAZ.create.color, "red")
 
 # create TAZ
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeC,

@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopBusStop")
+netedit.changeElement("stopFrame", "stopBusStop")
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.actType, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.actType, ";;;;;;;;;;")
 
 # try to create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.actType, "")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.actType, "")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.actType, "dummy Act")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.actType, "dummy Act")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.actType, "singing")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.actType, "singing")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)

@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.stopLane)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspectSelection.parking, "opportunistic", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspectSelection.parking, "opportunistic")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspectSelection.parking, "false", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspectSelection.parking, "false")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointLane.inspectSelection.parking, "true", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.waypointLane.inspectSelection.parking, "true")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

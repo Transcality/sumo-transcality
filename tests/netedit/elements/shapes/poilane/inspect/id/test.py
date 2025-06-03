@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POILane in list of shapes
-netedit.changeElement("poiLane")
+netedit.changeElement("shapeFrame", "poiLane")
 
 # create POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -41,22 +41,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter ID with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.id, "poi_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.id, "poi_1")
 
 # Change parameter ID with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.id, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.id, "")
 
 # Change parameter ID with a non valid value (invalid)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.id, "ID with spaces", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.id, "ID with spaces")
 
 # Change parameter ID with a valid value
-netedit.modifyAttribute(netedit.attrs.poiLane.inspect.id, "newID", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspect.id, "newID")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

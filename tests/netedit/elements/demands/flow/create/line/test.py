@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow
-netedit.changeElement("flow (from-to edges)")
+netedit.changeElement("vehicleFrame", "flow (from-to edges)")
 
 # set invalid line
-netedit.changeDefaultValue(netedit.attrs.flow.create.line, "%%%%%%")
+netedit.modifyAttribute(netedit.attrs.flow.create.line, "%%%%%%")
 
 # try to create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid Line
-netedit.changeDefaultValue(netedit.attrs.flow.create.line, "ownLine")
+netedit.modifyAttribute(netedit.attrs.flow.create.line, "ownLine")
 
 # create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set empty line
-netedit.changeDefaultValue(netedit.attrs.flow.create.line, "")
+netedit.modifyAttribute(netedit.attrs.flow.create.line, "")
 
 # create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

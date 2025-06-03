@@ -35,10 +35,10 @@ netedit.saveNeteditConfig(referencePosition)
 netedit.fixDemandElement(netedit.attrs.fix.demandElements.routes.selectInvalidRoutes)
 
 # Go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # press supr key to remove invalid routes
-netedit.deleteUsingSuprKey()
+netedit.deleteUsingShortcut()
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select chargingStation
-netedit.changeElement("chargingStation")
+netedit.changeElement("additionalFrame", "chargingStation")
 
 # create chargingStation in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first chargingStation
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter startPos with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.startPos, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.startPos, "")
 
 # Change parameter startPos with a valid value (< 0)
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.startPos, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.startPos, "-5")
 
 # Change parameter startPos with a non valid value (> endPos)
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.startPos, "400", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.startPos, "400")
 
 # Change parameter startPos with a valid value
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.startPos, "8", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.startPos, "8")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

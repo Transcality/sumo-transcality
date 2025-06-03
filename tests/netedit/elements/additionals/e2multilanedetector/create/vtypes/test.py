@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("multiLaneAreaDetector")
+netedit.changeElement("additionalFrame", "multiLaneAreaDetector")
 
 # select lanes
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -43,16 +43,16 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # set invalid vehicle types (invalid IDs)
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.vTypes, "%%;$$$ %%$$ type.3")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.vTypes, "%%;$$$ %%$$ type.3")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid vehicle type
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.vTypes, "private passenger taxi bus")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.vTypes, "private passenger taxi bus")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

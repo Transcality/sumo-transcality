@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select routeProbe
-netedit.changeElement("routeProbe")
+netedit.changeElement("additionalFrame", "routeProbe")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.routeProbe.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.routeProbe.create.center)
 
 # create routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -44,19 +44,19 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
 
 # Change parameter 0 with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.id, "rp_1", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.id, "rp_1")
 
 # Change parameter 0 with a non valid value (Invalid ID)
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.id, "Id with spaces", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.id, "Id with spaces")
 
 # Change parameter 0 with a valid value
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.id, "correctID", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.id, "correctID")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

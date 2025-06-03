@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,13 +40,13 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow over route
-netedit.changeElement("flow (over route)")
+netedit.changeElement("vehicleFrame", "flow (over route)")
 
 # set invalid person number
 netedit.changeColorUsingDialog(netedit.attrs.routeFlow.create.colorButton, 5)
@@ -55,19 +55,19 @@ netedit.changeColorUsingDialog(netedit.attrs.routeFlow.create.colorButton, 5)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid color
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.color, "dummyColor")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.color, "dummyColor")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid color
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.color, "cyan")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.color, "cyan")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid color
-netedit.changeDefaultValue(netedit.attrs.routeFlow.create.color, "12,13,14")
+netedit.modifyAttribute(netedit.attrs.routeFlow.create.color, "12,13,14")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

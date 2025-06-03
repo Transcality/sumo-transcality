@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select containerStop
-netedit.changeElement("containerStop")
+netedit.changeElement("additionalFrame", "containerStop")
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.containerStop.create.reference, "dummy")
+netedit.modifyAttribute(netedit.attrs.containerStop.create.reference, "dummy")
 
 # try to create containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.containerStop.create.reference, "center")
+netedit.modifyAttribute(netedit.attrs.containerStop.create.reference, "center")
 
 # try to create containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.containerStop.create.reference, "left")
+netedit.modifyAttribute(netedit.attrs.containerStop.create.reference, "left")
 
 # try to create containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.containerStop.create.reference, "right")
+netedit.modifyAttribute(netedit.attrs.containerStop.create.reference, "right")
 
 # create containerStop in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edge3)

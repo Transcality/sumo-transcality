@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect busstops
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.trainStop)
 
 # Set person capacity
-netedit.modifyAttribute(netedit.attrs.trainStop.inspectSelection.personCapacity, "50", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspectSelection.personCapacity, "50")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select routeProbe
-netedit.changeElement("routeProbe")
+netedit.changeElement("additionalFrame", "routeProbe")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.routeProbe.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.routeProbe.create.center)
 
 # create routeProbe (camera will be moved)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)

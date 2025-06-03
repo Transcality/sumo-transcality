@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointParkingArea")
+netedit.changeElement("stopFrame", "waypointParkingArea")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "-16", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "-16")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "11.5", False)
+netedit.modifyAttribute(netedit.attrs.waypointParking.inspect.speed, "11.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

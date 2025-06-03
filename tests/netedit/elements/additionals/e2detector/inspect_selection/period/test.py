@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect E2s
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.e2Detector)
 
 # Change parameter period with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.period, "dummyFrequency", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.period, "dummyFrequency")
 
 # Change parameter period with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.period, "-100", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.period, "-100")
 
 # Change parameter period with a valid value
-netedit.modifyAttribute(netedit.attrs.E2.inspectSelection.period, "120.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E2.inspectSelection.period, "120.5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

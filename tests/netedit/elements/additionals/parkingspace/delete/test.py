@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -41,7 +41,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # select space
-netedit.changeElement("space")
+netedit.changeElement("additionalFrame", "space")
 
 # create space
 netedit.selectAdditionalChild(netedit.attrs.parkingSpace.create.parent, 0)
@@ -52,10 +52,10 @@ netedit.selectAdditionalChild(netedit.attrs.parkingSpace.create.parent, 1)
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # disable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # delete created parkingArea
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)

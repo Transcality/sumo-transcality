@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "flow (from-to TAZs)")
 
 # create trip using two TAZs
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "dummyNumber", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "dummyNumber")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "-5", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "-5")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "2.5", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "2.5")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "3", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.personNumber, "3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

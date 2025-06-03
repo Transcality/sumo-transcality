@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poly")
+netedit.changeElement("shapeFrame", "poly")
 
 # change angle (invalid)
-netedit.changeDefaultValue(netedit.attrs.poly.create.angle, "dummyAngle")
+netedit.modifyAttribute(netedit.attrs.poly.create.angle, "dummyAngle")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change angle (valid, but > 360)
-netedit.changeDefaultValue(netedit.attrs.poly.create.angle, "365")
+netedit.modifyAttribute(netedit.attrs.poly.create.angle, "365")
 
 # try to create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeB,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change angle (valid, < 0)
-netedit.changeDefaultValue(netedit.attrs.poly.create.angle, "-5")
+netedit.modifyAttribute(netedit.attrs.poly.create.angle, "-5")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeC,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # change angle (0 < angle < 360)
-netedit.changeDefaultValue(netedit.attrs.poly.create.angle, "5")
+netedit.modifyAttribute(netedit.attrs.poly.create.angle, "5")
 
 # create polygon
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeD,

@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # show connections
 netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
@@ -38,22 +38,22 @@ netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
 netedit.leftClick(referencePosition, netedit.positions.network.connection.connectionA)
 
 # Change type with an invalid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.type, "%%%;;;;%%", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.type, "%%%;;;;%%")
 
 # Change type with an valid value (empty)
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.type, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.type, "")
 
 # Change type with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectTLS.type, "customType", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectTLS.type, "customType")
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 3)
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 3)

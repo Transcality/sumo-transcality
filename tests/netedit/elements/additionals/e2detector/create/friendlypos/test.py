@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # Change friendlyPos
-netedit.changeDefaultBoolValue(netedit.attrs.E2.create.friendlyPos)
+netedit.modifyBoolAttribute(netedit.attrs.E2.create.friendlyPos)
 
 # create E2 with different friendlyPos
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

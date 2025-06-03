@@ -29,32 +29,32 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selected edges
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 5 with an non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "DummyAllowed", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "DummyAllowed")
 
 # Change parameter 5 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "")
 
 # Change parameter 5 with a valid value (different separators)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "authority  army, passenger; taxi. tram", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "authority  army, passenger; taxi. tram")
 
 # Change parameter 5 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.allow, "")
 
 # Change parameter 5 with a valid value (empty)
 netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.disallow,
-                        "authority army vip passenger hov taxi bus coach tram bicycle", False)
+                        "authority army vip passenger hov taxi bus coach tram bicycle")
 
 # Check undos
 netedit.undo(referencePosition, 3)
@@ -66,7 +66,7 @@ netedit.redo(referencePosition, 3)
 netedit.saveNeteditConfig(referencePosition)
 
 # fix routes
-netedit.typeSpace()
+netedit.typeKey('space')
 
 # quit netedit
 netedit.quit(neteditProcess)

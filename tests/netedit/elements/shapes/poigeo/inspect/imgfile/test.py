@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POI in list of shapes
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # create first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 10 with a non valid value (invalid)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.imgFile, "%$$%%%%%", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.imgFile, "%$$%%%%%")
 
 # Change parameter 10 with a non valid value (no exist)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.imgFile, "paris.ico", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.imgFile, "paris.ico")
 
 # Change parameter 10 with a valid value (valid)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.imgFile, "berlin_icon.ico", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.imgFile, "berlin_icon.ico")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

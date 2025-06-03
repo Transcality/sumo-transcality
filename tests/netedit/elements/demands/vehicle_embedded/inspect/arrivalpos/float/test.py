@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("vehicle (embedded route)")
+netedit.changeElement("vehicleFrame", "vehicle (embedded route)")
 
 # create trip using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "")
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "dummyPos", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "dummyPos")
 
 # change departColor with a valid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "500", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "500")
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "-10", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "-10")
 
 # change arrivalPos with a valid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "15.5", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.arrivalPos, "15.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

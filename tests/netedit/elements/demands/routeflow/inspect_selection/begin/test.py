@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect flow over route
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change arrivalPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.begin, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.begin, "")
 
 # change arrivalPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.begin, "dummyBegin", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.begin, "dummyBegin")
 
 # change arrivalPosLat with an invalid valid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.begin, "-12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.begin, "-12")
 
 # change arrivalPosLat with an valid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.begin, "4.2", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.begin, "4.2")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

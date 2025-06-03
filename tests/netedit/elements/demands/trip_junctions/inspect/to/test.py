@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("trip (from-to junctions)")
+netedit.changeElement("vehicleFrame", "trip (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change vType with a valid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.type, "bicycle", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.type, "bicycle")
 
 # change from with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.toJunction, "", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.toJunction, "")
 
 # change from with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.toJunction, "dummyEdge", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.toJunction, "dummyEdge")
 
 # change from with an valid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.toJunction, "gneJ9", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspect.toJunction, "gneJ9")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

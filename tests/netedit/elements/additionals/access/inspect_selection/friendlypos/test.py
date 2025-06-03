@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # Change friendly position
-netedit.modifyAttribute(netedit.attrs.access.inspectSelection.friendlyPos, "true", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.access.inspectSelection.friendlyPos, "true")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

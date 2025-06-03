@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # create person using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.person.inspect.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.person.inspect.colorButton, 5)
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.color, "", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.color, "")
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.color, "dummyColor")
 
 # change color with an valid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.color, "cyan", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.color, "cyan")
 
 # change color with a valid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.color, "12,13,14", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.color, "12,13,14")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

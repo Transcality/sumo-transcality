@@ -29,20 +29,20 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TAZ mode
-netedit.TAZMode()
+netedit.changeMode("TAZ")
 
 # create first TAZ
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first TAZ
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.TAZ.inspect.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.TAZ.inspect.parameters)
 
 # save TAZs
 # save Netedit config

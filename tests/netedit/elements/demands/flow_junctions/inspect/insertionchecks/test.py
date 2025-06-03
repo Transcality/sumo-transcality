@@ -29,33 +29,33 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.insertionChecks, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.insertionChecks, "dummy")
 
 # change personNumber with an invalid value
 netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.insertionChecks,
-                        "leaderGap junction speedLimit pedestrian", False)
+                        "leaderGap junction speedLimit pedestrian")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

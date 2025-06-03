@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select chargingStation
-netedit.changeElement("chargingStation")
+netedit.changeElement("additionalFrame", "chargingStation")
 
 # set charge in transit
-netedit.changeDefaultBoolValue(netedit.attrs.chargingStation.create.chargeInTransit)
+netedit.modifyBoolAttribute(netedit.attrs.chargingStation.create.chargeInTransit)
 
 # create chargingStation in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

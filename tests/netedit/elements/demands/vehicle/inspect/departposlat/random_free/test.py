@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,31 +40,31 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select vehicle
-netedit.changeElement("vehicle (over route)")
+netedit.changeElement("vehicleFrame", "vehicle (over route)")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicle.inspect.departPosLat, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.vehicle.inspect.departPosLat, "")
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicle.inspect.departPosLat, "dummyPosLat", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.vehicle.inspect.departPosLat, "dummyPosLat")
 
 # change departPosLat with an valid value
-netedit.modifyAttribute(netedit.attrs.vehicle.inspect.departPosLat, "random_free", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.vehicle.inspect.departPosLat, "random_free")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

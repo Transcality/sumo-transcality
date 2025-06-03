@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect chargingStations
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.chargingStation)
 
 # disable friendlyPos
-netedit.modifyAttribute(netedit.attrs.busStop.inspectSelection.friendlyPos, "false", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspectSelection.friendlyPos, "false")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # clear selection
 netedit.selectionClear()

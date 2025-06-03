@@ -29,23 +29,23 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # change to non consecutive mode
-netedit.changeRouteMode("non consecutive edges")
+netedit.changeElement("routeFrame", "non consecutive edges")
 
 # change to bus
-netedit.changeRouteVClass("bus")
+netedit.changeParentElement("routeFrame", "bus")
 
 # create route using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClickShift(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

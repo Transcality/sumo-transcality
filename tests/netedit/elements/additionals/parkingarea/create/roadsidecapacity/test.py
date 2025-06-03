@@ -29,37 +29,37 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # set invalid roadSideCapacity (dummy)
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.roadSideCapacity, "dummyRoadSideCapacity")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.roadSideCapacity, "dummyRoadSideCapacity")
 
 # try to create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set invalid roadSideCapacity (empty"
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.roadSideCapacity, "")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.roadSideCapacity, "")
 
 # try to create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set invalid roadSideCapacity (negative)
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.roadSideCapacity, "-3")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.roadSideCapacity, "-3")
 
 # try to create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set invalid roadSideCapacity (double)
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.roadSideCapacity, "2.5")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.roadSideCapacity, "2.5")
 
 # create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set valid roadSideCapacity
-netedit.changeDefaultValue(netedit.attrs.parkingArea.create.roadSideCapacity, "3")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.roadSideCapacity, "3")
 
 # create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

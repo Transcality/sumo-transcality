@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "dummySpeed", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "dummySpeed")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "-10", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "-10")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "20.30", False)
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.inspectSelection.begin, "20.30")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

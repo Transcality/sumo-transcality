@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TLS mode
-netedit.selectTLSMode()
+netedit.changeMode("TLS")
 
 # select junction
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
@@ -38,19 +38,19 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.ce
 netedit.createTLS()
 
 # set attribute
-netedit.modifyAttribute(netedit.attrs.TLS.single.staticPhase.nxt, "dummyNext", False)
+netedit.modifyAttribute(netedit.attrs.TLS.single.staticPhase.nxt, "dummyNext")
 
 # set attribute
-netedit.modifyAttribute(netedit.attrs.TLS.single.staticPhase.nxt, "", False)
+netedit.modifyAttribute(netedit.attrs.TLS.single.staticPhase.nxt, "")
 
 # set attribute
-netedit.modifyAttribute(netedit.attrs.TLS.single.staticPhase.nxt, "1", False)
+netedit.modifyAttribute(netedit.attrs.TLS.single.staticPhase.nxt, "1")
 
 # type enter to save changes
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # type ESC (for undo-redo)
-netedit.typeEscape()
+netedit.typeKey('esc')
 
 # Check undo
 netedit.undo(referencePosition, 1)

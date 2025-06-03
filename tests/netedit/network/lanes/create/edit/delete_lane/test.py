@@ -29,17 +29,17 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Change to create mode
-netedit.createEdgeMode()
+netedit.changeMode("createEdge")
 
 # add lane
-netedit.changeDefaultBoolValue(netedit.attrs.lane.create.add)
+netedit.modifyBoolAttribute(netedit.attrs.lane.create.add)
 
 # Create two nodes
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionA)
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionB)
 
 # remove lane
-netedit.changeDefaultBoolValue(netedit.attrs.lane.create.remove)
+netedit.modifyBoolAttribute(netedit.attrs.lane.create.remove)
 
 # Create two nodes
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionC)

@@ -29,29 +29,29 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create two vTypes
-netedit.createVType()
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # modify attribute
-netedit.modifyAttribute(netedit.attrs.type.edit.id, "", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.id, "")
 
 # modify attribute
-netedit.modifyAttribute(netedit.attrs.type.edit.id, ";;;", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.id, ";;;")
 
 # modify attribute
-netedit.modifyAttribute(netedit.attrs.type.edit.id, "t_0", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.id, "t_0")
 
 # modify attribute
-netedit.modifyAttribute(netedit.attrs.type.edit.id, "t_1", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.id, "t_1")
 
 # modify attribute
-netedit.modifyAttribute(netedit.attrs.type.edit.id, "customID", False)
+netedit.modifyAttribute(netedit.attrs.type.edit.id, "customID")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

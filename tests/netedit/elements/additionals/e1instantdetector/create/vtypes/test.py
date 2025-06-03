@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1Instant
-netedit.changeElement("instantInductionLoop")
+netedit.changeElement("additionalFrame", "instantInductionLoop")
 
 # set invalid vehicle types (invalid IDs)
-netedit.changeDefaultValue(netedit.attrs.E1Instant.create.vTypes, "%%;$$$ %%$$ type.3")
+netedit.modifyAttribute(netedit.attrs.E1Instant.create.vTypes, "%%;$$$ %%$$ type.3")
 
 # try to create E1 with invalid vehicle types
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set valid vehicle type
-netedit.changeDefaultValue(netedit.attrs.E1Instant.create.vTypes, "private passenger taxi bus")
+netedit.modifyAttribute(netedit.attrs.E1Instant.create.vTypes, "private passenger taxi bus")
 
 # create E1 with valid vehicle types
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

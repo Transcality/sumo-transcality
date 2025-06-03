@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Change to create edge mode
-netedit.createEdgeMode()
+netedit.changeMode("createEdge")
 
 # select two-way mode
 netedit.changeEditMode(netedit.attrs.modes.network.twoWayMode)
@@ -42,34 +42,34 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.position
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionB)
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionC)
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionD)
-netedit.cancelEdge()
+netedit.typeKey('esc')
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all elements using invert operation
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect set of junctions
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionA)
 
 # Set all Junctions as traffic lighs
-netedit.modifyAttribute(netedit.attrs.junction.inspectSelection.type, "traffic_light", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.junction.inspectSelection.type, "traffic_light")
 
 # inspect set of edges
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionA, offsetX=100)
 
 # change all speed of edges
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.speed, "20", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.speed, "20")
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo and redo
 netedit.checkUndoRedo(referencePosition)

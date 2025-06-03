@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select routeProbe
-netedit.changeElement("routeProbe")
+netedit.changeElement("additionalFrame", "routeProbe")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.routeProbe.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.routeProbe.create.center)
 
 # create routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
 
 # Change parameter 5 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.begin, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.begin, "dummy")
 
 # Change parameter 5 with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.begin, "-5", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.begin, "-5")
 
 # Change parameter 5 with a valid value
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.begin, "20", False)
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspect.begin, "20")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

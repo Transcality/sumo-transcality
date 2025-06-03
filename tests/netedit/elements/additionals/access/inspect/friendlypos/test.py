@@ -29,29 +29,29 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select BusStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create BusStop with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select Access
-netedit.changeElement("access")
+netedit.changeElement("additionalFrame", "access")
 
 # Create Access
 netedit.selectAdditionalChild(netedit.attrs.access.create.parent, 0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # delete Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # Change friendly position
-netedit.modifyBoolAttribute(netedit.attrs.access.inspect.friendlyPos, True)
+netedit.modifyBoolAttributeOverlapped(netedit.attrs.access.inspect.friendlyPos)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

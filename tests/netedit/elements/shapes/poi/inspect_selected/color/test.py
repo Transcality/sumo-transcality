@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.poi.inspectSelection.colorButton, 6, False)
+netedit.modifyColorAttribute(netedit.attrs.poi.inspectSelection.colorButton, 6)
 
 # Change parameter 2 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "dummyColor")
 
 # Change parameter 2 with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "255,255,500", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "255,255,500")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "blue", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "blue")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "125,60,200", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

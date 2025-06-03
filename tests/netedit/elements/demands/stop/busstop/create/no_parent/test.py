@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopBusStop")
+netedit.changeElement("stopFrame", "stopBusStop")
 
 # try to create stop (don't click over busStop)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

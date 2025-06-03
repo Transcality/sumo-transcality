@@ -29,46 +29,46 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select space
-netedit.changeElement("space")
+netedit.changeElement("additionalFrame", "space")
 
 # set invalid slope (dummy)
 netedit.selectAdditionalChild(netedit.attrs.parkingSpace.create.parent, 0)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.slope, "dummySlope")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.slope, "dummySlope")
 
 # try to create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set invalid slope (empty)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.slope, "")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.slope, "")
 
 # try to create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set valid slope (negative)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.slope, "-4")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.slope, "-4")
 
 # create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)
 
 # set valid slope (>360)
 netedit.selectAdditionalChild(netedit.attrs.parkingSpace.create.parent, 0)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.slope, "500")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.slope, "500")
 
 # create area
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)
 
 # set valid slope
 netedit.selectAdditionalChild(netedit.attrs.parkingSpace.create.parent, 0)
-netedit.changeDefaultValue(netedit.attrs.parkingSpace.create.slope, "12")
+netedit.modifyAttribute(netedit.attrs.parkingSpace.create.slope, "12")
 
 # create area
 netedit.leftClick(referencePosition, netedit.positions.tmp)

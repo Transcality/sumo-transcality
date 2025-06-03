@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "")
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "dummyPosLat", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "dummyPosLat")
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "-5", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "-5")
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "5.6", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departPosLat, "5.6")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

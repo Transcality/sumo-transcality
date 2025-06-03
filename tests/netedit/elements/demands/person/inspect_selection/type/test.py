@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, ";;;;;", False)
+netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, ";;;;;")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, "", False)
+netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, "")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, "dummyType", False)
+netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, "dummyType")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, "typeC", False)
+netedit.modifyAttribute(netedit.attrs.person.inspectSelection.type, "typeC")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

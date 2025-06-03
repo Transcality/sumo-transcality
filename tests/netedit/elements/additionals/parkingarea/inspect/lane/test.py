@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select parkingArea
-netedit.changeElement("parkingArea")
+netedit.changeElement("additionalFrame", "parkingArea")
 
 # create parkingArea in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first parkingArea
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)
 
 # Change parameter lane with a non valid value (dummy lane)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.lane, "dummy lane", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.lane, "dummy lane")
 
 # Change parameter lane with a valid value (different edge)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.lane, "EdgeCenter1_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.lane, "EdgeCenter1_1")
 
 # Change parameter lane with a valid value (original edge, same lane)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.lane, "EdgeCenter1_0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.lane, "EdgeCenter1_0")
 
 # Change parameter lane with a valid value (original edge, different lane)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspect.lane, "EdgeCenter1_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspect.lane, "EdgeCenter1_1")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

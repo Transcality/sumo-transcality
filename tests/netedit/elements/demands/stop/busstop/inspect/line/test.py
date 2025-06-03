@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopBusStop")
+netedit.changeElement("stopFrame", "stopBusStop")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.line, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.line, "dummy")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.line, "", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.line, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.line, "customLine", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.line, "customLine")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -30,10 +30,10 @@ neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change container plan
 netedit.changeContainerPlan("transport", False)
@@ -43,22 +43,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.chargingStation)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to tranship.busStop.busStop mode
-netedit.containerPlanMode()
+netedit.changeMode("containerPlan")
 
 # go to tranship.busStop.busStop mode
-netedit.changeContainerPlanMode("tranship")
+netedit.changeElement("containerPlanFrame", "tranship")
 
 # create tranship.busStop.busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.junction4)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # transform
 netedit.contextualMenuOperation(referencePosition, netedit.positions.elements.demands.planEdgeBike0Ped,

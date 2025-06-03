@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select chargingStation
-netedit.changeElement("chargingStation")
+netedit.changeElement("additionalFrame", "chargingStation")
 
 # set name
-netedit.changeDefaultValue(netedit.attrs.chargingStation.create.name, "custom stopping place name")
+netedit.modifyAttribute(netedit.attrs.chargingStation.create.name, "custom stopping place name")
 
 # create chargingStation in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)

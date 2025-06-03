@@ -29,23 +29,23 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 16 with a valid value (default)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "4", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "4")
 
 # Change parameter 8 with a valid value (empty)
 netedit.modifyAttributeVClassDialog(netedit.attrs.edge.inspectSelection.stopOffsetExceptionButton,
-                                    netedit.attrs.dialog.allowVClass.rail_fast, False)
+                                    netedit.attrs.dialog.allowVClass.rail_fast)
 
 # Check undos
 netedit.undo(referencePosition, 4)

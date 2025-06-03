@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # set invalid vehicle types (invalid IDs)
-netedit.changeDefaultValue(netedit.attrs.E2.create.vTypes, "%%;$$$ %%$$ type.3")
+netedit.modifyAttribute(netedit.attrs.E2.create.vTypes, "%%;$$$ %%$$ type.3")
 
 # try to create E2 with invalid vehicle types
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set valid vehicle types
-netedit.changeDefaultValue(netedit.attrs.E2.create.vTypes, "type1 type2 type3")
+netedit.modifyAttribute(netedit.attrs.E2.create.vTypes, "type1 type2 type3")
 
 # create E2 with valid vehicle types
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect entry
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change Netedit parameter parent with a non valid value (Invalid E3 ID)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspectSelection.parent, "invalidE3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspectSelection.parent, "invalidE3")
 
 # Change Netedit parameter parent with a non valid value (Invalid E3 ID)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspectSelection.parent, "E3_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspectSelection.parent, "E3_1")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

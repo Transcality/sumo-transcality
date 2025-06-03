@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select containerStop
-netedit.changeElement("containerStop")
+netedit.changeElement("additionalFrame", "containerStop")
 
 # set invalid person number
 netedit.changeColorUsingDialog(netedit.attrs.containerStop.create.colorButton, 5)
@@ -41,13 +41,13 @@ netedit.changeColorUsingDialog(netedit.attrs.containerStop.create.colorButton, 5
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.containerStop.create.color, "Vlue")
+netedit.modifyAttribute(netedit.attrs.containerStop.create.color, "Vlue")
 
 # try to create containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set invalid person number
-netedit.changeDefaultValue(netedit.attrs.containerStop.create.color, "red")
+netedit.modifyAttribute(netedit.attrs.containerStop.create.color, "red")
 
 # create containerStop in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

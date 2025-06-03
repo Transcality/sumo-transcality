@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -40,40 +40,40 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select vehicle
-netedit.changeElement("vehicle (over route)")
+netedit.changeElement("vehicleFrame", "vehicle (over route)")
 
 # set invalid depart speed
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departSpeed, "dummySpeed")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departSpeed, "dummySpeed")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid depart speed
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departSpeed, "-12")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departSpeed, "-12")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set invalid depart speed
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departSpeed, "5000")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departSpeed, "5000")
 
 # try to create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid depart speed
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departSpeed, "max")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departSpeed, "max")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid depart speed
-netedit.changeDefaultValue(netedit.attrs.vehicle.create.departSpeed, "20")
+netedit.modifyAttribute(netedit.attrs.vehicle.create.departSpeed, "20")
 
 # create vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

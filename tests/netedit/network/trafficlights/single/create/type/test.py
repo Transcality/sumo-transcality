@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TLS mode
-netedit.selectTLSMode()
+netedit.changeMode("TLS")
 
 # select junction
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
@@ -38,28 +38,28 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.ce
 netedit.createTLS()
 
 # set invalid type
-netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "", False)
+netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "")
 
 # set invalid type
-netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, ";;;%%;;;", False)
+netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, ";;;%%;;;")
 
 # set set valid
-netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "actuated", False)
+netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "actuated")
 
 # set set valid
-netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "delay_based", False)
+netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "delay_based")
 
 # set set valid
-netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "NEMA", False)
+netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "NEMA")
 
 # set set valid
-netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "static", False)
+netedit.modifyAttribute(netedit.attrs.TLS.common.TLType, "static")
 
 # type enter to save changes
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # type ESC (for undo-redo)
-netedit.typeEscape()
+netedit.typeKey('esc')
 
 # Check undo
 netedit.undo(referencePosition, 4)

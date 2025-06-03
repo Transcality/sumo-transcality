@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select calibratorLane
-netedit.changeElement("calibratorLane")
+netedit.changeElement("additionalFrame", "calibratorLane")
 
 # change center view
-netedit.changeDefaultBoolValue(netedit.attrs.calibrator.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.calibrator.create.center)
 
 # create calibratorLane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect calibratorLane
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.calibratorLane)
 
 # Change parameter id with a non valid value (non existent ID)
-netedit.modifyAttribute(netedit.attrs.calibrator.inspectLane.lane, "dummyLane", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.calibrator.inspectLane.lane, "dummyLane")
 
 # Change parameter id with a valid value
-netedit.modifyAttribute(netedit.attrs.calibrator.inspectLane.lane, "EdgeCenter1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.calibrator.inspectLane.lane, "EdgeCenter1")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

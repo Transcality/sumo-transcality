@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect flow over route
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.personNumber, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.personNumber, "")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.personNumber, "dummyNumber", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.personNumber, "dummyNumber")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.personNumber, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.personNumber, "-5")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.personNumber, "2.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.personNumber, "2.5")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.personNumber, "3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.personNumber, "3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

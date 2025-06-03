@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # set invalid radius
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.name, "%%%%;;;;;", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.name, "%%%%;;;;;")
 
 # set invalid radius
-netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.name, "customName", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspectTLS.name, "customName")
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 2)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 2)

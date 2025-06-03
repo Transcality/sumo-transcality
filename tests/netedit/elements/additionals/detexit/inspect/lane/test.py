@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E3
-netedit.changeElement("entryExitDetector")
+netedit.changeElement("additionalFrame", "entryExitDetector")
 
 # create E3 with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # select entry detector
-netedit.changeElement("detExit")
+netedit.changeElement("additionalFrame", "detExit")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select exit detector
-netedit.changeElement("detEntry")
+netedit.changeElement("additionalFrame", "detEntry")
 
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter lane with a non valid value (dummy Lane)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspect.lane, "dummyLane", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspect.lane, "dummyLane")
 
 # Change parameter lane with a non valid value (Empty lane)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspect.lane, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspect.lane, "")
 
 # Change parameter lane with a valid value (other lane)
-netedit.modifyAttribute(netedit.attrs.entryExit.inspect.lane, "EdgeCenter0_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.entryExit.inspect.lane, "EdgeCenter0_1")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

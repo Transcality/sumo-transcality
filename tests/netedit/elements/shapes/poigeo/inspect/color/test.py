@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # select POI in list of shapes
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # create first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.poiGeo.inspect.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.poiGeo.inspect.colorButton, 5)
 
 # Change parameter 4 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "dummyColor")
 
 # Change parameter 4 with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "255,255,500", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "255,255,500")
 
 # Change parameter 4 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "blue", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "blue")
 
 # Change parameter 4 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "125,60,200", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspect.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

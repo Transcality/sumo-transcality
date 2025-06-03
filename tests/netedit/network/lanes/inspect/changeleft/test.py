@@ -32,26 +32,26 @@ neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 netedit.changeEditMode(netedit.attrs.modes.network.selectLane)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 1 with an non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "DummyAllowed", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "DummyAllowed")
 
 # Change parameter 1 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "")
 
 # Change parameter 1 with a valid value (different separators)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "authority  army, passenger; taxi. tram", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "authority  army, passenger; taxi. tram")
 
 # Change parameter 1 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft, "")
 
 # Change parameter 1 with a valid value (empty)
 netedit.modifyAttribute(netedit.attrs.lane.inspect.changeLeft,
-                        "authority army vip passenger hov taxi bus coach tram bicycle", False)
+                        "authority army vip passenger hov taxi bus coach tram bicycle")
 
 # Check undos
 netedit.undo(referencePosition, 3)

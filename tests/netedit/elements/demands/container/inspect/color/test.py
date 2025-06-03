@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # create container using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create container
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect container
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.container)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.container.inspect.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.container.inspect.colorButton, 5)
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.color, "", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.color, "")
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.color, "dummyColor")
 
 # change color with an valid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.color, "cyan", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.color, "cyan")
 
 # change color with a valid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.color, "12,13,14", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.color, "12,13,14")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

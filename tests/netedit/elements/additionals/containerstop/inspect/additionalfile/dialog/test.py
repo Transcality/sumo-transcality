@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select containerStop
-netedit.changeElement("containerStop")
+netedit.changeElement("additionalFrame", "containerStop")
 
 # create containerStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.containerStop)
 
 # set invalid person number
-netedit.modifyAdditionalFileDialog(netedit.attrs.containerStop.inspect.additionalFileButton, True)
+netedit.modifyAdditionalFileDialogOverlapped(netedit.attrs.containerStop.inspect.additionalFileButton)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

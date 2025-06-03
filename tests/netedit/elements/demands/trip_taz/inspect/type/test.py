@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("trip (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "trip (from-to TAZs)")
 
 # create trip using two TAZs
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change vType with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, "", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, "")
 
 # change vType with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, ";;;;", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, ";;;;")
 
 # change vType with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, "dummyVType", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, "dummyVType")
 
 # change vType with a valid value
-netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, "custom_vType", False)
+netedit.modifyAttribute(netedit.attrs.tripTAZ.inspect.type, "custom_vType")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

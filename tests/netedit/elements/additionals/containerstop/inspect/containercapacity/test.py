@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select containerStop
-netedit.changeElement("containerStop")
+netedit.changeElement("additionalFrame", "containerStop")
 
 # create containerStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first containerStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.containerStop)
 
 # Change parameter containerCapacity with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.containerCapacity, "dummyPersonCapacity", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.containerCapacity, "dummyPersonCapacity")
 
 # Change parameter containerCapacity with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.containerCapacity, "-7", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.containerCapacity, "-7")
 
 # Change parameter containerCapacity with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.containerCapacity, "2.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.containerCapacity, "2.5")
 
 # Change parameter containerCapacity with a valid value
-netedit.modifyAttribute(netedit.attrs.containerStop.inspect.containerCapacity, "10", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.containerStop.inspect.containerCapacity, "10")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

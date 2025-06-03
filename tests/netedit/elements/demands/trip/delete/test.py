@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-# netedit.changeElement("trip")
+# netedit.changeElement("vehicleFrame", "trip")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -43,10 +43,10 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
@@ -55,10 +55,10 @@ netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleE
 netedit.undo(referencePosition, 1)
 
 # Change to network mode
-netedit.supermodeNetwork()
+netedit.changeSupermode("network")
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # try to delete an edge with demand elements
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -67,7 +67,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.waitDeleteWarning()
 
 # disable protect demand elemnts
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # now delete edge with their route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

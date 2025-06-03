@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.tripJunction.inspectSelection.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.tripJunction.inspectSelection.colorButton, 5)
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "")
 
 # change color with an invalid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "dummyColor")
 
 # change color with an valid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "cyan", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "cyan")
 
 # change color with a valid value
-netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "12,13,14", False)
+netedit.modifyAttribute(netedit.attrs.tripJunction.inspectSelection.color, "12,13,14")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

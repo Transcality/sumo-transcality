@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Go to data supermode
-netedit.supermodeData()
+netedit.changeSupermode("data")
 
 # change to edgeData
-netedit.meanData()
+netedit.changeMode("meanData")
 
 # change to lane mean data
-netedit.changeMeanData("laneData")
+netedit.changeElement("meanDataFrame", "laneData")
 
 # create two mean datas
 netedit.createMeanData()
 
 # modify meanData
-netedit.modifyBoolAttribute(netedit.attrs.edgeMeanData.inspect.trackVehicles, True)
+netedit.modifyBoolAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.trackVehicles)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

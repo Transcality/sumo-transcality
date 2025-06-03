@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1
-netedit.changeElement("inductionLoop")
+netedit.changeElement("additionalFrame", "inductionLoop")
 
 # set invalid filename
-netedit.changeDefaultValue(netedit.attrs.E1.create.file, "&&&&&&&&")
+netedit.modifyAttribute(netedit.attrs.E1.create.file, "&&&&&&&&")
 
 # try to create E1 with invalid filename
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set valid filename
-netedit.changeDefaultValue(netedit.attrs.E1.create.file, "myOwnFilename.txt")
+netedit.modifyAttribute(netedit.attrs.E1.create.file, "myOwnFilename.txt")
 
 # try to create E1 with invalid filename
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

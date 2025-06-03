@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect busstops
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.trainStop)
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspectSelection.size, "dummy", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspectSelection.size, "dummy")
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspectSelection.size, "-12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspectSelection.size, "-12")
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspectSelection.size, "60000", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspectSelection.size, "60000")
 
 # Change parameter 5 with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspectSelection.size, "7.12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspectSelection.size, "7.12")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

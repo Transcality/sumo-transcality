@@ -29,27 +29,27 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect parking areas
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)
 # Change parameter Width with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspectSelection.width, "dummyWidth", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspectSelection.width, "dummyWidth")
 
 # Change parameter Width with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspectSelection.width, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspectSelection.width, "-5")
 
 # Change parameter Width with a non valid value (0)
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspectSelection.width, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspectSelection.width, "0")
 
 # Change parameter Width with a valid value
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspectSelection.width, "2.3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspectSelection.width, "2.3")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

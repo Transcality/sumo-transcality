@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # Create E2
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set a invalid  id (duplicated)
-netedit.changeDefaultValue(netedit.attrs.E2.create.id, "e2_0")
+netedit.modifyAttribute(netedit.attrs.E2.create.id, "e2_0")
 
 # try to create E2 with invalid id
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 
 # set a invalid  id
-netedit.changeDefaultValue(netedit.attrs.E2.create.id, ";;;")
+netedit.modifyAttribute(netedit.attrs.E2.create.id, ";;;")
 
 # try to create E2 with invalid id
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set a valid id
-netedit.changeDefaultValue(netedit.attrs.E2.create.id, "customID")
+netedit.modifyAttribute(netedit.attrs.E2.create.id, "customID")
 
 # create E2 with valid id
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

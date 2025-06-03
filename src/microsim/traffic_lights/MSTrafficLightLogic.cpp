@@ -222,6 +222,29 @@ MSTrafficLightLogic::init(NLDetectorBuilder&) {
             break;
         }
     }
+    // check direct conflict (two green links targeting the same lane)
+    const int numLinks = (int)myLinks.size();
+    for (int i = 0; i < (int)phases.size(); ++i) {
+        std::map<const MSLane*, int, ComparatorNumericalIdLess> greenLanes;
+        const std::string& state = phases[i]->getState();
+        for (int j = 0; j < numLinks; ++j) {
+            if (state[j] == LINKSTATE_TL_GREEN_MAJOR) {
+                for (const MSLink* link : myLinks[j]) {
+                    if (link->isInternalJunctionLink()) {
+                        // links from an internal junction have implicit priority in case of conflict
+                        continue;
+                    }
+                    greenLanes[link->getLane()] += 1;
+                }
+            }
+        }
+        for (auto item : greenLanes) {
+            if (item.second > 1) {
+                WRITE_WARNINGF(TL("Unsafe green phase % in tlLogic '%', program '%'. Lane '%' is targeted by % 'G'-links. (use 'g' instead)"),
+                               i, getID(), getProgramID(), item.first->getID(), item.second);
+            }
+        }
+    }
 
     // check incompatible junction logic
     // this can happen if the network was built with a very different signal
@@ -240,7 +263,6 @@ MSTrafficLightLogic::init(NLDetectorBuilder&) {
     if (mustCheck && phases.size() > 0) {
         // see NBNode::tlsConflict
         std::set<const MSJunction*> controlledJunctions;
-        const int numLinks = (int)myLinks.size();
         for (int j = 0; j < numLinks; ++j) {
             for (int k = 0; k < (int)myLinks[j].size(); ++k) {
                 MSLink* link = myLinks[j][k];

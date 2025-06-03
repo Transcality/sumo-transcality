@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointBusStop")
+netedit.changeElement("stopFrame", "waypointBusStop")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.waypointBusStop.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointBusStop.create.durationEnable)
 
 # enable until
-netedit.changeDefaultBoolValue(netedit.attrs.waypointBusStop.create.extensionEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointBusStop.create.extensionEnable)
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointBusStop.create.extension, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.create.extension, "dummyValue")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointBusStop.create.extension, "-20")
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.create.extension, "-20")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointBusStop.create.extension, "0")
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.create.extension, "0")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointBusStop.create.extension, "22.33")
+netedit.modifyAttribute(netedit.attrs.waypointBusStop.create.extension, "22.33")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)

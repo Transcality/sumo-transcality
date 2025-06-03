@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selection
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointContainerStop.inspectSelection.jump, ";;;;", False)
+netedit.modifyAttribute(netedit.attrs.waypointContainerStop.inspectSelection.jump, ";;;;")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointContainerStop.inspectSelection.jump, "", False)
+netedit.modifyAttribute(netedit.attrs.waypointContainerStop.inspectSelection.jump, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.waypointContainerStop.inspectSelection.jump, "12", False)
+netedit.modifyAttribute(netedit.attrs.waypointContainerStop.inspectSelection.jump, "12")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

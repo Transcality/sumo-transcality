@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
@@ -41,19 +41,19 @@ netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.right)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 
 # Change linkindex2 with a non valid value
-netedit.modifyAttribute(netedit.attrs.crossing.inspectSelectionTLS.linkIndex2, "dummylinkIndex", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspectSelectionTLS.linkIndex2, "dummylinkIndex")
 
 # Change linkindex2 with a non valid value
-netedit.modifyAttribute(netedit.attrs.crossing.inspectSelectionTLS.linkIndex2, "-3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspectSelectionTLS.linkIndex2, "-3")
 
 # Change linkindex2 with a valid value
-netedit.modifyAttribute(netedit.attrs.crossing.inspectSelectionTLS.linkIndex2, "1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspectSelectionTLS.linkIndex2, "1")
 
 # Check undo redo
 netedit.undo(referencePosition, 1)

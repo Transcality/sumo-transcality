@@ -29,53 +29,53 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow with embedded route
-netedit.changeElement("flow (embedded route)")
+netedit.changeElement("vehicleFrame", "flow (embedded route)")
 
 # set invalid arrival lane
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.arrivalLane, "dummyLane")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.arrivalLane, "dummyLane")
 
 # try to create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid arrival lane
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.arrivalLane, "-12")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.arrivalLane, "-12")
 
 # try to create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival lane
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.arrivalLane, "random")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.arrivalLane, "random")
 
 # create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid arrival lane
-netedit.changeDefaultValue(netedit.attrs.flowEmbedded.create.arrivalLane, "20")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.arrivalLane, "20")
 
 # create flow with embedded route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow with embedded route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

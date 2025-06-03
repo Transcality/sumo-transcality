@@ -29,46 +29,46 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointLane")
+netedit.changeElement("stopFrame", "waypointLane")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.waypointLane.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointLane.create.durationEnable)
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # enable duration
-netedit.changeDefaultBoolValue(netedit.attrs.waypointLane.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointLane.create.durationEnable)
 
 # create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.edge2)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointLane.create.duration, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.waypointLane.create.duration, "dummyValue")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.edge2)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointLane.create.duration, "-20")
+netedit.modifyAttribute(netedit.attrs.waypointLane.create.duration, "-20")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.edge2)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointLane.create.duration, "0")
+netedit.modifyAttribute(netedit.attrs.waypointLane.create.duration, "0")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.edge2)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointLane.create.duration, "22.33")
+netedit.modifyAttribute(netedit.attrs.waypointLane.create.duration, "22.33")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.edge2)

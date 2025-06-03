@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "dummyNumber", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "dummyNumber")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "-5", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "-5")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "2.5", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "2.5")
 
 # change personNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "3", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.personNumber, "3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

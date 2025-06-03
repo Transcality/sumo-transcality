@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first junction
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
@@ -44,13 +44,13 @@ netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.le
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.right)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.junction.inspectSelectionTLS.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.junction.inspectSelectionTLS.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

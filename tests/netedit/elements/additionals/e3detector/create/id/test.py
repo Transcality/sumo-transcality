@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E3
-netedit.changeElement("entryExitDetector")
+netedit.changeElement("additionalFrame", "entryExitDetector")
 
 # create E3 with default ID
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set invalid id
-netedit.changeDefaultValue(netedit.attrs.E3.create.id, ";;;;;;")
+netedit.modifyAttribute(netedit.attrs.E3.create.id, ";;;;;;")
 
 # create E3 with valid frequency
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)
 
 # set valid id
-netedit.changeDefaultValue(netedit.attrs.E3.create.id, "e3_0")
+netedit.modifyAttribute(netedit.attrs.E3.create.id, "e3_0")
 
 # create E3 with valid frequency
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)
 
 # set valid id
-netedit.changeDefaultValue(netedit.attrs.E3.create.id, "customID")
+netedit.modifyAttribute(netedit.attrs.E3.create.id, "customID")
 
 # create E3 with valid frequency
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredB)
 
 # select entry detector
-netedit.changeElement("detEntry")
+netedit.changeElement("additionalFrame", "detEntry")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
@@ -67,7 +67,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squa
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 
 # select exit detector
-netedit.changeElement("detExit")
+netedit.changeElement("additionalFrame", "detExit")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)

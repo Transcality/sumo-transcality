@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode again
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # show connections
 netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
@@ -47,8 +47,8 @@ netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
 netedit.leftClick(referencePosition, netedit.positions.network.connection.connectionA)
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttributeVClassDialog(netedit.attrs.connection.inspectSelectionTLS.changeLeftButton,
-                                    netedit.attrs.dialog.allowVClass.allVehicles, True, disallowAll=False)
+netedit.modifyAttributeVClassDialogOverlapped(netedit.attrs.connection.inspectSelectionTLS.changeLeftButton,
+                                              netedit.attrs.dialog.allowVClass.allVehicles, disallowAll=False)
 
 # Check undos
 netedit.undo(referencePosition, 4)

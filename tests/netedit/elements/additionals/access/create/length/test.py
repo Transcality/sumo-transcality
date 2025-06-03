@@ -29,29 +29,29 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select BusStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create BusStop with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select Access detector
-netedit.changeElement("access")
+netedit.changeElement("additionalFrame", "access")
 netedit.selectAdditionalChild(netedit.attrs.access.create.parent, 0)
 
 # set invalid length
-netedit.changeDefaultValue(netedit.attrs.access.create.length, "dummyLenght")
+netedit.modifyAttribute(netedit.attrs.access.create.length, "dummyLenght")
 
 # set invalid length
-netedit.changeDefaultValue(netedit.attrs.access.create.length, "-4")
+netedit.modifyAttribute(netedit.attrs.access.create.length, "-4")
 
 # Try to create Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)
 
 # set valid length
-netedit.changeDefaultValue(netedit.attrs.access.create.length, "3.5")
+netedit.modifyAttribute(netedit.attrs.access.create.length, "3.5")
 
 # Create access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1Ped)

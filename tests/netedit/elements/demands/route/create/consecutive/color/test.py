@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # set color using dialog
 netedit.changeColorUsingDialog(netedit.attrs.route.create.colorButton, 5)
@@ -43,10 +43,10 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid color
-netedit.changeDefaultValue(netedit.attrs.route.create.color, "dummyColor")
+netedit.modifyAttribute(netedit.attrs.route.create.color, "dummyColor")
 
 # try to create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -54,16 +54,16 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to try to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid color
-netedit.changeDefaultValue(netedit.attrs.route.create.color, "120, 20, 30")
+netedit.modifyAttribute(netedit.attrs.route.create.color, "120, 20, 30")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid color
-netedit.changeDefaultValue(netedit.attrs.route.create.color, "blue")
+netedit.modifyAttribute(netedit.attrs.route.create.color, "blue")
 
 # try to create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -71,7 +71,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

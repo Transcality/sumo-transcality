@@ -29,32 +29,32 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E3
-netedit.changeElement("entryExitDetector")
+netedit.changeElement("additionalFrame", "entryExitDetector")
 
 # set invalid vehicle types (invalid IDs)
-netedit.changeDefaultValue(netedit.attrs.E3.create.vTypes, "@%%;$$$ %%$$ type.3@")
+netedit.modifyAttribute(netedit.attrs.E3.create.vTypes, "@%%;$$$ %%$$ type.3@")
 
 # try to create E3 with invalid vehicle type
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # set valid vehicle types
-netedit.changeDefaultValue(netedit.attrs.E3.create.vTypes, "type1 type2 type3")
+netedit.modifyAttribute(netedit.attrs.E3.create.vTypes, "type1 type2 type3")
 
 # create E3 with valid vehicle types
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 
 # select entry detector
-netedit.changeElement("detExit")
+netedit.changeElement("additionalFrame", "detExit")
 
 # Create entry detector with default value
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select exit detector
-netedit.changeElement("detEntry")
+netedit.changeElement("additionalFrame", "detEntry")
 
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.squaredA)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

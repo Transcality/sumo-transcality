@@ -29,23 +29,23 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select BusStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create BusStop with default parameters
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # select Access
-netedit.changeElement("access")
+netedit.changeElement("additionalFrame", "access")
 
 # Create Access
 netedit.selectAdditionalChild(netedit.attrs.access.create.parent, 0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0Ped)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0Ped)
@@ -54,7 +54,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0Ped)
 netedit.undo(referencePosition, 1)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busStop)
@@ -63,7 +63,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busS
 netedit.undo(referencePosition, 1)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -72,7 +72,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.waitDeleteWarning()
 
 # disable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # delete Access
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)

@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect route
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # Change parameter color with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.route.inspectSelection.cycletime, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.route.inspectSelection.cycletime, "")
 
 # Change parameter color with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.route.inspectSelection.cycletime, "dummyCycle", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.route.inspectSelection.cycletime, "dummyCycle")
 
 # Change parameter color with a valid value
-netedit.modifyAttribute(netedit.attrs.route.inspectSelection.cycletime, "-12.4", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.route.inspectSelection.cycletime, "-12.4")
 
 # Change parameter color with a valid value
-netedit.modifyAttribute(netedit.attrs.route.inspectSelection.cycletime, "56.12", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.route.inspectSelection.cycletime, "56.12")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

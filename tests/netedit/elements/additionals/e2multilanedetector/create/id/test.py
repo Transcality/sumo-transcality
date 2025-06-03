@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("multiLaneAreaDetector")
+netedit.changeElement("additionalFrame", "multiLaneAreaDetector")
 
 # select lanes
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -43,7 +43,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # select lanes
 netedit.leftClick(referencePosition, netedit.positions.elements.edge3)
@@ -51,22 +51,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge4)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge5)
 
 # set other name
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.id, ";;;;")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.id, ";;;;")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set other name
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.id, "e2_0")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.id, "e2_0")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set other name
-netedit.changeDefaultValue(netedit.attrs.E2Multilane.create.id, "customID")
+netedit.modifyAttribute(netedit.attrs.E2Multilane.create.id, "customID")
 
 # create E2 with default parameters
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

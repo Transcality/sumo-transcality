@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E1Instant
-netedit.changeElement("instantInductionLoop")
+netedit.changeElement("additionalFrame", "instantInductionLoop")
 
 # create E1 1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -41,19 +41,19 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge4)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter id with a non valid value (Duplicated ID)
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.id, "e1i_1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.id, "e1i_1")
 
 # Change parameter id with a non valid value (Invalid ID)
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.id, "Id with spaces", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.id, "Id with spaces")
 
 # Change parameter id with a valid value
-netedit.modifyAttribute(netedit.attrs.E1Instant.inspect.id, "correctID", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1Instant.inspect.id, "correctID")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

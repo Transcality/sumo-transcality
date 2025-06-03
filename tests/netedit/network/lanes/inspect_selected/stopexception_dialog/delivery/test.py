@@ -32,23 +32,23 @@ neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 netedit.changeEditMode(netedit.attrs.modes.network.selectLane)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 16 with a valid value (default)
-netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.stopOffset, "4", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspectSelection.stopOffset, "4")
 
 # Change parameter 8 with a valid value (empty)
 netedit.modifyAttributeVClassDialog(netedit.attrs.lane.inspectSelection.stopOffsetExceptionButton,
-                                    netedit.attrs.dialog.allowVClass.delivery, False)
+                                    netedit.attrs.dialog.allowVClass.delivery)
 
 # Check undos
 netedit.undo(referencePosition, 4)

@@ -29,29 +29,29 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # change radio
-netedit.modifyAttribute(netedit.attrs.junction.inspect.radius, "400", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspect.radius, "400")
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # transform to roundAbout
 netedit.contextualMenuOperation(referencePosition, netedit.positions.network.junction.cross.center,
                                 netedit.contextualMenu.junction.convertToRoundAbout)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undos
 netedit.undo(referencePosition, 1)
 
 # recompute
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # check redos
 netedit.redo(referencePosition, 1)
@@ -60,7 +60,7 @@ netedit.redo(referencePosition, 1)
 netedit.saveNeteditConfig(referencePosition)
 
 # type space
-netedit.typeSpace()
+netedit.typeKey('space')
 
 # quit netedit
 netedit.quit(neteditProcess)

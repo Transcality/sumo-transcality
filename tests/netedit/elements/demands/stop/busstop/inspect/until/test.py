@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopBusStop")
+netedit.changeElement("stopFrame", "stopBusStop")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopBusStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopBusStop.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopBusStop.inspect.untilEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopBusStop.inspect.untilEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "-5", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "0", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.stopBusStop.inspect.until, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

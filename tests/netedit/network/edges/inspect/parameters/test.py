@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # check parameters
-netedit.checkParameters(referencePosition, netedit.attrs.edge.inspect.parameters, False)
+netedit.checkParameters(referencePosition, netedit.attrs.edge.inspect.parameters)
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

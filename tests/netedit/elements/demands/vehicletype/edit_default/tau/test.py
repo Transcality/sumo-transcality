@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.editDefault.tau, "", False)
+netedit.modifyAttribute(netedit.attrs.type.editDefault.tau, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.editDefault.tau, "dummyTau", False)
+netedit.modifyAttribute(netedit.attrs.type.editDefault.tau, "dummyTau")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.editDefault.tau, "-30", False)
+netedit.modifyAttribute(netedit.attrs.type.editDefault.tau, "-30")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.type.editDefault.tau + 1, "20.5", False)
+netedit.modifyAttribute(netedit.attrs.type.editDefault.tau + 1, "20.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

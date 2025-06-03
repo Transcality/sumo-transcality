@@ -29,30 +29,30 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to TAZ mode
-netedit.TAZMode()
+netedit.changeMode("TAZ")
 
 # create first TAZ
 netedit.createSquaredShape(referencePosition, netedit.positions.elements.additionals.shapeA,
                            netedit.positions.elements.additionals.shapeSize, True)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first TAZ
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 1 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "dummyTAZ", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "dummyTAZ")
 
 # Change parameter 1 with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "")
 
 # Change parameter 1 with a valid value (single point)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "12.00,8.00", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "12.00,8.00")
 
 # Change parameter 1 with a valid value
 netedit.modifyAttribute(netedit.attrs.TAZ.inspect.shape, "12.00,8.00 9.00,13.00 12.00,18.00 7.00,15.00 2.00,18.00 " +
-                        "5.00,13.00 2.00,8.00 7.00,11.00 12.00,8.00", False)
+                        "5.00,13.00 2.00,8.00 7.00,11.00 12.00,8.00")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

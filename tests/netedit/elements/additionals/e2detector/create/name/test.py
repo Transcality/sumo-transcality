@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select E2
-netedit.changeElement("laneAreaDetector")
+netedit.changeElement("additionalFrame", "laneAreaDetector")
 
 # set invalid name
-netedit.changeDefaultValue(netedit.attrs.E2.create.name, ";;;;$$$")
+netedit.modifyAttribute(netedit.attrs.E2.create.name, ";;;;$$$")
 
 # try to create E2 with invalid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set valid name
-netedit.changeDefaultValue(netedit.attrs.E2.create.name, "customName")
+netedit.modifyAttribute(netedit.attrs.E2.create.name, "customName")
 
 # create E2 with valid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

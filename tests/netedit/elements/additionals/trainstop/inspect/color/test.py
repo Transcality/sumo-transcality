@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select trainStop
-netedit.changeElement("trainStop")
+netedit.changeElement("additionalFrame", "trainStop")
 
 # create trainStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first trainStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.trainStop)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.trainStop.inspect.colorButton, 5, True)
+netedit.modifyColorAttributeOverlapped(netedit.attrs.trainStop.inspect.colorButton, 5)
 
 # Change parameter 2 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspect.color, "dummyColor", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspect.color, "dummyColor")
 
 # Change parameter 2 with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspect.color, "255,255,500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspect.color, "255,255,500")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspect.color, "blue", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspect.color, "blue")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.trainStop.inspect.color, "125,60,200", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.trainStop.inspect.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

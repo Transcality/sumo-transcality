@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poi")
+netedit.changeElement("shapeFrame", "poi")
 
 # create poi with default values
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)

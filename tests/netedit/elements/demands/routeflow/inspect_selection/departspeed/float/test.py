@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect flow over route
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.departSpeed, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.departSpeed, "")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.departSpeed, "dummySpeed", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.departSpeed, "dummySpeed")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.departSpeed, "500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.departSpeed, "500")
 
 # change departSpeed with an invalid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.departSpeed, "-10", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.departSpeed, "-10")
 
 # change departSpeed with a valid value
-netedit.modifyAttribute(netedit.attrs.routeFlow.inspectSelection.departSpeed, "20", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.routeFlow.inspectSelection.departSpeed, "20")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect parking areas
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.parkingArea)
 
 # Change parameter friendlyPos with a different value
-netedit.modifyAttribute(netedit.attrs.parkingArea.inspectSelection.lefthand, "true", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.parkingArea.inspectSelection.lefthand, "true")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

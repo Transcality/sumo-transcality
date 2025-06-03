@@ -29,16 +29,16 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointLane")
+netedit.changeElement("stopFrame", "waypointLane")
 
 # change friendlyPos
-netedit.changeDefaultBoolValue(netedit.attrs.waypointLane.create.friendlyPos)
+netedit.modifyBoolAttribute(netedit.attrs.waypointLane.create.friendlyPos)
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

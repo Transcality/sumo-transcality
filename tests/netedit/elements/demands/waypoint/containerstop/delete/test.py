@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointContainerStop")
+netedit.changeElement("stopFrame", "waypointContainerStop")
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
@@ -50,7 +50,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.demands.containe
 netedit.checkUndoRedo(referencePosition)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete route
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
@@ -59,7 +59,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleE
 netedit.checkUndoRedo(referencePosition)
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # delete waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)

@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 6 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.width, "dummyWidth", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.width, "dummyWidth")
 
 # Change parameter 6 with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.width, "-2", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.width, "-2")
 
 # Change parameter 6 with a valid value
-netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.width, "5", False)
+netedit.modifyAttribute(netedit.attrs.poi.inspectSelection.width, "5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

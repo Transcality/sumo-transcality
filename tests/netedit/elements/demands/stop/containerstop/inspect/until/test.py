@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopContainerStop")
+netedit.changeElement("stopFrame", "stopContainerStop")
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.containerStop)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.durationEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.durationEnable)
 
 # change value
-netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.untilEnable, False)
+netedit.modifyBoolAttribute(netedit.attrs.stopContainerStop.inspect.untilEnable)
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "dummyValue", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "dummyValue")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "-5", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "-5")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "0", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "0")
 
 # change value
-netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "3.5", False)
+netedit.modifyAttribute(netedit.attrs.stopContainerStop.inspect.until, "3.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

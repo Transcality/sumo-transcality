@@ -11,6 +11,7 @@ copy_test_path:net3.net.xml
 copy_test_path:input.poly.xml
 copy_test_path:input_additional.add.xml
 copy_test_path:input_additional2.add.xml
+copy_test_path:in_out.add.xml
 copy_test_path:three_split.net.xml
 copy_test_path:input_net.net.xml
 copy_test_path:input_net.net.xml.gz
@@ -27,6 +28,7 @@ copy_test_path:input_flows.flows.xml
 copy_test_path:input_turns.xml
 copy_test_path:input_detectors.det.xml
 copy_test_path:input_stops.xml
+copy_test_path:input_stopinfos.xml
 copy_test_path:input_config.xml
 copy_test_path:tracefile.txt
 copy_test_path:input_weights.dump.xml
@@ -137,6 +139,7 @@ routesB:outB.rou.xml
 tripinfos:004/tripinfo_004.xml
 additional:out.add.xml
 additional2:out2.add.xml
+additional_overwrite:in_out.add.xml
 diff_nod:diff.nod.xml
 diff_edg:diff.edg.xml
 diff_con:diff.con.xml
@@ -260,6 +263,7 @@ output:function .* finished after .*
 output:optional arguments:{REPLACE options:}
 output:succeeded after .*{REPLACE succeeded after TIME}
 output:usage: {LINES 1000}
+output:^load.*dll...
 dualog:uration:.*ms
 dualog:uration:.*s
 dualog:Real time factor
@@ -313,6 +317,7 @@ errors:= opt.linprog(
 errors:return sp.linalg.solve
 errors:usage: {[->}error:
 errors:\(choose from .*\){REPLACE (choose wisely)}
+errors:DeprecationWarning: builtin type .*wig.* has no __module__ attribute
 omnet:<!-- generated on
 shawn:<!-- generated on
 gpsdat:r[0-9]
@@ -334,6 +339,7 @@ net:<!--{[->]}-->
 tripinfos:<!--{[->]}-->
 additional:<!-- generated on{[->]}-->
 additional2:<!-- generated on{[->]}-->
+additional_overwrite:<!-- generated on{[->]}-->
 osmimport:<!--{[->]}-->
 osmstops:<!--{[->]}-->
 osmlines:<!--{[->]}-->
@@ -352,14 +358,17 @@ image:\)scale\({REPLACE ) scale(}
 image:\)rotate\({REPLACE ) rotate(}
 image:\)translate\({REPLACE ) translate(}
 image:(<text .* transform=")[^"]*"{REPLACE \1"}
+image:<image xlink:href="data:image/png;base64,${LINES 2}
 image-600:<g id="matplotlib.axis
 image-600:<dc:date>
 image-600:\)scale\({REPLACE ) scale(}
 image-600:\)translate\({REPLACE ) translate(}
+image-600:<image xlink:href="data:image/png;base64,${LINES 2}
 image-800:<g id="matplotlib.axis
 image-800:<dc:date>
 image-800:\)scale\({REPLACE ) scale(}
 image-800:\)translate\({REPLACE ) translate(}
+image-800:<image xlink:href="data:image/png;base64,${LINES 2}
 csv:\r$
 diff_con:<!-- generated on{[->]}-->
 diff_edg:<!-- generated on{[->]}-->
@@ -372,6 +381,7 @@ scaled:<!-- generated on{[->]}-->
 scaledObj:<!-- generated on{[->]}-->
 gtfs_additional:<!-- generated on{[->]}-->
 gtfs_routes:<!-- generated on{[->]}-->
+gtfs_missing:<!-- generated on{[->]}-->
 
 [floating_point_tolerance]
 net:0.0101

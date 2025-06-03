@@ -29,53 +29,53 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # select flow
-netedit.changeElement("flow (from-to edges)")
+netedit.changeElement("vehicleFrame", "flow (from-to edges)")
 
 # set invalid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flow.create.containerNumber, "dummyContainerNumber")
+netedit.modifyAttribute(netedit.attrs.flow.create.containerNumber, "dummyContainerNumber")
 
 # try to create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flow.create.containerNumber, "-12")
+netedit.modifyAttribute(netedit.attrs.flow.create.containerNumber, "-12")
 
 # try to create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flow.create.containerNumber, "3.5")
+netedit.modifyAttribute(netedit.attrs.flow.create.containerNumber, "3.5")
 
 # try to create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid containerNumber
-netedit.changeDefaultValue(netedit.attrs.flow.create.containerNumber, "13")
+netedit.modifyAttribute(netedit.attrs.flow.create.containerNumber, "13")
 
 # create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create flow
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

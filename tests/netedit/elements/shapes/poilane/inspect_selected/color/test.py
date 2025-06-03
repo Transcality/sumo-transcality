@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POILane
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.poiLane.inspectSelection.colorButton, 3, True)
+netedit.modifyColorAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.colorButton, 3)
 
 # Change parameter color with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspectSelection.color, "dummyColor", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.color, "dummyColor")
 
 # Change parameter color with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspectSelection.color, "255,255,500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.color, "255,255,500")
 
 # Change parameter color with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspectSelection.color, "blue", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.color, "blue")
 
 # Change parameter color with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poiLane.inspectSelection.color, "125,60,200", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.poiLane.inspectSelection.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopBusStop")
+netedit.changeElement("stopFrame", "stopBusStop")
 
 # change triggered
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.triggered, "person")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.triggered, "person")
 
 # try to create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.expected, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.expected, ";;;;;;;;;;")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.expected, "")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.expected, "")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopBusStop.create.expected, "personID1 personID2 personID3")
+netedit.modifyAttribute(netedit.attrs.stopBusStop.create.expected, "personID1 personID2 personID3")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.busStop)

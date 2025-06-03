@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "dummyDepart")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "-3", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "-3")
 
 # change depart with an valid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "containerTriggered", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspectSelection.depart, "containerTriggered")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

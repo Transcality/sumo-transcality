@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vaporizers
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.vaporizer)
 
 # Set invalid begin
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspectSelection.begin, "-30", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspectSelection.begin, "-30")
 
 # Set valid begin
-netedit.modifyAttribute(netedit.attrs.vaporizer.inspectSelection.begin, "5", False)
+netedit.modifyAttribute(netedit.attrs.vaporizer.inspectSelection.begin, "5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

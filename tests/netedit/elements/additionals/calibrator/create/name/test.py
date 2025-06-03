@@ -29,22 +29,22 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select calibrator
-netedit.changeElement("calibrator")
+netedit.changeElement("additionalFrame", "calibrator")
 
 # change center view
-netedit.changeDefaultBoolValue(netedit.attrs.calibrator.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.calibrator.create.center)
 
 # set invalid name
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.name, ";;\"\"\"")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.name, ";;\"\"\"")
 
 # try to create calibrator with invalid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # set valid name
-netedit.changeDefaultValue(netedit.attrs.calibrator.create.name, "customName")
+netedit.modifyAttribute(netedit.attrs.calibrator.create.name, "customName")
 
 # create calibrator with valid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)

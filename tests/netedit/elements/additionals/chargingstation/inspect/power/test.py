@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select chargingStation
-netedit.changeElement("chargingStation")
+netedit.changeElement("additionalFrame", "chargingStation")
 
 # create chargingStation in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first chargingStation
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter Power with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.power, "DummyPower", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.power, "DummyPower")
 
 # Change parameter Power with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.power, "-300", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.power, "-300")
 
 # Change parameter Power with a valid value
-netedit.modifyAttribute(netedit.attrs.chargingStation.inspect.power, "500.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.chargingStation.inspect.power, "500.5")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

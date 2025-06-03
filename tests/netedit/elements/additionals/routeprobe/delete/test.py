@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select routeProbe
-netedit.changeElement("routeProbe")
+netedit.changeElement("additionalFrame", "routeProbe")
 
 # disable center view
-netedit.changeDefaultBoolValue(netedit.attrs.routeProbe.create.center)
+netedit.modifyBoolAttribute(netedit.attrs.routeProbe.create.center)
 
 # create routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # inspect first routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
@@ -50,10 +50,10 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.rout
 netedit.undo(referencePosition, 2)
 
 # Change to delete
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # enable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # try to delete lane with the second loaded routeProbe (doesn't allowed)
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)

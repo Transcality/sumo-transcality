@@ -29,38 +29,38 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("trip (from-to TAZs)")
+netedit.changeElement("vehicleFrame", "trip (from-to TAZs)")
 
 # create trip using two TAZs
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change begin with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "")
 
 # change begin with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "dummyDepart")
 
 # change begin with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "-3", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "-3")
 
 # change begin with an valid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "10.2", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspect.begin, "10.2")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

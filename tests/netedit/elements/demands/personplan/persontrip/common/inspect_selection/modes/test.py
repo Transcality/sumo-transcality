@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # select two-way mode
 netedit.changeEditMode(netedit.attrs.modes.demand.showPersonPlans)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # now inspect plan top
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.planEdge2Ped)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspectSelection.modes, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspectSelection.modes, "dummy")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspectSelection.modes, "", False)
+netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspectSelection.modes, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspectSelection.modes, "car", False)
+netedit.modifyAttribute(netedit.attrs.personTrip.edge.edge.inspectSelection.modes, "car")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

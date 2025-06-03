@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create vType
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # open dialog
 netedit.openVTypeDialog()
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "dummy")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "dummy")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "-8")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "-8")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "4.4")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.desiredMaxSpeed, "4.4")
 
 # close dialog
-netedit.closeVTypeDialog()
+netedit.typeTwoKeys('alt', 'a')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

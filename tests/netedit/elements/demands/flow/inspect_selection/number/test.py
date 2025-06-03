@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminate, "dummyTerminate", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminate, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminate, "number", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminate, "number")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminateOption, "dummyEnd", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminateOption, "dummyEnd")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminateOption, "12.5", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminateOption, "12.5")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminateOption, "26", False)
+netedit.modifyAttribute(netedit.attrs.flow.inspectSelection.terminateOption, "26")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

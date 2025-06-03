@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # delete created polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
@@ -38,25 +38,25 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shap
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeC)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first TAZ
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.TAZ.inspectSelection.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.TAZ.inspectSelection.colorButton, 5)
 
 # Change parameter 2 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "dummyColor")
 
 # Change parameter 2 with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "255,255,500", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "255,255,500")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "blue", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "blue")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "125,60,200", False)
+netedit.modifyAttribute(netedit.attrs.TAZ.inspectSelection.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

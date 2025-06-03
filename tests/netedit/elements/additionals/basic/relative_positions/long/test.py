@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.move.top)
 
 # Change length
-netedit.modifyAttribute(netedit.attrs.edge.inspect.length, "8000", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspect.length, "8000")
 
 # Check undos
 netedit.undo(referencePosition, 1)

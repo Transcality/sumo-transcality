@@ -29,7 +29,7 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
@@ -38,25 +38,25 @@ netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shap
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first polygon
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.poly.inspectSelection.colorButton, 5, False)
+netedit.modifyColorAttribute(netedit.attrs.poly.inspectSelection.colorButton, 5)
 
 # Change parameter 2 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "dummyColor", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "dummyColor")
 
 # Change parameter 2 with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "255,255,500", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "255,255,500")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "blue", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "blue")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "125,60,200", False)
+netedit.modifyAttribute(netedit.attrs.poly.inspectSelection.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

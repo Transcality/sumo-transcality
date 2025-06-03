@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poiGeo")
+netedit.changeElement("shapeFrame", "poiGeo")
 
 # change color using dialog
 netedit.changeColorUsingDialog(netedit.attrs.poiGeo.create.colorButton, 5)
@@ -41,13 +41,13 @@ netedit.changeColorUsingDialog(netedit.attrs.poiGeo.create.colorButton, 5)
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change color manually (invalid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.color, "Vlue")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.color, "Vlue")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)
 
 # change color manually (valid)
-netedit.changeDefaultValue(netedit.attrs.poiGeo.create.color, "blue")
+netedit.modifyAttribute(netedit.attrs.poiGeo.create.color, "blue")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeC)

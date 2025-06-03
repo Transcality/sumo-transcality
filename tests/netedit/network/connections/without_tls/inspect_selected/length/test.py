@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # show connections
 netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode agaim
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selected connections
 netedit.leftClick(referencePosition, netedit.positions.network.connection.connectionA)
 
 # Change length with an invalid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectSelection.length, "dummyLength", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectSelection.length, "dummyLength")
 
 # Change length with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectSelection.length, "-4", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectSelection.length, "-4")
 
 # Change length with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectSelection.length, "0", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectSelection.length, "0")
 
 # Change length with an valid value
-netedit.modifyAttribute(netedit.attrs.connection.inspectSelection.length, "11", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.connection.inspectSelection.length, "11")
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 1)
 
 # rebuild
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 1)

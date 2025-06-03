@@ -29,50 +29,50 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change Person
-netedit.changeElement("personFlow")
+netedit.changeElement("personFrame", "personFlow")
 
 # create person using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.terminate, "dummyTerminate", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.terminate, "dummyTerminate")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.terminate, "end-number", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.terminate, "end-number")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "dummyEnd", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "dummyEnd")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "23", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.spacing, "23")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "dummyNumber", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "dummyNumber")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "12.3", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "12.3")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "-30", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "-30")
 
 # change flow value
-netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "81", False)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspect.end, "81")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

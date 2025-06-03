@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change person plan
 netedit.changePersonPlan("walk", False)
@@ -42,37 +42,37 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to walk.junction.edge mode
-netedit.personPlanMode()
+netedit.changeMode("personPlan")
 
 # go to walk.junction.edge mode
-netedit.changePersonPlanMode("walk")
+netedit.changeElement("personPlanFrame", "walk")
 
 # create walk.junction.edge
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # now inspect plan top
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.planEdge2Ped)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "dummy")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "", False)
+netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "-6", False)
+netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "-6")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "2.5", False)
+netedit.modifyAttribute(netedit.attrs.walk.junction.edge.inspect.arrivalPos, "2.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

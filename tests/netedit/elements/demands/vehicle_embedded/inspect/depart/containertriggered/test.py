@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("vehicle (embedded route)")
+netedit.changeElement("vehicleFrame", "vehicle (embedded route)")
 
 # create trip using two edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.depart, "", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.depart, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.depart, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.depart, "dummyDepart")
 
 # change depart with an valid value
-netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.depart, "containerTriggered", False)
+netedit.modifyAttribute(netedit.attrs.vehicleEmbedded.inspect.depart, "containerTriggered")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,13 +29,13 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change Container
-netedit.changeElement("containerFlow")
+netedit.changeElement("containerFrame", "containerFlow")
 
 # change container plan
 netedit.changeContainerPlan("tranship", True)
@@ -45,29 +45,29 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerFlow number
-netedit.changeDefaultValue(netedit.attrs.containerFlow.create.id, ";;;;")
+netedit.modifyAttribute(netedit.attrs.containerFlow.create.id, ";;;;")
 
 # create route using edge and busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerFlow number
-netedit.changeDefaultValue(netedit.attrs.containerFlow.create.id, "pf_0")
+netedit.modifyAttribute(netedit.attrs.containerFlow.create.id, "pf_0")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set invalid containerFlow number
-netedit.changeDefaultValue(netedit.attrs.containerFlow.create.id, "customID")
+netedit.modifyAttribute(netedit.attrs.containerFlow.create.id, "customID")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

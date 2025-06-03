@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # set own lines
-netedit.changeDefaultValue(netedit.attrs.busStop.create.parameters, "dummy")
+netedit.modifyAttribute(netedit.attrs.busStop.create.parameters, "dummy")
 
 # create busStop in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # set own lines
-netedit.changeDefaultValue(netedit.attrs.busStop.create.parameters, "key1=value1|key2=value2|key3=value3")
+netedit.modifyAttribute(netedit.attrs.busStop.create.parameters, "key1=value1|key2=value2|key3=value3")
 
 # create busStop in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)

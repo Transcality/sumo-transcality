@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # change container plan
 netedit.changeContainerPlan("tranship", False)
@@ -41,48 +41,48 @@ netedit.changeContainerPlan("tranship", False)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to container plan mode
-netedit.containerPlanMode()
+netedit.changeMode("containerPlan")
 
 # go to container plan mode
-netedit.changeContainerPlanMode("transport")
+netedit.changeElement("containerPlanFrame", "transport")
 
 # create containerTripEdgeEdge
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to network mode
-netedit.supermodeNetwork()
+netedit.changeSupermode("network")
 
 # go to delete mode
-netedit.deleteMode()
+netedit.changeMode("delete")
 
 # disable 'Automatically delete demand elements'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # disable 'Automatically delete additionals'
-netedit.protectElements(referencePosition)
+netedit.protectElements()
 
 # create containerTripEdgeEdge
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.undo(referencePosition, 2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 netedit.redo(referencePosition, 2)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)

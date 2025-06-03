@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect calibrator
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.calibrator)
 
 # Change parameter id with a non valid value (invalid characters)
-netedit.modifyAttribute(netedit.attrs.calibrator.inspectSelection.vTypes, "///;;", False)
+netedit.modifyAttribute(netedit.attrs.calibrator.inspectSelection.vTypes, "///;;")
 
 # Change parameter id with valid value
-netedit.modifyAttribute(netedit.attrs.calibrator.inspectSelection.vTypes, "type1 type2", False)
+netedit.modifyAttribute(netedit.attrs.calibrator.inspectSelection.vTypes, "type1 type2")
 
 # Change parameter id with valid value
-netedit.modifyAttribute(netedit.attrs.calibrator.inspectSelection.vTypes, "type1 type2", False)
+netedit.modifyAttribute(netedit.attrs.calibrator.inspectSelection.vTypes, "type1 type2")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

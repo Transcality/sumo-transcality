@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # invert selection
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # Change parameter 5 with a non valid value
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "dummyLayer", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "dummyLayer")
 
 # Change parameter 5 with a valid value (negative)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "-2", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "-2")
 
 # Change parameter 5 with a valid value (default)
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "default", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "default")
 
 # Change parameter 5 with a valid value
-netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "2", False)
+netedit.modifyAttribute(netedit.attrs.poiGeo.inspectSelection.layer, "2")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

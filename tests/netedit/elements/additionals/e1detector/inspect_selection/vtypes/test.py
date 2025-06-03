@@ -29,25 +29,25 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect E1
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # Change parameter vtypes with a empty value
-netedit.modifyAttribute(netedit.attrs.E1.inspectSelection.vTypes, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspectSelection.vTypes, "")
 
 # Change parameter vtypes with a invalid value
-netedit.modifyAttribute(netedit.attrs.E1.inspectSelection.vTypes, "Type%%%%%1 T;;yp$2 Type3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspectSelection.vTypes, "Type%%%%%1 T;;yp$2 Type3")
 
 # Change parameter vtypes with a valid value
-netedit.modifyAttribute(netedit.attrs.E1.inspectSelection.vTypes, "Type1 Type2 Type3", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.E1.inspectSelection.vTypes, "Type1 Type2 Type3")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

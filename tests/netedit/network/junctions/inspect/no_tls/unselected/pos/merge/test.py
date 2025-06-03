@@ -30,46 +30,46 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # inspect central node
 netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center)
 
 # change position with a non valid value
-netedit.modifyAttribute(netedit.attrs.junction.inspect.pos, "dummy position", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspect.pos, "dummy position")
 
 # change position with a non valid value (another junction in the same position)
-netedit.modifyAttribute(netedit.attrs.junction.inspect.pos, "-25.00,0.00", False)
+netedit.modifyAttribute(netedit.attrs.junction.inspect.pos, "-25.00,0.00")
 
 # wait for output
 time.sleep(2)
 
 # merge
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # wait for output
 time.sleep(2)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check undo
 netedit.undo(referencePosition, 5)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # Check redo
 netedit.redo(referencePosition, 5)
 
 # rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # save Netedit config
 netedit.saveNeteditConfig(referencePosition)
 
 # type space
-netedit.typeSpace()
+netedit.typeKey('space')
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -29,45 +29,45 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to container mode
-netedit.containerMode()
+netedit.changeMode("container")
 
 # create container using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create container
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # create container using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create container
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect container
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.container)
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.id, "", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.id, "")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.id, ";;;;;;;;", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.id, ";;;;;;;;")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.id, "id with spaces", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.id, "id with spaces")
 
 # change ID with an invalid value
-netedit.modifyAttribute(netedit.attrs.container.inspect.id, "p_1", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.id, "p_1")
 
 # change ID with an invalid value (empty)
-netedit.modifyAttribute(netedit.attrs.container.inspect.id, "customID", False)
+netedit.modifyAttribute(netedit.attrs.container.inspect.id, "customID")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect selected edges
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 12 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "dummyOffset", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "dummyOffset")
 
 # Change parameter 12 with a non valid value (empty)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "")
 
 # Change parameter 12 with a non valid value (negative)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "-2", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "-2")
 
 # Change parameter 12 with a valid value (default)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "default", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "default")
 
 # Change parameter 12 with a valid value (default)
-netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "4", False)
+netedit.modifyAttribute(netedit.attrs.edge.inspectSelection.stopOffset, "4")
 
 # Check undos
 netedit.undo(referencePosition, 1)

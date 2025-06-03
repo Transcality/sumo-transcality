@@ -29,28 +29,28 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleEdge)
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicle.inspectSelection.departPosLat, "", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.vehicle.inspectSelection.departPosLat, "")
 
 # change departPosLat with an invalid value
-netedit.modifyAttribute(netedit.attrs.vehicle.inspectSelection.departPosLat, "dummyPosLat", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.vehicle.inspectSelection.departPosLat, "dummyPosLat")
 
 # change departPosLat with an valid value
-netedit.modifyAttribute(netedit.attrs.vehicle.inspectSelection.departPosLat, "center", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.vehicle.inspectSelection.departPosLat, "center")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

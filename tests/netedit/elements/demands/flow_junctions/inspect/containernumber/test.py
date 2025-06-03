@@ -29,41 +29,41 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to vehicle mode
-netedit.vehicleMode()
+netedit.changeMode("vehicle")
 
 # change vehicle
-netedit.changeElement("flow (from-to junctions)")
+netedit.changeElement("vehicleFrame", "flow (from-to junctions)")
 
 # create trip using two junctions
 netedit.leftClick(referencePosition, netedit.positions.elements.junction0)
 netedit.leftClick(referencePosition, netedit.positions.elements.junction3)
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleJunction)
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "dummyNumber", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "dummyNumber")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "-5", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "-5")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "2.5", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "2.5")
 
 # change containerNumber with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "3", False)
+netedit.modifyAttribute(netedit.attrs.flowJunction.inspect.containerNumber, "3")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

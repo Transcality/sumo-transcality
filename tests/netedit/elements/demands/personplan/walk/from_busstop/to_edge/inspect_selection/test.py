@@ -29,35 +29,35 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # select two-way mode
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.busStop)
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # now inspect plan top
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.planEdgeBike0Ped)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "dummy", False)
+netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "dummy")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "", False)
+netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "-6", False)
+netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "-6")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "2.5", False)
+netedit.modifyAttribute(netedit.attrs.walk.busStop.edge.inspectSelection.arrivalPos, "2.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

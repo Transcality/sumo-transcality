@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to person mode
-netedit.personMode()
+netedit.changeMode("person")
 
 # change person plan
 netedit.changePersonPlan("ride", False)
@@ -42,22 +42,22 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
 # press enter to create person
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.depart, "", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.depart, "")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.depart, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.depart, "dummyDepart")
 
 # change depart with an invalid value
-netedit.modifyAttribute(netedit.attrs.person.inspect.depart, "triggered", False)
+netedit.modifyAttribute(netedit.attrs.person.inspect.depart, "triggered")
 
 # Check undo
 netedit.checkUndoRedo(referencePosition)

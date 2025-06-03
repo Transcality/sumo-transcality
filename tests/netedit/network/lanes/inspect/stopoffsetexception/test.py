@@ -32,29 +32,29 @@ neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 netedit.changeEditMode(netedit.attrs.modes.network.selectLane)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 4 with a valid value
-netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffset, "12.5", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffset, "12.5")
 
 # Change parameter 1 with an non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "DummyAllowed", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "DummyAllowed")
 
 # Change parameter 1 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "")
 
 # Change parameter 1 with a valid value (different separators)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "authority  army, passenger; taxi. tram", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "authority  army, passenger; taxi. tram")
 
 # Change parameter 1 with a valid value (empty)
-netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "", False)
+netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException, "")
 
 # Change parameter 1 with a valid value (empty)
 netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffsetException,
-                        "authority army vip passenger hov taxi bus coach tram bicycle", False)
+                        "authority army vip passenger hov taxi bus coach tram bicycle")
 
 # Check undos
 netedit.undo(referencePosition, 4)

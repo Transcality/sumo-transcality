@@ -29,43 +29,43 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to waypoint mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change waypoint type with a valid value
-netedit.changeStopType("waypointParkingArea")
+netedit.changeElement("stopFrame", "waypointParkingArea")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.waypointParking.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointParking.create.durationEnable)
 
 # enable until
-netedit.changeDefaultBoolValue(netedit.attrs.waypointParking.create.extensionEnable)
+netedit.modifyBoolAttribute(netedit.attrs.waypointParking.create.extensionEnable)
 
 # create waypoint
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.extension, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.extension, "dummyValue")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.extension, "-20")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.extension, "-20")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.extension, "0")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.extension, "0")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.waypointParking.create.extension, "22.33")
+netedit.modifyAttribute(netedit.attrs.waypointParking.create.extension, "22.33")
 
 # try to create waypoint
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)

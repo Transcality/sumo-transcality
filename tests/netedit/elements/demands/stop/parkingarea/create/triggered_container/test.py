@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopParkingArea")
+netedit.changeElement("stopFrame", "stopParkingArea")
 
 # change triggered
-netedit.changeDefaultValue(netedit.attrs.stopParkingArea.create.triggered, "container")
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.create.triggered, "container")
 
 # try to create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopParkingArea.create.expected, ";;;;;;;;;;")
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.create.expected, ";;;;;;;;;;")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopParkingArea.create.expected, "")
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.create.expected, "")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopParkingArea.create.expected, "containerID1 containerID2 containerID3")
+netedit.modifyAttribute(netedit.attrs.stopParkingArea.create.expected, "containerID1 containerID2 containerID3")
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.parkingArea)

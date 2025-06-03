@@ -29,14 +29,14 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edge
 netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 
 # Change parameter 8 with a valid value (empty)
 netedit.modifyAttributeVClassDialog(netedit.attrs.edge.inspect.allowButton,
-                                    netedit.attrs.dialog.allowVClass.wheelchair, False)
+                                    netedit.attrs.dialog.allowVClass.wheelchair)
 
 # Check undos
 netedit.undo(referencePosition, 4)

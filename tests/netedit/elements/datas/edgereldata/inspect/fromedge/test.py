@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Go to data supermode
-netedit.supermodeData()
+netedit.changeSupermode("data")
 
 # change to edgeRelData
-netedit.edgeRelData()
+netedit.changeMode("edgeRelData")
 
 # create dataSet
 netedit.createDataSet()
@@ -43,25 +43,25 @@ netedit.createDataInterval()
 # create edgeRelData
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0_dataMode)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1_dataMode)
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect edgeRelData
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0_dataMode)
 
 # Change parameter 3 with a non valid value (empty speed)
-netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "", False)
+netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "")
 
 # Change parameter 3 with a non valid value (empty speed)
-netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "dummyEdge", False)
+netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "dummyEdge")
 
 # Change parameter 3 with a non valid value (empty speed)
-netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "gneE14", False)
+netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "gneE14")
 
 # Change parameter 3 with a non valid value (empty speed)
-netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "-gneE16", False)
+netedit.modifyAttribute(netedit.attrs.edgeRelData.inspect.fromEdge, "-gneE16")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

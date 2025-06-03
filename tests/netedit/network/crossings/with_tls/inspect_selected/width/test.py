@@ -29,10 +29,10 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # Rebuild network
-netedit.rebuildNetwork()
+netedit.computeJunctions()
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
@@ -41,19 +41,19 @@ netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.right)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first crossing
 netedit.leftClick(referencePosition, netedit.positions.network.crossing.left)
 
 # Change shape with a non valid value
-netedit.modifyAttribute(netedit.attrs.crossing.inspectSelectionTLS.width, "dummyWidth", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspectSelectionTLS.width, "dummyWidth")
 
 # Change shape with a non valid value
-netedit.modifyAttribute(netedit.attrs.crossing.inspectSelectionTLS.width, "-5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspectSelectionTLS.width, "-5")
 
 # Change shape with a valid value
-netedit.modifyAttribute(netedit.attrs.crossing.inspectSelectionTLS.width, "8.1", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.crossing.inspectSelectionTLS.width, "8.1")
 
 # Check undo redo
 netedit.undo(referencePosition, 1)

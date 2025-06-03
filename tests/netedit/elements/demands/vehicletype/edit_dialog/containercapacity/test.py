@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to type mode
-netedit.typeMode()
+netedit.changeMode("type")
 
 # create vType
-netedit.createVType()
+netedit.modifyBoolAttribute(netedit.attrs.type.buttons.create)
 
 # open dialog
 netedit.openVTypeDialog()
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.containerCapacity, "dummy")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.containerCapacity, "dummy")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.containerCapacity, "")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.containerCapacity, "")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.containerCapacity, "-7")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.containerCapacity, "-7")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.containerCapacity, "5.2")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.containerCapacity, "5.2")
 
 # modify attribute
-netedit.modifyVTypeAttribute(netedit.attrs.type.editDialog.containerCapacity, "3")
+netedit.modifyVTypeDialogAttribute(netedit.attrs.type.editDialog.containerCapacity, "3")
 
 # close dialog
-netedit.closeVTypeDialog()
+netedit.typeTwoKeys('alt', 'a')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

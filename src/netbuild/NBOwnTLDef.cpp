@@ -924,8 +924,10 @@ NBOwnTLDef::addPedestrianPhases(NBTrafficLightLogic* logic, const SUMOTime green
             }
 #endif
             for (auto cross : crossings) {
-                state[cross->tlLinkIndex] = 'r';
-                if (cross->tlLinkIndex2 >= 0) {
+                if (cross->tlLinkIndex >= (int)fromEdges.size() || fromEdges[cross->tlLinkIndex] == nullptr) {
+                    state[cross->tlLinkIndex] = 'r';
+                }
+                if (cross->tlLinkIndex2 >= 0 && (cross->tlLinkIndex2 >= (int)fromEdges.size() || fromEdges[cross->tlLinkIndex2] == nullptr)) {
                     state[cross->tlLinkIndex2] = 'r';
                 }
             }
@@ -964,19 +966,24 @@ NBOwnTLDef::patchStateForCrossings(const std::string& state, const std::vector<N
                 }
             }
         }
-        int i1 = cross->tlLinkIndex;
+        const int i1 = cross->tlLinkIndex;
         assert(i1 >= 0 && i1 < (int)result.size());
-        if (!isForbidden) {
-            result[i1] = 'G';
+        const char newState = isForbidden ? 'r' : 'G';
+        if (i1 < (int)toEdges.size() && toEdges[i1] != nullptr && (result[i1] != newState || !isForbidden)) {
+            if (cross->tlID != DummyID) {
+                WRITE_WARNINGF(TL("Custom crossing linkIndex % conflicts with vehicular connections at tlLogic '%'"), i1, cross->tlID);
+            }
         } else {
-            result[i1] = 'r';
+            result[i1] = newState;
         }
         if (cross->tlLinkIndex2 >= 0) {
-            int i1 = cross->tlLinkIndex2;
-            if (!isForbidden) {
-                result[i1] = 'G';
+            const int i2 = cross->tlLinkIndex2;
+            if (i2 < (int)toEdges.size() && toEdges[i2] != nullptr && (result[i2] != newState || !isForbidden)) {
+                if (cross->tlID != DummyID) {
+                    WRITE_WARNINGF(TL("Custom crossing linkIndex2 % conflicts with vehicular connections at tlLogic '%'"), i2, cross->tlID);
+                }
             } else {
-                result[i1] = 'r';
+                result[i2] = newState;
             }
         }
     }

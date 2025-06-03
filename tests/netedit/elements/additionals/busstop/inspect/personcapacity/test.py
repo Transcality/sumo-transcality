@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create busStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busStop)
 
 # Change parameter personCapacity with a non valid value (throw warning)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.personCapacity, "dummyPersonCapacity", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.personCapacity, "dummyPersonCapacity")
 
 # Change parameter personCapacity with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.personCapacity, "-7", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.personCapacity, "-7")
 
 # Change parameter personCapacity with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.personCapacity, "2.5", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.personCapacity, "2.5")
 
 # Change parameter personCapacity with a valid value
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.personCapacity, "10", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.personCapacity, "10")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

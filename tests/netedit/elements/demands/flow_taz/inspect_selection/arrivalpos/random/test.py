@@ -29,31 +29,31 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "")
 
 # change arrivalPos with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "dummyPos", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "dummyPos")
 
 # change departColor with a valid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "500", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "500")
 
 # change arrivalPos with a valid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "random", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.arrivalPos, "random")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to route mode
-netedit.routeMode()
+netedit.changeMode("route")
 
 # change to non consecutive mode
-netedit.changeRouteMode("non consecutive edges")
+netedit.changeElement("routeFrame", "non consecutive edges")
 
 # set valid vclass
-netedit.changeRouteVClass("bus")
+netedit.changeParentElement("routeFrame", "bus")
 
 # set invalid repeat
-netedit.changeDefaultValue(netedit.attrs.route.create.repeat, "dummyrepeat")
+netedit.modifyAttribute(netedit.attrs.route.create.repeat, "dummyrepeat")
 
 # try to create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -56,19 +56,19 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge4)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge5)
 
 # press enter to try to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid repeat
-netedit.changeDefaultValue(netedit.attrs.route.create.repeat, "15.6")
+netedit.modifyAttribute(netedit.attrs.route.create.repeat, "15.6")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # set valid repeat
-netedit.changeDefaultValue(netedit.attrs.route.create.repeat, "13")
+netedit.modifyAttribute(netedit.attrs.route.create.repeat, "13")
 
 # press enter to create route
-netedit.typeEnter()
+netedit.typeKey('enter')
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)

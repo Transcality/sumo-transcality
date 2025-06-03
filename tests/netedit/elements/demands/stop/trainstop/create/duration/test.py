@@ -29,46 +29,46 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to stop mode
-netedit.stopMode()
+netedit.changeMode("stop")
 
 # change stop type with a valid value
-netedit.changeStopType("stopTrainStop")
+netedit.changeElement("stopFrame", "stopTrainStop")
 
 # disable duration
-netedit.changeDefaultBoolValue(netedit.attrs.stopTrainStop.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.stopTrainStop.create.durationEnable)
 
 # create stop
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # enable duration
-netedit.changeDefaultBoolValue(netedit.attrs.stopTrainStop.create.durationEnable)
+netedit.modifyBoolAttribute(netedit.attrs.stopTrainStop.create.durationEnable)
 
 # create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.duration, "dummyValue")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.duration, "dummyValue")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set invalid value
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.duration, "-20")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.duration, "-20")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.duration, "0")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.duration, "0")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)
 
 # set valid value
-netedit.changeDefaultValue(netedit.attrs.stopTrainStop.create.duration, "22.33")
+netedit.modifyAttribute(netedit.attrs.stopTrainStop.create.duration, "22.33")
 
 # try to create stop
 netedit.leftClickControl(referencePosition, netedit.positions.elements.demands.trainStop)

@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to additional mode
-netedit.additionalMode()
+netedit.changeMode("additional")
 
 # select busStop
-netedit.changeElement("busStop")
+netedit.changeElement("additionalFrame", "busStop")
 
 # create busStop in mode "Center"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect first busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.busStop)
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.busStop.inspect.colorButton, 5, True)
+netedit.modifyColorAttributeOverlapped(netedit.attrs.busStop.inspect.colorButton, 5)
 
 # Change parameter 2 with a non valid value (dummy)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.color, "dummyColor", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.color, "dummyColor")
 
 # Change parameter 2 with a non valid value (invalid format)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.color, "255,255,500", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.color, "255,255,500")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.color, "blue", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.color, "blue")
 
 # Change parameter 2 with a valid value (valid format)
-netedit.modifyAttribute(netedit.attrs.busStop.inspect.color, "125,60,200", True)
+netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspect.color, "125,60,200")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)

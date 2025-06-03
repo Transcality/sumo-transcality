@@ -29,19 +29,19 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to shape mode
-netedit.shapeMode()
+netedit.changeMode("shape")
 
 # go to shape mode
-netedit.changeElement("poi")
+netedit.changeElement("shapeFrame", "poi")
 
 # change angle (invalid)
-netedit.changeDefaultValue(netedit.attrs.poi.create.name, "%%%%;;;%%%")
+netedit.modifyAttribute(netedit.attrs.poi.create.name, "%%%%;;;%%%")
 
 # try to create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeA)
 
 # change angle (valid, but > 360)
-netedit.changeDefaultValue(netedit.attrs.poi.create.name, "customName")
+netedit.modifyAttribute(netedit.attrs.poi.create.name, "customName")
 
 # create POI
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.shapeB)

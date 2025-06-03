@@ -29,34 +29,34 @@ import neteditTestFunctions as netedit  # noqa
 neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
 
 # go to demand mode
-netedit.supermodeDemand()
+netedit.changeSupermode("demand")
 
 # go to select mode
-netedit.selectMode()
+netedit.changeMode("select")
 
 # select all using invert
 netedit.selectionInvert()
 
 # go to inspect mode
-netedit.inspectMode()
+netedit.changeMode("inspect")
 
 # inspect vehicle
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.vehicleTAZ)
 
 # change departLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "")
 
 # change departLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "dummyDepart", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "dummyDepart")
 
 # change departLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "500", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "500")
 
 # change departLane with an invalid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "-10", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "-10")
 
 # change departLane with a valid value
-netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "0", False)
+netedit.modifyAttribute(netedit.attrs.flowTAZ.inspectSelection.departLane, "0")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
