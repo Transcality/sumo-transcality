@@ -91,14 +91,20 @@ ENV LD_LIBRARY_PATH="/sumo/bin/:${LD_LIBRARY_PATH}"
 # Stage 2: Runtime-only image (final lightweight image)
 FROM python:3.10.14-slim-bookworm AS runtime
 
-# Install ONLY runtime libraries (not -dev packages) + build tools for downstream builds
+# Install runtime libraries AND development headers for downstream C++ compilation
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    # Runtime libraries
     libxerces-c3.2 libfox-1.6-0 libgdal32 libproj25 \
     libgl2ps1.4 libssl3 libcurl4 libsnappy1v5 \
     zlib1g libre2-9 liblz4-1 libzstd1 libbrotli1 \
     ca-certificates \
-    # Add build tools for downstream C++ compilation
-    build-essential g++ \
+    # Build tools for downstream C++ compilation
+    build-essential g++ cmake \
+    # Development headers needed for downstream compilation
+    libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev \
+    libgl2ps-dev libssl-dev libcurl4-openssl-dev \
+    libsnappy-dev zlib1g-dev libre2-dev liblz4-dev \
+    libzstd-dev libbrotli-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the built binaries and libraries
