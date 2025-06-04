@@ -91,20 +91,28 @@ ENV LD_LIBRARY_PATH="/sumo/bin/:${LD_LIBRARY_PATH}"
 # Stage 2: Runtime-only image (final lightweight image)
 FROM python:3.10.14-slim-bookworm AS runtime
 
-# Install ONLY runtime libraries (not -dev packages)
-RUN apt-get update && apt-get install -y \
+# Install ONLY runtime libraries (not -dev packages) + build tools for downstream builds
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libxerces-c3.2 libfox-1.6-0 libgdal32 libproj25 \
     libgl2ps1.4 libssl3 libcurl4 libsnappy1v5 \
     zlib1g libre2-9 liblz4-1 libzstd1 libbrotli1 \
-    ca-certificates && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    # Add build tools for downstream C++ compilation
+    build-essential g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the built binaries and libraries
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
+# Copy header files for development dependencies (Arrow, Parquet, fmt, etc.)
+COPY --from=builder /usr/local/include/ /usr/local/include/
 COPY --from=builder /sumo/install/ /sumo/
 COPY --from=builder /sumo/tools/ /sumo/tools/
 COPY --from=builder /sumo/data/ /sumo/data/
+# Copy source headers for libsumo development
+COPY --from=builder /sumo/src/ /sumo/src/
 # These MUST be included in the runtime stage
 ENV SUMO_HOME=/sumo
 ENV PATH="/sumo/bin:${PATH}"
 ENV PYTHONPATH="/sumo/tools:${PYTHONPATH}"
 ENV LD_LIBRARY_PATH="/sumo/bin/:/usr/local/lib:${LD_LIBRARY_PATH}"
+
