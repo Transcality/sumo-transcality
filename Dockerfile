@@ -2,7 +2,7 @@ FROM python:3.10.14-slim-bookworm AS builder
 
 # Install dependencies needed to compile SUMO
 RUN apt-get update && apt-get install -y \
-    build-essential git cmake python3 clang llvm \
+    build-essential git cmake python3 gcc g++ llvm \
     libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev \
     libgl2ps-dev python3-dev swig default-jdk maven libeigen3-dev vim \
     # Dependencies for Arrow and Parquet
@@ -27,8 +27,8 @@ RUN git clone https://github.com/apache/arrow.git /arrow && \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_CXX_STANDARD=17 \
           -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-          -DCMAKE_C_COMPILER=clang \
-          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
           ../cpp && \
     make -j$(nproc) && \
     make install && \
@@ -40,8 +40,8 @@ RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
     mkdir build && \
     cd build && \
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-          -DCMAKE_C_COMPILER=clang \
-          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
           .. && \
     make -j$(nproc) && \
     make install 
@@ -58,7 +58,7 @@ RUN rm -rf build/ CMakeFiles/ CMakeCache.txt cmake_install.cmake Makefile *.cmak
 # Set SUMO Parquet configuration
 ENV SUMO_PARQUET_ROWGROUP_SIZE=10000
 
-# Build the sumo target using clang
+# Build the sumo target using gcc
 RUN mkdir -p build && cd build && \
     cmake \
         -DHAVE_PARQUET=ON \
@@ -66,8 +66,8 @@ RUN mkdir -p build && cd build && \
       -DHAVE_S3=ON \
       -DARROW_S3=ON \
       -DHAVE_AZURE=ON \
-      -DCMAKE_C_COMPILER=clang \
-      -DCMAKE_CXX_COMPILER=clang++ \
+      -DCMAKE_C_COMPILER=gcc \
+      -DCMAKE_CXX_COMPILER=g++ \
       -DCMAKE_CXX_STANDARD=17 \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo/install \
@@ -87,3 +87,4 @@ ENV SUMO_HOME=/sumo
 ENV PATH="/sumo/bin:${PATH}"
 ENV PYTHONPATH="/sumo/tools:${PYTHONPATH}"
 ENV LD_LIBRARY_PATH="/sumo/bin/:${LD_LIBRARY_PATH}"
+
