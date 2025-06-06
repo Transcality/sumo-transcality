@@ -38,6 +38,7 @@
 #include <microsim/traffic_lights/MSRailSignal.h>
 #include <microsim/traffic_lights/MSDriveWay.h>
 #include <microsim/devices/MSDevice_Routing.h>
+#include <microsim/devices/MSRoutingEngine.h>
 #include <microsim/devices/MSDevice_BTreceiver.h>
 #include <microsim/devices/MSDevice_ToC.h>
 #include <microsim/transportables/MSTransportableControl.h>
@@ -174,6 +175,7 @@ MSStateHandler::saveState(const std::string& file, SUMOTime step, bool usePrefix
         }
     }
     MSNet::getInstance()->getTLSControl().saveState(out);
+    MSRoutingEngine::saveState(out);
     out.close();
 }
 
@@ -241,6 +243,17 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
                 activeLanes.push_back(lane);
             }
             MSNet::getInstance()->getEdgeControl().setActiveLanes(activeLanes);
+            break;
+        }
+        case SUMO_TAG_ROUTINGENGINE: {
+            MSRoutingEngine::initEdgeWeights(SVC_PASSENGER);
+            if (OptionsCont::getOptions().getBool("device.rerouting.bike-speeds")) {
+                MSRoutingEngine::initEdgeWeights(SVC_BICYCLE);
+            }
+            break;
+        }
+        case SUMO_TAG_EDGE: {
+            MSRoutingEngine::loadState(attrs);
             break;
         }
         case SUMO_TAG_DELAY: {
@@ -315,7 +328,9 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
                 if (myQueIndex >= mySegment->numQueues()) {
                     throw ProcessError(TLF("Invalid queue index '%' on segment '%'. Check for consistency of lane numbers and queue options.", myQueIndex, mySegment->getID()));
                 }
-                mySegment->loadState(vehs, StringUtils::toLong(attrs.getString(SUMO_ATTR_TIME)) - myOffset, myQueIndex);
+                const SUMOTime blockTime = StringUtils::toLong(attrs.getString(SUMO_ATTR_TIME));
+                const SUMOTime entryBlockTime = StringUtils::toLong(attrs.getString(SUMO_ATTR_BLOCKTIME));
+                mySegment->loadState(vehs, blockTime - myOffset, entryBlockTime - myOffset, myQueIndex);
                 myQueIndex++;
             } else {
                 myCurrentLane->loadState(vehs);
