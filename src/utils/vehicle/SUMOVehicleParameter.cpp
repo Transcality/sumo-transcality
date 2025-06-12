@@ -180,7 +180,7 @@ SUMOVehicleParameter::write(OutputDevice& dev, const OptionsCont& oc, const Sumo
     // individual speedFactor
     if (wasSet(VEHPARS_SPEEDFACTOR_SET)) {
         // might be saving state with custom precision
-        const int precision = dev.precision();
+        const int precision = dev.getPrecision();
         dev.setPrecision(MAX2(gPrecisionRandom, precision));
         dev.writeAttr(SUMO_ATTR_SPEEDFACTOR, speedFactor);
         dev.setPrecision(precision);
@@ -305,6 +305,9 @@ SUMOVehicleParameter::Stop::write(OutputDevice& dev, const bool close, const boo
     }
     if ((parametersSet & STOP_JUMP_UNTIL_SET) != 0 && jumpUntil >= 0) {
         dev.writeAttr(SUMO_ATTR_JUMP_UNTIL, time2string(jumpUntil));
+    }
+    if ((parametersSet & STOP_PRIORITY_SET) != 0 && priority >= 0) {
+        dev.writeAttr(SUMO_ATTR_PRIORITY, priority);
     }
     if (collision) {
         dev.writeAttr(SUMO_ATTR_COLLISION, collision);

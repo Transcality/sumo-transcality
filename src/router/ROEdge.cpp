@@ -229,7 +229,7 @@ ROEdge::getTravelTime(const ROVehicle* const veh, double time) const {
             }
         }
     }
-    const double speed = veh != nullptr ? MIN2(veh->getMaxSpeed(), veh->getType()->speedFactor.getParameter()[0] * getVClassMaxSpeed(veh->getVClass())) : mySpeed;
+    const double speed = veh != nullptr ? MIN2(veh->getMaxSpeed(), veh->getType()->speedFactor.getParameter(0) * getVClassMaxSpeed(veh->getVClass())) : mySpeed;
     return myLength / speed + myTimePenalty;
 }
 
@@ -458,7 +458,9 @@ ROEdge::getViaSuccessors(SUMOVehicleClass vClass, bool /*ignoreTransientPermissi
 
 
 bool
-ROEdge::isConnectedTo(const ROEdge& e, const SUMOVehicleClass vClass) const {
+ROEdge::isConnectedTo(const ROEdge& e, const SUMOVehicleClass vClass, bool ignoreTransientPermissions) const {
+    // @todo needs to be used with #12501
+    UNUSED_PARAMETER(ignoreTransientPermissions);
     const ROEdgeVector& followers = getSuccessors(vClass);
     return std::find(followers.begin(), followers.end(), &e) != followers.end();
 }

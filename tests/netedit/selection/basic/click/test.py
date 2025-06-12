@@ -19,14 +19,11 @@
 import os
 import sys
 
-testRoot = os.path.join(os.environ.get('SUMO_HOME', '.'), 'tests')
-neteditTestRoot = os.path.join(
-    os.environ.get('TEXTTEST_HOME', testRoot), 'netedit')
-sys.path.append(neteditTestRoot)
+sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
-neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
+neteditProcess, referencePosition = netedit.setupAndStart()
 
 # go to inspect mode
 netedit.changeMode("inspect")
@@ -38,7 +35,7 @@ netedit.leftClickControl(referencePosition, netedit.positions.selection.edge)
 netedit.leftClickControl(referencePosition, netedit.positions.selection.edge)
 
 # this should not delete anything
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # go to select mode
 netedit.changeMode("select")
@@ -50,7 +47,7 @@ netedit.leftClickShift(referencePosition, netedit.positions.selection.edge)
 netedit.leftClickShift(referencePosition, netedit.positions.selection.edge)
 
 # this should not delete anything
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # toggle edges selection
 netedit.changeEditMode(netedit.attrs.modes.network.selectLane)
@@ -61,7 +58,7 @@ netedit.leftClick(referencePosition, netedit.positions.selection.edge)
 netedit.leftClick(referencePosition, netedit.positions.selection.edge)
 
 # this should not delete anything
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # save Netedit config
 netedit.saveExistentShortcut("neteditConfig")

@@ -30,7 +30,7 @@
 // member method definitions
 // ===========================================================================
 PlainXMLFormatter::PlainXMLFormatter(const int defaultIndentation)
-    : myDefaultIndentation(defaultIndentation), myHavePendingOpener(false) {
+    : OutputFormatter(OutputFormatterType::XML), myDefaultIndentation(defaultIndentation), myHavePendingOpener(false) {
 }
 
 

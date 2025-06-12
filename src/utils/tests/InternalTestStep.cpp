@@ -52,6 +52,14 @@ InternalTestStep::InternalTestStep(InternalTest* testSystem, const std::string& 
         processModifyAttributeFunction();
     } else if (function == "modifyAttributeOverlapped") {
         processModifyAttributeOverlappedFunction();
+    } else if (function == "modifyBoolAttribute") {
+        processModifyBoolAttributeFunction();
+    } else if (function == "modifyBoolAttributeOverlapped") {
+        processModifyBoolAttributeOverlappedFunction();
+    } else if (function == "modifyColorAttribute") {
+        processModifyColorAttributeFunction();
+    } else if (function == "modifyColorAttributeOverlapped") {
+        processModifyColorAttributeOverlappedFunction();
     } else if (function == "supermode") {
         processSupermodeFunction();
     } else if (function == "changeMode") {
@@ -64,12 +72,19 @@ InternalTestStep::InternalTestStep(InternalTest* testSystem, const std::string& 
         processSaveExistentShortcutFunction();
     } else if (function == "checkUndoRedo") {
         processCheckUndoRedoFunction();
+    } else if (function == "delete") {
+        processDeleteFunction();
+    } else if (function == "selection") {
+        processSelectionFunction();
     } else if (function == "undo") {
         processUndoFunction();
     } else if (function == "redo") {
         processRedoFunction();
     } else if (function == "quit") {
         processQuitFunction();
+    } else if (function.size() > 0) {
+        std::cout << function << std::endl;
+        throw ProcessError("Function " + function + " not implemented in InternalTestStep");
     }
 }
 
@@ -329,6 +344,8 @@ InternalTestStep::translateKey(const std::string& key) const {
     if (key == "backspace") {
         solution.first = KEY_BackSpace;
         solution.second = "\b";
+    } else if (key == "space") {
+        solution.first = KEY_space;
     } else if (key == "tab") {
         solution.first = KEY_Tab;
         solution.second = "\t";
@@ -349,6 +366,11 @@ InternalTestStep::translateKey(const std::string& key) const {
         solution.second = "\x7F";
     } else if (key == "multi_key") {
         solution.first = KEY_Multi_key;
+        // function
+    } else if (key == "shift") {
+        solution.first = KEY_Shift_L;
+    } else if (key == "control") {
+        solution.first = KEY_Control_L;
         // Cursor
     } else if (key == "home") {
         solution.first = KEY_Home;
@@ -408,8 +430,8 @@ InternalTestStep::processSetupAndStartFunction() {
     std::cout << "TestFunctions: Netedit opened successfully" << std::endl;
     std::cout << "Finding reference" << std::endl;
     std::cout << "TestFunctions: 'reference.png' found. Position: " <<
-        toString(MOUSE_REFERENCE_X) << " - " << 
-        toString(MOUSE_REFERENCE_Y) << std::endl;
+              toString(MOUSE_REFERENCE_X) << " - " <<
+              toString(MOUSE_REFERENCE_Y) << std::endl;
 }
 
 
@@ -423,8 +445,8 @@ InternalTestStep::processLeftClickFunction() const {
         const int posY = myTestSystem->myViewPositions.at(myArguments[1]).second;
         // print info
         std::cout << "TestFunctions: Clicked over position " <<
-            toString(posX + MOUSE_REFERENCE_X) << " - " <<
-            toString(posY + MOUSE_REFERENCE_Y) << std::endl;
+                  toString(posX + MOUSE_REFERENCE_X) << " - " <<
+                  toString(posY + MOUSE_REFERENCE_Y) << std::endl;
         // add move, left button press and left button release
         new InternalTestStep(myTestSystem, SEL_MOTION, Category::VIEW, buildMouseMoveEvent(posX, posY), true);
         new InternalTestStep(myTestSystem, SEL_LEFTBUTTONPRESS, Category::VIEW, buildMouseLeftClickPressEvent(posX, posY), true);
@@ -448,16 +470,14 @@ InternalTestStep::processModifyAttributeFunction() const {
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
         // jump to the element
         for (int i = 0; i < numTabs; i++) {
-            new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent("tab"), false);
-            new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent("tab"), false);
+            buildPressKeyEvent("tab", false);
         }
         // write attribute character by character
         for (const char c : value) {
-            new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(c), false);
-            new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(c), false);
+            buildPressKeyEvent(c, false);
         }
         // press enter to confirm changes (updating view)
-        new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent("enter"), true);
+        buildPressKeyEvent("enter", true);
     }
 }
 
@@ -478,16 +498,120 @@ InternalTestStep::processModifyAttributeOverlappedFunction() const {
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
         // jump to the element
         for (int i = 0; i < (numTabs + overlappedTabs); i++) {
-            new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent("tab"), false);
-            new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent("tab"), false);
+            buildPressKeyEvent("tab", false);
         }
         // write attribute character by character
         for (const char c : value) {
-            new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(c), false);
-            new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(c), false);
+            buildPressKeyEvent(c, false);
         }
         // press enter to confirm changes (updating view)
-        new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent("enter"), true);
+        buildPressKeyEvent("enter", true);
+    }
+}
+
+
+void
+InternalTestStep::processModifyBoolAttributeFunction() const {
+    if ((myArguments.size() != 1) ||
+            !checkIntArgument(myArguments[0], myTestSystem->myAttributesEnum)) {
+        writeError("modifyBoolAttribute", "<int/attributeEnum>");
+    } else {
+        const int numTabs = getIntArgument(myArguments[0], myTestSystem->myAttributesEnum);
+        // focus frame
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
+        // jump to the element
+        for (int i = 0; i < numTabs; i++) {
+            buildPressKeyEvent("tab", false);
+        }
+        // toogle attribute
+        buildPressKeyEvent("space", true);
+    }
+}
+
+
+void
+InternalTestStep::processModifyBoolAttributeOverlappedFunction() const {
+    if ((myArguments.size() != 1) ||
+            !checkIntArgument(myArguments[0], myTestSystem->myAttributesEnum)) {
+        writeError("modifyBoolAttributeOverlapped", "<int/attributeEnum>");
+    } else {
+        const int numTabs = getIntArgument(myArguments[0], myTestSystem->myAttributesEnum);
+        const int overlappedTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.editElements.overlapped");
+        // focus frame
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
+        // jump to the element
+        for (int i = 0; i < (numTabs + overlappedTabs); i++) {
+            buildPressKeyEvent("tab", false);
+        }
+        // toogle attribute
+        buildPressKeyEvent("space", true);
+    }
+}
+
+
+void
+InternalTestStep::processModifyColorAttributeFunction() const {
+    if ((myArguments.size() != 2) ||
+            !checkIntArgument(myArguments[0], myTestSystem->myAttributesEnum) ||
+            !checkIntArgument(myArguments[1], myTestSystem->myAttributesEnum)) {
+        writeError("processModifyColorAttributeFunction", "<int/attributeEnum, int>");
+    } else {
+        const int numTabs = getIntArgument(myArguments[0], myTestSystem->myAttributesEnum);
+        const int colorIndex = getIntArgument(myArguments[1], myTestSystem->myAttributesEnum);
+        const int overlappedTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.editElements.overlapped");
+        // focus frame
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
+        // jump to the element
+        for (int i = 0; i < (numTabs + overlappedTabs); i++) {
+            buildPressKeyEvent("tab", false);
+        }
+        // open dialog
+        buildPressKeyEvent("space", false);
+        // go to the list of colors
+        for (int i = 0; i < 2; i++) {
+            buildTwoPressKeyEvent("shift", "tab", false);
+        }
+        // select color
+        for (int i = 0; i < (1 + colorIndex); i++) {
+            buildPressKeyEvent("down", false);
+        }
+        // go to button
+        buildPressKeyEvent("tab", false);
+        // press button
+        buildPressKeyEvent("space", true);
+    }
+}
+
+
+void
+InternalTestStep::processModifyColorAttributeOverlappedFunction() const {
+    if ((myArguments.size() != 2) ||
+            !checkIntArgument(myArguments[0], myTestSystem->myAttributesEnum) ||
+            !checkIntArgument(myArguments[1], myTestSystem->myAttributesEnum)) {
+        writeError("processModifyColorAttributeOverlappedFunction", "<int/attributeEnum, int>");
+    } else {
+        const int numTabs = getIntArgument(myArguments[0], myTestSystem->myAttributesEnum);
+        const int colorIndex = getIntArgument(myArguments[1], myTestSystem->myAttributesEnum);
+        // focus frame
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
+        // jump to the element
+        for (int i = 0; i < numTabs; i++) {
+            buildPressKeyEvent("tab", false);
+        }
+        // open dialog
+        buildPressKeyEvent("space", false);
+        // go to the list of colors
+        for (int i = 0; i < 2; i++) {
+            buildTwoPressKeyEvent("shift", "tab", false);
+        }
+        // select color
+        for (int i = 0; i < (1 + colorIndex); i++) {
+            buildPressKeyEvent("down", false);
+        }
+        // go to button
+        buildPressKeyEvent("tab", false);
+        // press button
+        buildPressKeyEvent("space", true);
     }
 }
 
@@ -521,15 +645,15 @@ InternalTestStep::processCheckUndoRedoFunction() const {
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_I_MODE_INSPECT, Category::APP);
         // click over reference
         std::cout << "TestFunctions: Clicked over position " <<
-            toString(MOUSE_REFERENCE_X) << " - " <<
-            toString(MOUSE_REFERENCE_Y) << std::endl;
+                  toString(MOUSE_REFERENCE_X) << " - " <<
+                  toString(MOUSE_REFERENCE_Y) << std::endl;
         // add move, left button press and left button release
         new InternalTestStep(myTestSystem, SEL_MOTION, Category::VIEW, buildMouseMoveEvent(0, 0), true);
         new InternalTestStep(myTestSystem, SEL_LEFTBUTTONPRESS, Category::VIEW, buildMouseLeftClickPressEvent(0, 0), true);
         new InternalTestStep(myTestSystem, SEL_LEFTBUTTONRELEASE, Category::VIEW, buildMouseLeftClickReleaseEvent(0, 0), true);
         // undo
         for (int i = 0; i < numUndoRedos; i++) {
-                new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_CTRL_Z_UNDO, Category::APP);
+            new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_CTRL_Z_UNDO, Category::APP);
         }
         // focus frame
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
@@ -537,8 +661,8 @@ InternalTestStep::processCheckUndoRedoFunction() const {
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_I_MODE_INSPECT, Category::APP);
         // click over reference
         std::cout << "TestFunctions: Clicked over position " <<
-            toString(MOUSE_REFERENCE_X) << " - " <<
-            toString(MOUSE_REFERENCE_Y) << std::endl;
+                  toString(MOUSE_REFERENCE_X) << " - " <<
+                  toString(MOUSE_REFERENCE_Y) << std::endl;
         // add move, left button press and left button release
         new InternalTestStep(myTestSystem, SEL_MOTION, Category::VIEW, buildMouseMoveEvent(0, 0), true);
         new InternalTestStep(myTestSystem, SEL_LEFTBUTTONPRESS, Category::VIEW, buildMouseLeftClickPressEvent(0, 0), true);
@@ -546,6 +670,66 @@ InternalTestStep::processCheckUndoRedoFunction() const {
         // undo
         for (int i = 0; i < numUndoRedos; i++) {
             new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_CTRL_Y_REDO, Category::APP);
+        }
+    }
+}
+
+
+void
+InternalTestStep::processDeleteFunction() const {
+    if (myArguments.size() != 0) {
+        writeError("delete", "<>");
+    } else {
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_DEL, Category::APP);
+    }
+}
+
+
+void
+InternalTestStep::processSelectionFunction() const {
+    if (myArguments.size() != 1 || !checkStringArgument(myArguments[0])) {
+        writeError("selection", "<selection operation>");
+    } else {
+        const std::string selectionType = getStringArgument(myArguments[0]);
+        // get number of tabls
+        int numTabs = 0;
+        if (selectionType == "default") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.default");
+        } else if (selectionType == "save") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.save");
+        } else if (selectionType == "load") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.load");
+        } else if (selectionType == "add") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.add");
+        } else if (selectionType == "remove") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.remove");
+        } else if (selectionType == "keep") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.keep");
+        } else if (selectionType == "replace") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.replace");
+        } else if (selectionType == "clear") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.clear");
+        } else if (selectionType == "invert") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.invert");
+        } else if (selectionType == "invertData") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.invertData");
+        } else if (selectionType == "delete") {
+            numTabs = myTestSystem->myAttributesEnum.at("netedit.attrs.frames.selection.delete");
+        }
+        // focus frame
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
+        // jump to the element
+        for (int i = 0; i < numTabs; i++) {
+            buildPressKeyEvent("tab", false);
+        }
+        if (selectionType == "save") {
+            buildPressKeyEvent("enter", false);
+            // complete
+        } else if (selectionType == "load") {
+            buildPressKeyEvent("enter", false);
+            // complete
+        } else {
+            buildPressKeyEvent("space", true);
         }
     }
 }
@@ -564,8 +748,8 @@ InternalTestStep::processUndoFunction() const {
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_I_MODE_INSPECT, Category::APP);
         // click over reference
         std::cout << "TestFunctions: Clicked over position " <<
-            toString(MOUSE_REFERENCE_X) << " - " <<
-            toString(MOUSE_REFERENCE_Y) << std::endl;
+                  toString(MOUSE_REFERENCE_X) << " - " <<
+                  toString(MOUSE_REFERENCE_Y) << std::endl;
         // add move, left button press and left button release
         new InternalTestStep(myTestSystem, SEL_MOTION, Category::VIEW, buildMouseMoveEvent(0, 0), true);
         new InternalTestStep(myTestSystem, SEL_LEFTBUTTONPRESS, Category::VIEW, buildMouseLeftClickPressEvent(0, 0), true);
@@ -591,8 +775,8 @@ InternalTestStep::processRedoFunction() const {
         new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_I_MODE_INSPECT, Category::APP);
         // click over reference
         std::cout << "TestFunctions: Clicked over position " <<
-            toString(MOUSE_REFERENCE_X) << " - " <<
-            toString(MOUSE_REFERENCE_Y) << std::endl;
+                  toString(MOUSE_REFERENCE_X) << " - " <<
+                  toString(MOUSE_REFERENCE_Y) << std::endl;
         // add move, left button press and left button release
         new InternalTestStep(myTestSystem, SEL_MOTION, Category::VIEW, buildMouseMoveEvent(0, 0), true);
         new InternalTestStep(myTestSystem, SEL_LEFTBUTTONPRESS, Category::VIEW, buildMouseLeftClickPressEvent(0, 0), true);
@@ -709,16 +893,14 @@ InternalTestStep::processChangeElementArgument() const {
             new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP);
             // jump to select additional argument
             for (int i = 0; i < numTabs; i++) {
-                new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent("tab"), false);
-                new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent("tab"), false);
+                buildPressKeyEvent("tab", false);
             }
             // write additional character by character
             for (const char c : element) {
-                new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(c), false);
-                new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(c), false);
+                buildPressKeyEvent(c, false);
             }
             // press enter to confirm changes (updating view)
-            new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent("enter"), true);
+            buildPressKeyEvent("enter", true);
         }
     }
 }
@@ -829,6 +1011,29 @@ InternalTestStep::stripSpaces(const std::string& str) const {
 void
 InternalTestStep::writeError(const std::string& function, const std::string& expected) const {
     WRITE_ERRORF("Invalid internal testStep function '%', requires '%' arguments ", function, expected);
+}
+
+
+void
+InternalTestStep::buildPressKeyEvent(const std::string& key, const bool updateView) const {
+    new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(key), updateView);
+    new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(key), updateView);
+}
+
+
+void
+InternalTestStep::buildPressKeyEvent(const char key, const bool updateView) const {
+    new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(key), updateView);
+    new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(key), updateView);
+}
+
+
+void
+InternalTestStep::buildTwoPressKeyEvent(const std::string& keyA, const std::string& keyB, const bool updateView) const {
+    new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(keyA), updateView);
+    new InternalTestStep(myTestSystem, SEL_KEYPRESS, Category::APP, buildKeyPressEvent(keyB), updateView);
+    new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(keyB), updateView);
+    new InternalTestStep(myTestSystem, SEL_KEYRELEASE, Category::APP, buildKeyReleaseEvent(keyA), updateView);
 }
 
 /****************************************************************************/

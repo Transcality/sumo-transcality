@@ -19,20 +19,17 @@
 import os
 import sys
 
-testRoot = os.path.join(os.environ.get('SUMO_HOME', '.'), 'tests')
-neteditTestRoot = os.path.join(
-    os.environ.get('TEXTTEST_HOME', testRoot), 'netedit')
-sys.path.append(neteditTestRoot)
+sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
-neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
+neteditProcess, referencePosition = netedit.setupAndStart()
 
 # go to select mode
 netedit.changeMode("select")
 
 # select all using invert
-netedit.selectionInvert()
+netedit.selection("invert")
 
 # go to inspect mode
 netedit.changeMode("inspect")
@@ -47,7 +44,7 @@ netedit.modifyAttributeOverlapped(netedit.attrs.busStop.inspectSelection.friendl
 netedit.changeMode("select")
 
 # clear selection
-netedit.selectionClear()
+netedit.selection("clear")
 
 # save netedit config
 netedit.saveExistentShortcut("neteditConfig")
@@ -56,7 +53,7 @@ netedit.saveExistentShortcut("neteditConfig")
 netedit.fixStoppingPlace("selectInvalids")
 
 # remove it using DEL key
-netedit.deleteUsingShortcut()
+netedit.delete()
 
 # save netedit config
 netedit.saveExistentShortcut("neteditConfig")

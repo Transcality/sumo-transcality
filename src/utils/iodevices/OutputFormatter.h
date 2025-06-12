@@ -39,6 +39,11 @@ class RGBColor;
 // ===========================================================================
 // class definitions
 // ===========================================================================
+enum class OutputFormatterType {
+    XML,
+    CSV
+};
+
 /**
  * @class OutputFormatter
  * @brief Abstract base class for output formatters
@@ -49,6 +54,9 @@ class RGBColor;
  */
 class OutputFormatter {
 public:
+    /// @brief Constructor
+    OutputFormatter(OutputFormatterType t) : myType(t) { }
+
     /// @brief Destructor
     virtual ~OutputFormatter() = default;
 
@@ -115,9 +123,11 @@ public:
 
     virtual bool wroteHeader() const = 0;
 
+
     template <typename T>
     void writeRaw(StreamDevice& into, const T& val){
         
         into << val;
     }
+
 };

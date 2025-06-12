@@ -19,14 +19,11 @@
 import os
 import sys
 
-testRoot = os.path.join(os.environ.get('SUMO_HOME', '.'), 'tests')
-neteditTestRoot = os.path.join(
-    os.environ.get('TEXTTEST_HOME', testRoot), 'netedit')
-sys.path.append(neteditTestRoot)
+sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
-neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
+neteditProcess, referencePosition = netedit.setupAndStart()
 
 # save Netedit config
 netedit.saveExistentShortcut("neteditConfig")
@@ -38,7 +35,7 @@ netedit.fixDemandElement(netedit.attrs.fix.demandElements.routes.selectInvalidRo
 netedit.changeSupermode("demand")
 
 # press supr key to remove invalid routes
-netedit.deleteUsingShortcut()
+netedit.delete()
 
 # save Netedit config
 netedit.saveExistentShortcut("neteditConfig")

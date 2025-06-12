@@ -19,14 +19,11 @@
 import os
 import sys
 
-testRoot = os.path.join(os.environ.get('SUMO_HOME', '.'), 'tests')
-neteditTestRoot = os.path.join(
-    os.environ.get('TEXTTEST_HOME', testRoot), 'netedit')
-sys.path.append(neteditTestRoot)
+sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
-neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
+neteditProcess, referencePosition = netedit.setupAndStart()
 
 # go to select mode
 netedit.changeMode("select")
@@ -34,7 +31,7 @@ netedit.changeMode("select")
 # select all edges with allow = "all" and remove it
 # (we cannot use "=all" since "all" is expanded to include all vClassess)
 netedit.selectItems("Network elements", "lane", "allow", "custom1")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # recompute
 netedit.computeJunctions()

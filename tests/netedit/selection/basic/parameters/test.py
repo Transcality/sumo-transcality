@@ -19,45 +19,42 @@
 import os
 import sys
 
-testRoot = os.path.join(os.environ.get('SUMO_HOME', '.'), 'tests')
-neteditTestRoot = os.path.join(
-    os.environ.get('TEXTTEST_HOME', testRoot), 'netedit')
-sys.path.append(neteditTestRoot)
+sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
-neteditProcess, referencePosition = netedit.setupAndStart(neteditTestRoot)
+neteditProcess, referencePosition = netedit.setupAndStart()
 
 # go to select mode
 netedit.changeMode("select")
 
 # select all trainStops with lanes that contains "E5_0" and remove it
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "trainStop", "lane", "E5_0")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # select all chargingStations with id "cs_3" and remove it
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "chargingStation", "id", "cs_3")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # select all containerStops with id "cs_3" and remove it
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "containerStop", "id", "cs_3")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # select all busStops with startPos greater than 18
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "busStop", "endPos", ">18")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # select all busStops with startPos greater than 25
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "parkingArea", "startPos", "")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # select all busStops with lines that contains "lineToRemove" and remove it
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "busStop", "lines", "line1")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # select all busStops with lines that contains "linetoRemove" and remove it
 netedit.selectStoppingPlaceItems("Additional elements", "Stopping places", "busStop", "lines", "line2")
-netedit.deleteSelectedItems()
+netedit.delete()
 
 # save Netedit config
 netedit.saveExistentShortcut("neteditConfig")

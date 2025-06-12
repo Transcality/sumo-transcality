@@ -114,6 +114,7 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
         // check the file extension
         const auto file_ext = FileHelpers::getExtension(name);
         const int len = (int)name.length();
+
         if (file_ext == ".parquet" || file_ext == ".prq") {
 #ifdef HAVE_PARQUET
             // Check if this is an FCD output file
@@ -145,6 +146,7 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
         }
         else {
             dev = new OutputDevice_File(name2, len > 3 && FileHelpers::getExtension(name) == ".gz");
+
         }
     }
     // todo: extract this to a class method? (b.c. Parquet doesn't have an iostream)
@@ -284,6 +286,7 @@ void
 OutputDevice::setPrecision(int precision) {
     getOStream().setPrecision(precision);
 }
+
 
 
 int

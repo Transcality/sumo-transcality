@@ -29,6 +29,7 @@
 #include <cassert>
 #include <utils/common/ToString.h>
 #include <utils/xml/SUMOXMLDefinitions.h>
+#include "CSVFormatter.h"
 #include "PlainXMLFormatter.h"
 #include "ParquetFormatter.h"
 #include "ParquetUnstructuredFormatter.h"
@@ -181,14 +182,15 @@ public:
      */
     void close();
 
+    void setFormatter(OutputFormatter* formatter) {
+        delete myFormatter;
+        myFormatter = formatter;
+    }
 
     /** @brief Sets the precision or resets it to default
      * @param[in] precision The accuracy (number of digits behind '.') to set
      */
     virtual void setPrecision(int precision = gPrecision);
-
-    /// @brief return precision set on the device
-    int precision();
 
     /** @brief Returns the precision of the underlying stream
      */
@@ -289,6 +291,7 @@ public:
         assert((int)attr <= 63);
         if (attributeMask == 0 || useAttribute(attr, attributeMask)) {
             writeAttr(attr, val);
+
         }
         return *this;
     }
@@ -296,7 +299,9 @@ public:
     OutputDevice& writeOptionalAttr(const SumoXMLAttr attr, const T& val, SumoXMLAttrMask attributeMask) {
         assert((int)attr <= (int)attributeMask.size());
         if (attributeMask.none() || useAttribute(attr, attributeMask)) {
+
             writeAttr(attr, val);
+
         }
         return *this;
     }
@@ -310,6 +315,7 @@ public:
      */
     template <typename T>
     OutputDevice& writeAttr(const std::string& attr, const T& val) {
+
         switch (this->getType())
         {
         case OutputWriterType::XML:
@@ -333,6 +339,7 @@ public:
         default:
             throw IOError("Unknown output writer type");
             break;
+
         }
         return *this;
     }
@@ -464,6 +471,7 @@ protected:
     std::unique_ptr<StreamDevice> myStreamDevice{nullptr};
 
     /// @brief The formatter for XML
+
     std::unique_ptr<OutputFormatter> myFormatter{nullptr};
 
     /// @brief return a type casted formatter
@@ -471,6 +479,7 @@ protected:
     T& getFormatter() {
         return static_cast<T&>(*myFormatter);
     }
+
 
 private:
     /// @brief Invalidated copy constructor.
