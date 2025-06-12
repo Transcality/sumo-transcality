@@ -1,9 +1,28 @@
+# Remove the redundant FIND_LIBRARY call - the main CMakeLists.txt already handles this properly
+# if(WITH_PARQUET)
+#     FIND_LIBRARY(PARQUET_LIBRARY NAMES parquet)
+# endif()
+
+# Build library lists conditionally including Parquet libraries when available
+set(parquet_libs "")
+if(HAVE_PARQUET AND PARQUET_LIBRARY)
+    # Add both Parquet and Arrow libraries as they're needed together
+    set(parquet_libs ${PARQUET_LIBRARY})
+    # If Arrow was found as a target, include it too
+    if(TARGET arrow_shared)
+        list(APPEND parquet_libs arrow_shared)
+    elseif(TARGET Arrow::arrow_shared)
+        list(APPEND parquet_libs Arrow::arrow_shared)
+    endif()
+endif()
+
 set(netconvertlibs
-        netwrite netimport netbuild foreign_eulerspiral ${GDAL_LIBRARY} netimport_vissim netimport_vissim_typeloader netimport_vissim_tempstructs ${commonlibs} ${TCMALLOC_LIBRARY})
+        netwrite netimport netbuild foreign_eulerspiral ${GDAL_LIBRARY} netimport_vissim netimport_vissim_typeloader netimport_vissim_tempstructs ${commonlibs} ${parquet_libs} ${TCMALLOC_LIBRARY})
 
 set(sumolibs
         traciserver netload microsim_cfmodels microsim_engine microsim_lcmodels microsim_devices microsim_trigger microsim_output microsim_transportables microsim_actions
-        microsim_traffic_lights microsim mesosim ${commonvehiclelibs} ${GEOS_LIBRARY})
+        microsim_traffic_lights microsim mesosim ${commonvehiclelibs} ${GEOS_LIBRARY} ${parquet_libs})
+
 if (OPENSCENEGRAPH_FOUND)
     set(osgviewlib osgview)
 endif ()
@@ -57,6 +76,7 @@ add_executable(sumo sumo_main.cpp)
 set_target_properties(sumo PROPERTIES OUTPUT_NAME sumo${BINARY_SUFFIX})
 set_target_properties(sumo PROPERTIES OUTPUT_NAME_DEBUG sumo${BINARY_SUFFIX}D)
 target_link_libraries(sumo microsim traciserver libsumostatic ${sumolibs} ${TCMALLOC_LIBRARY})
+
 add_dependencies(sumo generate-version-h install_dll)
 
 if (FOX_FOUND)
@@ -92,7 +112,7 @@ add_dependencies(netconvert generate-version-h install_dll)
 add_executable(od2trips od2trips_main.cpp)
 set_target_properties(od2trips PROPERTIES OUTPUT_NAME od2trips${BINARY_SUFFIX})
 set_target_properties(od2trips PROPERTIES OUTPUT_NAME_DEBUG od2trips${BINARY_SUFFIX}D)
-target_link_libraries(od2trips od router ${commonvehiclelibs} ${TCMALLOC_LIBRARY})
+target_link_libraries(od2trips od router ${commonvehiclelibs} ${parquet_libs} ${TCMALLOC_LIBRARY})
 add_dependencies(od2trips generate-version-h install_dll)
 
 install(TARGETS sumo netconvert od2trips RUNTIME DESTINATION bin)

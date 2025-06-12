@@ -36,6 +36,8 @@
 #include "OutputDevice_COUT.h"
 #include "OutputDevice_CERR.h"
 #include "OutputDevice_Network.h"
+#include "OutputDevice_Parquet.h"
+#include "OutputDevice_ParquetUnstructured.h"
 #include "PlainXMLFormatter.h"
 #include <utils/common/StringUtils.h>
 #include <utils/common/UtilExceptions.h>
@@ -44,6 +46,16 @@
 #include <utils/common/MsgHandler.h>
 #include <utils/options/OptionsCont.h>
 #include <utils/options/OptionsIO.h>
+#include <utils/iodevices/OutputDevice_String.h>
+#ifdef HAVE_PARQUET
+#include <utils/iodevices/OutputDevice_Parquet.h>
+#include <utils/iodevices/OutputDevice_ParquetUnstructured.h>
+#endif
+
+#ifdef HAVE_S3
+#include <arrow/filesystem/s3fs.h>
+#include "S3Utils.h"
+#endif
 
 
 // ===========================================================================
@@ -51,6 +63,13 @@
 // ===========================================================================
 std::map<std::string, OutputDevice*> OutputDevice::myOutputDevices;
 int OutputDevice::myPrevConsoleCP = -1;
+int OutputDevice::myPrecision = OUTPUT_ACCURACY;
+
+#ifdef HAVE_S3
+// Initialize the shared S3 variables
+std::mutex sumo::s3::s3FinalizationMutex;
+bool sumo::s3::s3WasInitialized = false;
+#endif
 
 
 // ===========================================================================
@@ -76,18 +95,8 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
         dev = OutputDevice_COUT::getDevice();
     } else if (name == "stderr") {
         dev = OutputDevice_CERR::getDevice();
-    } else if (FileHelpers::isSocket(name)) {
-        try {
-            const bool ipv6 = name[0] == '[';  // IPv6 adresses may be written like '[::1]:8000'
-            const size_t sepIndex = name.find(":", ipv6 ? name.find("]") : 0);
-            const int port = StringUtils::toInt(name.substr(sepIndex + 1));
-            dev = new OutputDevice_Network(ipv6 ? name.substr(1, sepIndex - 2) : name.substr(0, sepIndex), port);
-        } catch (NumberFormatException&) {
-            throw IOError("Given port number '" + name.substr(name.find(":") + 1) + "' is not numeric.");
-        } catch (EmptyData&) {
-            throw IOError(TL("No port number given."));
-        }
-    } else {
+    }  
+    else {
         std::string name2 = (name == "nul" || name == "NUL") ? "/dev/null" : name;
         if (usePrefix && OptionsCont::getOptions().isSet("output-prefix") && name2 != "/dev/null") {
             std::string prefix = OptionsCont::getOptions().getString("output-prefix");
@@ -102,14 +111,47 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
             name2 = FileHelpers::prependToLastPathComponent(prefix, name);
         }
         name2 = StringUtils::substituteEnvironment(name2, &OptionsIO::getLoadTime());
+        // check the file extension
+        const auto file_ext = FileHelpers::getExtension(name);
         const int len = (int)name.length();
-        dev = new OutputDevice_File(name2, len > 3 && name.substr(len - 3) == ".gz");
-        if ((len > 4 && name.substr(len - 4) == ".csv") || (len > 7 && name.substr(len - 7) == ".csv.gz")) {
-            dev->setFormatter(new CSVFormatter());
+
+        if (file_ext == ".parquet" || file_ext == ".prq") {
+#ifdef HAVE_PARQUET
+            // Check if this is an FCD output file
+            bool isFCDOutput = false;
+            // Check if we're handling the fcd-output option
+            if (OptionsCont::getOptions().isSet("fcd-output")) {
+                const std::string fcdOutput = OptionsCont::getOptions().getString("fcd-output");
+                if (name == fcdOutput) {
+                    isFCDOutput = true;
+                }
+            }
+            // Also check if the filename contains "fcd"
+            if (!isFCDOutput && (name.find("fcd") != std::string::npos || name2.find("fcd") != std::string::npos)) {
+                isFCDOutput = true;
+            }
+            
+            if (isFCDOutput) {
+                // Use the structured Parquet writer for FCD outputs
+                std::cout << "Creating structured Parquet writer for FCD output: " << name2 << std::endl;
+                dev = new OutputDevice_Parquet(name2);
+            } else {
+                // Use the unstructured Parquet writer for all other outputs
+                std::cout << "Creating unstructured Parquet writer for output: " << name2 << std::endl;
+                dev = new OutputDevice_ParquetUnstructured(name2);
+            }
+#else
+            throw IOError(TL("Parquet output is not supported in this build."));
+#endif
+        }
+        else {
+            dev = new OutputDevice_File(name2, len > 3 && FileHelpers::getExtension(name) == ".gz");
+
         }
     }
+    // todo: extract this to a class method? (b.c. Parquet doesn't have an iostream)
     dev->setPrecision();
-    dev->getOStream() << std::setiosflags(std::ios::fixed);
+    dev->setOSFlags(std::ios::fixed);
     myOutputDevices[name] = dev;
     return *dev;
 }
@@ -210,9 +252,8 @@ OutputDevice::OutputDevice(const int defaultIndentation, const std::string& file
     myFilename(filename), myFormatter(new PlainXMLFormatter(defaultIndentation)) {
 }
 
-
-OutputDevice::~OutputDevice() {
-    delete myFormatter;
+OutputDevice::OutputDevice(const std::string& filename,  OutputFormatter* formatter) :
+    myFilename(filename), myFormatter(formatter) {
 }
 
 
@@ -243,7 +284,14 @@ OutputDevice::close() {
 
 void
 OutputDevice::setPrecision(int precision) {
-    getOStream() << std::setprecision(precision);
+    getOStream().setPrecision(precision);
+}
+
+
+
+int
+OutputDevice::precision() {
+    return getOStream().precision();
 }
 
 
@@ -296,6 +344,44 @@ OutputDevice::inform(const std::string& msg, const bool progress) {
         getOStream() << msg << '\n';
     }
     postWriteHook();
+}
+
+
+void
+OutputDevice::finalizeGlobalOutput() {
+    // close all devices
+    std::vector<OutputDevice*> devices;
+    for (auto& item : myOutputDevices) {
+        devices.push_back(item.second);
+    }
+    // clear map to avoid closing being called several times
+    myOutputDevices.clear();
+    for (auto device : devices) {
+        try {
+            //device->close();
+            delete device;
+        } catch (const IOError& e) {
+            WRITE_ERROR("Error on closing output devices. " + std::string(e.what()));
+        }
+    }
+    
+#ifdef HAVE_S3
+    // Finalize S3 once at application shutdown
+    try {
+        std::lock_guard<std::mutex> lock(sumo::s3::s3FinalizationMutex);
+        if (sumo::s3::s3WasInitialized) {
+            arrow::Status status = arrow::fs::FinalizeS3();
+            if (!status.ok()) {
+                std::cerr << "Warning: Error finalizing S3: " << status.ToString() << std::endl;
+            } else {
+                std::cout << "S3 resources finalized successfully" << std::endl;
+            }
+            sumo::s3::s3WasInitialized = false;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception during global S3 finalization: " << e.what() << std::endl;
+    }
+#endif
 }
 
 
