@@ -41,6 +41,7 @@ public:
         INIT,   // Setup and start step
         APP,    // send signal to APP (Either GUIAppWindows or GNEApplicationWindow)
         VIEW,   // send signal to view (either GUIView or GNEViewNet)
+        COLOR,  // send signal to color dialog
     };
 
     /// @brief constructor for parsing step in strin format
@@ -53,6 +54,9 @@ public:
     /// @brief constructor for input events (click, keyPress, etc.)
     InternalTestStep(InternalTest* testSystem, FXSelector messageType, Category category,
                      FXEvent* event, const bool updateView);
+
+    /// @brief constructor for key steps (only used for dialog steps)
+    InternalTestStep(InternalTestStep* parent, FXSelector messageType, FXEvent* event);
 
     /// @brief destructor
     ~InternalTestStep();
@@ -74,6 +78,9 @@ public:
 
     /// @brief get event associated with this step
     void* getEvent() const;
+
+    /// @brief get key events used in certain dialogs (color, allowDialog, etc.)
+    const std::vector<const InternalTestStep*>& getKeySteps() const;
 
 protected:
     /// @brief build mouse move event
@@ -118,6 +125,9 @@ private:
 
     /// @brief list of events associated with this step
     FXEvent* myEvent = nullptr;
+
+    /// @brief key events used in certain dialogs (color, allowDialog, etc.)
+    std::vector<const InternalTestStep*> myKeySteps;
 
     /// @brief parse function and arguments
     std::string parseStep(const std::string& rowText);
@@ -210,13 +220,19 @@ private:
     void writeError(const std::string& function, const std::string& expected) const;
 
     /// @brief build a key press and key release (used for tabs, spaces, enter, etc)
-    void buildPressKeyEvent(const std::string& key, const bool updateView) const;
+    InternalTestStep* buildPressKeyEvent(const std::string& key, const bool updateView) const;
+
+    /// @brief build a key press and key release (used for tabs, spaces, enter, etc)
+    void buildPressKeyEvent(InternalTestStep* parent, const std::string& key) const;
 
     /// @brief build a key press and key release (used for single keys)
-    void buildPressKeyEvent(const char key, const bool updateView) const;
+    InternalTestStep* buildPressKeyEvent(const char key, const bool updateView) const;
 
     /// @brief build a two key press and key release (used for tabs, spaces, enter, etc)
-    void buildTwoPressKeyEvent(const std::string& keyA, const std::string& keyB, const bool updateView) const;
+    InternalTestStep* buildTwoPressKeyEvent(const std::string& keyA, const std::string& keyB, const bool updateView) const;
+
+    /// @brief build a two key press and key release (used for tabs, spaces, enter, etc)
+    void buildTwoPressKeyEvent(InternalTestStep* parent, const std::string& keyA, const std::string& keyB) const;
 
     /// @brief invalidate default constructor
     InternalTestStep() = delete;
