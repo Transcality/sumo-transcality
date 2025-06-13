@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /sumo 
 
 # Set C++17 as the standard for all builds
-ENV CXXFLAGS="-std=c++17"
+ENV CXXFLAGS="-std=c++17 -fPIC"
+ENV CPPFLAGS="-std=c++17 -fPIC"
 # Install Arrow and Parquet with C++17 support - FORCED TO VERSION 19
 RUN git clone https://github.com/apache/arrow.git /arrow && \
     cd /arrow && \
@@ -29,6 +30,8 @@ RUN git clone https://github.com/apache/arrow.git /arrow && \
           -DCMAKE_CXX_STANDARD_REQUIRED=ON \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-fPIC" \
+          -DCMAKE_C_FLAGS="-fPIC" \
           -DARROW_BUILD_SHARED=ON \
           -DARROW_BUILD_STATIC=OFF \
           -DARROW_PARQUET_SHARED=ON \
@@ -44,6 +47,8 @@ RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-fPIC" \
+          -DCMAKE_C_FLAGS="-fPIC" \
           .. && \
     make -j$(nproc) && \
     make install && \
