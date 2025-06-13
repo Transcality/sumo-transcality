@@ -183,8 +183,7 @@ public:
     void close();
 
     void setFormatter(OutputFormatter* formatter) {
-        delete myFormatter;
-        myFormatter = formatter;
+        myFormatter.reset(formatter);
     }
 
     /** @brief Sets the precision or resets it to default

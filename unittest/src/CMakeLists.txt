@@ -3,11 +3,16 @@ set(parquet_libs "")
 if(HAVE_PARQUET AND PARQUET_LIBRARY)
     # Add both Parquet and Arrow libraries as they're needed together
     set(parquet_libs ${PARQUET_LIBRARY})
-    # If Arrow was found as a target, include it too
-    if(TARGET arrow_shared)
-        list(APPEND parquet_libs arrow_shared)
-    elseif(TARGET Arrow::arrow_shared)
+    
+    # Arrow is required for Parquet functionality
+    if(TARGET Arrow::arrow_shared)
         list(APPEND parquet_libs Arrow::arrow_shared)
+    elseif(TARGET Arrow::arrow_static)
+        list(APPEND parquet_libs Arrow::arrow_static)
+    elseif(TARGET arrow_shared)
+        list(APPEND parquet_libs arrow_shared)
+    else()
+        message(WARNING "Arrow target not found - Parquet linking may fail")
     endif()
 endif()
 

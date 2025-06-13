@@ -289,12 +289,6 @@ OutputDevice::setPrecision(int precision) {
 
 
 
-int
-OutputDevice::precision() {
-    return getOStream().precision();
-}
-
-
 bool
 OutputDevice::writeXMLHeader(const std::string& rootElement,
                              const std::string& schemaFile,

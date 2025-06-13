@@ -459,7 +459,7 @@ protected:
 class ParquetUnstructuredFormatter : public OutputFormatter {
 public:
     /// @brief Constructor
-    ParquetUnstructuredFormatter() {};
+    ParquetUnstructuredFormatter() : OutputFormatter(OutputFormatterType::CSV) {};
 
     /// @brief Destructor
     virtual ~ParquetUnstructuredFormatter() = default;

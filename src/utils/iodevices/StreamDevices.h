@@ -434,7 +434,7 @@ public:
         currentColumnIndex = 0;
         
         // Build a map of column names to types
-        for (int i = 0; i < numColumns; i++) {
+        for (size_t i = 0; i < numColumns; i++) {
             auto col = schema->Column(i);
             columnTypes[col->name()] = col->physical_type();
             columnNames.push_back(col->name());
@@ -769,8 +769,8 @@ public:
     }
 
 private:
-    int numColumns{0};
-    int currentColumnIndex{0};
+    size_t numColumns{0};
+    size_t currentColumnIndex{0};
     std::map<std::string, parquet::Type::type> columnTypes;
     std::vector<std::string> columnNames;
     

@@ -60,7 +60,6 @@ public:
     /// @brief Destructor
     virtual ~OutputFormatter() = default;
 
-
     /** @brief Writes an XML header with optional configuration
      *
      * If something has been written (myXMLStack is not empty), nothing
@@ -129,5 +128,9 @@ public:
         
         into << val;
     }
+
+protected:
+    /// @brief The formatter type
+    OutputFormatterType myType;
 
 };

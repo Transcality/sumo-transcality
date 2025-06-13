@@ -19,7 +19,7 @@ ENV CXXFLAGS="-std=c++17"
 # Install Arrow and Parquet with C++17 support - FORCED TO VERSION 19
 RUN git clone https://github.com/apache/arrow.git /arrow && \
     cd /arrow && \
-    git checkout apache-arrow-19.0.0 && \
+    git checkout apache-arrow-20.0.0 && \
     mkdir build && \
     cd build && \
     cmake -DARROW_S3=ON -DARROW_PARQUET=ON -DARROW_DATASET=ON -DARROW_WITH_SNAPPY=ON \
@@ -29,10 +29,12 @@ RUN git clone https://github.com/apache/arrow.git /arrow && \
           -DCMAKE_CXX_STANDARD_REQUIRED=ON \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
+          -DARROW_BUILD_SHARED=ON \
+          -DARROW_BUILD_STATIC=OFF \
+          -DARROW_PARQUET_SHARED=ON \
           ../cpp && \
     make -j$(nproc) && \
-    make install && \
-    ldconfig
+    make install
 
 # Install fmt library with C++17 support
 RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
@@ -44,7 +46,8 @@ RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
           -DCMAKE_CXX_COMPILER=g++ \
           .. && \
     make -j$(nproc) && \
-    make install 
+    make install && \
+    ldconfig 
 
 # Now build only the 'sumo' target from local files
 WORKDIR /sumo
@@ -71,6 +74,10 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_STANDARD=17 \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo/install \
+      -DArrow_DIR=/usr/local/lib/cmake/arrow \
+      -DParquet_DIR=/usr/local/lib/cmake/arrow \
+      -DCMAKE_CXX_FLAGS="-I/usr/local/include" \
+      -DCMAKE_EXE_LINKER_FLAGS="-L/usr/local/lib -larrow -lparquet" \
       .. && \
       make -j$(nproc) && \
       make install

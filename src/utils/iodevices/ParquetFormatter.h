@@ -280,7 +280,7 @@ protected:
 class ParquetFormatter : public OutputFormatter {
 public:
     /// @brief Constructor
-    ParquetFormatter() {};
+    ParquetFormatter() : OutputFormatter(OutputFormatterType::CSV) {};
 
     /// @brief Destructor
     virtual ~ParquetFormatter() = default;
