@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y -V ./apache-arrow-apt-source-latest-*.deb \
     && apt-get update && apt-get install -y --no-install-recommends \
     libfox-1.6-0 libgdal30 libgeos-c1v5 libgl2ps1.4 libproj22 \
-    libxerces-c3.2 python3-minimal libfmt8 freeglut3 \
+    libxerces-c3.2 python3-minimal libfmt8 freeglut3 python3.10-venv\
     libgl1-mesa-glx libglu1-mesa libgoogle-perftools4 \
     libarrow1000 libparquet1000 \
     && apt-get install -y --no-install-recommends libarrow-dev libparquet-dev || true \
