@@ -1,17 +1,53 @@
-# Use official SUMO image with explicit platform specification
-# Note: Official SUMO images are only available for AMD64/x86_64
-# On Apple Silicon Macs, this will run under emulation
-FROM --platform=linux/amd64 ghcr.io/eclipse-sumo/sumo:main
+# Builder stage
+FROM ubuntu:22.04 AS builder
 
-# Add Apache Arrow/Parquet support
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    lsb-release \
-    && wget https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
-    && apt install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
-    && apt-get update \
-    && apt-get install -y -V libarrow-dev libparquet-dev \
-    && rm -rf /var/lib/apt/lists/* ./apache-arrow-apt-source-latest-*.deb 
+# Install build deps in single layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget lsb-release gnupg ca-certificates git cmake g++ \
+    astyle ccache debhelper devscripts default-jdk doxygen freeglut3-dev \
+    gettext graphviz help2man hugo libeigen3-dev libfmt-dev libfox-1.6-dev \
+    libgdal-dev libgeos-dev libgl2ps-dev libgoogle-perftools-dev libgtest-dev \
+    libproj-dev libv8-dev libxerces-c-dev libxrandr-dev maven mkdocs mono-mcs \
+    pipx plantuml pre-commit python-is-python3 python3-build python3-dev \
+    python3-pip python3-setuptools swig xvfb \
+    && wget -q https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get install -y -V ./apache-arrow-apt-source-latest-*.deb \
+    && apt-get update && apt-get install -y --no-install-recommends libarrow-dev libparquet-dev \
+    && rm -rf /var/lib/apt/lists/* ./apache-arrow-apt-source-latest-*.deb
+
+# Build SUMO
+WORKDIR /usr/src
+RUN git clone --recursive --depth=1 https://github.com/eclipse-sumo/sumo \
+    && cd sumo \
+    && cmake -B build -DCMAKE_BUILD_TYPE=Release . \
+    && cmake --build build -j$(nproc) \
+    && strip build/bin/* 2>/dev/null || true
+
+# Runtime stage
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV SUMO_HOME="/usr/sumo"
+ENV PATH="${SUMO_HOME}/bin:${PATH}"
+
+# Install minimal runtime deps with Apache Arrow
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget lsb-release gnupg ca-certificates \
+    && wget -q https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get install -y -V ./apache-arrow-apt-source-latest-*.deb \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    libfox-1.6-0 libgdal30 libgeos-c1v5 libgl2ps1.4 libproj22 \
+    libxerces-c3.2 python3-minimal libfmt8 freeglut3 \
+    libgl1-mesa-glx libglu1-mesa libgoogle-perftools4 \
+    libarrow1000 libparquet1000 \
+    && apt-get install -y --no-install-recommends libarrow-dev libparquet-dev || true \
+    && rm -rf /var/lib/apt/lists/* ./apache-arrow-apt-source-latest-*.deb
+
+# Copy built SUMO
+COPY --from=builder /usr/src/sumo/bin ${SUMO_HOME}/bin
+COPY --from=builder /usr/src/sumo/data ${SUMO_HOME}/data
+COPY --from=builder /usr/src/sumo/tools ${SUMO_HOME}/tools
+
+WORKDIR ${SUMO_HOME} 
