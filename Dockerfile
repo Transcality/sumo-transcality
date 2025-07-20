@@ -32,22 +32,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV SUMO_HOME="/usr/sumo"
 ENV PATH="${SUMO_HOME}/bin:${PATH}"
 
-# Install minimal runtime deps with Apache Arrow
+# Install minimal runtime deps with Apache Arrow + development tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget lsb-release gnupg ca-certificates \
+    wget lsb-release gnupg ca-certificates g++ cmake \
     && wget -q https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get install -y -V ./apache-arrow-apt-source-latest-*.deb \
     && apt-get update && apt-get install -y --no-install-recommends \
     libfox-1.6-0 libgdal30 libgeos-c1v5 libgl2ps1.4 libproj22 \
-    libxerces-c3.2 python3-minimal libfmt8 freeglut3 python3.10-venv\
+    libxerces-c3.2 python3-minimal libfmt8 freeglut3 \
     libgl1-mesa-glx libglu1-mesa libgoogle-perftools4 \
-    libarrow1000 libparquet1000 \
+    libarrow-dev libparquet-dev \
     && apt-get install -y --no-install-recommends libarrow-dev libparquet-dev || true \
     && rm -rf /var/lib/apt/lists/* ./apache-arrow-apt-source-latest-*.deb
 
-# Copy built SUMO
+# Copy built SUMO with development files
 COPY --from=builder /usr/src/sumo/bin ${SUMO_HOME}/bin
 COPY --from=builder /usr/src/sumo/data ${SUMO_HOME}/data
 COPY --from=builder /usr/src/sumo/tools ${SUMO_HOME}/tools
+COPY --from=builder /usr/src/sumo/src ${SUMO_HOME}/src
 
 WORKDIR ${SUMO_HOME} 
