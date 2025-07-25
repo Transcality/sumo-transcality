@@ -4,6 +4,7 @@ on:
   push:
     branches:
        - 'Main-official'
+       - 'simreplay-fix'
 
 jobs:
   docker:
