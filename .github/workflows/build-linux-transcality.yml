@@ -41,5 +41,5 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            registry.transcality.com/sumo-linux:latest
-            registry.transcality.com/sumo-linux:${{ github.sha }}
+            registry.transcality.com/sumo-linux-official:latest
+            registry.transcality.com/sumo-linux-official:${{ github.sha }}
