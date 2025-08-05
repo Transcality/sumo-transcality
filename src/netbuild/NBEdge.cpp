@@ -567,6 +567,27 @@ NBEdge::reshiftPosition(double xoff, double yoff) {
 
 
 void
+NBEdge::roundGeometry() {
+    myGeom.round(gPrecision);
+    for (Lane& lane : myLanes) {
+        lane.customShape.round(gPrecision);
+    }
+    for (std::vector<Connection>::iterator i = myConnections.begin(); i != myConnections.end(); ++i) {
+        (*i).customShape.round(gPrecision);
+    }
+}
+
+
+void
+NBEdge::roundSpeed() {
+    mySpeed = roundDecimalToEven(mySpeed, gPrecision);
+    // lane speeds are not used for computation but are compared to mySpeed in hasLaneSpecificSpeed
+    for (Lane& l : myLanes) {
+        l.speed = roundDecimalToEven(l.speed, gPrecision);
+    }
+}
+
+void
 NBEdge::mirrorX() {
     myGeom.mirrorX();
     for (int i = 0; i < (int)myLanes.size(); i++) {
@@ -4090,6 +4111,7 @@ NBEdge::append(NBEdge* e) {
     myTurnDestination = e->myTurnDestination;
     myPossibleTurnDestination = e->myPossibleTurnDestination;
     myConnectionsToDelete = e->myConnectionsToDelete;
+    updateRemovedNodes(e->getParameter(SUMO_PARAM_REMOVED_NODES));
     // set the node
     myTo = e->myTo;
     myTurnSignTarget = e->myTurnSignTarget;
@@ -4099,6 +4121,19 @@ NBEdge::append(NBEdge* e) {
         mySignalPosition = e->mySignalPosition;
     }
     computeAngle(); // myEndAngle may be different now
+}
+
+
+void
+NBEdge::updateRemovedNodes(const std::string& removed) {
+    std::string result = getParameter(SUMO_PARAM_REMOVED_NODES);
+    if (!result.empty() && !removed.empty()) {
+        result += " ";
+    }
+    result += removed;
+    if (!result.empty()) {
+        setParameter(SUMO_PARAM_REMOVED_NODES, result);
+    }
 }
 
 
@@ -4785,7 +4820,7 @@ NBEdge::shiftToLanesToEdge(NBEdge* to, int laneOff) {
 }
 
 
-void
+bool
 NBEdge::shiftPositionAtNode(NBNode* node, NBEdge* other) {
     if (myLaneSpreadFunction == LaneSpreadFunction::CENTER
             && !isRailway(getPermissions())
@@ -4804,13 +4839,17 @@ NBEdge::shiftPositionAtNode(NBNode* node, NBEdge* other) {
             //tmp.move2side(MIN2(neededOffset - dist, neededOffset2 - dist2));
             try {
                 tmp.move2side(neededOffset - dist);
+                tmp[i].round(gPrecision);
                 myGeom[i] = tmp[i];
+                computeAngle();
+                return true;
                 //std::cout << getID() << " shiftPositionAtNode needed=" << neededOffset << " dist=" << dist << " needed2=" << neededOffset2 << " dist2=" << dist2 << "  by=" << (neededOffset - dist) << " other=" << other->getID() << "\n";
             } catch (InvalidArgument&) {
                 WRITE_WARNINGF(TL("Could not avoid overlapping shape at node '%' for edge '%'."), node->getID(), getID());
             }
         }
     }
+    return false;
 }
 
 
