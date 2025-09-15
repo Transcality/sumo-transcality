@@ -40,7 +40,7 @@ class GNEAdditionalHandler : public AdditionalHandler {
 
 public:
     /// @brief Constructor
-    GNEAdditionalHandler(GNENet* net, const std::string& filename, const bool allowUndoRedo, const bool overwrite);
+    GNEAdditionalHandler(GNENet* net, const std::string& filename, const bool allowUndoRedo);
 
     /// @brief Destructor
     ~GNEAdditionalHandler();
@@ -431,7 +431,7 @@ public:
      * @param[in] time step's time
      * @param[in] speed step's speed
      */
-    bool buildVariableSpeedSignStep(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOTime time, const std::string& speed);
+    bool buildVariableSpeedSignStep(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, const SUMOTime time, const double speed);
 
     /**@brief Builds a vaporizer (lane speed additional)
      * @param[in] sumoBaseObject sumo base object used for build
@@ -700,7 +700,7 @@ protected:
     /// @brief get element by ID
     GNEAdditional* retrieveAdditionalElement(const std::vector<SumoXMLTag> tags, const std::string& id);
 
-    /// @brief check if element exist, and if overwritte
+    /// @brief check if element exist, and if overwrite
     bool checkElement(const SumoXMLTag tag, GNEAdditional* additional);
 
 private:
@@ -709,9 +709,6 @@ private:
 
     /// @brief allow undo/redo
     const bool myAllowUndoRedo;
-
-    /// @brief check if overwrite
-    const bool myOverwrite;
 
     /// @brief invalidate default constructo
     GNEAdditionalHandler() = delete;
