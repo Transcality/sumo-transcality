@@ -22,7 +22,7 @@ WORKDIR /usr/src
 ARG SUMO_REPO=https://github.com/Transcality/sumo-transcality
 ARG SUMO_BRANCH=simreply-fix
 
-RUN git clone --recursive --depth=1 --branch $SUMO_BRANCH $SUMO_REPO \
+RUN git clone --recursive --depth=1 --branch $SUMO_BRANCH $SUMO_REPO sumo\
     && cd sumo \
     && cmake -B build -DCMAKE_BUILD_TYPE=Release . \
     && cmake --build build -j$(nproc) \
