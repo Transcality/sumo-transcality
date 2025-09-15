@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Build SUMO
 WORKDIR /usr/src
-RUN git clone --recursive --depth=1 https://github.com/eclipse-sumo/sumo \
+ARG SUMO_REPO=https://github.com/Transcality/sumo-transcality
+RUN git clone --recursive --depth=1 --branch $SUMO_BRANCH $SUMO_REPO \
     && cd sumo \
     && cmake -B build -DCMAKE_BUILD_TYPE=Release . \
     && cmake --build build -j$(nproc) \
