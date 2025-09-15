@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Build SUMO
 WORKDIR /usr/src
 ARG SUMO_REPO=https://github.com/Transcality/sumo-transcality
+ARG SUMO_BRANCH=simreply-fix
+
 RUN git clone --recursive --depth=1 --branch $SUMO_BRANCH $SUMO_REPO \
     && cd sumo \
     && cmake -B build -DCMAKE_BUILD_TYPE=Release . \
