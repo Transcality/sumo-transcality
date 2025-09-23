@@ -48,6 +48,12 @@ GNEEdgeTemplate::getHierarchicalElement() {
 }
 
 
+GNEMoveElement*
+GNEEdgeTemplate::getMoveElement() {
+    return nullptr;
+}
+
+
 const std::vector<GNELaneTemplate*>&
 GNEEdgeTemplate::getLaneTemplates() const {
     return myLaneTemplates;
@@ -137,6 +143,12 @@ GNEEdgeTemplate::checkDrawMoveContour() const {
 std::string
 GNEEdgeTemplate::getAttribute(SumoXMLAttr key) const {
     return myEdge->getAttribute(key);
+}
+
+
+double
+GNEEdgeTemplate::getAttributeDouble(SumoXMLAttr key) const {
+    return myEdge->getAttributeDouble(key);
 }
 
 

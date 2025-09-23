@@ -705,6 +705,18 @@ enum class GUIIcon {
     BACK,
     /// @}
 
+    /// @name icons for dialogs
+    /// @{
+    INFORMATION_LARGE,
+    INFORMATION_SMALL,
+    QUESTION_LARGE,
+    QUESTION_SMALL,
+    ERROR_LARGE,
+    ERROR_SMALL,
+    WARNING_LARGE,
+    WARNING_SMALL,
+    /// @}
+
     /// @name icons for grid
     /// @{
     GRID,
@@ -720,11 +732,32 @@ enum class GUIIcon {
     OSM,
     /// @}
 
+    /// @brief icons for file dialogs
+    /// @{
+    FILEDIALOG_BOOK_CLR,
+    FILEDIALOG_BOOK_SET,
+    FILEDIALOG_DIRUP_ICON,
+    FILEDIALOG_FILE_COPY,
+    FILEDIALOG_FILE_DELETE,
+    FILEDIALOG_FILE_HIDDEN,
+    FILEDIALOG_FILE_LINK,
+    FILEDIALOG_FILE_MOVE,
+    FILEDIALOG_FILE_SHOWN,
+    FILEDIALOG_FOLDER_BIG,
+    FILEDIALOG_FOLDER_NEW,
+    FILEDIALOG_GOTO_HOME,
+    FILEDIALOG_GOTO_WORK,
+    FILEDIALOG_SHOW_BIGICONS,
+    FILEDIALOG_SHOW_DETAILS,
+    FILEDIALOG_SHOW_SMALLICONS,
+    /// @}
+
     /// @brief icons for languages
     /// @{
     LANGUAGE_EN,
     LANGUAGE_DE,
     LANGUAGE_ES,
+    LANGUAGE_PT,
     LANGUAGE_FR,
     LANGUAGE_IT,
     LANGUAGE_HU,

@@ -48,6 +48,12 @@ GNEDataInterval::getHierarchicalElement() {
 }
 
 
+GNEMoveElement*
+GNEDataInterval::getMoveElement() {
+    return nullptr;
+}
+
+
 void
 GNEDataInterval::updateGenericDataIDs() {
     if (myNet->isUpdateDataEnabled()) {
@@ -259,6 +265,19 @@ GNEDataInterval::hasGenericDataChild(GNEGenericData* genericData) const {
 const std::vector<GNEGenericData*>&
 GNEDataInterval::getGenericDataChildren() const {
     return myGenericDataChildren;
+}
+
+
+bool
+GNEDataInterval::edgeRelSingleExists(const GNEEdge* edge) const {
+    // interate over all edgeRels and check edge parents
+    for (const auto& genericData : myGenericDataChildren) {
+        if ((genericData->getTagProperty()->getTag() == GNE_TAG_EDGEREL_SINGLE) &&
+                (genericData->getParentEdges().front() == edge)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 

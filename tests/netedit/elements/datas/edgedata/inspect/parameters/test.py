@@ -32,28 +32,28 @@ netedit.changeSupermode("data")
 netedit.changeMode("edgeData")
 
 # create dataSet
-netedit.createDataSet()
+netedit.createDataSet("newDataSet")
 
 # create data interval
-netedit.createDataInterval()
+netedit.createDataInterval("0", "3600")
 
 # create edgeData
-netedit.leftClick(referencePosition, netedit.positions.elements.edge0_dataMode)
+netedit.leftClickData(referencePosition, netedit.positions.elements.edge0)
 
 # go to inspect mode
 netedit.changeMode("inspect")
 
 # inspect edgeData
-netedit.leftClick(referencePosition, netedit.positions.elements.edge0_dataMode)
+netedit.leftClickData(referencePosition, netedit.positions.elements.edge0)
 
 # check double parameters
-netedit.checkDoubleParameters(referencePosition, netedit.attrs.edgeData.inspect.parameters, False, 0, 30)
+netedit.checkDoubleParameters(referencePosition, netedit.attrs.edgeData.inspect.parameters)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

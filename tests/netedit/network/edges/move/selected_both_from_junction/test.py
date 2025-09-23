@@ -46,7 +46,7 @@ netedit.changeMode("move")
 
 # move
 netedit.moveElementVertical(referencePosition, netedit.positions.network.edge.move.top,
-                            netedit.positions.elements.movementEdgeTop)
+                            netedit.movements.edgeTop)
 
 # Check undo and redo
 netedit.checkUndoRedo(referencePosition)
@@ -55,7 +55,7 @@ netedit.checkUndoRedo(referencePosition)
 netedit.computeJunctions()
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

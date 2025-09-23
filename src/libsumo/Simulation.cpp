@@ -130,7 +130,7 @@ Simulation::load(const std::vector<std::string>& args) {
 #endif
     close("Libsumo issued load command.");
     try {
-        OptionsCont::getOptions().setApplicationName("libsumo", "Eclipse SUMO libsumo Version " VERSION_STRING);
+        OptionsCont::getOptions().setApplicationName("libsumo", "Eclipse SUMO libsumo " VERSION_STRING);
         gSimulation = true;
         XMLSubSys::init();
         OptionsIO::setArgs(args);
@@ -750,7 +750,7 @@ Simulation::findIntermodalRoute(const std::string& from, const std::string& to,
         }
         std::vector<MSTransportableRouter::TripItem> items;
         if (router.compute(fromEdge, toEdge, departPos, "", arrivalPos, destStop,
-                           speed * walkFactor, vehicle, modeSet, departStep, items, externalFactor)) {
+                           speed * walkFactor, vehicle, pedType->getParameter(), modeSet, departStep, items, externalFactor)) {
             double cost = 0;
             for (std::vector<MSTransportableRouter::TripItem>::iterator it = items.begin(); it != items.end(); ++it) {
                 if (!it->edges.empty()) {

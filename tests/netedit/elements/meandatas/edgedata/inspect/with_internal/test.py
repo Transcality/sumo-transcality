@@ -35,13 +35,13 @@ netedit.changeMode("meanData")
 netedit.createMeanData()
 
 # modify meanData
-netedit.modifyBoolAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.withInternal)
+netedit.modifyBoolAttribute(netedit.attrs.edgeMeanData.inspect.withInternal)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -35,6 +35,7 @@
 #include <microsim/MSVehicleControl.h>
 #include <microsim/devices/MSDevice.h>
 #include <utils/common/FileHelpers.h>
+#include <utils/common/MsgHandler.h>
 #include <utils/iodevices/OutputDevice.h>
 #include <utils/common/RandHelper.h>
 #include "MEVehicle.h"
@@ -56,7 +57,7 @@
 // ===========================================================================
 // static member definition
 // ===========================================================================
-MSEdge MESegment::myDummyParent("MESegmentDummyParent", -1, SumoXMLEdgeFunc::UNKNOWN, "", "", -1, 0);
+MSEdge MESegment::myDummyParent("MESegmentDummyParent", -1, SumoXMLEdgeFunc::UNKNOWN, "", "", "", -1, 0);
 MESegment MESegment::myVaporizationTarget("vaporizationTarget");
 const double MESegment::DO_NOT_PATCH_JAM_THRESHOLD(std::numeric_limits<double>::max());
 const std::string MESegment::OVERRIDE_TLS_PENALTIES("meso.tls.control");
@@ -370,7 +371,7 @@ MESegment::initialise(MEVehicle* veh, SUMOTime time) {
         // we can check only after insertion because insertion may change the route via devices
         std::string msg;
         if (MSGlobals::gCheckRoutes && !veh->hasValidRoute(msg)) {
-            throw ProcessError("Vehicle '" + veh->getID() + "' has no valid route. " + msg);
+            throw ProcessError(TLF("Vehicle '%' has no valid route. %", veh->getID(), msg));
         }
         return true;
     }

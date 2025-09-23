@@ -32,7 +32,7 @@ netedit.changeSupermode("demand")
 netedit.changeMode("route")
 
 # set valid vclass
-netedit.changeParentElement("routeFrame", "bus")
+netedit.modifyAttribute(netedit.attrs.route.create.vClass, "bus")
 
 # set invalid repeat
 netedit.modifyAttribute(netedit.attrs.route.create.repeat, "dummyrepeat")
@@ -60,7 +60,7 @@ netedit.typeKey("enter")
 netedit.checkUndoRedo(referencePosition)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

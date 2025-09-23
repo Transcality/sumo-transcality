@@ -59,7 +59,8 @@
 MSEdge::DictType MSEdge::myDict;
 MSEdgeVector MSEdge::myEdges;
 SVCPermissions MSEdge::myMesoIgnoredVClasses(0);
-
+DepartLaneDefinition MSEdge::myDefaultDepartLaneDefinition(DepartLaneDefinition::DEFAULT);
+int MSEdge::myDefaultDepartLane(0);
 
 // ===========================================================================
 // member method definitions
@@ -68,6 +69,7 @@ MSEdge::MSEdge(const std::string& id, int numericalID,
                const SumoXMLEdgeFunc function,
                const std::string& streetName,
                const std::string& edgeType,
+               const std::string& routingType,
                int priority,
                double distance) :
     Named(id), myNumericalID(numericalID), myLanes(nullptr),
@@ -78,6 +80,7 @@ MSEdge::MSEdge(const std::string& id, int numericalID,
     myOtherTazConnector(nullptr),
     myStreetName(streetName),
     myEdgeType(edgeType),
+    myRoutingType(routingType),
     myPriority(priority),
     myDistance(distance),
     myWidth(0.),
@@ -652,12 +655,18 @@ MSEdge::getDepartLaneMeso(SUMOVehicle& veh) const {
 
 MSLane*
 MSEdge::getDepartLane(MSVehicle& veh) const {
-    switch (veh.getParameter().departLaneProcedure) {
+    DepartLaneDefinition dld = veh.getParameter().departLaneProcedure;
+    int departLane = veh.getParameter().departLane;
+    if (dld == DepartLaneDefinition::DEFAULT) {
+        dld = myDefaultDepartLaneDefinition;
+        departLane = myDefaultDepartLane;
+    }
+    switch (dld) {
         case DepartLaneDefinition::GIVEN:
-            if ((int) myLanes->size() <= veh.getParameter().departLane || !(*myLanes)[veh.getParameter().departLane]->allowsVehicleClass(veh.getVehicleType().getVehicleClass())) {
+            if ((int) myLanes->size() <= departLane || !(*myLanes)[departLane]->allowsVehicleClass(veh.getVehicleType().getVehicleClass())) {
                 return nullptr;
             }
-            return (*myLanes)[veh.getParameter().departLane];
+            return (*myLanes)[departLane];
         case DepartLaneDefinition::RANDOM:
             return RandHelper::getRandomFrom(*allowedLanes(veh.getVehicleType().getVehicleClass()));
         case DepartLaneDefinition::FREE:
@@ -1678,6 +1687,12 @@ MSEdge::getLastBlocked(int index) const {
         return myLaneChanger->getLastBlocked(index);
     }
     return std::make_pair(-1, -1);
+}
+
+
+double
+MSEdge::getPreference(const SUMOVTypeParameter& pars) const {
+    return MSNet::getInstance()->getPreference(getRoutingType(), pars);
 }
 
 void

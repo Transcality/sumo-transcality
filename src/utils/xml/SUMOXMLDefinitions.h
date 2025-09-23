@@ -57,6 +57,8 @@ enum SumoXMLTag {
     SUMO_TAG_JUNCTION,
     /// @brief begin/end of the description of an edge restriction
     SUMO_TAG_RESTRICTION,
+    /// @brief begin/end of the description of an edge preferences
+    SUMO_TAG_PREFERENCE,
     /// @brief edge-specific meso settings
     SUMO_TAG_MESO,
     /// @brief  A bus stop
@@ -258,6 +260,8 @@ enum SumoXMLTag {
     SUMO_TAG_NODE,
     /// @brief type (edge)
     SUMO_TAG_TYPE,
+    /// @brief types (edge)
+    SUMO_TAG_TYPES,
     /// @brief lane type
     SUMO_TAG_LANETYPE,
     /// @brief definition of a detector
@@ -966,6 +970,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_REMOVE,
     SUMO_ATTR_LENGTH,
     SUMO_ATTR_BIDI,
+    SUMO_ATTR_ROUTINGTYPE,
     SUMO_ATTR_ID_BEFORE,
     SUMO_ATTR_ID_AFTER,
     SUMO_ATTR_CENTER,
@@ -1973,6 +1978,7 @@ enum SumoXMLAttr {
  * than enum values we do not bother with a StringBijection
  */
 extern const std::string SUMO_PARAM_ORIGID;
+extern const std::string SUMO_PARAM_REMOVED_NODES;
 
 /**
  * @enum SumoXMLNodeType

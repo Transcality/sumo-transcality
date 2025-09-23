@@ -32,8 +32,11 @@ bool gSimulation = false;
 bool gIgnoreUnknownVClass = false;
 double gWeightsRandomFactor = 1;
 double gWeightsWalkOppositeFactor = 1;
+bool gRoutingPreferences = false;
 std::string gLanguage = "C";
+
 int GUIDesignHeight = 23;
+int GUIDesignDialogButtonsHeight = 32;
 
 bool gDebugFlag1 = false;
 bool gDebugFlag2 = false;
@@ -56,6 +59,11 @@ double roundDecimal(double x, int precision) {
     const double p = pow(10, precision);
     const double x2 = x * p;
     return (x2 < 0 ? ceil(x2 - 0.5) : floor(x2 + 0.5)) / p;
+}
+
+double roundDecimalToEven(double x, int precision) {
+    const int p = (int)pow(10, precision);
+    return std::nearbyint(x * p) / p;
 }
 
 int

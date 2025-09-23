@@ -74,8 +74,8 @@
 // ===========================================================================
 // static member definition
 // ===========================================================================
-MSEdge MSTriggeredRerouter::mySpecialDest_keepDestination("MSTriggeredRerouter_keepDestination", -1, SumoXMLEdgeFunc::UNKNOWN, "", "", -1, 0);
-MSEdge MSTriggeredRerouter::mySpecialDest_terminateRoute("MSTriggeredRerouter_terminateRoute", -1, SumoXMLEdgeFunc::UNKNOWN, "", "", -1, 0);
+MSEdge MSTriggeredRerouter::mySpecialDest_keepDestination("MSTriggeredRerouter_keepDestination", -1, SumoXMLEdgeFunc::UNKNOWN, "", "", "", -1, 0);
+MSEdge MSTriggeredRerouter::mySpecialDest_terminateRoute("MSTriggeredRerouter_terminateRoute", -1, SumoXMLEdgeFunc::UNKNOWN, "", "", "", -1, 0);
 const double MSTriggeredRerouter::DEFAULT_MAXDELAY(7200);
 std::map<std::string, MSTriggeredRerouter*> MSTriggeredRerouter::myInstances;
 
@@ -280,7 +280,7 @@ MSTriggeredRerouter::myStartElement(int element,
         for (const std::string& edgeID : attrs.get<std::vector<std::string> >(SUMO_ATTR_MAIN, getID().c_str(), ok)) {
             MSEdge* edge = MSEdge::dictionary(edgeID);
             if (edge == nullptr) {
-                throw InvalidArgument("The main edge '" + edgeID + "' to use within rerouter '" + getID() + "' is not known.");
+                throw InvalidArgument(TLF("The main edge '%' to use within rerouter '%' is not known.", edgeID, getID()));
             }
             myParsedRerouteInterval.main.push_back(edge);
             myParsedRerouteInterval.cMain.push_back(edge);
@@ -288,14 +288,14 @@ MSTriggeredRerouter::myStartElement(int element,
         for (const std::string& edgeID : attrs.get<std::vector<std::string> >(SUMO_ATTR_SIDING, getID().c_str(), ok)) {
             MSEdge* edge = MSEdge::dictionary(edgeID);
             if (edge == nullptr) {
-                throw InvalidArgument("The siding edge '" + edgeID + "' to use within rerouter '" + getID() + "' is not known.");
+                throw InvalidArgument(TLF("The siding edge '%' to use within rerouter '%' is not known.", edgeID, getID()));
             }
             myParsedRerouteInterval.siding.push_back(edge);
             myParsedRerouteInterval.cSiding.push_back(edge);
         }
         myParsedRerouteInterval.sidingExit = findSignal(myParsedRerouteInterval.cSiding.begin(), myParsedRerouteInterval.cSiding.end());
         if (myParsedRerouteInterval.sidingExit == nullptr) {
-            throw InvalidArgument("The siding within rerouter '" + getID() + "' does not have a rail signal.");
+            throw InvalidArgument(TLF("The siding within rerouter '%' does not have a rail signal.", getID()));
         }
         for (auto it = myParsedRerouteInterval.cSiding.begin(); it != myParsedRerouteInterval.cSiding.end(); it++) {
             myParsedRerouteInterval.sidingLength += (*it)->getLength();
@@ -699,7 +699,7 @@ MSTriggeredRerouter::triggerRouting(SUMOTrafficObject& tObject, MSMoveReminder::
                                             : MSNet::getInstance()->getIntermodalRouter(tObject.getRNGIndex(), 0, prohibited);
             const bool success = router.compute(tObject.getEdge(), newEdge, tObject.getPositionOnLane(), "",
                                                 rerouteDef->isVia ? newEdge->getLength() / 2. : tObject.getParameter().arrivalPos, "",
-                                                tObject.getMaxSpeed(), nullptr, 0, now, items);
+                                                tObject.getMaxSpeed(), nullptr, tObject.getVTypeParameter(), 0, now, items);
             if (!rerouteDef->isVia) {
                 if (success) {
                     for (const MSTransportableRouter::TripItem& it : items) {
@@ -756,7 +756,7 @@ MSTriggeredRerouter::triggerRouting(SUMOTrafficObject& tObject, MSMoveReminder::
                                                 : MSNet::getInstance()->getIntermodalRouter(tObject.getRNGIndex(), 0, prohibited);
                 success = router.compute(newEdge, lastEdge, newEdge->getLength() / 2., "",
                                          tObject.getParameter().arrivalPos, "",
-                                         tObject.getMaxSpeed(), nullptr, 0, now, items);
+                                         tObject.getMaxSpeed(), nullptr, tObject.getVTypeParameter(), 0, now, items);
             }
             if (success) {
                 for (const MSTransportableRouter::TripItem& it : items) {
@@ -884,7 +884,12 @@ MSTriggeredRerouter::rerouteParkingArea(const MSTriggeredRerouter::RerouteInterv
         // not driving towards the right type of stop
         return nullptr;
     }
-    std::vector<StoppingPlaceVisible> parks = rerouteDef->parkProbs.getVals();
+    std::vector<StoppingPlaceVisible> parks;
+    for (auto cand : rerouteDef->parkProbs.getVals()) {
+        if (cand.first->accepts(&veh)) {
+            parks.push_back(cand);
+        }
+    }
     StoppingPlaceParamMap_t addInput = {};
     return dynamic_cast<MSParkingArea*>(rerouteStoppingPlace(destStoppingPlace, parks, rerouteDef->parkProbs.getProbs(), veh, newDestination, newRoute, addInput, rerouteDef->getClosed()));
 }
@@ -1178,12 +1183,12 @@ MSTriggeredRerouter::resetClosedEdges(bool hasReroutingDevice, const SUMOTraffic
     // getRouterTT without prohibitions removes previous prohibitions
     if (o.isVehicle()) {
         hasReroutingDevice
-            ? MSRoutingEngine::getRouterTT(o.getRNGIndex(), o.getVClass())
-            : MSNet::getInstance()->getRouterTT(o.getRNGIndex());
+        ? MSRoutingEngine::getRouterTT(o.getRNGIndex(), o.getVClass())
+        : MSNet::getInstance()->getRouterTT(o.getRNGIndex());
     } else {
         hasReroutingDevice
-            ? MSRoutingEngine::getIntermodalRouterTT(o.getRNGIndex())
-            : MSNet::getInstance()->getIntermodalRouter(o.getRNGIndex(), 0);
+        ? MSRoutingEngine::getIntermodalRouterTT(o.getRNGIndex())
+        : MSNet::getInstance()->getIntermodalRouter(o.getRNGIndex(), 0);
     }
 }
 

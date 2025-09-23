@@ -381,6 +381,21 @@ NBNode::reshiftPosition(double xoff, double yoff) {
 
 
 void
+NBNode::roundGeometry() {
+    myPosition.round(gPrecision);
+    if (myHaveCustomPoly) {
+        myPoly.round(gPrecision);
+    }
+    for (auto& wacs : myWalkingAreaCustomShapes) {
+        wacs.shape.round(gPrecision);
+    }
+    for (auto& c : myCrossings) {
+        c->customShape.round(gPrecision);
+    }
+}
+
+
+void
 NBNode::mirrorX() {
     myPosition.mul(1, -1);
     myPoly.mirrorX();
@@ -1002,7 +1017,7 @@ NBNode::needsCont(const NBEdge* fromE, const NBEdge* otherFromE,
 }
 
 bool
-NBNode::tlsContConflict(const NBEdge* from, const NBEdge::Connection& c,
+NBNode::tlsStrandedConflict(const NBEdge* from, const NBEdge::Connection& c,
                         const NBEdge* foeFrom, const NBEdge::Connection& foe) const {
     return (foe.haveVia && isTLControlled() && c.tlLinkIndex >= 0 && foe.tlLinkIndex >= 0
             && !foeFrom->isTurningDirectionAt(foe.toEdge)
@@ -4234,13 +4249,17 @@ NBNode::getEdgesSortedByAngleAtNodeCenter() const {
 void
 NBNode::avoidOverlap() {
     // simple case: edges with LaneSpreadFunction::CENTER and a (possible) turndirection at the same node
+    bool haveModifications = false;
     for (EdgeVector::iterator it = myIncomingEdges.begin(); it != myIncomingEdges.end(); it++) {
         NBEdge* edge = *it;
         NBEdge* turnDest = edge->getTurnDestination(true);
         if (turnDest != nullptr) {
-            edge->shiftPositionAtNode(this, turnDest);
-            turnDest->shiftPositionAtNode(this, edge);
+            haveModifications |= edge->shiftPositionAtNode(this, turnDest);
+            haveModifications |= turnDest->shiftPositionAtNode(this, edge);
         }
+    }
+    if (haveModifications) {
+        NBTurningDirectionsComputer::computeTurnDirectionsForNode(this, false);
     }
     // @todo: edges in the same direction with sharp angles starting/ending at the same position
 }

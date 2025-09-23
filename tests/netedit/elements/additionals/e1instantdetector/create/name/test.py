@@ -32,7 +32,7 @@ netedit.changeMode("additional")
 netedit.changeElement("additionalFrame", "instantInductionLoop")
 
 # set invalid name
-netedit.modifyAttribute(netedit.attrs.E1Instant.create.name, "\"\"\";;")
+netedit.modifyAttribute(netedit.attrs.E1Instant.create.name, "%%%%&&&;;;;")
 
 # try to create E1 with invalid name
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -47,7 +47,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter0)
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

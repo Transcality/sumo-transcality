@@ -1258,10 +1258,16 @@ GNEEdge::getAttribute(SumoXMLAttr key) const {
                 return "";
             }
         case GNE_ATTR_IS_ROUNDABOUT:
-            return myNBEdge->getFromNode()->isRoundabout() && myNBEdge->getToNode()->isRoundabout() ? True : False;
+            return myNBEdge->getFromNode()->isRoundabout() && myNBEdge->getToNode()->isRoundabout() ? TRUE_STR : FALSE_STR;
         default:
             return getCommonAttribute(myNBEdge, key);
     }
+}
+
+
+double
+GNEEdge::getAttributeDouble(SumoXMLAttr key) const {
+    throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
 }
 
 
@@ -2892,7 +2898,9 @@ void
 GNEEdge::drawChildrens(const GUIVisualizationSettings& s) const {
     // draw child additional
     for (const auto& additional : getChildAdditionals()) {
-        additional->drawGL(s);
+        if (!additional->getTagProperty()->isListedElement()) {
+            additional->drawGL(s);
+        }
     }
     // draw person stops
     if (myNet->getViewNet()->getNetworkViewOptions().showDemandElements() && myNet->getViewNet()->getDataViewOptions().showDemandElements()) {

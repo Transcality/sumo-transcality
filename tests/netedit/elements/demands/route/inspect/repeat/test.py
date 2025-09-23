@@ -32,7 +32,7 @@ netedit.changeSupermode("demand")
 netedit.changeMode("route")
 
 # set valid vclass
-netedit.changeParentElement("routeFrame", "bus")
+netedit.modifyAttribute(netedit.attrs.route.vClass, "bus")
 
 # create route using three edges
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
@@ -63,7 +63,7 @@ netedit.modifyAttribute(netedit.attrs.route.inspect.repeat, "13")
 netedit.checkUndoRedo(referencePosition)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

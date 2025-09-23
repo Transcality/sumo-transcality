@@ -25,12 +25,14 @@
 // ===========================================================================
 // class declarations
 // ===========================================================================
+
 class GNEEdge;
 class GNELaneTemplate;
 
 // ===========================================================================
 // class definitions
 // ===========================================================================
+
 class GNEEdgeTemplate : public GNEAttributeCarrier {
 
 public:
@@ -42,6 +44,9 @@ public:
 
     /// @brief get GNEHierarchicalElement associated with this AttributeCarrier
     GNEHierarchicalElement* getHierarchicalElement();
+
+    /// @brief get GNEMoveElement associated with this AttributeCarrier
+    GNEMoveElement* getMoveElement();
 
     /// @brief get vector with the lane templates of this edge
     const std::vector<GNELaneTemplate*>& getLaneTemplates() const;
@@ -99,6 +104,12 @@ public:
      * @return string with the value associated to key
      */
     std::string getAttribute(SumoXMLAttr key) const;
+
+    /* @brief method for getting the Attribute of an XML key in double format
+     * @param[in] key The attribute key
+     * @return string with the value associated to key
+     */
+    double getAttributeDouble(SumoXMLAttr key) const;
 
     /* @brief method for getting the Attribute of an XML key in Position format
      * @param[in] key The attribute key

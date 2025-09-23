@@ -479,6 +479,7 @@ Let's list an edge's attributes again:
 | sidewalkWidth  | float \>= 0                           | Adds a sidewalk with the given width (defaults to -1 which adds nothing).  |
 | bikeLaneWidth  | float \>= 0                           | Adds a bicycle lane with the given width (defaults to -1 which adds nothing).  |
 | distance       | float                                 | [Kilometrage](../Simulation/Railways.md#kilometrage_mileage_chainage) at the start of this edge. If the value is positive, kilometrage increases in driving direction; if the value is negative, kilometrage decreases. Kilometrage along the edge is computed as abs(*distance* + *offsetFromStart*).  |
+| routingType    | id                                    | Used together with [preference](../Simulation/Routing.md#routing_by_travel_time_and_routingtype) to set custom edge preferences for routing |
 
 The priority plays a role during the computation of the way-giving rules
 of a node. Normally, the allowed speed on the edge and the edge's number
@@ -703,6 +704,7 @@ The definition of a split uses the following attributes:
 | id                                         | id (string)             | The id of the newly created node. IDs of existing nodes may also be used. (by default the id is generated from the edge id and *pos*                          |
 | idBefore                                   | id (string)             | The id of the edge before the split (defaults to the original id)   |
 | idAfter                                    | id (string)             | The id of the edge after the split (defaults to <origID.pos\>)       |
+| offset                                     | float                   | Extra sideways shift to be applied to the edge after the split     |
 | type, tl, tlType, shape, radius, keepClear |                         | see [\#Node_Descriptions](#node_descriptions)                          |
 
 ## Roundabouts

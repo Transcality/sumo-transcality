@@ -32,7 +32,7 @@ netedit.changeMode("additional")
 netedit.changeElement("additionalFrame", "busStop")
 
 # set invalid person number
-netedit.modifyAttribute(netedit.attrs.busStop.create.parkingLength, "dummyLenght")
+netedit.modifyAttribute(netedit.attrs.busStop.create.parkingLength, "dummyLength")
 
 # try to create busStop
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -53,7 +53,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

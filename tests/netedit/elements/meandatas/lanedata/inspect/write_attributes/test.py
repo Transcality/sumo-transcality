@@ -38,19 +38,19 @@ netedit.changeElement("meanDataFrame", "laneData")
 netedit.createMeanData()
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.writeAttributes, "%%%%")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.writeAttributes, "%%%%")
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.writeAttributes, "attributeA")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.writeAttributes, "attributeA")
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.writeAttributes, "id shape")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.writeAttributes, "id shape")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

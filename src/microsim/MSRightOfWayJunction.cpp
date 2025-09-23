@@ -32,6 +32,7 @@
 #include "MSLane.h"
 #include "MSLink.h"
 #include "MSRightOfWayJunction.h"
+#include <utils/common/MsgHandler.h>
 
 
 // ===========================================================================
@@ -87,7 +88,7 @@ MSRightOfWayJunction::postloadInit() {
                 continue;
             }
             if (myLogic->getLogicSize() <= requestPos) {
-                throw ProcessError("Found invalid logic position of a link for junction '" + getID() + "' (" + toString(requestPos) + ", max " + toString(myLogic->getLogicSize()) + ") -> (network error)");
+                throw ProcessError(TLF("Found invalid logic position of a link for junction '%' (%, max %) -> (network error)", getID(), toString(requestPos), toString(myLogic->getLogicSize())));
             }
             const MSLogicJunction::LinkBits& linkResponse = myLogic->getResponseFor(requestPos); // SUMO_ATTR_RESPONSE
             const MSLogicJunction::LinkBits& linkFoes = myLogic->getFoesFor(requestPos); // SUMO_ATTR_FOES
@@ -131,6 +132,11 @@ MSRightOfWayJunction::postloadInit() {
                         continue;
                     }
                     if (linkFoes.test(c)) {
+                        // vehicles waiting at an internal junction can mostly be ignored. The main exceptions are:
+                        // - they are on the main road and the current link is from a side road
+                        // - its a tls and the current link is on a side road relative to the internal junction
+                        // both cases are encoded in a positive linkResponse
+                        // (case 2 only if netconvert option --tls.ignore-internal-junction-jam was not set)
                         myLinkFoeInternalLanes[link].push_back(myInternalLanes[li]);
                         if (linkResponse.test(c) || sortedLinks[c].second->isIndirect() ||
                                 link->getLane()->getBidiLane() == sortedLinks[c].second->getLaneBefore()) {

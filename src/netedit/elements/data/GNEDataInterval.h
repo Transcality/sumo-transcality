@@ -48,6 +48,9 @@ public:
     /// @brief get GNEHierarchicalElement associated with this AttributeCarrier
     GNEHierarchicalElement* getHierarchicalElement();
 
+    /// @brief get GNEMoveElement associated with this AttributeCarrier
+    GNEMoveElement* getMoveElement();
+
     /// @brief update generic data child IDs
     void updateGenericDataIDs();
 
@@ -130,6 +133,9 @@ public:
 
     /// @brief get generic data children
     const std::vector<GNEGenericData*>& getGenericDataChildren() const;
+
+    /// @brief check if there is already a edgeRel single defined in the given edge
+    bool edgeRelSingleExists(const GNEEdge* edge) const;
 
     /// @brief check if there is already a edgeRel defined between two edges
     bool edgeRelExists(const GNEEdge* fromEdge, const GNEEdge* toEdge) const;

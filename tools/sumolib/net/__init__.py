@@ -284,11 +284,11 @@ class Net:
         if type is not None and node._type is None:
             node._type = type
 
-    def addEdge(self, id, fromID, toID, prio, function, name, edgeType=''):
+    def addEdge(self, id, fromID, toID, prio, function, name, edgeType='', routingType=''):
         if id not in self._id2edge:
             fromN = self.addNode(fromID)
             toN = self.addNode(toID)
-            e = edge.Edge(id, fromN, toN, prio, function, name, edgeType)
+            e = edge.Edge(id, fromN, toN, prio, function, name, edgeType, routingType)
             self._edges.append(e)
             self._id2edge[id] = e
             if function:
@@ -440,12 +440,12 @@ class Net:
     def forbids(self, possProhibitor, possProhibited):
         return possProhibitor.getFrom().getToNode().forbids(possProhibitor, possProhibited)
 
-    def getDownstreamEdges(self, edge, distance, stopOnTLS, stopOnTurnaround):
+    def getUpstreamEdges(self, edge, distance, stopOnTLS, stopOnTurnaround):
         """return a list of lists of the form
            [[firstEdge, pos, [edge_0, edge_1, ..., edge_k], aborted], ...]
            where
-             firstEdge: is the downstream edge furthest away from the intersection,
-             [edge_0, ..., edge_k]: is the list of edges from the intersection downstream to firstEdge
+             firstEdge: is the upstream edge furthest away from the intersection,
+             [edge_0, ..., edge_k]: is the list of edges from the intersection upstream to firstEdge
              pos: is the position on firstEdge with distance to the end of the input edge
              aborted: a flag indicating whether the downstream
                  search stopped at a TLS or a node without incoming edges before reaching the distance threshold
@@ -793,7 +793,8 @@ class NetReader(handler.ContentHandler):
                     self._crossingID2edgeIDs[edgeID] = attrs.get('crossingEdges').split(' ')
 
                 self._currentEdge = self._net.addEdge(edgeID, fromNodeID, toNodeID, prio, function,
-                                                      attrs.get('name', ''), attrs.get('type', ''))
+                                                      attrs.get('name', ''), attrs.get('type', ''),
+                                                      attrs.get('routingType', ''))
 
                 self._currentEdge.setRawShape(convertShape(attrs.get('shape', '')))
 

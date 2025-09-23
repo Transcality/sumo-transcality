@@ -19,15 +19,17 @@
 /****************************************************************************/
 #pragma once
 #include <config.h>
-#include "GNENetworkElement.h"
 
 #include <netbuild/NBEdge.h>
+#include <utils/gui/div/GUIGeometry.h>
+
+#include "GNENetworkElement.h"
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
-class GNEEdge;
 
+class GNEEdge;
 
 // ===========================================================================
 // class definitions
@@ -183,6 +185,12 @@ public:
      * @return string with the value associated to key
      */
     std::string getAttribute(SumoXMLAttr key) const;
+
+    /* @brief method for getting the Attribute of an XML key in double format
+     * @param[in] key The attribute key
+     * @return string with the value associated to key
+     */
+    double getAttributeDouble(SumoXMLAttr key) const;
 
     /* @brief method for getting the Attribute of an XML key in PositionVector format
      * @param[in] key The attribute key

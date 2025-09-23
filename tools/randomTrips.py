@@ -168,8 +168,10 @@ def get_options(args=None):
                     "by a random factor drawn uniformly from [1,FLOAT)")
     op.add_argument("--marouter", default=False, action="store_true",
                     help="Compute routes with marouter instead of duarouter")
-    op.add_argument("--validate", default=True, action="store_true",
+    op.add_argument("--validate", action="store_true",
                     help="Whether to produce trip output that is already checked for connectivity")
+    op.add_argument("--no-validate", dest="validate", action="store_false")
+    op.set_defaults(validate=True)
     op.add_argument("--min-success-rate", dest="minSuccessRate", default=0.1, type=float,
                     help="Minimum ratio of valid trips to retry sampling if some trips are invalid")
     op.add_argument("-v", "--verbose", action="store_true", default=False,
@@ -518,7 +520,7 @@ def get_prob_fun(options, fringe_bonus, fringe_forbidden, max_length):
                 prob *= (angleDiff * (options.angle_weight - 1) + 1)
             else:
                 prob *= ((180 - angleDiff) * (options.angle_weight - 1) + 1)
-        prob *= options.typeFactors[edge.getType()]
+        prob *= options.typeFactors[edge.getRoutingType()]
 
         return prob
     return edge_probability

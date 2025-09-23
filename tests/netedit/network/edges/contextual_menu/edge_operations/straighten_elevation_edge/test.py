@@ -31,7 +31,7 @@ netedit.computeJunctions()
 # go to inspect mode
 netedit.changeMode("inspect")
 
-# straigthen edge
+# straighten edge
 netedit.contextualMenuOperation(referencePosition, netedit.positions.network.edge.leftBot,
                                 netedit.contextualMenu.edges.edgeOperations.straightenElevationEdge)
 
@@ -47,8 +47,8 @@ netedit.computeJunctions()
 # check redos
 netedit.redo(referencePosition, 1)
 
-# save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+# save netedit config
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -38,16 +38,16 @@ netedit.changeMode("inspect")
 netedit.leftClick(referencePosition, netedit.positions.elements.additionals.routeProbe)
 
 # Set invalid period
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.frequency, "-30")
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.period, "-30")
 
 # Set valid period
-netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.frequency, "50")
+netedit.modifyAttribute(netedit.attrs.routeProbe.inspectSelection.period, "50")
 
 # Check undos and redos
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

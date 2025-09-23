@@ -220,6 +220,8 @@ enum {
     MID_HOTKEY_CTRL_SHIFT_O_OPENNETCONVERTFILE,
     /// @brief save SUMOConfig (SUMO AND netedit)
     MID_HOTKEY_CTRL_SHIFT_S_SAVESUMOCONFIG,
+    /// @brief load only the network in sumo-gui/netedit
+    MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET,
 
     /// @}
 
@@ -849,8 +851,60 @@ enum {
     MID_GNE_ADDSELECT_EDGE,
     /// @brief Remove edge from selected items - Menu Entry
     MID_GNE_REMOVESELECT_EDGE,
-    /// @brief lock element
+    /// @brief lock element (general, used if we press directly the menuCommand in the toolbar)
     MID_GNE_LOCK_ELEMENT,
+    /// @brief lock junctions
+    MID_GNE_LOCK_JUNCTION,
+    /// @brief lock edges
+    MID_GNE_LOCK_EDGE,
+    /// @brief lock lanes
+    MID_GNE_LOCK_LANE,
+    /// @brief lock connections
+    MID_GNE_LOCK_CONNECTION,
+    /// @brief lock crossings
+    MID_GNE_LOCK_CROSSING,
+    /// @brief lock walkingareas
+    MID_GNE_LOCK_WALKINGAREA,
+    /// @brief lock additional elements
+    MID_GNE_LOCK_ADDITIONALELEMENT,
+    /// @brief lock wires
+    MID_GNE_LOCK_WIRE,
+    /// @brief lock TAZs
+    MID_GNE_LOCK_TAZ,
+    /// @brief lock polygons
+    MID_GNE_LOCK_POLYGON,
+    /// @brief lock POIs
+    MID_GNE_LOCK_POI,
+    /// @brief lock walkableAreas
+    MID_GNE_LOCK_JPS_WALKABLEAREA,
+    /// @brief lock obstacles
+    MID_GNE_LOCK_JPS_OBSTACLE,
+    /// @brief lock routes
+    MID_GNE_LOCK_ROUTE,
+    /// @brief lock vehicles
+    MID_GNE_LOCK_VEHICLE,
+    /// @brief lock persons
+    MID_GNE_LOCK_PERSON,
+    /// @brief lock personTrips
+    MID_GNE_LOCK_PERSONTRIP,
+    /// @brief lock walks
+    MID_GNE_LOCK_WALK,
+    /// @brief lock rides
+    MID_GNE_LOCK_RIDE,
+    /// @brief lock containers
+    MID_GNE_LOCK_CONTAINER,
+    /// @brief lock transports
+    MID_GNE_LOCK_TRANSPORT,
+    /// @brief lock tranships
+    MID_GNE_LOCK_TRANSHIP,
+    /// @brief lock stops
+    MID_GNE_LOCK_STOP,
+    /// @brief lock edgeDatas
+    MID_GNE_LOCK_EDGEDATA,
+    /// @brief lock edgeRelDatas
+    MID_GNE_LOCK_EDGERELDATA,
+    /// @brief lock TAZRelDatas
+    MID_GNE_LOCK_TAZRELDATA,
     /// @brief lock all element
     MID_GNE_LOCK_ALLELEMENTS,
     /// @brief unlock all element
@@ -1474,6 +1528,29 @@ enum {
     MID_GNE_BUTTON_ADD,
     /// @brief remove button
     MID_GNE_BUTTON_REMOVE,
+    /// @brief config button (used in GNEFileDialog)
+    MID_GNE_BUTTON_CONFIG,
+
+    /// @}
+
+    /// @name ElementTable messages
+    /// @{
+    /// @brief edit row
+    MID_GNE_ELEMENTTABLE_EDIT,
+    /// @brief remove row
+    MID_GNE_ELEMENTTABLE_REMOVE,
+    /// @brief open dialog element
+    MID_GNE_ELEMENTTABLE_DIALOG_ELEMENT,
+    /// @brief open dialog vClass
+    MID_GNE_ELEMENTTABLE_DIALOG_VCLASS,
+
+    /// @name ElementList messages
+    /// @{
+
+    /// @brief add element in ElementList
+    MID_GNE_ELEMENTLIST_ADD,
+    /// @brief sort elements in ElementList
+    MID_GNE_ELEMENTLIST_SORT,
 
     /// @}
 
@@ -1494,30 +1571,10 @@ enum {
 
     /// @brief select table interval
     MID_GNE_REROUTEDIALOG_TABLE_INTERVAL,
-    /// @brief change table closing lane reroute reroute
-    MID_GNE_REROUTEDIALOG_TABLE_CLOSINGLANEREROUTE,
-    /// @brief change table route closing reroute
-    MID_GNE_REROUTEDIALOG_TABLE_CLOSINGREROUTE,
-    /// @brief change table destination probability reroute
-    MID_GNE_REROUTEDIALOG_TABLE_DESTPROBREROUTE,
-    /// @brief change table route probability reroute
-    MID_GNE_REROUTEDIALOG_TABLE_ROUTEPROBREROUTE,
-    /// @brief change table parkingAreaReroute
-    MID_GNE_REROUTEDIALOG_TABLE_PARKINGAREAREROUTE,
     /// @brief add interval
     MID_GNE_REROUTEDIALOG_ADD_INTERVAL,
     /// @brief sort rerouter intervals
     MID_GNE_REROUTEDIALOG_SORT_INTERVAL,
-    /// @brief add closing lane reroute
-    MID_GNE_REROUTEDIALOG_ADD_CLOSINGLANEREROUTE,
-    /// @brief add closing reroute
-    MID_GNE_REROUTEDIALOG_ADD_CLOSINGREROUTE,
-    /// @brief add destination probability route
-    MID_GNE_REROUTEDIALOG_ADD_DESTPROBREROUTE,
-    /// @brief add route probability route
-    MID_GNE_REROUTEDIALOG_ADD_ROUTEPROBREROUTE,
-    /// @brief add parkingAreaReroute
-    MID_GNE_REROUTEDIALOG_ADD_PARKINGAREAREROUTE,
     /// @brief edit interval
     MID_GNE_REROUTEDIALOG_EDIT_INTERVAL,
 
@@ -1540,19 +1597,19 @@ enum {
 
     /// @}
 
-    /// @name allowDisallow Dialog messages
+    /// @name allow vClasses Dialog messages
     /// @{
 
     /// @brief select/unselect single vehicle
-    MID_GNE_ALLOWDISALLOW_CHANGE,
+    MID_GNE_ALLOWVCLASSES_TOGGLE,
     /// @brief select all vehicles
-    MID_GNE_ALLOWDISALLOW_SELECTALL,
+    MID_GNE_ALLOWVCLASSES_SELECTALL,
     /// @brief unselect all vehicles
-    MID_GNE_ALLOWDISALLOW_UNSELECTALL,
+    MID_GNE_ALLOWVCLASSES_UNSELECTALL,
     /// @brief select only non road vehicles
-    MID_GNE_ALLOWDISALLOW_ONLY_ROAD,
+    MID_GNE_ALLOWVCLASSES_ONLY_ROAD,
     /// @brief select only rail vehicles
-    MID_GNE_ALLOWDISALLOW_ONLY_RAIL,
+    MID_GNE_ALLOWVCLASSES_ONLY_RAIL,
 
     /// @}
 
@@ -1658,6 +1715,8 @@ enum {
     MID_LANGUAGE_DE,
     /// @brief change language to spanish
     MID_LANGUAGE_ES,
+    /// @brief change language to portuguese
+    MID_LANGUAGE_PT,
     /// @brief change language to french
     MID_LANGUAGE_FR,
     /// @brief change language to italian
@@ -1680,8 +1739,6 @@ enum {
 
     /// @brief run tests
     MID_RUNTESTS,
-    /// @brief execute internal test in modal dialog
-    MID_INTERNALTEST,
 
     /// @{
 

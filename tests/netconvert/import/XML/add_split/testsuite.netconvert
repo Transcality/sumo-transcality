@@ -1,8 +1,17 @@
 # beginning with three lanes, the right is removed
 three_minus_right
 
+# beginning with three lanes, the right is removed
+three_minus_right_zipper
+
 # beginning with two lanes, adding one to the left
 two_plus_left
+
+# beginning with two lanes, adding one to the left
+two_plus_left_offset
+
+# beginning with two lanes, adding one to the left
+two_plus_left_offset_centered
 
 # beginning with two lanes, adding one to the left
 two_plus_left_lefthand
@@ -89,3 +98,6 @@ beyond_end
 
 # add a split to a loaded a .net.xml file with bidi edges and preserve the bidi status
 keep_bidi
+
+# see #17033
+keep_bidi2

@@ -98,8 +98,8 @@ public:
      * @param[in] streetName The street name for that edge
      */
     MSEdge(const std::string& id, int numericalID, const SumoXMLEdgeFunc function,
-           const std::string& streetName, const std::string& edgeType, int priority,
-           double distance);
+           const std::string& streetName, const std::string& edgeType,
+           const std::string& routingType, int priority, double distance);
 
 
     /// @brief Destructor.
@@ -319,6 +319,14 @@ public:
     const std::string& getEdgeType() const {
         return myEdgeType;
     }
+
+    /** @brief Returns the type of the edge
+     */
+    const std::string& getRoutingType() const {
+        return myRoutingType.empty() ? myEdgeType : myRoutingType;
+    }
+
+    double getPreference(const SUMOVTypeParameter& pars) const;
 
     // @brief try to infer edge type for internal edges
     void inferEdgeType();
@@ -797,6 +805,14 @@ public:
     /// @brief update meso segment parameters
     void updateMesoType();
 
+    static DepartLaneDefinition& getDefaultDepartLaneDefinition() {
+        return myDefaultDepartLaneDefinition;
+    }
+
+    static int& getDefaultDepartLane() {
+        return myDefaultDepartLane;
+    }
+
     /** @brief Inserts edge into the static dictionary
         Returns true if the key id isn't already in the dictionary. Otherwise
         returns false. */
@@ -977,6 +993,9 @@ protected:
     /// @brief the type of the edge (optionally used during network creation)
     std::string myEdgeType;
 
+    /// @brief the routing type of the edge (used to look up vType and vClass specific routing preferences)
+    std::string myRoutingType;
+
     /// @brief the priority of the edge (used during network creation)
     const int myPriority;
 
@@ -1024,6 +1043,9 @@ protected:
     static MSEdgeVector myEdges;
 
     static SVCPermissions myMesoIgnoredVClasses;
+
+    static DepartLaneDefinition myDefaultDepartLaneDefinition;
+    static int myDefaultDepartLane;
     /// @}
 
 

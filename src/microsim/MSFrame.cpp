@@ -43,6 +43,7 @@
 #include <microsim/MSRoute.h>
 #include <microsim/MSNet.h>
 #include <microsim/MSLane.h>
+#include <microsim/MSEdge.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/lcmodels/MSAbstractLaneChangeModel.h>
 #include <microsim/devices/MSDevice.h>
@@ -512,6 +513,12 @@ MSFrame::fillOptions() {
 
     oc.doRegister("time-to-impatience", new Option_String("180", "TIME"));
     oc.addDescription("time-to-impatience", "Processing", TL("Specify how long a vehicle may wait until impatience grows from 0 to 1, defaults to 300, non-positive values disable impatience growth"));
+
+    oc.doRegister("default.departspeed", new Option_String("0"));
+    oc.addDescription("default.departspeed", "Processing", TL("Select default depart speed"));
+
+    oc.doRegister("default.departlane", new Option_String("first"));
+    oc.addDescription("default.departlane", "Processing", TL("Select default depart lane"));
 
     oc.doRegister("default.action-step-length", new Option_Float(0.0));
     oc.addDescription("default.action-step-length", "Processing", TL("Length of the default interval length between action points for the car-following and lane-change models (in seconds). If not specified, the simulation step-length is used per default. Vehicle- or VType-specific settings override the default. Must be a multiple of the simulation step-length."));
@@ -1093,6 +1100,9 @@ MSFrame::checkOptions() {
     if (!oc.isDefault("weights.random-factor") && (oc.isSet("astar.all-distances") || oc.isSet("astar.landmark-distances"))) {
         WRITE_WARNING(TL("The option --weights.random-factor should not be used together with astar and precomputed distances."));
     }
+    if (oc.getInt("threads") > 1) {
+        WRITE_WARNING(TL("The option --threads has known problems and does NOT provide meaningful speedup at this time (https://github.com/eclipse-sumo/sumo/issues/4767). Using it is not recommended!"));
+    }
 
 #ifdef JPS_VERSION
     const std::string pedestrianJPSModel = oc.getString("pedestrian.jupedsim.model");
@@ -1194,6 +1204,18 @@ MSFrame::setMSGlobals(OptionsCont& oc) {
         defaultClasses |= parseVehicleClasses(vClassName);
     }
     MSRailSignalControl::initSignalized(defaultClasses);
+
+    std::string error;
+    if (!SUMOVehicleParameter::parseDepartLane(oc.getString("default.departlane"), "options", "",
+            MSEdge::getDefaultDepartLane(),
+            MSEdge::getDefaultDepartLaneDefinition(), error)) {
+        WRITE_ERROR(error);
+    }
+    if (!SUMOVehicleParameter::parseDepartSpeed(oc.getString("default.departspeed"), "options", "",
+            MSLane::getDefaultDepartSpeed(),
+            MSLane::getDefaultDepartSpeedDefinition(), error)) {
+        WRITE_ERROR(error);
+    }
 
 #ifdef _DEBUG
     if (oc.isSet("movereminder-output")) {

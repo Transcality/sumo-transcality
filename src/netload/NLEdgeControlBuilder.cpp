@@ -60,12 +60,13 @@ NLEdgeControlBuilder::beginEdgeParsing(
     const std::string& id, const SumoXMLEdgeFunc function,
     const std::string& streetName,
     const std::string& edgeType,
+    const std::string& routingType,
     int priority,
     const std::string& bidi,
     double distance) {
     // closeEdge might not have been called because the last edge had an error, so we clear the lane storage
     myLaneStorage->clear();
-    myActiveEdge = buildEdge(id, function, streetName, edgeType, priority, distance);
+    myActiveEdge = buildEdge(id, function, streetName, edgeType, routingType, priority, distance);
     if (MSEdge::dictionary(id) != nullptr) {
         throw InvalidArgument("Another edge with the id '" + id + "' exists.");
     }
@@ -194,10 +195,20 @@ NLEdgeControlBuilder::build(const MMVersion& networkVersion) {
         }
     }
     // consistency check
+    std::set<const MSLane*> checked;
     for (auto item : myOppositeLanes) {
-        if (item.first->getOpposite() != nullptr && item.first->getOpposite()->getOpposite() != item.first) {
-            WRITE_WARNINGF(TL("Asymmetrical neigh lane '%' for lane '%'"), item.second, item.first->getID());
-            item.first->getOpposite()->setOpposite(item.first);
+        if (item.first->getOpposite() != nullptr) {
+            if (item.first->getOpposite()->getOpposite() != item.first) {
+                if (checked.count(item.first->getOpposite()) == 0) {
+                    WRITE_WARNINGF(TL("Asymmetrical neigh lane '%' for lane '%'"), item.second, item.first->getID());
+                    item.first->getOpposite()->setOpposite(item.first);
+                } else {
+                    throw ProcessError(TLF("Mutually inconsistent neigh lane definitions for lanes '%', '%' and '%'",
+                                           item.first->getID(), item.first->getOpposite()->getID(), Named::getIDSecure(item.first->getOpposite()->getOpposite())));
+                }
+            }
+            checked.insert(item.first);
+            checked.insert(item.first->getOpposite());
         }
     }
     for (MSEdge* const edge : myEdges) {
@@ -249,8 +260,9 @@ NLEdgeControlBuilder::build(const MMVersion& networkVersion) {
 
 MSEdge*
 NLEdgeControlBuilder::buildEdge(const std::string& id, const SumoXMLEdgeFunc function,
-                                const std::string& streetName, const std::string& edgeType, const int priority, const double distance) {
-    return new MSEdge(id, myCurrentNumericalEdgeID++, function, streetName, edgeType, priority, distance);
+                                const std::string& streetName, const std::string& edgeType, const std::string& routingType,
+                                const int priority, const double distance) {
+    return new MSEdge(id, myCurrentNumericalEdgeID++, function, streetName, edgeType, routingType, priority, distance);
 }
 
 void NLEdgeControlBuilder::addCrossingEdges(const std::vector<std::string>& crossingEdges) {

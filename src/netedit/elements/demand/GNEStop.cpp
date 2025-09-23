@@ -153,9 +153,7 @@ GNEStop::getMoveOperation() {
         // get allow change lane
         const bool allowChangeLane = myNet->getViewNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane();
         // fist check if we're moving only extremes
-        if (myNet->getViewNet()->getEditModes().isCurrentSupermodeDemand() &&
-                (myNet->getViewNet()->getEditModes().demandEditMode == DemandEditMode::DEMAND_MOVE) &&
-                myNet->getViewNet()->getMouseButtonKeyPressed().shiftKeyPressed()) {
+        if (drawMovingGeometryPoints()) {
             // get snap radius
             const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.additionalGeometryPointRadius;
             // get mouse position
@@ -437,10 +435,15 @@ GNEStop::drawGL(const GUIVisualizationSettings& s) const {
             }
             // pop layer matrix
             GLHelper::popMatrix();
+            if (s.showParkingInfo) {
+                // draw above demand elements
+                GLHelper::pushMatrix();
+                glTranslated(myDemandElementGeometry.getShape().back().x(), myDemandElementGeometry.getShape().back().y(), GLO_VEHICLELABELS);
+                drawStopLabel(s);
+                GLHelper::popMatrix();
+            }
             // draw lock icon
             GNEViewNetHelper::LockIcon::drawLockIcon(d, this, getType(), getPositionInView(), exaggeration);
-            // Draw name
-            drawName(getCenteringBoundary().getCenter(), s.scale, s.addName);
             // draw dotted contour
             myStopContour.drawDottedContours(s, d, this, s.dottedContourSettings.segmentWidth, true);
         }
@@ -453,6 +456,72 @@ GNEStop::drawGL(const GUIVisualizationSettings& s) const {
                     0, nullptr, getParentLanes().front()->getParentEdge());
         }
     }
+}
+
+
+void
+GNEStop::drawStopLabel(const GUIVisualizationSettings& s) const {
+    const SUMOVehicleParameter::Stop& stop = *this;
+    std::string label;
+    if (stop.speed > 0) {
+        label += "waypoint";
+    } else if (stop.busstop != "") {
+        label += "busStop:" + stop.busstop;
+    } else if (stop.containerstop != "") {
+        label += "containerStop:" + stop.containerstop;
+    } else if (stop.parkingarea != "") {
+        label += "parkingArea:" + stop.parkingarea;
+    } else if (stop.chargingStation != "") {
+        label += "chargingStation:" + stop.chargingStation;
+    } else if (stop.overheadWireSegment != "") {
+        label += "overheadWireSegment:" + stop.overheadWireSegment;
+    } else {
+        label += "stop";
+    }
+    if (stop.triggered || stop.containerTriggered || stop.joinTriggered) {
+        label += " triggered:";
+        if (stop.triggered) {
+            label += "person";
+            if (!stop.awaitedPersons.empty()) {
+                label += "(" + toString(stop.awaitedPersons) + ")";
+            }
+        }
+        if (stop.containerTriggered) {
+            label += "container";
+            if (!stop.awaitedContainers.empty()) {
+                label += "(" + toString(stop.awaitedContainers) + ")";
+            }
+        }
+        if (stop.joinTriggered) {
+            label += "join";
+            if (stop.join != "") {
+                label += "(" + stop.join + ")";
+            }
+        }
+    }
+    if (stop.arrival >= 0) {
+        label += " arrival:" + time2string(stop.arrival);
+    }
+    if (stop.until >= 0) {
+        label += " until:" + time2string(stop.until);
+    }
+    if (stop.started >= 0) {
+        label += " started:" + time2string(stop.started);
+    }
+    if (stop.ended >= 0) {
+        label += " ended:" + time2string(stop.ended);
+    }
+    if (stop.duration >= 0 || stop.duration > 0) {
+        if (STEPS2TIME(stop.duration) > 3600 * 24) {
+            label += " duration:1day+";
+        } else {
+            label += " duration:" + time2string(stop.duration);
+        }
+    }
+    if (stop.actType != "") {
+        label += " actType:" + stop.actType;
+    }
+    GLHelper::drawTextSettings(s.vehicleText, label, Position(0, 0), s.scale, s.angle, 0);
 }
 
 
@@ -1445,9 +1514,7 @@ GNEStop::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList)
 void
 GNEStop::drawGeometryPoints(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d, const RGBColor& baseColor) const {
     // first check that we're in move mode and shift key is pressed
-    if (myNet->getViewNet()->getEditModes().isCurrentSupermodeDemand() &&
-            (myNet->getViewNet()->getEditModes().demandEditMode == DemandEditMode::DEMAND_MOVE) &&
-            myNet->getViewNet()->getMouseButtonKeyPressed().shiftKeyPressed()) {
+    if (drawMovingGeometryPoints()) {
         // calculate new color
         const RGBColor color = baseColor.changedBrightness(-50);
         // push matrix

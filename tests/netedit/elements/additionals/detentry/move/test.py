@@ -52,13 +52,13 @@ netedit.changeMode("move")
 
 # move
 netedit.moveElementHorizontal(referencePosition, netedit.positions.elements.edgeCenter1,
-                              netedit.positions.elements.movementRadius)
+                              netedit.movements.radius)
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

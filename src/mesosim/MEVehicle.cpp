@@ -127,10 +127,12 @@ MEVehicle::getSpeed() const {
 
 double
 MEVehicle::getAverageSpeed() const {
-    if (mySegment == nullptr || myQueIndex == MESegment::PARKING_QUEUE) {
+    // cache for thread safety
+    MESegment* s = mySegment;
+    if (s == nullptr || myQueIndex == MESegment::PARKING_QUEUE) {
         return 0;
     } else {
-        return MIN2(mySegment->getLength() / STEPS2TIME(myEventTime - myLastEntryTime),
+        return MIN2(s->getLength() / STEPS2TIME(myEventTime - myLastEntryTime),
                     getEdge()->getLanes()[myQueIndex]->getVehicleMaxSpeed(this));
     }
 }
@@ -198,7 +200,7 @@ MEVehicle::setApproaching(MSLink* link) {
         const double speed = getSpeed();
         link->setApproaching(this, getEventTime() + (link->getState() == LINKSTATE_ALLWAY_STOP ?
                              (SUMOTime)RandHelper::rand((int)2) : 0), // tie braker
-                             speed, speed, true,
+                             speed, link->getViaLaneOrLane()->getVehicleMaxSpeed(this), true,
                              speed, getWaitingTime(),
                              // @note: dist is not used by meso (getZipperSpeed is never called)
                              getSegment()->getLength(), 0);

@@ -30,7 +30,11 @@
 #define UNUSED_PARAMETER(x)  ((void)(x))
 
 #ifdef _MSC_VER
+#if _MSC_VER < 1943
 #define FALLTHROUGH /* do nothing */
+#else
+#define FALLTHROUGH [[fallthrough]]
+#endif
 #elif __GNUC__ < 7
 #define FALLTHROUGH /* do nothing */
 #else
@@ -122,13 +126,16 @@ extern bool gSimulation; // whether the current application is sumo or sumo-gui 
 extern bool gIgnoreUnknownVClass; // whether the unknown vehicle classes shall be ignored on loading (for upward compatibility)
 extern double gWeightsRandomFactor; // randomization for edge weights
 extern double gWeightsWalkOppositeFactor; // factor for walking against flow of traffic
+extern bool gRoutingPreferences; // whether routing preferences have been loaded
 
 /// the language for GUI elements and messages
 extern std::string gLanguage;
 
-/// the default size for GUI elements
+/// the default height for GUI elements
 extern int GUIDesignHeight;
 
+/// the default height for dialog buttons
+extern int GUIDesignDialogButtonsHeight;
 
 /// @brief global utility flags for debugging
 extern bool gDebugFlag1;
@@ -149,6 +156,9 @@ double roundBits(double x, int fractionBits);
 
 /// @brief round to the given number of decimal digits
 double roundDecimal(double x, int precision);
+
+/// @brief round to the given number of decimal digits (bankers rounding)
+double roundDecimalToEven(double x, int precision);
 
 /** @brief Returns the number of instances of the current object that shall be emitted
  * given the number of loaded objects

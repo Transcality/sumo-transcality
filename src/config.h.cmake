@@ -205,7 +205,7 @@
 #cmakedefine HAVE_OSG
 
 /* defined if PARQUET is available */
-# cmakedefine HAVE_PARQUET
+#cmakedefine HAVE_PARQUET
 
 /* defined if zlib is available */
 #cmakedefine HAVE_ZLIB
@@ -220,7 +220,7 @@
 #define HAVE_VERSION_H
 #ifndef HAVE_VERSION_H
     /* Define if auto-generated version.h is unavailable. */
-    #define VERSION_STRING "1.23.1"
+    #define VERSION_STRING "1.24.0"
 #endif
 
 /* defines the epsilon to use on general floating point comparison */

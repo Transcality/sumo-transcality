@@ -43,7 +43,7 @@ MFXUtils::userPermitsOverwritingWhenFileExists(FXWindow* const parent,
         return TRUE;
     }
     int answer =
-        FXMessageBox::question(parent, MBOX_YES_NO, "File Exists", "Overwrite '%s'?", file.text());
+        FXMessageBox::question(parent, MBOX_YES_NO, TL("File Exists"), TL("Overwrite '%s'?"), file.text());
     if (answer == MBOX_CLICKED_NO) {
         return FALSE;
     }
@@ -102,7 +102,7 @@ MFXUtils::parseExtensions(FXString patternText) {
     // check files extension
     if (patternText != "*") {
         // split extensions
-        const auto extensionsStr = StringTokenizer(patternText.text(), ", ").getVector();
+        const auto extensionsStr = StringTokenizer(patternText.text(), ",").getVector();
         for (const auto& extensionStr : extensionsStr) {
             FXString extension = extensionStr.c_str();
             extensions.push_back(extension.after('.'));

@@ -32,7 +32,7 @@ netedit.changeMode("additional")
 netedit.changeElement("additionalFrame", "parkingArea")
 
 # set invalid height (dummy)
-netedit.modifyAttribute(netedit.attrs.parkingArea.create.length, "dummyLenght")
+netedit.modifyAttribute(netedit.attrs.parkingArea.create.length, "dummyLength")
 
 # try to create parkingArea in mode "Reference Left"
 netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
@@ -59,7 +59,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edgeCenter1)
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

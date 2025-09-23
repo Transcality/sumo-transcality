@@ -265,11 +265,10 @@ class Routes:
         comment = []
         probability = ""
         ID = ' id="%s%s%s"' % (prefix, intervalPrefix, routeIndex) if prefix is not None else ""
-        if writeDist:
+        if ID:
             probability = ' probability="%s"' % count
-        elif ID:
-            indent = ' ' * 4
-            comment.append(str(count))
+            if not writeDist:
+                indent = ' ' * 4
         if ID and edges in self.edgeIDs:
             comment.append("(%s)" % self.edgeIDs[edges])
         comment = ' '.join(comment)
@@ -1252,7 +1251,8 @@ def writeMismatch(options, mismatchf, countData, begin, end):
             mismatchf.write('        <edge id="%s" measuredCount="%s" deficit="%s" GEH="%.2f"/>\n' % (
                 cd.edgeTuple[0], cd.origCount, cd.count, geh))
         elif len(cd.edgeTuple) == 2:
-            relationPrefix = '        <edgeRelation from="%s" to="%s" ' % cd.edgeTuple
+            tag = 'tazRelation' if cd.isTaz else 'edgeRelation'
+            relationPrefix = '        <%s from="%s" to="%s" ' % ((tag,) + cd.edgeTuple)
             if cd.isRatio:
                 deficit = setPrecision("%.2f",  options.precision) % (cd.assignedProbability() - cd.origCount)
                 mismatchf.write('%smeasuredProbability="%s" deficit="%s" totalAssignedFromCount="%s"/>\n'

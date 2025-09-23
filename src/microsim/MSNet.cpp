@@ -192,6 +192,7 @@ MSNet::getInstance(void) {
 
 void
 MSNet::initStatic() {
+    gRoutingPreferences = false;
     MSDriveWay::init();
 }
 
@@ -356,6 +357,50 @@ MSNet::getRestrictions(const std::string& id) const {
         return nullptr;
     }
     return &i->second;
+}
+
+
+double
+MSNet::getPreference(const std::string& routingType, const SUMOVTypeParameter& pars) const {
+    if (gRoutingPreferences) {
+        auto it = myVTypePreferences.find(pars.id);
+        if (it != myVTypePreferences.end()) {
+            auto it2 = it->second.find(routingType);
+            if (it2 != it->second.end()) {
+                return it2->second;
+            }
+        }
+        auto it3 = myVClassPreferences.find(pars.vehicleClass);
+        if (it3 != myVClassPreferences.end()) {
+            auto it4 = it3->second.find(routingType);
+            if (it4 != it3->second.end()) {
+                return it4->second;
+            }
+        }
+        // fallback to generel preferences
+        it = myVTypePreferences.find("");
+        if (it != myVTypePreferences.end()) {
+            auto it2 = it->second.find(routingType);
+            if (it2 != it->second.end()) {
+                return it2->second;
+            }
+        }
+    }
+    return 1;
+}
+
+
+void
+MSNet::addPreference(const std::string& routingType, SUMOVehicleClass svc, double prio) {
+    myVClassPreferences[svc][routingType] = prio;
+    gRoutingPreferences = true;
+}
+
+
+void
+MSNet::addPreference(const std::string& routingType, std::string vType, double prio) {
+    myVTypePreferences[vType][routingType] = prio;
+    gRoutingPreferences = true;
 }
 
 void

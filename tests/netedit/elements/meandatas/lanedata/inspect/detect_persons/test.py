@@ -38,19 +38,19 @@ netedit.changeElement("meanDataFrame", "laneData")
 netedit.createMeanData()
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.minSamples, "dummy")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.minSamples, "dummy")
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.minSamples, "-12")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.minSamples, "-12")
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.minSamples, "7.5")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.minSamples, "7.5")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

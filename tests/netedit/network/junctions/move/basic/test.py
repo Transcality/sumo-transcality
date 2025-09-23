@@ -31,7 +31,7 @@ netedit.changeMode("move")
 
 # move
 netedit.moveElement(referencePosition, netedit.positions.network.junction.cross.center,
-                    netedit.positions.elements.movementRadius)
+                    netedit.movements.radius)
 
 # rebuild network
 netedit.computeJunctions()
@@ -43,7 +43,7 @@ netedit.undo(referencePosition, 5)
 netedit.redo(referencePosition, 5)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)
