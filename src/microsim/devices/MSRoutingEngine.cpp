@@ -212,6 +212,9 @@ MSRoutingEngine::getEffortExtra(const MSEdge* const e, const SUMOVehicle* const 
         const double relativeInversePrio = 1 - ((e->getPriority() - myMinEdgePriority) / myEdgePriorityRange);
         effort *= 1 + relativeInversePrio * myPriorityFactor;
     }
+    if (gRoutingPreferences) {
+        effort /= MSNet::getInstance()->getPreference(e->getRoutingType(), v->getVTypeParameter());
+    }
     return effort;
 }
 
@@ -384,7 +387,7 @@ MSRoutingEngine::initRouter(SUMOVehicle* vehicle) {
     const std::string routingAlgorithm = oc.getString("routing-algorithm");
     const bool hasPermissions = MSNet::getInstance()->hasPermissions();
     myBikeSpeeds = oc.getBool("device.rerouting.bike-speeds");
-    myEffortFunc = ((gWeightsRandomFactor != 1 || myPriorityFactor != 0 || myBikeSpeeds) ? &MSRoutingEngine::getEffortExtra : &MSRoutingEngine::getEffort);
+    myEffortFunc = ((gWeightsRandomFactor != 1 || myPriorityFactor != 0 || myBikeSpeeds || gRoutingPreferences) ? &MSRoutingEngine::getEffortExtra : &MSRoutingEngine::getEffort);
 
     SUMOAbstractRouter<MSEdge, SUMOVehicle>* router = nullptr;
     if (routingAlgorithm == "dijkstra") {

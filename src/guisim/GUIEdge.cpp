@@ -63,9 +63,10 @@
 
 GUIEdge::GUIEdge(const std::string& id, int numericalID,
                  const SumoXMLEdgeFunc function,
-                 const std::string& streetName, const std::string& edgeType, int priority,
+                 const std::string& streetName, const std::string& edgeType,
+                 const std::string& routingType, int priority,
                  double distance) :
-    MSEdge(id, numericalID, function, streetName, edgeType, priority, distance),
+    MSEdge(id, numericalID, function, streetName, edgeType, routingType, priority, distance),
     GUIGlObject(GLO_EDGE, id, GUIIconSubSys::getIcon(GUIIcon::EDGE)),
     myLock(true)
 {}
@@ -227,6 +228,7 @@ GUIEdge::getTypeParameterWindow(GUIMainWindow& app,
     // add items
     ret->mkItem(TL("Type Information:"), false, "");
     ret->mkItem(TL("type [id]"), false, getEdgeType());
+    ret->mkItem(TL("routing type [id]"), false, getRoutingType());
     ret->mkItem(TL("tauff"), false, STEPS2TIME(edgeType.tauff));
     ret->mkItem(TL("taufj"), false, STEPS2TIME(edgeType.taufj));
     ret->mkItem(TL("taujf"), false, STEPS2TIME(edgeType.taujf));

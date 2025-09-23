@@ -236,6 +236,14 @@ public:
      */
     const std::map<SUMOVehicleClass, double>* getRestrictions(const std::string& id) const;
 
+    /// @brief retriefe edge type specific routing preference
+    double getPreference(const std::string& routingType, const SUMOVTypeParameter& pars) const;
+
+    /// @brief add edge type specific routing preference
+    void addPreference(const std::string& routingType, SUMOVehicleClass svc, double prio); 
+    /// @brief add edge type specific routing preference
+    void addPreference(const std::string& routingType, std::string vType, double prio); 
+
     /** @brief Adds edge type specific meso parameters
      * @param[in] id The id of the type
      * @param[in] edgeType The parameter object
@@ -964,6 +972,10 @@ protected:
 
     /// @brief The vehicle class specific speed restrictions
     std::map<std::string, std::map<SUMOVehicleClass, double> > myRestrictions;
+
+    /// @brief Preferences for routing
+    std::map<SUMOVehicleClass, std::map<std::string, double> > myVClassPreferences;
+    std::map<std::string, std::map<std::string, double> > myVTypePreferences;
 
     /// @brief The edge type specific meso parameters
     std::map<std::string, MESegment::MesoEdgeType> myMesoEdgeTypes;

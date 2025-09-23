@@ -32,6 +32,11 @@ vehicle.
   routes are connected
 - When working in **--fix**-mode a vehicle type file must be given
 - No tests for dealing with networks that have internal edges
+- Does not handle nested elements (i.e. stops) reliably
+- Does not handle named routes
+
+!!! note
+    A alternative to routecheck.py is duarouter with options **--skip-new-routes --repair --ignore-errors --ptline-routing** which doesn't have the above limitations.
 
 # findAllRoutes.py
 

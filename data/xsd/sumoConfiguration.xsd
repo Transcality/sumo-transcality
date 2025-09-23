@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-09-11T16:03:34.200901+01:00 by Eclipse SUMO sumo v1_24_0+0766-b295674de6f
--->
-
 <xsd:schema elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-
-    <xsd:include schemaLocation="baseTypes.xsd"/>
+    <xsd:include schemaLocation="types/base.xsd"/>
+    <xsd:include schemaLocation="types/sumoConfigurationType.xsd"/>
     <xsd:element name="sumoConfiguration" type="sumoConfigurationType"/>
-
     <xsd:complexType name="sumoConfigurationType">
         <xsd:all>
             <xsd:element name="input" type="inputTopicType" minOccurs="0"/>
@@ -622,5 +618,4 @@
             <xsd:element name="gui-testing.setting-output" type="fileOptionType" minOccurs="0"/>
         </xsd:all>
     </xsd:complexType>
-
 </xsd:schema>

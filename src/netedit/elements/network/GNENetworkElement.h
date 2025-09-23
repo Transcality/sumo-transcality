@@ -23,7 +23,7 @@
 #include <netedit/elements/GNEAttributeCarrier.h>
 #include <netedit/elements/GNEContour.h>
 #include <netedit/elements/GNEHierarchicalElement.h>
-#include <netedit/elements/GNEMoveElement.h>
+#include <netedit/elements/moving/GNEMoveElement.h>
 #include <utils/gui/globjects/GUIGlObject.h>
 
 // ===========================================================================
@@ -45,6 +45,9 @@ public:
 
     /// @brief get GNEHierarchicalElement associated with this AttributeCarrier
     GNEHierarchicalElement* getHierarchicalElement();
+
+    /// @brief get GNEMoveElement associated with this AttributeCarrier
+    GNEMoveElement* getMoveElement();
 
     /**@brief get move operation
     * @note returned GNEMoveOperation can be nullptr

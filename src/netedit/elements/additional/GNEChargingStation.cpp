@@ -35,10 +35,12 @@ GNEChargingStation::GNEChargingStation(GNENet* net) :
 }
 
 
-GNEChargingStation::GNEChargingStation(const std::string& id, GNENet* net, const std::string& filename, GNELane* lane, const double startPos, const double endPos,
-                                       const std::string& name, double chargingPower, double efficiency, bool chargeInTransit, SUMOTime chargeDelay,
-                                       const std::string& chargeType, const SUMOTime waitingTime,  const std::string& parkingAreaID, bool friendlyPosition, const Parameterised::Map& parameters) :
-    GNEStoppingPlace(id, net, filename, SUMO_TAG_CHARGING_STATION, lane, startPos, endPos, name, friendlyPosition, RGBColor::INVISIBLE, parameters),
+GNEChargingStation::GNEChargingStation(const std::string& id, GNENet* net, const std::string& filename, GNELane* lane,
+                                       const double startPos, const double endPos, const std::string& name, const double chargingPower,
+                                       const double efficiency, const bool chargeInTransit, const SUMOTime chargeDelay,
+                                       const std::string& chargeType, const SUMOTime waitingTime, const std::string& parkingAreaID,
+                                       const bool friendlyPosition, const Parameterised::Map& parameters) :
+    GNEStoppingPlace(id, net, filename, SUMO_TAG_CHARGING_STATION, lane, startPos, endPos, name, friendlyPosition, RGBColor::INVISIBLE, 0, parameters),
     myChargingPower(chargingPower),
     myEfficiency(efficiency),
     myChargeInTransit(chargeInTransit),
@@ -113,7 +115,7 @@ GNEChargingStation::drawGL(const GUIVisualizationSettings& s) const {
         // Obtain exaggeration of the draw
         const double chargingStationExaggeration = getExaggeration(s);
         // check if draw moving geometry points
-        const bool movingGeometryPoints = drawMovingGeometryPoints(false);
+        const bool movingGeometryPoints = drawMovingGeometryPoints();
         // get detail level
         const auto d = s.getDetailLevel(chargingStationExaggeration);
         // draw geometry only if we'rent in drawForObjectUnderCursor mode

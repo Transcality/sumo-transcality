@@ -57,6 +57,14 @@ InternalTestStep::DialogArgument::DialogArgument(DialogType type, const std::str
 }
 
 
+InternalTestStep::DialogArgument::DialogArgument(DialogType type, const std::string& customAction, const int index) :
+    myType(type),
+    myAction(InternalTestStep::DialogArgument::Action::CUSTOM),
+    myCustomAction(customAction),
+    myIndex(index) {
+}
+
+
 InternalTestStep::DialogArgument::DialogArgument(DialogType type, const std::string& prefixToRemove, const std::string& customAction) :
     myType(type),
     myAction(InternalTestStep::DialogArgument::Action::CUSTOM),
@@ -69,6 +77,7 @@ InternalTestStep::DialogArgument::DialogArgument(DialogType type, const std::str
         }
     }
 }
+
 
 DialogType
 InternalTestStep::DialogArgument::getType() const {
@@ -85,6 +94,12 @@ InternalTestStep::DialogArgument::getAction() const {
 const std::string&
 InternalTestStep::DialogArgument::getCustomAction() const {
     return myCustomAction;
+}
+
+
+int
+InternalTestStep::DialogArgument::getIndex() const {
+    return myIndex;
 }
 
 // ---------------------------------------------------------------------------
@@ -315,6 +330,10 @@ InternalTestStep::InternalTestStep(InternalTest* testSystem, const std::string& 
         saveFileAs();
     } else if (function == "reloadFile") {
         reloadFile();
+    } else if (function == "selectEdgeType") {
+        selectEdgeType();
+    } else if (function == "createNewEdgeType") {
+        createNewEdgeType();
     } else if (function == "overwritingAccept") {
         overwritingAccept();
     } else if (function == "overwritingCancel") {
@@ -1623,13 +1642,15 @@ InternalTestStep::openAboutDialog() {
 
 void
 InternalTestStep::loadFile() {
-    if (myArguments.size() != 3) {
-        writeError("loadFile", 0, "<referencePosition, type, file>");
+    if ((myArguments.size() != 5) || !checkIntArgument(myArguments[4])) {
+        writeError("loadFile", 0, "<referencePosition, type, file, extension, extensionIndex>");
     } else {
         myCategory = Category::APP;
         // get type and file
         const auto type = getStringArgument(myArguments[1]);
         const auto file = getStringArgument(myArguments[2]);
+        const auto extension = getStringArgument(myArguments[3]);
+        const auto extensionIndex = getIntArgument(myArguments[4]);
         // get working directory
         std::string workingDirectory = FXSystem::getCurrentDirectory().text();
         const auto sandboxDirectory = std::getenv("TEXTTEST_SANDBOX");
@@ -1645,6 +1666,10 @@ InternalTestStep::loadFile() {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_O_OPENNETCONVERTFILE;
         } else if (type == "network") {
             myMessageID = MID_HOTKEY_CTRL_O_OPENSIMULATION_OPENNETWORK;
+        } else if (type == "trafficLights") {
+            myMessageID = MID_HOTKEY_CTRL_K_OPENTLSPROGRAMS;
+        } else if (type == "edgeTypes") {
+            myMessageID = MID_HOTKEY_CTRL_H_APPSETTINGS_OPENEDGETYPES;
         } else if (type == "additional") {
             myMessageID = MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS;
         } else if (type == "demand") {
@@ -1657,9 +1682,9 @@ InternalTestStep::loadFile() {
             WRITE_ERRORF("Invalid type '%' used in function loadFile", type);
         }
         // write info
-        std::cout << file << std::endl;
+        std::cout << file << "." << extension << std::endl;
         // set filename dialog
-        new InternalTestStep(myTestSystem, new DialogArgument(DialogType::FILE, workingDirectory + "/" + file), "filepath");
+        new InternalTestStep(myTestSystem, new DialogArgument(DialogType::FILE, workingDirectory + "/" + file + "." + extension, extensionIndex), "filepath");
         new InternalTestStep(myTestSystem, new DialogArgument(DialogType::FILE, DialogArgument::Action::ACCEPT), "go to directory");
     }
 }
@@ -1667,12 +1692,14 @@ InternalTestStep::loadFile() {
 
 void
 InternalTestStep::saveNewFile() {
-    if (myArguments.size() != 2) {
-        writeError("saveNewFile", 0, "<referencePosition, type>");
+    if ((myArguments.size() != 4) || !checkIntArgument(myArguments[3])) {
+        writeError("saveNewFile", 0, "<referencePosition, type, extension, extensionIndex>");
     } else {
         myCategory = Category::APP;
         // get type and file
         const auto type = getStringArgument(myArguments[1]);
+        const auto extension = getStringArgument(myArguments[2]);
+        const auto extensionIndex = getIntArgument(myArguments[3]);
         std::string file;
         // get working directory
         std::string workingDirectory = FXSystem::getCurrentDirectory().text();
@@ -1683,38 +1710,44 @@ InternalTestStep::saveNewFile() {
         // continue depending of type
         if (type == "neteditConfig") {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_E_SAVENETEDITCONFIG;
-            file = "netedit2.netecfg";
+            file = "netedit2." + extension;
         } else if (type == "sumoConfig") {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_S_SAVESUMOCONFIG;
-            file = "sumo2.sumocfg";
+            file = "sumo2." + extension;
         } else if (type == "xml") {
             myMessageID = MID_HOTKEY_CTRL_L_SAVEASPLAINXML;
-            file = "net2.xml";
+            file = "net2." + extension;
         } else if (type == "joinedJunctions") {
             myMessageID = MID_GNE_SAVEJOINEDJUNCTIONS;
-            file = "joinedjunctions2.nod.xml";
+            file = "joinedjunctions2." + extension;
         } else if (type == "network") {
             myMessageID = MID_HOTKEY_CTRL_S_STOPSIMULATION_SAVENETWORK;
-            file = "net2.net.xml";
+            file = "net2." + extension;
+        } else if (type == "trafficLights") {
+            myMessageID = MID_HOTKEY_CTRL_SHIFT_K_SAVETLS;
+            file = "trafficlights2." + extension;
+        } else if (type == "edgeTypes") {
+            myMessageID = MID_HOTKEY_CTRL_SHIFT_H_SAVEEDGETYPES;
+            file = "edgetypes2." + extension;
         } else if (type == "additional") {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_A_SAVEADDITIONALELEMENTS;
-            file = "additionals2.add.xml";
+            file = "additionals2." + extension;
         } else if (type == "demand") {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_D_SAVEDEMANDELEMENTS;
-            file = "routes2.rou.xml";
+            file = "routes2." + extension;
         } else if (type == "data") {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_B_SAVEDATAELEMENTS;
-            file = "datas2.dat.xml";
+            file = "datas2." + extension;
         } else if (type == "meanData") {
             myMessageID = MID_HOTKEY_CTRL_SHIFT_M_SAVEMEANDATAELEMENTS;
-            file = "meandatas2.dat.add.xml";
+            file = "meandatas2.dat." + extension;
         } else {
             WRITE_ERRORF("Invalid type '%' used in function loadFile", type);
         }
         // write info
         std::cout << file << std::endl;
         // set filename dialog
-        new InternalTestStep(myTestSystem, new DialogArgument(DialogType::FILE, workingDirectory + "/" + file), "filepath");
+        new InternalTestStep(myTestSystem, new DialogArgument(DialogType::FILE, workingDirectory + "/" + file, extensionIndex), "filepath");
         new InternalTestStep(myTestSystem, new DialogArgument(DialogType::FILE, DialogArgument::Action::ACCEPT), "go to directory");
     }
 }
@@ -1745,6 +1778,12 @@ InternalTestStep::saveFileAs() {
         } else if (type == "network") {
             myMessageID = MID_GNE_TOOLBARFILE_SAVENETWORK_AS;
             file = "net3.net.xml";
+        } else if (type == "trafficLights") {
+            myMessageID = MID_GNE_TOOLBARFILE_SAVETLSPROGRAMS_AS;
+            file = "trafficlights3.tll.xml";
+        } else if (type == "edgeTypes") {
+            myMessageID = MID_GNE_TOOLBARFILE_SAVEEDGETYPES_AS;
+            file = "edgetypes3.typ.xml";
         } else if (type == "additional") {
             myMessageID = MID_GNE_TOOLBARFILE_SAVEADDITIONALELEMENTS_UNIFIED;
             file = "additionals3.add.xml";
@@ -1787,6 +1826,10 @@ InternalTestStep::reloadFile() {
             myMessageID = MID_GNE_TOOLBARFILE_RELOAD_SUMOCONFIG;
         } else if (type == "network") {
             myMessageID = MID_GNE_TOOLBARFILE_RELOADNETWORK;
+        } else if (type == "edgeTypes") {
+            myMessageID = MID_GNE_TOOLBARFILE_RELOAD_EDGETYPES;
+        } else if (type == "trafficLights") {
+            myMessageID = MID_GNE_TOOLBARFILE_RELOAD_TLSPROGRAMS;
         } else if (type == "additional") {
             myMessageID = MID_GNE_TOOLBARFILE_RELOAD_ADDITIONALELEMENTS;
         } else if (type == "demand") {
@@ -1796,8 +1839,46 @@ InternalTestStep::reloadFile() {
         } else if (type == "meanData") {
             myMessageID = MID_GNE_TOOLBARFILE_RELOAD_MEANDATAELEMENTS;
         } else {
-            WRITE_ERRORF("Invalid type '%' used in function loadFile", type);
+            WRITE_ERRORF("Invalid type '%' used in function reloadFile", type);
         }
+    }
+}
+
+
+void
+InternalTestStep::selectEdgeType() {
+    if (myArguments.size() != 0) {
+        writeError("selectEdgeType", 0, "<>");
+    } else {
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP, "focus edge frame");
+        // got to type
+        for (int i = 0; i < myTestSystem->getAttributesEnum().at("netedit.attrs.edge.edgeType.select"); i++) {
+            buildPressKeyEvent(Category::APP, "tab", false);
+        }
+        // select edge type
+        buildPressKeyEvent(Category::APP, "space", true);
+    }
+}
+
+
+void
+InternalTestStep::createNewEdgeType() {
+    if (myArguments.size() != 1 && checkBoolArgument(myArguments[0])) {
+        writeError("createNewEdgeType", 0, "<bool>");
+    } else {
+        const auto existent = getBoolArgument(myArguments[0]);
+        new InternalTestStep(myTestSystem, SEL_COMMAND, MID_HOTKEY_SHIFT_F12_FOCUSUPPERELEMENT, Category::APP, "focus edge frame");
+        if (existent) {
+            for (int i = 0; i < myTestSystem->getAttributesEnum().at("netedit.attrs.edge.edgeType.createExistent"); i++) {
+                buildPressKeyEvent(Category::APP, "tab", false);
+            }
+        } else {
+            for (int i = 0; i < myTestSystem->getAttributesEnum().at("netedit.attrs.edge.edgeType.createNew"); i++) {
+                buildPressKeyEvent(Category::APP, "tab", false);
+            }
+        }
+        // select edge type
+        buildPressKeyEvent(Category::APP, "space", true);
     }
 }
 

@@ -8,9 +8,8 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2025-09-04 16:38+0200\n"
-"PO-Revision-Date: 2025-09-03 15:08+0000\n"
-"Last-Translator: João Pedro Egidio da Silva <joao.egidio@joinville.sc.gov."
-"br>\n"
+"PO-Revision-Date: 2025-09-20 18:02+0000\n"
+"Last-Translator: Edson Pereira <edson.pereira@joinville.sc.gov.br>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/eclipse-sumo/"
 "applications/pt/>\n"
 "Language: pt\n"
@@ -18,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.13.1-rc\n"
+"X-Generator: Weblate 5.14-dev\n"
 
 #: src/activitygen/AGActivityGen.cpp:46
 msgid "Reading input"
@@ -414,21 +413,21 @@ msgstr " % detector fonte"
 #: src/dfrouter/RODFNet.cpp:144
 #, c-format
 msgid " % sink detectors"
-msgstr ""
+msgstr " % detectores destino"
 
 #: src/dfrouter/RODFNet.cpp:145
 #, c-format
 msgid " % in-between detectors"
-msgstr ""
+msgstr " % detectores intermediários"
 
 #: src/dfrouter/RODFNet.cpp:146
 #, c-format
 msgid " % invalid detectors"
-msgstr ""
+msgstr " % detectores inválidos"
 
 #: src/dfrouter/RODFNet.cpp:281
 msgid "Could not close route for '%'"
-msgstr ""
+msgstr "Não foi possível fechar a rota pra '%'"
 
 #: src/dfrouter/RODFNet.cpp:439
 #, c-format
@@ -436,18 +435,20 @@ msgid ""
 "Detector '%' has no flows.\n"
 " Trying to rebuild."
 msgstr ""
+"Detector '%' não tem fluxo.\n"
+" Tentando reconstruir."
 
 #: src/dfrouter/RODFNet.cpp:467
 msgid " Could not build list of previous flows."
-msgstr ""
+msgstr " Não foi possível criar a lista com fluxos anteriores."
 
 #: src/dfrouter/RODFNet.cpp:504
 msgid " Could not build list of latter flows."
-msgstr ""
+msgstr " Não foi possível gerar a lista dos últimos fluxos."
 
 #: src/dfrouter/RODFNet.cpp:591
 msgid "Removed detector '%' because no flows for him exist."
-msgstr ""
+msgstr "O detector '%' foi eliminado pois não existem fluxos para ele."
 
 #: src/dfrouter/RODFNet.cpp:614
 #, c-format
@@ -477,6 +478,8 @@ msgid ""
 "Quitting checking for being a false source for detector '%' due to seen edge "
 "limit."
 msgstr ""
+"Saindo da verificação para ser uma fonte falsa para o detector '%' devido ao "
+"limite de aresta vista."
 
 #: src/dfrouter/RODFNet.cpp:998
 msgid "Average speedFactor for PKW is % maximum speedFactor is %."
@@ -2175,6 +2178,8 @@ msgid ""
 "Select default speed deviation. A negative value implies vClass specific "
 "defaults (0.1 for the default passenger class)"
 msgstr ""
+"Selecione o desvio de velocidade padrão. Um valor negativo implica padrões "
+"específicos de vClass (0.1 para a classe de passageiro padrão)"
 
 #: src/microsim/MSFrame.cpp:534
 msgid ""

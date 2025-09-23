@@ -1215,7 +1215,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                 GNETagProperties::Over::LANE,
                 GNETagProperties::Conflicts::POS_LANE,
                 GUIIcon::ACCESS, GUIGlObjectType::GLO_ACCESS, currentTag, TL("Access"),
-        {SUMO_TAG_BUS_STOP, SUMO_TAG_TRAIN_STOP}, FXRGBA(240, 255, 205, 255));
+        {SUMO_TAG_BUS_STOP, SUMO_TAG_TRAIN_STOP, SUMO_TAG_CONTAINER_STOP}, FXRGBA(240, 255, 205, 255));
         // set values of attributes
         fillLaneAttribute(myTagProperties[currentTag], false);
 
@@ -1364,12 +1364,6 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                                    GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
                                    TL("The length of the road-side parking spaces. By default (endPos - startPos) / roadsideCapacity"),
                                    "", "0");
-
-        new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_ANGLE,
-                                   GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::ANGLE | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
-                                   GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
-                                   TL("The angle of the road-side parking spaces relative to the lane angle, positive means clockwise"),
-                                   "0");
 
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_LEFTHAND,
                                    GNEAttributeProperties::Property::BOOL | GNEAttributeProperties::Property::DEFAULTVALUE,
@@ -7021,6 +7015,12 @@ GNETagPropertiesDatabase::fillCommonStoppingPlaceAttributes(GNETagProperties* ta
     if (includeColor) {
         fillColorAttribute(tagProperties, "");
     }
+
+    new GNEAttributeProperties(tagProperties, SUMO_ATTR_ANGLE,
+                               GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::ANGLE | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
+                               GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+                               TLF("Angle of %", tagProperties->getTagStr()),
+                               "0");
 
     // netedit attributes
     new GNEAttributeProperties(tagProperties, GNE_ATTR_SIZE,

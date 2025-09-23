@@ -20,13 +20,15 @@
 #pragma once
 #include <config.h>
 
+#include "GNELaneMovableElement.h"
+
 #include "GNEAdditional.h"
 
 // ===========================================================================
 // class definitions
 // ===========================================================================
 
-class GNEStoppingPlace : public GNEAdditional, public Parameterised {
+class GNEStoppingPlace : public GNEAdditional, public GNELaneMovableElement, public Parameterised {
 
 public:
     /**@brief Default constructor
@@ -46,11 +48,12 @@ public:
      * @param[in] name Name of stoppingPlace
      * @param[in] friendlyPos enable or disable friendly position
      * @param[in] color stoppingPlace color
+     * @param[in] angle stoppingPlace angle
      * @param[in] parameters generic parameters
      */
     GNEStoppingPlace(const std::string& id, GNENet* net, const std::string& filename, SumoXMLTag tag, GNELane* lane,
                      const double startPos, const double endPos, const std::string& name, bool friendlyPosition,
-                     const RGBColor& color, const Parameterised::Map& parameters);
+                     const RGBColor& color, const double angle, const Parameterised::Map& parameters);
 
     /// @brief Destructor
     ~GNEStoppingPlace();
@@ -161,17 +164,11 @@ public:
     /// @}
 
 protected:
-    /// @brief The relative start position this stopping place is located at (-1 means empty)
-    double myStartPosition = 0;
-
-    /// @brief The  position this stopping place is located at (-1 means empty)
-    double myEndPosition = 0;
-
-    /// @brief Flag for friendly position
-    bool myFriendlyPosition = false;
-
     /// @brief RGB color
     RGBColor myColor = RGBColor::INVISIBLE;
+
+    /// @brief angle
+    double myAngle = 0;
 
     /// @brief size (only use in templates)
     double mySize = 10;
@@ -243,21 +240,18 @@ private:
     /// @brief set attribute after validation
     virtual void setAttribute(SumoXMLAttr key, const std::string& value) = 0;
 
-    /// @brief get start position over lane that is applicable to the shape
-    double getStartGeometryPositionOverLane() const;
-
-    /// @brief get end position over lane that is applicable to the shape
-    double getEndGeometryPositionOverLane() const;
-
     /// @brief set move shape
     void setMoveShape(const GNEMoveResult& moveResult);
 
     /// @brief commit move shape
     void commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList);
 
-    /// @brief adjust length
-    void adjustLength(const double length, GNEUndoList* undoList);
-
     /// @brief Invalidate set new position in the view
     void setPosition(const Position& pos) = delete;
+
+    /// @brief Invalidated copy constructor.
+    GNEStoppingPlace(const GNEStoppingPlace&) = delete;
+
+    /// @brief Invalidated assignment operator
+    GNEStoppingPlace& operator=(const GNEStoppingPlace& src) = delete;
 };

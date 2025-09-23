@@ -121,6 +121,30 @@ RONetHandler::myStartElement(int element,
             }
             break;
         }
+        case SUMO_TAG_PREFERENCE: {
+            bool ok = true;
+            const std::string routingType = attrs.get<std::string>(SUMO_ATTR_ROUTINGTYPE, nullptr, ok);
+            const double prio = attrs.get<double>(SUMO_ATTR_PRIORITY, routingType.c_str(), ok);
+            if (prio <= 0) {
+                throw InvalidArgument("In preference for routingType '" + routingType + "', priority must be positve");
+            }
+            if (attrs.hasAttribute(SUMO_ATTR_VCLASSES)) {
+                StringTokenizer st(attrs.get<std::string>(SUMO_ATTR_VCLASSES, routingType.c_str(), ok));
+                for (std::string className : st.getVector()) {
+                    myNet.addPreference(routingType, getVehicleClassID(className), prio);
+                }
+            } else if (!attrs.hasAttribute(SUMO_ATTR_VTYPES)) {
+                // general preferenze applying to all types and vClasses
+                myNet.addPreference(routingType, "", prio);
+            }
+            if (attrs.hasAttribute(SUMO_ATTR_VTYPES)) {
+                StringTokenizer st(attrs.get<std::string>(SUMO_ATTR_VTYPES, routingType.c_str(), ok));
+                for (std::string typeName : st.getVector()) {
+                    myNet.addPreference(routingType, typeName, prio);
+                }
+            }
+            break;
+        }
         case SUMO_TAG_PARAM:
             addParam(attrs);
             break;
@@ -202,8 +226,9 @@ RONetHandler::parseEdge(const SUMOSAXAttributes& attrs) {
         myNet.addNode(toNode);
     }
     const std::string type = attrs.getOpt<std::string>(SUMO_ATTR_TYPE, myCurrentName.c_str(), ok, "");
+    const std::string routingType = attrs.getOpt<std::string>(SUMO_ATTR_ROUTINGTYPE, myCurrentName.c_str(), ok, "");
     // build the edge
-    myCurrentEdge = myEdgeBuilder.buildEdge(myCurrentName, fromNode, toNode, priority, type);
+    myCurrentEdge = myEdgeBuilder.buildEdge(myCurrentName, fromNode, toNode, priority, type, routingType);
     myCurrentEdge->setFunction(func);
 
     if (myNet.addEdge(myCurrentEdge)) {
@@ -420,8 +445,8 @@ RONetHandler::parseDistrict(const SUMOSAXAttributes& attrs) {
     if (!ok) {
         return;
     }
-    ROEdge* const sink = myEdgeBuilder.buildEdge(myCurrentName + "-sink", nullptr, nullptr, 0, "");
-    ROEdge* const source = myEdgeBuilder.buildEdge(myCurrentName + "-source", nullptr, nullptr, 0, "");
+    ROEdge* const sink = myEdgeBuilder.buildEdge(myCurrentName + "-sink", nullptr, nullptr, 0, "", "");
+    ROEdge* const source = myEdgeBuilder.buildEdge(myCurrentName + "-source", nullptr, nullptr, 0, "", "");
     myNet.addDistrict(myCurrentName, source, sink);
     if (attrs.hasAttribute(SUMO_ATTR_EDGES)) {
         const std::vector<std::string>& desc = attrs.get<std::vector<std::string> >(SUMO_ATTR_EDGES, myCurrentName.c_str(), ok);

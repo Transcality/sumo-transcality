@@ -37,13 +37,14 @@
 #include <utils/common/RandHelper.h>
 #include <utils/emissions/PollutantsInterface.h>
 #include <utils/geom/Boundary.h>
+#include <utils/router/FlippedEdge.h>
 #ifdef HAVE_FOX
 #include <utils/foxtools/fxheader.h>
 #endif
 #include <utils/vehicle/SUMOVTypeParameter.h>
+#include "RONet.h"
 #include "RONode.h"
 #include "ROVehicle.h"
-#include <utils/router/FlippedEdge.h>
 
 
 // ===========================================================================
@@ -78,7 +79,7 @@ public:
      * @param[in] to The node the edge ends at
      * @param[in] index The numeric id of the edge
      */
-    ROEdge(const std::string& id, RONode* from, RONode* to, int index, const int priority, const std::string& type);
+    ROEdge(const std::string& id, RONode* from, RONode* to, int index, const int priority, const std::string& type, const std::string& routingType);
 
     /** @brief Constructor for dummy edge, only used when building the connectivity graph **/
     ROEdge(const std::string& id, const RONode* from, const RONode* to, SVCPermissions p);
@@ -430,16 +431,16 @@ public:
      * @return The traveltime needed by the given vehicle to pass the edge at the given time
      */
     static inline double getTravelTimeStatic(const ROEdge* const edge, const ROVehicle* const veh, double time) {
-        return edge->getTravelTime(veh, time);
+        return edge->getTravelTime(veh, time) * getRoutingFactor(edge, veh);
     }
 
     static inline double getTravelTimeStaticRandomized(const ROEdge* const edge, const ROVehicle* const veh, double time) {
-        return edge->getTravelTime(veh, time) * RandHelper::rand(1., gWeightsRandomFactor);
+        return edge->getTravelTime(veh, time) * RandHelper::rand(1., gWeightsRandomFactor) * getRoutingFactor(edge, veh);
     }
 
     /// @brief Alias for getTravelTimeStatic (there is no routing device to provide aggregated travel times)
     static inline double getTravelTimeAggregated(const ROEdge* const edge, const ROVehicle* const veh, double time) {
-        return edge->getTravelTime(veh, time);
+        return edge->getTravelTime(veh, time) * getRoutingFactor(edge, veh);
     }
 
     /// @brief Return traveltime weighted by edge priority (scaled penalty for low-priority edges)
@@ -449,8 +450,13 @@ public:
         // minimum priority receives a factor of myPriorityFactor
         const double relativeInversePrio = 1 - ((edge->getPriority() - myMinEdgePriority) / myEdgePriorityRange);
         result *= 1 + relativeInversePrio * myPriorityFactor;
-        return result;
+        return result * getRoutingFactor(edge, veh);
     }
+
+    static inline double getRoutingFactor(const ROEdge* const edge, const ROVehicle* const veh) {
+        return gRoutingPreferences ?  1 / edge->getPreference(veh->getVTypeParameter()) : 1;
+    }
+
 
     /** @brief Returns a lower bound for the travel time on this edge without using any stored timeLine
      *
@@ -509,6 +515,11 @@ public:
     /// @brief return the coordinates of the center of the given stop
     static const Position getStopPosition(const SUMOVehicleParameter::Stop& stop);
 
+    /// @brief return loaded edge preference based on routingType
+    inline double getPreference(const SUMOVTypeParameter& pars) const {
+        return RONet::getInstance()->getPreference(getRoutingType(), pars);
+    }
+
     /// @brief get edge priority (road class)
     int getPriority() const {
         return myPriority;
@@ -517,6 +528,10 @@ public:
     /// @brief get edge type
     const std::string& getType() const {
         return myType;
+    }
+
+    const std::string& getRoutingType() const {
+        return myRoutingType.empty() ? myType : myRoutingType;
     }
 
     const RONode* getFromJunction() const {
@@ -600,6 +615,9 @@ protected:
 
     /// @brief the type of this edge
     const std::string myType;
+
+    /// @brief the routing type of the edge (used to look up vType and vClass specific routing preferences)
+    const std::string myRoutingType;
 
     /// @brief The maximum speed allowed on this edge
     double mySpeed;

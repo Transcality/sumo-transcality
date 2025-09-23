@@ -23,8 +23,9 @@
 #include <netedit/elements/GNEAttributeCarrier.h>
 #include <netedit/elements/GNEContour.h>
 #include <netedit/elements/GNEHierarchicalElement.h>
-#include <netedit/elements/GNEMoveElement.h>
 #include <netedit/elements/GNEPathElement.h>
+#include <netedit/elements/moving/GNEMoveElement.h>
+#include <utils/gui/div/GUIGeometry.h>
 #include <utils/gui/globjects/GUIGlObject.h>
 #include <utils/gui/images/GUITextureSubSys.h>
 
@@ -64,6 +65,9 @@ public:
 
     /// @brief get GNEHierarchicalElement associated with this AttributeCarrier
     GNEHierarchicalElement* getHierarchicalElement();
+
+    /// @brief get GNEMoveElement associated with this AttributeCarrier
+    GNEMoveElement* getMoveElement();
 
     /**@brief get move operation
      * @note returned GNEMoveOperation can be nullptr
@@ -395,14 +399,8 @@ protected:
                               const double extraOffsetY, const RGBColor baseCol, const RGBColor textCol, GUITexture texture,
                               const std::string text) const;
 
-    /// @brief check if draw additional extrem geometry points
-    bool drawMovingGeometryPoints(const bool ignoreShift) const;
-
     /// @brief draw demand element children
     void drawDemandElementChildren(const GUIVisualizationSettings& s) const;
-
-    /// @brief get moveOperation for an element over single lane
-    GNEMoveOperation* getMoveOperationSingleLane(const double startPos, const double endPos);
 
     /// @brief get moveOperation for an element over multi lane
     GNEMoveOperation* getMoveOperationMultiLane(const double startPos, const double endPos);

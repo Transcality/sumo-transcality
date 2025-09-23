@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Build SUMO
 WORKDIR /usr/src
+
 ARG SUMO_REPO=https://github.com/Transcality/sumo-transcality
 ARG SUMO_BRANCH=simreply-fix
 
@@ -54,4 +55,6 @@ COPY --from=builder /usr/src/sumo/data ${SUMO_HOME}/data
 COPY --from=builder /usr/src/sumo/tools ${SUMO_HOME}/tools
 COPY --from=builder /usr/src/sumo/src ${SUMO_HOME}/src
 
+
 WORKDIR ${SUMO_HOME} 
+

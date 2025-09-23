@@ -29,6 +29,7 @@
 
 class GNEHierarchicalElement;
 class GNELane;
+class GNEMoveElement;
 class GNENet;
 class GNETagProperties;
 class GNEUndoList;
@@ -84,13 +85,24 @@ public:
     /// @brief check if attribute carrier is selected
     bool isAttributeCarrierSelected() const;
 
-    /// @brief check if attribute carrier must be drawn using selecting color.
-    bool drawUsingSelectColor() const;
-
     /// @brief get GNEHierarchicalElement associated with this AttributeCarrier
     virtual GNEHierarchicalElement* getHierarchicalElement() = 0;
 
-    /// @name Function related front elements
+    /// @brief get GNEMoveElement associated with this AttributeCarrier
+    virtual GNEMoveElement* getMoveElement() = 0;
+
+    /// @name Function related with drawing
+    /// @{
+
+    /// @brief check if attribute carrier must be drawn using selecting color.
+    bool drawUsingSelectColor() const;
+
+    /// @brief check if draw moving geometry points
+    bool drawMovingGeometryPoints() const;
+
+    /// @}
+
+    /// @name Function related with front elements
     /// @{
 
     /// @brief mark for drawing front
@@ -109,6 +121,7 @@ public:
 
     /// @name Function related with grid (needed for elements that aren't always in grid)
     /// @{
+
     /// @brief mark if this AC was inserted in grid or not
     void setInGrid(bool value);
 
@@ -119,6 +132,7 @@ public:
 
     /// @name Function related with graphics (must be implemented in all children)
     /// @{
+
     /// @brief get GUIGlObject associated with this AttributeCarrier
     virtual GUIGlObject* getGUIGlObject() = 0;
 
@@ -130,7 +144,7 @@ public:
 
     /// @}
 
-    /// @name Function related with contourdrawing (can be implemented in children)
+    /// @name Function related with contour drawing (can be implemented in children)
     /// @{
 
     /// @brief check if draw inspect contour (black/white)
@@ -170,11 +184,18 @@ public:
 
     /// @name Functions related with attributes (must be implemented in all children)
     /// @{
+
     /* @brief method for getting the Attribute of an XML key
      * @param[in] key The attribute key
      * @return string with the value associated to key
      */
     virtual std::string getAttribute(SumoXMLAttr key) const = 0;
+
+    /* @brief method for getting the Attribute of an XML key in double format
+     * @param[in] key The attribute key
+     * @return string with the value associated to key
+     */
+    virtual double getAttributeDouble(SumoXMLAttr key) const = 0;
 
     /* @brief method for setting the attribute and letting the object perform additional changes
      * @param[in] key The attribute key
@@ -228,6 +249,7 @@ public:
 
     /// @name Function related with parameters
     /// @{
+
     /// @brief get parameters map
     virtual const Parameterised::Map& getACParametersMap() const = 0;
 

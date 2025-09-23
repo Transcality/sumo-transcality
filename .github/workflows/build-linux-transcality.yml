@@ -41,8 +41,10 @@ jobs:
           file: Dockerfile
           push: true
           platforms: linux/amd64
+
           build-args: |
             SUMO_BRANCH=${{ github.ref_name }}
           tags: |
             registry.transcality.com/sumo-linux:latest
             registry.transcality.com/sumo-linux:${{ github.sha }}
+

@@ -368,6 +368,7 @@ NIXMLEdgesHandler::addEdge(const SUMOSAXAttributes& attrs) {
     }
     // try to get the kilometrage/mileage
     myCurrentEdge->setDistance(attrs.getOpt<double>(SUMO_ATTR_DISTANCE, myCurrentID.c_str(), ok, myCurrentEdge->getDistance()));
+    myCurrentEdge->setRoutingType(attrs.getOpt<std::string>(SUMO_ATTR_ROUTINGTYPE, myCurrentID.c_str(), ok, myCurrentEdge->getRoutingType()));
     // preserve bidi edge (only as bool, the actual edge will be recomputed)
     const std::string bidi = attrs.getOpt<std::string>(SUMO_ATTR_BIDI, myCurrentID.c_str(), ok, "");
     myCurrentEdge->setBidi(myCurrentEdge->getBidiEdge() != nullptr || myCurrentEdge->isBidi() || bidi != "");
@@ -521,6 +522,7 @@ void NIXMLEdgesHandler::addSplit(const SUMOSAXAttributes& attrs) {
             return;
         }
         e.node = myNodeCont.retrieve(nodeID);
+        e.offset = attrs.getOpt(SUMO_ATTR_OFFSET, nullptr, ok, 0.0);
         e.offsetFactor = OptionsCont::getOptions().getBool("lefthand") ? -1 : 1;
         if (e.node == nullptr) {
             double geomPos = e.pos;

@@ -2666,6 +2666,16 @@ NBEdge::computeLanes2Edges() {
     // return if this relationship has been build in previous steps or
     //  during the import
     if (myStep >= EdgeBuildingStep::LANES2EDGES) {
+        if (myStep == EdgeBuildingStep::LANES2LANES_USER && myConnections.size() > 1) {
+            for (std::vector<Connection>::iterator i = myConnections.begin(); i != myConnections.end();) {
+                if ((*i).toEdge == nullptr) {
+                    WRITE_WARNINGF("Inconsistent connection definitions at edge '%'.", getID());
+                    i = myConnections.erase(i);
+                } else {
+                    i++;
+                }
+            }
+        }
         return true;
     }
     assert(myStep == EdgeBuildingStep::EDGE2EDGES);
@@ -4035,6 +4045,11 @@ NBEdge::expandableBy(NBEdge* possContinuation, std::string& reason) const {
     // the speed allowed
     if (mySpeed != possContinuation->mySpeed) {
         reason = "speed";
+        return false;
+    }
+    // the routingType
+    if (myRoutingType != possContinuation->myRoutingType) {
+        reason = "routingType";
         return false;
     }
     // spreadtype should match or it will look ugly

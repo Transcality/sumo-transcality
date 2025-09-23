@@ -45,6 +45,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "poi",                                    SUMO_TAG_POI },
     { "junction",                               SUMO_TAG_JUNCTION },
     { "restriction",                            SUMO_TAG_RESTRICTION },
+    { "preference",                             SUMO_TAG_PREFERENCE },
     { "meso",                                   SUMO_TAG_MESO },
     { "busStop",                                SUMO_TAG_BUS_STOP },
     { "trainStop",                              SUMO_TAG_TRAIN_STOP },
@@ -768,6 +769,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "remove",                 SUMO_ATTR_REMOVE },
     { "length",                 SUMO_ATTR_LENGTH },
     { "bidi",                   SUMO_ATTR_BIDI },
+    { "routingType",            SUMO_ATTR_ROUTINGTYPE },
     // Split
     { "idBefore",               SUMO_ATTR_ID_BEFORE },
     { "idAfter",                SUMO_ATTR_ID_AFTER },
@@ -1526,7 +1528,7 @@ StringBijection<LaneSpreadFunction>::Entry SUMOXMLDefinitions::laneSpreadFunctio
 StringBijection<ParkingType>::Entry SUMOXMLDefinitions::parkingTypeValues[] = {
     {"0",              ParkingType::ONROAD },   // default: park on the street
     {"1",              ParkingType::OFFROAD },    // parking off the street
-    {"opportunistic",  ParkingType::OPPORTUNISTIC } // park of the street if there is an opportunity for it
+    {"opportunistic",  ParkingType::OPPORTUNISTIC } // park off the street if there is an opportunity for it
 };
 
 StringBijection<ChargeType>::Entry SUMOXMLDefinitions::chargeTypeValues[] = {
@@ -1816,19 +1818,19 @@ StringBijection<StateFileExtension>::Entry SUMOXMLDefinitions::stateFileExtensio
 
 StringBijection<SumoConfigFileExtension>::Entry SUMOXMLDefinitions::sumoConfigFileExtensionValues[] = {
     {TL("Sumo config") + std::string(" files (*.sumocfg)"), SumoConfigFileExtension::SUMOCONF},
-    {TL("XML files") + std::string(" (*.xml,*.xml.gz)"),    SumoConfigFileExtension::XML},
+    {TL("XML files") + std::string(" (*.xml)"),              SumoConfigFileExtension::XML},
     {TL("All files") + std::string(" (*)"),                 SumoConfigFileExtension::ALL} //< must be the last one
 };
 
 StringBijection<NeteditConfigFileExtension>::Entry SUMOXMLDefinitions::neteditConfigFileExtensionValues[] = {
     {TL("Netedit config files") + std::string(" (*.netecfg)"),  NeteditConfigFileExtension::NETECFG},
-    {TL("XML files") + std::string(" (*.xml,*.xml.gz)"),        NeteditConfigFileExtension::XML},
+    {TL("XML files") + std::string(" (*.xml)"),                  NeteditConfigFileExtension::XML},
     {TL("All files") + std::string(" (*)"),                     NeteditConfigFileExtension::ALL} //< must be the last one
 };
 
 StringBijection<NetconvertConfigFileExtension>::Entry SUMOXMLDefinitions::netconvertConfigFileExtensionValues[] = {
     {TL("Netconvert config files") + std::string(" (*.netccfg)"),   NetconvertConfigFileExtension::NETCCFG},
-    {TL("XML files") + std::string(" (*.xml,*.xml.gz)"),            NetconvertConfigFileExtension::XML},
+    {TL("XML files") + std::string(" (*.xml"),                      NetconvertConfigFileExtension::XML},
     {TL("All files") + std::string(" (*)"),                         NetconvertConfigFileExtension::ALL} //< must be the last one
 };
 

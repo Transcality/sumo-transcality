@@ -42,6 +42,12 @@ GNELaneTemplate::getHierarchicalElement() {
 }
 
 
+GNEMoveElement*
+GNELaneTemplate::getMoveElement() {
+    return nullptr;
+}
+
+
 GUIGlObject*
 GNELaneTemplate::getGUIGlObject() {
     return nullptr;
@@ -111,6 +117,12 @@ GNELaneTemplate::checkDrawMoveContour() const {
 std::string
 GNELaneTemplate::getAttribute(SumoXMLAttr key) const {
     return myLane->getAttribute(key);
+}
+
+
+double
+GNELaneTemplate::getAttributeDouble(SumoXMLAttr key) const {
+    return myLane->getAttributeDouble(key);
 }
 
 
