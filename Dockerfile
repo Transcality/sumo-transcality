@@ -67,3 +67,4 @@ ENV SUMO_HOME=/sumo
 ENV PATH="/sumo/bin:$PATH"
 ENV PYTHONPATH="/sumo/tools:$PYTHONPATH"
 ENV LD_LIBRARY_PATH="/sumo/bin/:$LD_LIBRARY_PATH"
+
