@@ -1,70 +1,44 @@
 FROM python:3.10.14-slim-bookworm
 
-# Set C++17 as the standard for all builds
+ENV DEBIAN_FRONTEND=noninteractive
 ENV CXXFLAGS="-std=c++17"
+ENV SUMO_HOME=/sumo
+ENV PATH="${SUMO_HOME}/bin:${PATH}"
+ENV PYTHONPATH="${SUMO_HOME}/tools:${PYTHONPATH}"
 
-# Install dependencies needed to compile SUMO
-RUN apt-get update && apt-get install -y \
-    build-essential git cmake python3 g++ \
-    libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev \
-    libgl2ps-dev python3-dev swig default-jdk maven libeigen3-dev vim \
-    # Dependencies for Arrow and Parquet
-    libboost-all-dev libssl-dev libcurl4-openssl-dev \
-    rapidjson-dev libgflags-dev libsnappy-dev libz-dev \
-    libre2-dev liblz4-dev libzstd-dev libbrotli-dev
+# Build & dev deps + Arrow repo
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates wget gnupg lsb-release \
+    build-essential git cmake ninja-build pkg-config \
+    swig default-jdk maven \
+    # SUMO deps
+    libxerces-c-dev libfox-1.6-dev libgdal-dev libproj-dev libgl2ps-dev libeigen3-dev \
+    # optional but useful
+    libfmt-dev libgoogle-perftools-dev \
+    # Arrow runtime deps
+    libssl-dev libcurl4-openssl-dev rapidjson-dev libgflags-dev \
+    libsnappy-dev zlib1g-dev liblz4-dev libzstd-dev libbrotli-dev \
+ && wget -q https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+ && apt-get install -y -V ./apache-arrow-apt-source-latest-*.deb \
+ && apt-get update && apt-get install -y --no-install-recommends \
+    libarrow-dev libparquet-dev libarrow-dataset-dev libarrow-s3-dev libarrow-azure-dev \
+ && rm -rf /var/lib/apt/lists/* ./apache-arrow-apt-source-latest-*.deb
 
-# Install Arrow and Parquet with C++17 support
-RUN git clone https://github.com/apache/arrow.git /arrow && \
-    cd /arrow && \
-    mkdir build && \
-    cd build && \
-    cmake -DARROW_S3=ON -DARROW_PARQUET=ON -DARROW_DATASET=ON -DARROW_WITH_SNAPPY=ON \
-          -DARROW_WITH_ZLIB=ON -DARROW_WITH_ZSTD=ON -DARROW_WITH_BROTLI=ON -DARROW_WITH_LZ4=ON \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_CXX_STANDARD=17 \
-          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-          ../cpp && \
-    make -j$(nproc) && \
-    make install && \
-    ldconfig
+# Help CMake locate Arrow's config files on Debian
+ENV CMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake:${CMAKE_PREFIX_PATH}"
 
-# Install fmt library with C++17 support
-RUN git clone https://github.com/fmtlib/fmt.git /fmt && \
-    cd /fmt && \
-    mkdir build && \
-    cd build && \
-    cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON .. && \
-    make -j$(nproc) && \
-    make install 
-
-# Create directory for SUMO
-RUN mkdir -p /sumo
+# Use your local SUMO source
 WORKDIR /sumo
-
-# Copy local SUMO files instead of cloning
 COPY . /sumo/
 
-# Build SUMO with Parquet, S3 and Azure support and C++17
-RUN mkdir -p build && cd build && \
-    cmake \
-      -DHAVE_PARQUET=ON \
+# Configure, build, install to /sumo
+# NOTE: WITH_PARQUET enables Arrow/Parquet support; S3/Azure come from Arrow backends being present.
+RUN cmake -S . -B build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+      -DCMAKE_INSTALL_PREFIX=/sumo \
       -DWITH_PARQUET=ON \
-      -DHAVE_S3=ON \
-      -DARROW_S3=ON \
-      -DHAVE_AZURE=ON \
-      -DCMAKE_C_COMPILER=/usr/bin/gcc \
-      -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
-      -DCMAKE_CXX_STANDARD=17 \
-      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-      -DCMAKE_INSTALL_PREFIX=/sumo/build/install \
-      ..
-RUN make -j$(nproc)
-RUN make install 
-
-
-# Expose environment variables for SUMO
-ENV SUMO_HOME=/sumo
-ENV PATH="/sumo/bin:$PATH"
-ENV PYTHONPATH="/sumo/tools:$PYTHONPATH"
-ENV LD_LIBRARY_PATH="/sumo/bin/:$LD_LIBRARY_PATH"
-
+      -DWITH_FOX=ON \
+ && cmake --build build -j"$(nproc)" \
+ && cmake --install build \
+ && strip /sumo/bin/* 2>/dev/null || true
