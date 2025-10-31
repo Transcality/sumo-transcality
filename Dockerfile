@@ -56,5 +56,5 @@ COPY --from=builder /usr/src/sumo/tools ${SUMO_HOME}/tools
 COPY --from=builder /usr/src/sumo/src ${SUMO_HOME}/src
 
 
-WORKDIR ${SUMO_HOME} 
+WORKDIR ${SUMO_HOME}
 
