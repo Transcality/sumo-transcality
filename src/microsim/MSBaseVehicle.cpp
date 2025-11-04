@@ -970,6 +970,16 @@ MSBaseVehicle::getRoutePosition() const {
 }
 
 
+int
+MSBaseVehicle::getNumRemainingEdges() const {
+    if (myParameter->arrivalEdge >= 0) {
+        return myParameter->arrivalEdge - getRoutePosition() + 1;
+    } else {
+        return myRoute->size() - getRoutePosition();
+    }
+}
+
+
 void
 MSBaseVehicle::resetRoutePosition(int index, DepartLaneDefinition departLaneProcedure) {
     myCurrEdge = myRoute->begin() + index;
@@ -1119,7 +1129,7 @@ MSBaseVehicle::getRouteValidity(bool update, bool silent, std::string* msgReturn
             *msgReturn = msg;
         }
     }
-    if (MSGlobals::gCheckRoutes
+    if ((MSGlobals::gCheckRoutes || myRoute->getFirstEdge()->isInternal())
             && (myRouteValidity & ROUTE_UNCHECKED) != 0
             // we could check after the first rerouting
             && (!myParameter->wasSet(VEHPARS_FORCE_REROUTE))) {
@@ -2619,6 +2629,14 @@ MSBaseVehicle::removeTransportable(MSTransportable* t) {
     if (myContainerDevice != nullptr) {
         myContainerDevice->removeTransportable(t);
     }
+    if (myEnergyParams != nullptr) {
+        myEnergyParams->setTransportableMass(myEnergyParams->getTransportableMass() - t->getVehicleType().getMass());
+    }
+}
+
+
+void
+MSBaseVehicle::removeTransportableMass(MSTransportable* t) {
     if (myEnergyParams != nullptr) {
         myEnergyParams->setTransportableMass(myEnergyParams->getTransportableMass() - t->getVehicleType().getMass());
     }

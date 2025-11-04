@@ -103,9 +103,21 @@ GNEVType::GNEVType(const std::string& newVTypeID, GNENet* net, GNEVType* vTypeOr
 GNEVType::~GNEVType() {}
 
 
-GNEMoveOperation*
-GNEVType::getMoveOperation() {
+GNEMoveElement*
+GNEVType::getMoveElement() const {
     return nullptr;
+}
+
+
+Parameterised*
+GNEVType::getParameters() {
+    return this;
+}
+
+
+const Parameterised*
+GNEVType::getParameters() const {
+    return this;
 }
 
 
@@ -501,15 +513,15 @@ GNEVType::getAttribute(SumoXMLAttr key) const {
             }
         // other
         case GNE_ATTR_DEFAULT_VTYPE:
-            return toString(myDefaultVehicleType);
+            return myDefaultVehicleType ? TRUE_STR : FALSE_STR;
         case GNE_ATTR_DEFAULT_VTYPE_MODIFIED:
             if (myDefaultVehicleType) {
-                return toString(myDefaultVehicleTypeModified);
+                return myDefaultVehicleTypeModified ? TRUE_STR : FALSE_STR;
             } else {
                 return FALSE_STR;
             }
         default:
-            return getCommonAttribute(this, key);
+            return getCommonAttribute(key);
     }
 }
 
@@ -556,14 +568,14 @@ GNEVType::getAttributeDouble(SumoXMLAttr key) const {
                 return parse<double>(myTagProperty->getDefaultStringValue(SUMO_ATTR_PROB));
             }
         default:
-            throw InvalidArgument(getTagStr() + " doesn't have a double attribute of type '" + toString(key) + "'");
+            return getCommonAttributeDouble(key);
     }
 }
 
 
 Position
 GNEVType::getAttributePosition(SumoXMLAttr key) const {
-    throw InvalidArgument(getTagStr() + " doesn't have a Position attribute of type '" + toString(key) + "'");
+    return getCommonAttributePosition(key);
 }
 
 
@@ -903,7 +915,7 @@ GNEVType::isValid(SumoXMLAttr key, const std::string& value) {
                 return false;
             }
         default:
-            return isCommonValid(key, value);
+            return isCommonAttributeValid(key, value);
     }
 }
 
@@ -958,12 +970,6 @@ GNEVType::getPopUpID() const {
 std::string
 GNEVType::getHierarchyName() const {
     return getTagStr() + ": " + getAttribute(SUMO_ATTR_ID) ;
-}
-
-
-const Parameterised::Map&
-GNEVType::getACParametersMap() const {
-    return getParametersMap();
 }
 
 
@@ -1841,25 +1847,13 @@ GNEVType::setAttribute(SumoXMLAttr key, const std::string& value) {
             myDefaultVehicleTypeModified = parse<bool>(value);
             break;
         default:
-            setCommonAttribute(this, key, value);
+            setCommonAttribute(key, value);
             break;
     }
     // check if geometry must be marked as deprecated
     if (myTagProperty->hasAttribute(key) && (myTagProperty->getAttributeProperties(key)->requireUpdateGeometry())) {
         updateGeometry();
     }
-}
-
-
-void
-GNEVType::setMoveShape(const GNEMoveResult& /*moveResult*/) {
-    // vehicleTypes cannot be moved
-}
-
-
-void
-GNEVType::commitMoveShape(const GNEMoveResult& /*moveResult*/, GNEUndoList* /*undoList*/) {
-    // vehicleTypes cannot be moved
 }
 
 

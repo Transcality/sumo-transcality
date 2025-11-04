@@ -502,6 +502,8 @@ NBEdge::init(int noLanes, bool tryIgnoreNodePositions, const std::string& origID
         int patchIndex = myFrom->getID() < myTo->getID() ? 1 : 0;
         myGeom[patchIndex].add(Position(POSITION_EPS, POSITION_EPS));
     }
+    // avoid degeneration of near-0-length geometrie when shifting later
+    myGeom.ensureMinLength(gPrecision);
     //
     myFrom->addOutgoingEdge(this);
     myTo->addIncomingEdge(this);
@@ -3220,7 +3222,7 @@ void NBEdge::recheckOpposite(const NBEdgeCont& ec, bool fixOppositeLengths) {
             getLaneStruct(leftmostLane).oppositeID = "";
         } else {
             if (oppEdge->getFromNode() != getToNode() || oppEdge->getToNode() != getFromNode()) {
-                WRITE_ERRORF(TL("Opposite lane '%' does not reverse-connect the same nodes as edge '%'!"), oppositeID, getID());
+                WRITE_WARNINGF(TL("Opposite lane '%' does not reverse-connect the same nodes as edge '%'!"), oppositeID, getID());
                 getLaneStruct(getNumLanes() - 1).oppositeID = "";
             } else {
                 if (oppEdge->getLaneID(oppEdge->getNumLanes() - 1) != oppositeID) {

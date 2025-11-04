@@ -18,6 +18,8 @@
 // Database with all information about netedit elements
 /****************************************************************************/
 
+#include <netedit/elements/moving/GNEMoveElementLaneDouble.h>
+#include <netedit/elements/moving/GNEMoveElementLaneSingle.h>
 #include <netedit/GNENet.h>
 #include <utils/emissions/PollutantsInterface.h>
 #include <utils/options/OptionsCont.h>
@@ -361,7 +363,7 @@ GNETagPropertiesDatabase::writeAttributeHelp() const {
                 dev << "|" << toString(attr->getAttr()) << "|"
                     << attr->getDescription() << "|"
                     << StringUtils::replace(attr->getDefinition(), "\n", " ");
-                if (attr->hasDefaultValue()) {
+                if (attr->hasDefaultValue() && attr->getDefaultStringValue() != "") {
                     dev << " *default:* **" << attr->getDefaultStringValue() << "**";
                 }
                 dev << "|\n";
@@ -931,7 +933,7 @@ GNETagPropertiesDatabase::fillNetworkElements() {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties.at(SUMO_TAG_NET),
                 GNETagProperties::Type::NETWORKELEMENT,
-                GNETagProperties::Property::NO_PROPERTY,
+                GNETagProperties::Property::NOPARAMETERS,
                 GNETagProperties::Over::JUNCTION,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
                 GUIIcon::CROSSING, GUIGlObjectType::GLO_CROSSING, currentTag, TL("Crossing"));
@@ -1154,7 +1156,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                 GUIIcon::BUSSTOP, GUIGlObjectType::GLO_BUS_STOP, currentTag, TL("BusStop"),
                 {}, FXRGBA(240, 255, 205, 255));
         // set common attributes
-        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], true);
+        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], true, false);
 
         // set specific attributes
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_LINES,
@@ -1185,7 +1187,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                 GUIIcon::TRAINSTOP, GUIGlObjectType::GLO_TRAIN_STOP, currentTag, TL("TrainStop"),
                 {}, FXRGBA(240, 255, 205, 255));
         // set common attributes
-        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], true);
+        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], true, false);
 
         // set specific attributes
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_LINES,
@@ -1240,7 +1242,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                 GUIIcon::CONTAINERSTOP, GUIGlObjectType::GLO_CONTAINER_STOP, currentTag, TL("ContainerStop"),
                 {}, FXRGBA(240, 255, 205, 255));
         // set common attributes
-        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], true);
+        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], true, false);
 
         // set specific attributes
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_LINES,
@@ -1271,7 +1273,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                 GUIIcon::CHARGINGSTATION, GUIGlObjectType::GLO_CHARGING_STATION, currentTag, TL("ChargingStation"),
                 {}, FXRGBA(240, 255, 205, 255));
         // set common attributes
-        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], false);
+        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], false, false);
 
         // set specific attributes
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_CHARGINGPOWER,
@@ -1328,7 +1330,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
                 GUIIcon::PARKINGAREA, GUIGlObjectType::GLO_PARKING_AREA, currentTag, TL("ParkingArea"),
                 {}, FXRGBA(240, 255, 205, 255));
         // set common attributes
-        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], false);
+        fillCommonStoppingPlaceAttributes(myTagProperties[currentTag], false, true);
 
         // set specific attributes
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_DEPARTPOS,
@@ -1460,13 +1462,19 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
 
         fillPosOverLaneAttribute(myTagProperties[currentTag]);
 
+        // this is a "virtual attribute", only used for movement
+        new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_ENDPOS,
+                                   GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::UNIQUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
+                                   GNEAttributeProperties::Edit::NO_EDIT,
+                                   TL("The end position on the lane the detector shall be laid on in meters"));
+
         fillFriendlyPosAttribute(myTagProperties[currentTag]);
 
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_LENGTH,
                                    GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::POSITIVE | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
                                    GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
                                    TL("The length of the detector in meters"),
-                                   "10");
+                                   toString(GNEMoveElementLaneDouble::defaultSize));
 
         fillNameAttribute(myTagProperties[currentTag]);
 
@@ -1834,7 +1842,7 @@ GNETagPropertiesDatabase::fillAdditionalElements() {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties.at(SUMO_TAG_VIEWSETTINGS_ADDITIONALS),
                 GNETagProperties::Type::ADDITIONALELEMENT | GNETagProperties::Type::CALIBRATOR,
-                GNETagProperties::Property::XMLCHILD,
+                GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::LISTED,
                 GNETagProperties::Over::VIEW,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
                 GUIIcon::FLOW, GUIGlObjectType::GLO_CALIBRATOR_FLOW, SUMO_TAG_FLOW, TL("CalibratorFlow"),
@@ -2541,13 +2549,16 @@ GNETagPropertiesDatabase::fillDemandElements() {
 
         // add common route attributes
         fillCommonRouteAttributes(myTagProperties[currentTag]);
+
+        // add distribution probability
+        fillDistributionProbability(myTagProperties[currentTag]);
     }
     currentTag = GNE_TAG_ROUTEREF;
     {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties[GNE_TAG_SUPERMODE_DEMAND],
                 GNETagProperties::Type::DEMANDELEMENT,
-                GNETagProperties::Property::XMLCHILD,
+                GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::DISTRIBUTIONREF | GNETagProperties::Property::NOPARAMETERS,
                 GNETagProperties::Over::VIEW,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
                 GUIIcon::ROUTEREF, GUIGlObjectType::GLO_ROUTE_REF, currentTag, TL("Route (Ref)"),
@@ -2564,7 +2575,8 @@ GNETagPropertiesDatabase::fillDemandElements() {
                                    GNEAttributeProperties::Edit::EDITMODE,
                                    TL("Reference ID of route"));
 
-        fillDistributionProbability(myTagProperties[currentTag], true);
+        // add distribution probability
+        fillDistributionProbability(myTagProperties[currentTag]);
     }
     currentTag = GNE_TAG_ROUTE_EMBEDDED;
     {
@@ -2620,7 +2632,7 @@ GNETagPropertiesDatabase::fillDemandElements() {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties[GNE_TAG_SUPERMODE_DEMAND],
                 GNETagProperties::Type::DEMANDELEMENT,
-                GNETagProperties::Property::XMLCHILD,
+                GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::DISTRIBUTIONREF | GNETagProperties::Property::NOPARAMETERS,
                 GNETagProperties::Over::VIEW,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
                 GUIIcon::VTYPEREF, GUIGlObjectType::GLO_VTYPE_REF, currentTag, TL("VType (Ref)"),
@@ -2637,7 +2649,8 @@ GNETagPropertiesDatabase::fillDemandElements() {
                                    GNEAttributeProperties::Edit::EDITMODE,
                                    TL("Reference ID of vType"));
 
-        fillDistributionProbability(myTagProperties[currentTag], true);
+        // add distribution probability
+        fillDistributionProbability(myTagProperties[currentTag]);
     }
 }
 
@@ -3270,7 +3283,7 @@ GNETagPropertiesDatabase::fillWaypointElements() {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties.at(GNE_TAG_STOPS),
                 GNETagProperties::Type::DEMANDELEMENT | GNETagProperties::Type::STOP_VEHICLE | GNETagProperties::Type::WAYPOINT_VEHICLE,
-                GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::NOPARAMETERS,
+                GNETagProperties::Property::XMLCHILD,
                 GNETagProperties::Over::CONTAINERSTOP,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
                 GUIIcon::WAYPOINT, GUIGlObjectType::GLO_STOP, SUMO_TAG_STOP, TL("WaypointContainerStop"),
@@ -3308,7 +3321,7 @@ GNETagPropertiesDatabase::fillWaypointElements() {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties.at(GNE_TAG_STOPS),
                 GNETagProperties::Type::DEMANDELEMENT | GNETagProperties::Type::STOP_VEHICLE | GNETagProperties::Type::WAYPOINT_VEHICLE,
-                GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::NOPARAMETERS,
+                GNETagProperties::Property::XMLCHILD,
                 GNETagProperties::Over::PARKINGAREA,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
                 GUIIcon::WAYPOINT, GUIGlObjectType::GLO_STOP, SUMO_TAG_STOP, TL("WaypointParkingArea"),
@@ -6990,7 +7003,7 @@ GNETagPropertiesDatabase::fillCommonAttributes(GNETagProperties* tagProperties) 
 
 
 void
-GNETagPropertiesDatabase::fillCommonStoppingPlaceAttributes(GNETagProperties* tagProperties, const bool includeColor) {
+GNETagPropertiesDatabase::fillCommonStoppingPlaceAttributes(GNETagProperties* tagProperties, const bool includeColor, const bool parkingAreaAngle) {
     // set values of attributes
     fillIDAttribute(tagProperties, true);
 
@@ -7000,13 +7013,13 @@ GNETagPropertiesDatabase::fillCommonStoppingPlaceAttributes(GNETagProperties* ta
                                GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::UNIQUE | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
                                GNEAttributeProperties::Edit::EDITMODE,
                                TL("The begin position on the lane (the lower position on the lane) in meters"),
-                               GNEAttributeCarrier::LANE_START, "INVALID_DOUBLE");
+                               GNEMoveElementLaneSingle::PositionType::STARPOS, "INVALID_DOUBLE");
 
     new GNEAttributeProperties(tagProperties, SUMO_ATTR_ENDPOS,
                                GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::UNIQUE | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
                                GNEAttributeProperties::Edit::EDITMODE,
                                TL("The end position on the lane (the higher position on the lane) in meters, must be larger than startPos by more than 0.1m"),
-                               GNEAttributeCarrier::LANE_END, "INVALID_DOUBLE");
+                               GNEMoveElementLaneSingle::PositionType::ENDPOS, "INVALID_DOUBLE");
 
     fillFriendlyPosAttribute(tagProperties);
 
@@ -7019,7 +7032,8 @@ GNETagPropertiesDatabase::fillCommonStoppingPlaceAttributes(GNETagProperties* ta
     new GNEAttributeProperties(tagProperties, SUMO_ATTR_ANGLE,
                                GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::ANGLE | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY,
                                GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
-                               TLF("Angle of %", tagProperties->getTagStr()),
+                               parkingAreaAngle ? TL("The angle of the road-side parking spaces relative to the lane angle, positive means clockwise") :
+                               TLF("Angle of waiting %s relative to lane angle", tagProperties->getTag() == SUMO_TAG_CONTAINER_STOP ? toString(SUMO_TAG_CONTAINER) : toString(SUMO_TAG_PERSON)),
                                "0");
 
     // netedit attributes
@@ -7027,7 +7041,7 @@ GNETagPropertiesDatabase::fillCommonStoppingPlaceAttributes(GNETagProperties* ta
                                GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::POSITIVE | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::DEFAULTVALUE,
                                GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE | GNEAttributeProperties::Edit::NETEDITEDITOR,
                                TLF("Length of %", tagProperties->getTagStr()),
-                               "10");
+                               toString(GNEMoveElementLaneDouble::defaultSize));
 
     auto forceSize = new GNEAttributeProperties(tagProperties, GNE_ATTR_FORCESIZE,
             GNEAttributeProperties::Property::BOOL | GNEAttributeProperties::Property::DEFAULTVALUE,
@@ -7247,7 +7261,8 @@ GNETagPropertiesDatabase::fillCommonVTypeAttributes(GNETagProperties* tagPropert
                                TL("The interval length for which vehicle performs its decision logic (acceleration and lane-changing)"),
                                toString(OptionsCont::getOptions().getFloat("default.action-step-length")));
 
-    fillDistributionProbability(tagProperties, false);
+    // add distribution probability
+    fillDistributionProbability(tagProperties);
 
     new GNEAttributeProperties(tagProperties, SUMO_ATTR_OSGFILE,
                                GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::DEFAULTVALUE,
@@ -8473,6 +8488,13 @@ GNETagPropertiesDatabase::fillCommonMeanDataAttributes(GNETagProperties* tagProp
 
     fillFileAttribute(tagProperties);
 
+    auto meanDataType = new GNEAttributeProperties(tagProperties, SUMO_ATTR_TYPE,
+            GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::DISCRETE | GNEAttributeProperties::Property::DEFAULTVALUE,
+            GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+            TL("Type of data generated by this mean data"),
+            SUMOXMLDefinitions::MeanDataTypes.getString(MeanDataType::DEFAULT));
+    meanDataType->setDiscreteValues(SUMOXMLDefinitions::MeanDataTypes.getStrings());
+
     new GNEAttributeProperties(tagProperties, SUMO_ATTR_PERIOD,
                                GNEAttributeProperties::Property::SUMOTIME | GNEAttributeProperties::Property::DEFAULTVALUE,
                                GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
@@ -8777,20 +8799,12 @@ GNETagPropertiesDatabase::fillDetectorThresholdAttributes(GNETagProperties* tagP
 
 
 void
-GNETagPropertiesDatabase::fillDistributionProbability(GNETagProperties* tagProperties, const bool visible) {
-    if (visible) {
-        new GNEAttributeProperties(tagProperties, SUMO_ATTR_PROB,
-                                   GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::POSITIVE | GNEAttributeProperties::Property::DEFAULTVALUE,
-                                   GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
-                                   TL("The probability when being added to a distribution without an explicit probability"),
-                                   "1");
-    } else {
-        new GNEAttributeProperties(tagProperties, SUMO_ATTR_PROB,
-                                   GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::POSITIVE | GNEAttributeProperties::Property::DEFAULTVALUE,
-                                   GNEAttributeProperties::Edit::NO_EDIT,
-                                   TL("The probability when being added to a distribution without an explicit probability"),
-                                   "1");
-    }
+GNETagPropertiesDatabase::fillDistributionProbability(GNETagProperties* tagProperties) {
+    new GNEAttributeProperties(tagProperties, SUMO_ATTR_PROB,
+                               GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::POSITIVE | GNEAttributeProperties::Property::DEFAULTVALUE,
+                               GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+                               TL("The probability when being added to a distribution"),
+                               toString(DEFAULT_VEH_PROB));
 }
 
 

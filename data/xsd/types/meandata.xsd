@@ -30,6 +30,7 @@
         <xsd:attribute name="overlapTraveltime" use="optional" type="nonNegativeFloatType"/>
 
         <xsd:attribute name="density" use="optional" type="nonNegativeFloatType"/>
+        <xsd:attribute name="overlapDensity" use="optional" type="nonNegativeFloatType"/>
         <xsd:attribute name="laneDensity" use="optional" type="nonNegativeFloatType"/>
         <xsd:attribute name="occupancy" use="optional" type="nonNegativeFloatType"/>
         <xsd:attribute name="waitingTime" use="optional" type="nonNegativeFloatType"/>
@@ -45,6 +46,7 @@
         <xsd:attribute name="vaporized" use="optional" type="xsd:integer"/>
         <xsd:attribute name="vaporizedOnNextEdge" use="optional" type="xsd:integer"/>
         <xsd:attribute name="teleported" use="optional" type="xsd:integer"/>
+        <xsd:attribute name="flow" use="optional" type="floatType"/>
 
         <xsd:attribute name="CO_abs" use="optional" type="nonNegativeFloatType"/>
         <xsd:attribute name="CO2_abs" use="optional" type="nonNegativeFloatType"/>

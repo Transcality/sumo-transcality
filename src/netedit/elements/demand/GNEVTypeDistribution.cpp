@@ -43,9 +43,20 @@ GNEVTypeDistribution::GNEVTypeDistribution(const std::string& ID, GNENet* net, c
 GNEVTypeDistribution::~GNEVTypeDistribution() {}
 
 
-GNEMoveOperation*
-GNEVTypeDistribution::getMoveOperation() {
-    // distributions cannot be moved
+GNEMoveElement*
+GNEVTypeDistribution::getMoveElement() const {
+    return nullptr;
+}
+
+
+Parameterised*
+GNEVTypeDistribution::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNEVTypeDistribution::getParameters() const {
     return nullptr;
 }
 
@@ -58,21 +69,9 @@ GNEVTypeDistribution::writeDemandElement(OutputDevice& device) const {
     if (myDeterministic != myTagProperty->getDefaultIntValue(SUMO_ATTR_DETERMINISTIC)) {
         device.writeAttr(SUMO_ATTR_DETERMINISTIC, myDeterministic);
     }
-    // check if write vType or refs)
+    // write references
     for (const auto& refChild : getChildDemandElements()) {
-        if (refChild->getTagProperty()->getTag() == GNE_TAG_VTYPEREF) {
-            int numReferences = 0;
-            for (const auto& vTypeChild : refChild->getParentDemandElements().at(1)->getChildDemandElements()) {
-                if (vTypeChild->getTagProperty()->getTag() == GNE_TAG_VTYPEREF) {
-                    numReferences++;
-                }
-            }
-            if (numReferences == 1) {
-                refChild->getParentDemandElements().at(1)->writeDemandElement(device);
-            } else {
-                refChild->writeDemandElement(device);
-            }
-        }
+        refChild->writeDemandElement(device);
     }
     device.closeTag();
 }
@@ -143,11 +142,7 @@ GNEVTypeDistribution::getParentName() const {
 
 Boundary
 GNEVTypeDistribution::getCenteringBoundary() const {
-    if (getChildDemandElements().size() > 0) {
-        return getChildDemandElements().front()->getCenteringBoundary();
-    } else {
-        return Boundary(-0.1, -0.1, 0.1, 0.1);
-    }
+    return Boundary(-0.1, -0.1, 0.1, 0.1);
 }
 
 
@@ -276,7 +271,7 @@ GNEVTypeDistribution::isValid(SumoXMLAttr key, const std::string& value) {
                 return canParse<int>(value) && (parse<int>(value) >= 0);
             }
         default:
-            return isCommonValid(key, value);
+            return isCommonAttributeValid(key, value);
     }
 }
 
@@ -290,12 +285,6 @@ GNEVTypeDistribution::getPopUpID() const {
 std::string
 GNEVTypeDistribution::getHierarchyName() const {
     return getTagStr() + ": " + getAttribute(SUMO_ATTR_ID) ;
-}
-
-
-const Parameterised::Map&
-GNEVTypeDistribution::getACParametersMap() const {
-    throw InvalidArgument(getTagStr() + " doesn't have parameters");
 }
 
 // ===========================================================================
@@ -316,21 +305,9 @@ GNEVTypeDistribution::setAttribute(SumoXMLAttr key, const std::string& value) {
             }
             break;
         default:
-            setCommonAttribute(this, key, value);
+            setCommonAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNEVTypeDistribution::setMoveShape(const GNEMoveResult& /*moveResult*/) {
-    // distributions cannot be moved
-}
-
-
-void
-GNEVTypeDistribution::commitMoveShape(const GNEMoveResult& /*moveResult*/, GNEUndoList* /*undoList*/) {
-    // distributions cannot be moved
 }
 
 /****************************************************************************/

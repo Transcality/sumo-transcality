@@ -18,18 +18,14 @@
 // Representation of Stops in netedit
 /****************************************************************************/
 
-#include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEViewParent.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/changes/GNEChange_ToggleAttribute.h>
-#include <netedit/frames/common/GNEMoveFrame.h>
-#include <netedit/frames/demand/GNEStopFrame.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNEUndoList.h>
 #include <utils/gui/div/GLHelper.h>
+#include <utils/gui/images/GUITextureSubSys.h>
 
 #include "GNEStopPlan.h"
-
 
 // ===========================================================================
 // member method definitions
@@ -70,9 +66,21 @@ GNEStopPlan::GNEStopPlan(SumoXMLTag tag, GNEDemandElement* personParent, const G
 GNEStopPlan::~GNEStopPlan() {}
 
 
-GNEMoveOperation*
-GNEStopPlan::getMoveOperation() {
-    return getPlanMoveOperation();
+GNEMoveElement*
+GNEStopPlan::getMoveElement() const {
+    return myMoveElementPlan;
+}
+
+
+Parameterised*
+GNEStopPlan::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNEStopPlan::getParameters() const {
+    return nullptr;
 }
 
 
@@ -428,12 +436,6 @@ GNEStopPlan::getHierarchyName() const {
     return getPlanHierarchyName();
 }
 
-
-const Parameterised::Map&
-GNEStopPlan::getACParametersMap() const {
-    return getParametersMap();
-}
-
 // ===========================================================================
 // private
 // ===========================================================================
@@ -490,24 +492,6 @@ GNEStopPlan::toggleAttribute(SumoXMLAttr key, const bool value) {
         default:
             throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
     }
-}
-
-
-void
-GNEStopPlan::setMoveShape(const GNEMoveResult& moveResult) {
-    // change endPos
-    myArrivalPosition = moveResult.newFirstPos;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNEStopPlan::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "endPos of " + getTagStr());
-    // now adjust start position
-    setAttribute(SUMO_ATTR_ENDPOS, toString(moveResult.newFirstPos), undoList);
-    undoList->end();
 }
 
 /****************************************************************************/

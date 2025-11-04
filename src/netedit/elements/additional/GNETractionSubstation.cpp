@@ -17,13 +17,12 @@
 ///
 //
 /****************************************************************************/
-#include <config.h>
 
+#include <netedit/changes/GNEChange_Attribute.h>
+#include <netedit/elements/moving/GNEMoveElementView.h>
 #include <netedit/GNENet.h>
 #include <netedit/GNETagProperties.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/changes/GNEChange_Attribute.h>
+#include <utils/gui/images/GUITextureSubSys.h>
 
 #include "GNETractionSubstation.h"
 
@@ -32,15 +31,16 @@
 // ===========================================================================
 
 GNETractionSubstation::GNETractionSubstation(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_TRACTION_SUBSTATION, "") {
+    GNEAdditional("", net, "", SUMO_TAG_TRACTION_SUBSTATION, ""),
+    GNEAdditionalSquared(this) {
 }
 
 
 GNETractionSubstation::GNETractionSubstation(const std::string& id, GNENet* net, const std::string& filename, const Position& pos,
         const double voltage, const double currentLimit, const Parameterised::Map& parameters) :
     GNEAdditional(id, net, filename, SUMO_TAG_TRACTION_SUBSTATION, ""),
+    GNEAdditionalSquared(this, pos),
     Parameterised(parameters),
-    myPosition(pos),
     myVoltage(voltage),
     myCurrentLimit(currentLimit) {
     // update centering boundary without updating grid
@@ -52,11 +52,32 @@ GNETractionSubstation::~GNETractionSubstation() {
 }
 
 
+GNEMoveElement*
+GNETractionSubstation::getMoveElement() const {
+    return myMoveElementView;
+}
+
+
+Parameterised*
+GNETractionSubstation::getParameters() {
+    return this;
+}
+
+
+const Parameterised*
+GNETractionSubstation::getParameters() const {
+    return this;
+}
+
+
 void
 GNETractionSubstation::writeAdditional(OutputDevice& device) const {
     device.openTag(SUMO_TAG_TRACTION_SUBSTATION);
-    device.writeAttr(SUMO_ATTR_ID, getID());
-    device.writeAttr(SUMO_ATTR_POSITION, myPosition);
+    // write common additional attributes
+    writeAdditionalAttributes(device);
+    // write move atributes
+    myMoveElementView->writeMoveAttributes(device);
+    // write specific attributes
     if (myVoltage != myTagProperty->getDefaultDoubleValue(SUMO_ATTR_VOLTAGE)) {
         device.writeAttr(SUMO_ATTR_VOLTAGE, myVoltage);
     }
@@ -103,42 +124,21 @@ GNETractionSubstation::checkDrawMoveContour() const {
 }
 
 
-GNEMoveOperation*
-GNETractionSubstation::getMoveOperation() {
-    // return move operation for additional placed in view
-    return new GNEMoveOperation(this, myPosition);
-}
-
-
 void
 GNETractionSubstation::updateGeometry() {
-    // update additional geometry
-    myAdditionalGeometry.updateSinglePosGeometry(myPosition, 0);
+    updatedSquaredGeometry();
 }
 
 
 Position
 GNETractionSubstation::getPositionInView() const {
-    return myPosition;
+    return myPosOverView;
 }
 
 
 void
 GNETractionSubstation::updateCenteringBoundary(const bool updateGrid) {
-    // remove additional from grid
-    if (updateGrid) {
-        myNet->removeGLObjectFromGrid(this);
-    }
-    // now update geometry
-    updateGeometry();
-    // add shape boundary
-    myAdditionalBoundary = myAdditionalGeometry.getShape().getBoxBoundary();
-    // grow
-    myAdditionalBoundary.grow(5);
-    // add additional into RTREE again
-    if (updateGrid) {
-        myNet->addGLObjectIntoGrid(this);
-    }
+    updatedSquaredCenteringBoundary(updateGrid);
 }
 
 
@@ -156,10 +156,13 @@ GNETractionSubstation::getParentName() const {
 
 void
 GNETractionSubstation::drawGL(const GUIVisualizationSettings& s) const {
-    // draw parent and child lines
-    drawParentChildLines(s, s.additionalSettings.connectionColor, true);
-    // draw TractionSubstation
-    drawSquaredAdditional(s, myPosition, s.additionalSettings.tractionSubstationSize, GUITexture::TRACTIONSUBSTATION, GUITexture::TRACTIONSUBSTATION_SELECTED);
+    // first check if additional has to be drawn
+    if (myNet->getViewNet()->getDataViewOptions().showAdditionals()) {
+        // draw parent and child lines
+        drawParentChildLines(s, s.additionalSettings.connectionColor, true);
+        // draw TractionSubstation
+        drawSquaredAdditional(s, s.additionalSettings.tractionSubstationSize, GUITexture::TRACTIONSUBSTATION, GUITexture::TRACTIONSUBSTATION_SELECTED);
+    }
 }
 
 
@@ -177,27 +180,31 @@ GNETractionSubstation::getAttribute(SumoXMLAttr key) const {
             }
             return toString(edges);
         }
-        case SUMO_ATTR_POSITION:
-            return toString(myPosition);
         case SUMO_ATTR_VOLTAGE:
             return toString(myVoltage);
         case SUMO_ATTR_CURRENTLIMIT:
             return toString(myCurrentLimit);
         default:
-            return getCommonAttribute(this, key);
+            return myMoveElementView->getMovingAttribute(key);
     }
 }
 
 
 double
 GNETractionSubstation::getAttributeDouble(SumoXMLAttr key) const {
-    throw InvalidArgument(getTagStr() + " doesn't have a double attribute of type '" + toString(key) + "'");
+    return myMoveElementView->getMovingAttributeDouble(key);
 }
 
 
-const
-Parameterised::Map& GNETractionSubstation::getACParametersMap() const {
-    return getParametersMap();
+Position
+GNETractionSubstation::getAttributePosition(SumoXMLAttr key) const {
+    return myMoveElementView->getMovingAttributePosition(key);
+}
+
+
+PositionVector
+GNETractionSubstation::getAttributePositionVector(SumoXMLAttr key) const {
+    return myMoveElementView->getMovingAttributePositionVector(key);
 }
 
 
@@ -210,13 +217,12 @@ GNETractionSubstation::setAttribute(SumoXMLAttr key, const std::string& value, G
         // special case  for lanes due tractionSubstation Symbols
         case SUMO_ATTR_EDGES:
         case SUMO_ATTR_ID:
-        case SUMO_ATTR_POSITION:
         case SUMO_ATTR_VOLTAGE:
         case SUMO_ATTR_CURRENTLIMIT:
             GNEChange_Attribute::changeAttribute(this, key, value, undoList);
             break;
         default:
-            setCommonAttribute(key, value, undoList);
+            myMoveElementView->setMovingAttribute(key, value, undoList);
             break;
     }
 }
@@ -229,8 +235,6 @@ GNETractionSubstation::isValid(SumoXMLAttr key, const std::string& value) {
             return isValidAdditionalID(value);
         case SUMO_ATTR_EDGES:
             return canParse<std::vector<GNEEdge*> >(myNet, value, false);
-        case SUMO_ATTR_POSITION:
-            return canParse<Position>(value);
         case SUMO_ATTR_VOLTAGE:
         case SUMO_ATTR_CURRENTLIMIT:
             if (canParse<double>(value)) {
@@ -239,7 +243,7 @@ GNETractionSubstation::isValid(SumoXMLAttr key, const std::string& value) {
                 return false;
             }
         default:
-            return isCommonValid(key, value);
+            return myMoveElementView->isMovingAttributeValid(key, value);
     }
 }
 
@@ -268,13 +272,6 @@ GNETractionSubstation::setAttribute(SumoXMLAttr key, const std::string& value) {
             // update microsimID
             setAdditionalID(value);
             break;
-        case SUMO_ATTR_POSITION:
-            myPosition = parse<Position>(value);
-            // update boundary (except for template)
-            if (getID().size() > 0) {
-                updateCenteringBoundary(true);
-            }
-            break;
         case SUMO_ATTR_VOLTAGE:
             myVoltage = parse<double>(value);
             break;
@@ -282,26 +279,13 @@ GNETractionSubstation::setAttribute(SumoXMLAttr key, const std::string& value) {
             myCurrentLimit = parse<double>(value);
             break;
         default:
-            setCommonAttribute(this, key, value);
+            myMoveElementView->setMovingAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNETractionSubstation::setMoveShape(const GNEMoveResult& moveResult) {
-    // update position
-    myPosition = moveResult.shapeToUpdate.front();
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNETractionSubstation::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "position of " + getTagStr());
-    GNEChange_Attribute::changeAttribute(this, SUMO_ATTR_POSITION, toString(moveResult.shapeToUpdate.front()), undoList);
-    undoList->end();
+    // update boundary (except for template)
+    if (getID().size() > 0) {
+        updateCenteringBoundary(true);
+    }
 }
 
 /****************************************************************************/

@@ -732,6 +732,7 @@ GNEAttributesEditorRow::showAttributeFile(const GNEAttributeProperties* attrProp
 void
 GNEAttributesEditorRow::showAttributeLabel(const GNEAttributeProperties* attrProperty) {
     myAttributeLabel->setText(attrProperty->getAttrStr().c_str());
+    myAttributeLabel->setTipText(attrProperty->getDefinition().c_str());
     myAttributeLabel->show();
     // hide other elements
     myAttributeToggleEnableCheckButton->hide();
@@ -759,7 +760,7 @@ GNEAttributesEditorRow::showValueCheckButton(const std::string& value,
         booleanVector = GNEAttributeCarrier::parse<std::vector<bool> >(value);
     }
     // iterate over booleans comparing all element with the first
-    for (const auto& booleanValue : booleanVector) {
+    for (const auto booleanValue : booleanVector) {
         if (booleanValue != booleanVector.front()) {
             allValuesEqual = false;
         }

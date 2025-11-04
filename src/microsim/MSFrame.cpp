@@ -61,9 +61,9 @@
 void
 MSFrame::fillOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
-    oc.addCallExample("-b 0 -e 1000 -n net.xml -r routes.xml", "start a simulation from time 0 to 1000 with given net and routes");
-    oc.addCallExample("-c munich_config.cfg", "start with a configuration file");
-    oc.addCallExample("--help", "print help");
+    oc.addCallExample("-b 0 -e 1000 -n net.xml -r routes.xml", TL("start a simulation from time 0 to 1000 with given net and routes"));
+    oc.addCallExample("-c munich_config.cfg", TL("start with a configuration file"));
+    oc.addCallExample("--help", TL("print help"));
 
     // insert options sub-topics
     SystemFrame::addConfigurationOptions(oc); // fill this subtopic, too
@@ -183,6 +183,10 @@ MSFrame::fillOptions() {
     oc.addDescription("fcd-output.attributes", "Output", TL("List attributes that should be included in the FCD output"));
     oc.doRegister("fcd-output.filter-shapes", new Option_StringVector());
     oc.addDescription("fcd-output.filter-shapes", "Output", TL("List shape names that should be used to filter the FCD output"));
+
+    oc.doRegister("person-fcd-output", new Option_FileName());
+    oc.addSynonyme("person-fcd-output", "person-fcd");
+    oc.addDescription("person-fcd-output", "Output", TL("Save fcd for persons and container to separate FILE"));
 
     oc.doRegister("device.ssm.filter-edges.input-file", new Option_FileName());
     oc.addDescription("device.ssm.filter-edges.input-file", "Output", TL("Restrict SSM device output to the edge selection from the given input file"));
@@ -647,6 +651,9 @@ MSFrame::fillOptions() {
     oc.doRegister("weights.turnaround-penalty", new Option_Float(5.0));
     oc.addDescription("weights.turnaround-penalty", "Processing", TL("Apply the given time penalty when computing routing costs for turnaround internal lanes"));
 
+    oc.doRegister("weights.reversal-penalty", new Option_Float(60));
+    oc.addDescription("weights.reversal-penalty", "Processing", TL("Apply the given time penalty when computing routing costs for train reversal. Negative values disable reversal"));
+
     oc.doRegister("weights.priority-factor", new Option_Float(0));
     oc.addDescription("weights.priority-factor", "Routing", TL("Consider edge priorities in addition to travel times, weighted by factor"));
 
@@ -670,10 +677,10 @@ MSFrame::fillOptions() {
                       "Where are mode changes from car to walking allowed (possible values: 'parkingAreas', 'ptStops', 'allJunctions' and combinations)");
 
     oc.doRegister("persontrip.transfer.taxi-walk", new Option_StringVector());
-    oc.addDescription("persontrip.transfer.taxi-walk", "Routing", TL("Where taxis can drop off customers ('allJunctions, 'ptStops')"));
+    oc.addDescription("persontrip.transfer.taxi-walk", "Routing", TL("Where taxis can drop off customers ('allJunctions, 'ptStops', 'parkingAreas')"));
 
     oc.doRegister("persontrip.transfer.walk-taxi", new Option_StringVector());
-    oc.addDescription("persontrip.transfer.walk-taxi", "Routing", TL("Where taxis can pick up customers ('allJunctions, 'ptStops')"));
+    oc.addDescription("persontrip.transfer.walk-taxi", "Routing", TL("Where taxis can pick up customers ('allJunctions, 'ptStops', 'parkingAreas')"));
 
     oc.doRegister("persontrip.default.group", new Option_String());
     oc.addDescription("persontrip.default.group", "Routing", TL("When set, trips between the same origin and destination will share a taxi by default"));
@@ -858,6 +865,7 @@ MSFrame::buildStreams() {
 
     //extended
     OutputDevice::createDeviceByOption("fcd-output", "fcd-export", "fcd_file.xsd");
+    OutputDevice::createDeviceByOption("person-fcd-output", "fcd-export", "fcd_file.xsd");
     OutputDevice::createDeviceByOption("emission-output", "emission-export", "emission_file.xsd");
     OutputDevice::createDeviceByOption("battery-output", "battery-export", "battery_file.xsd");
     if (OptionsCont::getOptions().getBool("elechybrid-output.aggregated")) {
@@ -896,10 +904,12 @@ bool
 MSFrame::checkOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
     bool ok = true;
+    /*
     if (!oc.isSet("net-file") && oc.isDefault("remote-port")) {
         WRITE_ERROR(TL("No network file (-n) specified."));
         ok = false;
     }
+    */
     if (oc.getFloat("scale") < 0.) {
         WRITE_ERROR(TL("Invalid scaling factor."));
         ok = false;

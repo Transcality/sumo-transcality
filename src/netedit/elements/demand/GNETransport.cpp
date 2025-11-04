@@ -18,12 +18,8 @@
 // A class for visualizing transports in Netedit
 /****************************************************************************/
 
-#include <utils/gui/windows/GUIAppEnum.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <utils/gui/div/GUIDesigns.h>
 
 #include "GNETransport.h"
 
@@ -63,9 +59,21 @@ GNETransport::GNETransport(SumoXMLTag tag, GNEDemandElement* containerParent, co
 GNETransport::~GNETransport() {}
 
 
-GNEMoveOperation*
-GNETransport::getMoveOperation() {
-    return getPlanMoveOperation();
+GNEMoveElement*
+GNETransport::getMoveElement() const {
+    return myMoveElementPlan;
+}
+
+
+Parameterised*
+GNETransport::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNETransport::getParameters() const {
+    return nullptr;
 }
 
 
@@ -259,12 +267,6 @@ GNETransport::getHierarchyName() const {
     return getPlanHierarchyName();
 }
 
-
-const Parameterised::Map&
-GNETransport::getACParametersMap() const {
-    return getParametersMap();
-}
-
 // ===========================================================================
 // private
 // ===========================================================================
@@ -283,24 +285,6 @@ GNETransport::setAttribute(SumoXMLAttr key, const std::string& value) {
             setPlanAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNETransport::setMoveShape(const GNEMoveResult& moveResult) {
-    // change both position
-    myArrivalPosition = moveResult.newFirstPos;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNETransport::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "arrivalPos of " + getTagStr());
-    // now adjust start position
-    setAttribute(SUMO_ATTR_ARRIVALPOS, toString(moveResult.newFirstPos), undoList);
-    undoList->end();
 }
 
 /****************************************************************************/

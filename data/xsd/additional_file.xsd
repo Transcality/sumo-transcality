@@ -127,8 +127,8 @@
                             </xsd:complexType>
                         </xsd:element>
                     </xsd:choice>
-                    <xsd:attribute name="begin" type="nonNegativeFloatType" use="required"/>
-                    <xsd:attribute name="end" type="nonNegativeFloatType" use="required"/>
+                    <xsd:attribute name="begin" type="timeType" use="required"/>
+                    <xsd:attribute name="end" type="timeType" use="required"/>
                 </xsd:complexType>
             </xsd:element>
         </xsd:choice>
@@ -390,6 +390,7 @@
                                 <xsd:attribute name="main" type="xsd:string" use="required"/>
                                 <xsd:attribute name="siding" type="xsd:string" use="required"/>
                                 <xsd:attribute name="minSaving" type="nonNegativeFloatType" use="optional"/>
+                                <xsd:attribute name="defer" type="boolType" use="optional"/>
                             </xsd:complexType>
                         </xsd:element>
                         <xsd:element name="stationReroute">
@@ -469,9 +470,10 @@
     </xsd:complexType>
 
     <xsd:complexType name="chargingStationType">
-        <xsd:sequence>
+        <xsd:choice  minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="param" type="paramType" minOccurs="0" maxOccurs="unbounded"/>
-        </xsd:sequence>
+            <xsd:element name="access" type="accessType" minOccurs="1" maxOccurs="unbounded"/>
+        </xsd:choice>
         <xsd:attribute name="id" type="idType" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="lane" type="xsd:string" use="required"/>
@@ -494,6 +496,7 @@
         </xsd:attribute>
         <xsd:attribute name="waitingTime" type="nonNegativeFloatType" use="optional"/>
         <xsd:attribute name="parkingArea" type="xsd:string" use="optional"/>
+        <xsd:attribute name="angle" type="floatType" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="overheadWireSegmentType">
@@ -564,6 +567,7 @@
         <xsd:choice maxOccurs="unbounded">
             <xsd:element name="param" type="paramType" minOccurs="0" maxOccurs="unbounded"/>
             <xsd:element name="space" type="parkingSpaceType" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="access" type="accessType" minOccurs="1" maxOccurs="unbounded"/>
         </xsd:choice>
         <xsd:attribute name="id" type="idType" use="required"/>
         <xsd:attribute name="lane" type="xsd:string" use="required"/>

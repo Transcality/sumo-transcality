@@ -665,7 +665,7 @@ MSNet::writeStatistics(const SUMOTime start, const long now) const {
 
 
 void
-MSNet::writeSummaryOutput() {
+MSNet::writeSummaryOutput(bool finalStep) {
     // summary output
     const OptionsCont& oc = OptionsCont::getOptions();
     const bool hasOutput = oc.isSet("summary-output");
@@ -673,7 +673,9 @@ MSNet::writeSummaryOutput() {
     if (hasOutput || hasPersonOutput) {
         const SUMOTime period = string2time(oc.getString("summary-output.period"));
         const SUMOTime begin = string2time(oc.getString("begin"));
-        if (period > 0 && (myStep - begin) % period != 0) {
+        if ((period > 0 && (myStep - begin) % period != 0 && !finalStep) 
+                // it's the final step but we already wrote output
+                || (finalStep && (period <= 0 || (myStep - begin) % period == 0))) {
             return;
         }
     }
@@ -700,6 +702,7 @@ MSNet::writeSummaryOutput() {
         std::pair<double, double> meanSpeed = myVehicleControl->getVehicleMeanSpeeds();
         od.writeAttr("meanSpeed", meanSpeed.first);
         od.writeAttr("meanSpeedRelative", meanSpeed.second);
+        od.writeAttr("discarded", myVehicleControl->getDiscardedVehicleNo());
         if (myLogExecutionTime) {
             od.writeAttr("duration", mySimStepDuration);
         }
@@ -720,6 +723,7 @@ MSNet::writeSummaryOutput() {
         od.writeAttr("ended", pc.getEndedNumber());
         od.writeAttr("arrived", pc.getArrivedNumber());
         od.writeAttr("teleports", pc.getTeleportCount());
+        od.writeAttr("discarded", pc.getDiscardedNumber());
         if (myLogExecutionTime) {
             od.writeAttr("duration", mySimStepDuration);
         }
@@ -764,6 +768,8 @@ MSNet::closeSimulation(SUMOTime start, const std::string& reason) {
     if (OptionsCont::getOptions().isSet("statistic-output")) {
         writeStatistics(start, now);
     }
+    // maybe write a final line of output if reporting is periodic
+    writeSummaryOutput(true);
 }
 
 
@@ -1111,7 +1117,12 @@ MSNet::writeOutput() {
 
     // check fcd dumps
     if (OptionsCont::getOptions().isSet("fcd-output")) {
-        MSFCDExport::write(OutputDevice::getDeviceByOption("fcd-output"), myStep);
+        if (OptionsCont::getOptions().isSet("person-fcd-output")) {
+            MSFCDExport::write(OutputDevice::getDeviceByOption("fcd-output"), myStep, SUMO_TAG_VEHICLE);
+            MSFCDExport::write(OutputDevice::getDeviceByOption("person-fcd-output"), myStep, SUMO_TAG_PERSON);
+        } else {
+            MSFCDExport::write(OutputDevice::getDeviceByOption("fcd-output"), myStep);
+        }
     }
 
     // check emission dumps
@@ -1626,7 +1637,7 @@ MSNet::getIntermodalRouter(int rngIndex, const int routingMode, const Prohibitio
     const OptionsCont& oc = OptionsCont::getOptions();
     const int key = rngIndex * oc.getInt("thread-rngs") + routingMode;
     if (myIntermodalRouter.count(key) == 0) {
-        const int carWalk = SUMOVehicleParserHelper::parseCarWalkTransfer(oc, MSDevice_Taxi::getTaxi() != nullptr);
+        const int carWalk = SUMOVehicleParserHelper::parseCarWalkTransfer(oc, MSDevice_Taxi::hasFleet() || myInserter->hasTaxiFlow());
         const std::string routingAlgorithm = OptionsCont::getOptions().getString("routing-algorithm");
         const double taxiWait = STEPS2TIME(string2time(OptionsCont::getOptions().getString("persontrip.taxi.waiting-time")));
         if (routingMode == libsumo::ROUTING_MODE_COMBINED) {

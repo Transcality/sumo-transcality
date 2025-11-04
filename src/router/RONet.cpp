@@ -78,6 +78,8 @@ RONet::RONet() :
                     && OptionsCont::getOptions().getBool("keep-vtype-distributions")),
     myDoPTRouting(!OptionsCont::getOptions().exists("ptline-routing")
                   || OptionsCont::getOptions().getBool("ptline-routing")),
+    myKeepFlows(OptionsCont::getOptions().exists("keep-flows")
+                  && OptionsCont::getOptions().getBool("keep-flows")),
     myHasBidiEdges(false) {
     if (myInstance != nullptr) {
         throw ProcessError(TL("A network was already constructed."));
@@ -586,7 +588,24 @@ RONet::checkFlows(SUMOTime time, MsgHandler* errorHandler) {
         if (pars->line != "" && !myDoPTRouting) {
             continue;
         }
-        if (pars->repetitionProbability > 0) {
+        if (myKeepFlows) {
+            if (pars->repetitionsDone < pars->repetitionNumber) {
+                // each each flow only once
+                pars->repetitionsDone = pars->repetitionNumber;
+                const SUMOVTypeParameter* type = getVehicleTypeSecure(pars->vtypeid);
+                if (type == nullptr) {
+                    type = getVehicleTypeSecure(DEFAULT_VTYPE_ID);
+                } else {
+                    auto dist = getVTypeDistribution(pars->vtypeid);
+                    if (dist != nullptr) {
+                        WRITE_WARNINGF("Keeping flow '%' with a vTypeDistribution can lead to invalid routes if the distribution contains different vClasses", pars->id);
+                    }
+                }
+                RORouteDef* route = getRouteDef(pars->routeid)->copy(pars->routeid, pars->depart);
+                ROVehicle* veh = new ROVehicle(*pars, route, type, this, errorHandler);
+                addVehicle(pars->id, veh);
+            }
+        } else if (pars->repetitionProbability > 0) {
             if (pars->repetitionEnd > pars->depart && pars->repetitionsDone < pars->repetitionNumber) {
                 myHaveActiveFlows = true;
             }
@@ -667,6 +686,7 @@ RONet::checkFlows(SUMOTime time, MsgHandler* errorHandler) {
 void
 RONet::createBulkRouteRequests(const RORouterProvider& provider, const SUMOTime time, const bool removeLoops) {
     std::map<const int, std::vector<RORoutable*> > bulkVehs;
+    int numBulked = 0;
     for (RoutablesMap::const_iterator i = myRoutables.begin(); i != myRoutables.end(); ++i) {
         if (i->first >= time) {
             break;
@@ -675,6 +695,7 @@ RONet::createBulkRouteRequests(const RORouterProvider& provider, const SUMOTime 
             const ROEdge* const depEdge = routable->getDepartEdge();
             bulkVehs[depEdge->getNumericalID()].push_back(routable);
             RORoutable* const first = bulkVehs[depEdge->getNumericalID()].front();
+            numBulked++;
             if (first->getMaxSpeed() != routable->getMaxSpeed()) {
                 WRITE_WARNINGF(TL("Bulking different maximum speeds ('%' and '%') may lead to suboptimal routes."), first->getID(), routable->getID());
             }
@@ -686,6 +707,9 @@ RONet::createBulkRouteRequests(const RORouterProvider& provider, const SUMOTime 
 #ifdef HAVE_FOX
     int workerIndex = 0;
 #endif
+    if ((int)bulkVehs.size() < numBulked) {
+        WRITE_MESSAGE(TLF("Using bulk-mode for % entities from % origins", numBulked, bulkVehs.size()));
+    }
     for (std::map<const int, std::vector<RORoutable*> >::const_iterator i = bulkVehs.begin(); i != bulkVehs.end(); ++i) {
 #ifdef HAVE_FOX
         if (myThreadPool.size() > 0) {
@@ -895,7 +919,7 @@ RONet::adaptIntermodalRouter(ROIntermodalRouter& router) {
     // add access to transfer from walking to taxi-use
     if ((router.getCarWalkTransfer() & ModeChangeOptions::TAXI_PICKUP_ANYWHERE) != 0) {
         for (const ROEdge* edge : ROEdge::getAllEdges()) {
-            if ((edge->getPermissions() & SVC_PEDESTRIAN) != 0 && (edge->getPermissions() & SVC_TAXI) != 0) {
+            if (!edge->isTazConnector() && (edge->getPermissions() & SVC_PEDESTRIAN) != 0 && (edge->getPermissions() & SVC_TAXI) != 0) {
                 router.getNetwork()->addCarAccess(edge, SVC_TAXI, taxiWait);
             }
         }

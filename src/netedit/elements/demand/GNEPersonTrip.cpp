@@ -18,12 +18,8 @@
 // A class for visualizing person trips in Netedit
 /****************************************************************************/
 
-#include <utils/gui/windows/GUIAppEnum.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <utils/gui/div/GUIDesigns.h>
 
 #include "GNEPersonTrip.h"
 
@@ -66,9 +62,21 @@ GNEPersonTrip::GNEPersonTrip(SumoXMLTag tag, GNEDemandElement* personParent, con
 GNEPersonTrip::~GNEPersonTrip() {}
 
 
-GNEMoveOperation*
-GNEPersonTrip::getMoveOperation() {
-    return getPlanMoveOperation();
+GNEMoveElement*
+GNEPersonTrip::getMoveElement() const {
+    return myMoveElementPlan;
+}
+
+
+Parameterised*
+GNEPersonTrip::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNEPersonTrip::getParameters() const {
+    return nullptr;
 }
 
 
@@ -293,12 +301,6 @@ GNEPersonTrip::getHierarchyName() const {
     return getPlanHierarchyName();
 }
 
-
-const Parameterised::Map&
-GNEPersonTrip::getACParametersMap() const {
-    return getParametersMap();
-}
-
 // ===========================================================================
 // private
 // ===========================================================================
@@ -326,24 +328,6 @@ GNEPersonTrip::setAttribute(SumoXMLAttr key, const std::string& value) {
             setPlanAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNEPersonTrip::setMoveShape(const GNEMoveResult& moveResult) {
-    // change both position
-    myArrivalPosition = moveResult.newFirstPos;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNEPersonTrip::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "arrivalPos of " + getTagStr());
-    // now adjust start position
-    setAttribute(SUMO_ATTR_ARRIVALPOS, toString(moveResult.newFirstPos), undoList);
-    undoList->end();
 }
 
 /****************************************************************************/

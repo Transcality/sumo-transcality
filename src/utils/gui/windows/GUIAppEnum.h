@@ -1413,8 +1413,14 @@ enum {
     /// @name GNEPOI messages
     /// @{
 
-    /// @brief Transform POI to POILane, and viceversa
-    MID_GNE_POI_TRANSFORM,
+    /// @brief attach POI to lane
+    MID_GNE_POI_ATTACH,
+    /// @brief release POI from lane
+    MID_GNE_POI_RELEASE,
+    /// @brief Transform to POI
+    MID_GNE_POI_TRANSFORM_POI,
+    /// @brief Transform to POI Geo
+    MID_GNE_POI_TRANSFORM_POIGEO,
 
     /// @}
 
@@ -1530,6 +1536,10 @@ enum {
     MID_GNE_BUTTON_REMOVE,
     /// @brief config button (used in GNEFileDialog)
     MID_GNE_BUTTON_CONFIG,
+    /// @brief copy
+    MID_GNE_BUTTON_COPY,
+    /// @brief report
+    MID_GNE_BUTTON_REPORT,
 
     /// @}
 
@@ -1673,6 +1683,11 @@ enum {
 
     /// @}
 
+    /// @brief copy exception
+    MID_GNE_CRASHDIALOG_COPYEXCEPTION,
+    /// @brief copy trace
+    MID_GNE_CRASHDIALOG_COPYTRACE,
+
     /// @name other
     /// @{
 
@@ -1695,6 +1710,16 @@ enum {
     /// @{
 
     MID_MTEXTFIELDSEARCH_UPDATED,
+
+    /// @}
+
+    /// @name Distribution reference dialog
+    /// @{
+
+    /// @brief change reference
+    MID_GNE_DISTRIBUTIONDIALOG_REFERENCE,
+    /// @brief change probability
+    MID_GNE_DISTRIBUTIONDIALOG_PROBABILITY,
 
     /// @}
 

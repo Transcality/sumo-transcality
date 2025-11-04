@@ -18,15 +18,10 @@
 // A class for visualizing tranships in Netedit
 /****************************************************************************/
 
-#include <utils/gui/windows/GUIAppEnum.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <utils/gui/div/GUIDesigns.h>
 
 #include "GNETranship.h"
-#include "GNERoute.h"
 
 
 // ===========================================================================
@@ -63,9 +58,21 @@ GNETranship::GNETranship(SumoXMLTag tag, GNEDemandElement* containerParent, cons
 GNETranship::~GNETranship() {}
 
 
-GNEMoveOperation*
-GNETranship::getMoveOperation() {
-    return getPlanMoveOperation();
+GNEMoveElement*
+GNETranship::getMoveElement() const {
+    return myMoveElementPlan;
+}
+
+
+Parameterised*
+GNETranship::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNETranship::getParameters() const {
+    return nullptr;
 }
 
 
@@ -280,12 +287,6 @@ GNETranship::getHierarchyName() const {
     return getPlanHierarchyName();
 }
 
-
-const Parameterised::Map&
-GNETranship::getACParametersMap() const {
-    return getParametersMap();
-}
-
 // ===========================================================================
 // private
 // ===========================================================================
@@ -311,24 +312,6 @@ GNETranship::setAttribute(SumoXMLAttr key, const std::string& value) {
             setPlanAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNETranship::setMoveShape(const GNEMoveResult& moveResult) {
-    // change both position
-    myArrivalPosition = moveResult.newFirstPos;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNETranship::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "arrivalPos of " + getTagStr());
-    // now adjust start position
-    setAttribute(SUMO_ATTR_ARRIVALPOS, toString(moveResult.newFirstPos), undoList);
-    undoList->end();
 }
 
 /****************************************************************************/

@@ -50,23 +50,23 @@
 */
 enum ModeChangeOptions {
     /// @brief parking areas
-    PARKING_AREAS = 1,
+    PARKING_AREAS = 1 << 0,
     /// @brief public transport stops and access
-    PT_STOPS = 2,
+    PT_STOPS = 1 << 1,
     /// @brief junctions with edges allowing the additional mode
-    ALL_JUNCTIONS = 2 << 2,
+    ALL_JUNCTIONS = 1 << 2,
     /// @brief taxi customer may exit at parking areas
-    TAXI_DROPOFF_PARKING_AREAS = 2 << 3,
+    TAXI_DROPOFF_PARKING_AREAS = 1 << 3,
     /// @brief taxi customer may exit at public transport stops
-    TAXI_DROPOFF_PT = 2 << 4,
+    TAXI_DROPOFF_PT = 1 << 4,
     /// @brief taxi customer may exit anywhere
-    TAXI_DROPOFF_ANYWHERE = 2 << 5,
+    TAXI_DROPOFF_ANYWHERE = 1 << 5,
     /// @brief taxi customer may be picked up at parking areas
-    TAXI_PICKUP_PARKING_AREAS = 2 << 6,
+    TAXI_PICKUP_PARKING_AREAS = 1 << 6,
     /// @brief taxi customer may be picked up at public transport stops
-    TAXI_PICKUP_PT = 2 << 7,
+    TAXI_PICKUP_PT = 1 << 7,
     /// @brief taxi customer may be picked up anywhere
-    TAXI_PICKUP_ANYWHERE = 2 << 8
+    TAXI_PICKUP_ANYWHERE = 1 << 8
 };
 
 
@@ -456,14 +456,14 @@ public:
             addEdge(access);
             departConn->addSuccessor(access);
             access->addSuccessor(carEdge);
-            if ((myCarWalkTransfer & TAXI_PICKUP_PT) == 0) {
+            if ((myCarWalkTransfer & TAXI_PICKUP_ANYWHERE) != 0) {
                 // taxi may depart anywhere but there is a time penalty
                 _AccessEdge* taxiAccess = new _AccessEdge(myNumericalID++, departConn, carEdge, 0, SVC_TAXI, SVC_IGNORING, taxiWait);
                 addEdge(taxiAccess);
                 departConn->addSuccessor(taxiAccess);
                 taxiAccess->addSuccessor(carEdge);
             }
-            if ((myCarWalkTransfer & TAXI_DROPOFF_PT) == 0) {
+            if ((myCarWalkTransfer & TAXI_DROPOFF_ANYWHERE) != 0) {
                 // taxi (as all other cars) may arrive anywhere
                 carEdge->addSuccessor(getArrivalConnector(edgePair.first));
             } else {
@@ -515,8 +515,10 @@ public:
         assert(stopEdge != nullptr);
         const bool transferCarWalk = ((category == SUMO_TAG_PARKING_AREA && (myCarWalkTransfer & PARKING_AREAS) != 0) ||
                                       (category == SUMO_TAG_BUS_STOP && (myCarWalkTransfer & PT_STOPS) != 0));
-        const bool transferTaxiWalk = (category == SUMO_TAG_BUS_STOP && (myCarWalkTransfer & TAXI_DROPOFF_PT) != 0);
-        const bool transferWalkTaxi = (category == SUMO_TAG_BUS_STOP && (myCarWalkTransfer & TAXI_PICKUP_PT) != 0);
+        const bool transferTaxiWalk = ((category == SUMO_TAG_PARKING_AREA && (myCarWalkTransfer & TAXI_DROPOFF_PARKING_AREAS) != 0) ||
+                                       (category == SUMO_TAG_BUS_STOP && (myCarWalkTransfer & TAXI_DROPOFF_PT) != 0));
+        const bool transferWalkTaxi = ((category == SUMO_TAG_PARKING_AREA && (myCarWalkTransfer & TAXI_PICKUP_PARKING_AREAS) != 0) ||
+                                       (category == SUMO_TAG_BUS_STOP && (myCarWalkTransfer & TAXI_PICKUP_PT) != 0));
         const double pos = (startPos + endPos) / 2.;
 #ifdef IntermodalRouter_DEBUG_ACCESS
         std::cout << "addAccess stopId=" << stopId << " stopEdge=" << stopEdge->getID() << " pos=" << pos << " length=" << length << " tag=" << toString(category)
@@ -597,6 +599,19 @@ public:
                     if (carSplit->removeSuccessor(prevArr)) {
                         carSplit->addSuccessor(arrConn);
                         myAccessSplits[myCarLookup[stopEdge]][splitIndex]->addSuccessor(prevArr);
+                    } else {
+                        // check for restricted access
+                        for (_IntermodalEdge* out : carSplit->getSuccessors()) {
+                            _AccessEdge* aOut = dynamic_cast<_AccessEdge*>(out);
+                            if (aOut != nullptr && aOut->removeSuccessor(prevArr)) {
+                                aOut->addSuccessor(arrConn);
+                                addRestrictedCarExit(
+                                        myAccessSplits[myCarLookup[stopEdge]][splitIndex],
+                                        prevArr,
+                                        aOut->getVehicleRetriction());
+                                break;
+                            }
+                        }
                     }
                 }
                 addConnectors(depConn, arrConn, splitIndex + 1);

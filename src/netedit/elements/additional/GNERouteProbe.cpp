@@ -17,15 +17,11 @@
 ///
 //
 /****************************************************************************/
-#include <config.h>
 
-#include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
 #include <netedit/changes/GNEChange_Attribute.h>
+#include <netedit/GNENet.h>
 #include <utils/gui/div/GLHelper.h>
-#include <utils/gui/div/GUIGlobalViewObjectsHandler.h>
-#include <utils/gui/globjects/GLIncludes.h>
+#include <utils/gui/images/GUITextureSubSys.h>
 
 #include "GNERouteProbe.h"
 
@@ -62,12 +58,31 @@ GNERouteProbe::~GNERouteProbe() {
 }
 
 
+GNEMoveElement*
+GNERouteProbe::getMoveElement() const {
+    return nullptr;
+}
+
+
+Parameterised*
+GNERouteProbe::getParameters() {
+    return this;
+}
+
+
+const Parameterised*
+GNERouteProbe::getParameters() const {
+    return this;
+}
+
+
 void
 GNERouteProbe::writeAdditional(OutputDevice& device) const {
     // open tag
     device.openTag(SUMO_TAG_ROUTEPROBE);
-    // write parameters
-    device.writeAttr(SUMO_ATTR_ID, getID());
+    // write common additional attributes
+    writeAdditionalAttributes(device);
+    // write specific attributes
     device.writeAttr(SUMO_ATTR_BEGIN, time2string(myBegin));
     if (getAttribute(SUMO_ATTR_PERIOD).size() > 0) {
         device.writeAttr(SUMO_ATTR_PERIOD, time2string(myPeriod));
@@ -75,9 +90,6 @@ GNERouteProbe::writeAdditional(OutputDevice& device) const {
     device.writeAttr(SUMO_ATTR_EDGE, getParentEdges().front()->getID());
     if (!myOutputFilename.empty()) {
         device.writeAttr(SUMO_ATTR_FILE, myOutputFilename);
-    }
-    if (!myAdditionalName.empty()) {
-        device.writeAttr(SUMO_ATTR_NAME, myAdditionalName);
     }
     if (!myVehicleTypes.empty()) {
         device.writeAttr(SUMO_ATTR_VTYPES, myVehicleTypes);
@@ -134,13 +146,6 @@ GNERouteProbe::splitEdgeGeometry(const double /*splitPosition*/, const GNENetwor
 bool
 GNERouteProbe::checkDrawMoveContour() const {
     return false;
-}
-
-
-GNEMoveOperation*
-GNERouteProbe::getMoveOperation() {
-    // routeprobes cannot be moved
-    return nullptr;
 }
 
 
@@ -218,7 +223,7 @@ GNERouteProbe::drawGL(const GUIVisualizationSettings& s) const {
         }
         // calculate contour and draw dotted geometry
         myAdditionalContour.calculateContourRectangleShape(s, d, this, myAdditionalGeometry.getShape().front(), s.additionalSettings.routeProbeSize,
-                s.additionalSettings.routeProbeSize, getType(), 0, 0, 0, routeProbeExaggeration, getParentEdges().front());
+                s.additionalSettings.routeProbeSize, getType(), 0, 0, (myAdditionalGeometry.getShapeRotations().front() * -1), routeProbeExaggeration, getParentEdges().front());
         mySymbolBaseContour.calculateContourExtrudedShape(s, d, this, myAdditionalGeometry.getShape(), getType(), 0.3, routeProbeExaggeration,
                 true, true, 0, nullptr, getParentEdges().front());
     }
@@ -248,7 +253,7 @@ GNERouteProbe::getAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_VTYPES:
             return toString(myVehicleTypes);
         default:
-            return getCommonAttribute(this, key);
+            return getCommonAttribute(key);
     }
 }
 
@@ -259,14 +264,20 @@ GNERouteProbe::getAttributeDouble(SumoXMLAttr key) const {
         case SUMO_ATTR_BEGIN:
             return STEPS2TIME(myBegin);
         default:
-            throw InvalidArgument(getTagStr() + " doesn't have a double attribute of type '" + toString(key) + "'");
+            return getCommonAttributeDouble(key);
     }
 }
 
 
-const Parameterised::Map&
-GNERouteProbe::getACParametersMap() const {
-    return getParametersMap();
+Position
+GNERouteProbe::getAttributePosition(SumoXMLAttr key) const {
+    return getCommonAttributePosition(key);
+}
+
+
+PositionVector
+GNERouteProbe::getAttributePositionVector(SumoXMLAttr key) const {
+    return getCommonAttributePositionVector(key);
 }
 
 
@@ -339,7 +350,7 @@ GNERouteProbe::isValid(SumoXMLAttr key, const std::string& value) {
                 return SUMOXMLDefinitions::isValidListOfTypeID(value);
             }
         default:
-            return isCommonValid(key, value);
+            return isCommonAttributeValid(key, value);
     }
 }
 
@@ -375,22 +386,9 @@ GNERouteProbe::setAttribute(SumoXMLAttr key, const std::string& value) {
             myVehicleTypes = parse<std::vector<std::string> >(value);
             break;
         default:
-            setCommonAttribute(this, key, value);
+            setCommonAttribute(key, value);
             break;
     }
 }
-
-
-void
-GNERouteProbe::setMoveShape(const GNEMoveResult& /*moveResult*/) {
-    // nothing to do
-}
-
-
-void
-GNERouteProbe::commitMoveShape(const GNEMoveResult& /*moveResult*/, GNEUndoList* /*undoList*/) {
-    // nothing to do
-}
-
 
 /****************************************************************************/

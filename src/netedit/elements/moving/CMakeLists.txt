@@ -1,6 +1,32 @@
 set(netedit_elements_moving_SRCS
    GNEMoveElement.cpp
    GNEMoveElement.h
+   GNEMoveElementConnection.cpp
+   GNEMoveElementConnection.h
+   GNEMoveElementCrossing.cpp
+   GNEMoveElementCrossing.h
+   GNEMoveElementEdge.cpp
+   GNEMoveElementEdge.h
+   GNEMoveElementJunction.cpp
+   GNEMoveElementJunction.h
+   GNEMoveElementLane.cpp
+   GNEMoveElementLane.h
+   GNEMoveElementLaneDouble.cpp
+   GNEMoveElementLaneDouble.h
+   GNEMoveElementLaneSingle.cpp
+   GNEMoveElementLaneSingle.h
+   GNEMoveElementPlan.cpp
+   GNEMoveElementPlan.h
+   GNEMoveElementPlanParent.cpp
+   GNEMoveElementPlanParent.h
+   GNEMoveElementShape.cpp
+   GNEMoveElementShape.h
+   GNEMoveElementVehicle.cpp
+   GNEMoveElementVehicle.h
+   GNEMoveElementView.cpp
+   GNEMoveElementView.h
+   GNEMoveElementViewResizable.cpp
+   GNEMoveElementViewResizable.h
    GNEMoveOffset.cpp
    GNEMoveOffset.h
    GNEMoveOperation.cpp

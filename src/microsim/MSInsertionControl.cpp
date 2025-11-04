@@ -385,21 +385,9 @@ MSInsertionControl::saveState(OutputDevice& out) {
     for (const Flow& flow : myFlows) {
         flow.pars->write(out, OptionsCont::getOptions(), SUMO_TAG_FLOWSTATE,
                          flow.pars->vtypeid == DEFAULT_VTYPE_ID ? "" : flow.pars->vtypeid);
-        if (flow.pars->repetitionEnd == SUMOTime_MAX) {
-            out.writeAttr(SUMO_ATTR_NUMBER, flow.pars->repetitionNumber);
-        }
-        if (flow.pars->repetitionProbability > 0) {
-            out.writeAttr(SUMO_ATTR_PROB, flow.pars->repetitionProbability);
-        } else if (flow.pars->poissonRate > 0) {
-            out.writeAttr(SUMO_ATTR_PERIOD, "exp(" + toString(flow.pars->poissonRate) + ")");
-            out.writeAttr(SUMO_ATTR_NEXT, STEPS2TIME(flow.pars->repetitionTotalOffset));
-        } else {
-            out.writeAttr(SUMO_ATTR_PERIOD, STEPS2TIME(flow.pars->repetitionOffset));
+        if (flow.pars->repetitionProbability <= 0) {
             out.writeAttr(SUMO_ATTR_NEXT, STEPS2TIME(flow.pars->repetitionTotalOffset));
         }
-        if (flow.pars->repetitionEnd != SUMOTime_MAX) {
-            out.writeAttr(SUMO_ATTR_END, STEPS2TIME(flow.pars->repetitionEnd));
-        };
         out.writeAttr(SUMO_ATTR_ROUTE, flow.pars->routeid);
         out.writeAttr(SUMO_ATTR_DONE, flow.pars->repetitionsDone);
         out.writeAttr(SUMO_ATTR_INDEX, flow.index);
@@ -458,6 +446,28 @@ MSInsertionControl::getLastFlowVehicle(const std::string& id) const {
         return MSNet::getInstance()->getVehicleControl().getVehicle(vehID);
     }
     return nullptr;
+}
+
+
+bool
+MSInsertionControl::hasTaxiFlow() const {
+    SumoRNG tmp("tmp");
+    for (const Flow& flow : myFlows) {
+        if (flow.scale != 0 &&
+                (StringUtils::toBool(flow.pars->getParameter("has.taxi.device", "false"))
+                 || hasTaxiDeviceType(flow.pars->vtypeid, tmp))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool
+MSInsertionControl::hasTaxiDeviceType(const std::string& vtypeId, SumoRNG& rng) {
+    MSVehicleControl& vehControl = MSNet::getInstance()->getVehicleControl();
+    const MSVehicleType* vtype = vehControl.getVType(vtypeId, &rng);
+    return StringUtils::toBool(vtype->getParameter().getParameter("has.taxi.device", "false"));
 }
 
 /****************************************************************************/

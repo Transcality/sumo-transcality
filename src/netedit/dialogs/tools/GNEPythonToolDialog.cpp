@@ -179,7 +179,7 @@ GNEPythonToolDialog::onCmdSetVisualization(FXObject*, FXSelector, void*) {
 long
 GNEPythonToolDialog::onCmdRun(FXObject*, FXSelector, void*) {
     // hide dialog
-    hide();
+    closeDialogAccepting();
     // run tool
     return myApplicationWindow->tryHandle(myPythonTool->getMenuCommand(), FXSEL(SEL_COMMAND, MID_GNE_RUNPYTHONTOOL), nullptr);
 }
@@ -296,6 +296,12 @@ GNEPythonToolDialog::buildArguments(bool sortByName, bool groupedByCategories) {
                 myArguments.push_back(new GNEPythonToolDialogElements::StringArgument(this, myPythonTool, getApplicationWindow(), argumentFrame, option.first, option.second));
             }
             numInsertedArguments++;
+        }
+    }
+    // check if create arguments
+    if (id() > 0) {
+        for (auto& argument : myArguments) {
+            argument->create();
         }
     }
     // adjust parameter column (call always after create elements)

@@ -18,16 +18,10 @@
 // A class for visualizing walks in Netedit
 /****************************************************************************/
 
-#include <utils/gui/windows/GUIAppEnum.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <utils/gui/div/GUIDesigns.h>
-#include <utils/gui/div/GLHelper.h>
 
 #include "GNEWalk.h"
-#include "GNERoute.h"
 
 // ===========================================================================
 // method definitions
@@ -63,9 +57,21 @@ GNEWalk::GNEWalk(SumoXMLTag tag, GNEDemandElement* personParent, const GNEPlanPa
 GNEWalk::~GNEWalk() {}
 
 
-GNEMoveOperation*
-GNEWalk::getMoveOperation() {
-    return getPlanMoveOperation();
+GNEMoveElement*
+GNEWalk::getMoveElement() const {
+    return myMoveElementPlan;
+}
+
+
+Parameterised*
+GNEWalk::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNEWalk::getParameters() const {
+    return nullptr;
 }
 
 
@@ -280,12 +286,6 @@ GNEWalk::getHierarchyName() const {
     return getPlanHierarchyName();
 }
 
-
-const Parameterised::Map&
-GNEWalk::getACParametersMap() const {
-    return getParametersMap();
-}
-
 // ===========================================================================
 // private
 // ===========================================================================
@@ -311,24 +311,6 @@ GNEWalk::setAttribute(SumoXMLAttr key, const std::string& value) {
             setPlanAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNEWalk::setMoveShape(const GNEMoveResult& moveResult) {
-    // change both position
-    myArrivalPosition = moveResult.newFirstPos;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNEWalk::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "arrivalPos of " + getTagStr());
-    // now adjust start position
-    setAttribute(SUMO_ATTR_ARRIVALPOS, toString(moveResult.newFirstPos), undoList);
-    undoList->end();
 }
 
 /****************************************************************************/

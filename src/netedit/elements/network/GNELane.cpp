@@ -20,29 +20,20 @@
 /****************************************************************************/
 
 #include <netbuild/NBEdgeCont.h>
-#include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEViewParent.h>
 #include <netedit/changes/GNEChange_Attribute.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanCreator.h>
+#include <netedit/elements/moving/GNEMoveElementLane.h>
 #include <netedit/frames/common/GNEDeleteFrame.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
-#include <netedit/frames/demand/GNEContainerFrame.h>
-#include <netedit/frames/demand/GNEContainerPlanFrame.h>
-#include <netedit/frames/demand/GNEPersonFrame.h>
-#include <netedit/frames/demand/GNEPersonPlanFrame.h>
 #include <netedit/frames/demand/GNERouteFrame.h>
-#include <netedit/frames/demand/GNEVehicleFrame.h>
+#include <netedit/frames/GNEPathCreator.h>
+#include <netedit/frames/GNEPlanCreator.h>
+#include <netedit/frames/GNEViewObjectSelector.h>
 #include <netedit/frames/network/GNEAdditionalFrame.h>
 #include <netedit/frames/network/GNETLSEditorFrame.h>
-#include <netedit/frames/GNEViewObjectSelector.h>
-#include <utils/common/MsgHandler.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNEViewParent.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
-#include <utils/gui/div/GUIGlobalViewObjectsHandler.h>
-#include <utils/gui/globjects/GLIncludes.h>
 #include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
 #include <utils/gui/images/GUITextureSubSys.h>
 #include <utils/gui/images/VClassIcons.h>
@@ -168,6 +159,7 @@ GNELane::DrawingConstants::drawSuperposed() const {
 #endif
 GNELane::GNELane(GNEEdge* edge, const int index) :
     GNENetworkElement(edge->getNet(), edge->getNBEdge()->getLaneID(index), SUMO_TAG_LANE),
+    myMoveElementLane(new GNEMoveElementLane(this)),
     myIndex(index),
     myDrawingConstants(new DrawingConstants(this)),
     mySpecialColor(nullptr),
@@ -182,6 +174,7 @@ GNELane::GNELane(GNEEdge* edge, const int index) :
 
 GNELane::GNELane() :
     GNENetworkElement(nullptr, "dummyConstructorGNELane", SUMO_TAG_LANE),
+    myMoveElementLane(new GNEMoveElementLane(this)),
     myIndex(-1),
     myDrawingConstants(nullptr),
     mySpecialColor(nullptr),
@@ -196,6 +189,24 @@ GNELane::~GNELane() {
     if (myDrawingConstants) {
         delete myDrawingConstants;
     }
+}
+
+
+GNEMoveElement*
+GNELane::getMoveElement() const {
+    return myMoveElementLane;
+}
+
+
+Parameterised*
+GNELane::getParameters() {
+    return &(getParentEdges().front()->getNBEdge()->getLaneStruct(myIndex));
+}
+
+
+const Parameterised*
+GNELane::getParameters() const {
+    return &(getParentEdges().front()->getNBEdge()->getLaneStruct(myIndex));
 }
 
 
@@ -434,44 +445,6 @@ GNELane::checkDrawMoveContour() const {
         return editedNetworkElement == this;
     } else {
         return false;
-    }
-}
-
-
-GNEMoveOperation*
-GNELane::getMoveOperation() {
-    // edit depending if shape is being edited
-    if (isShapeEdited()) {
-        // calculate move shape operation
-        return calculateMoveShapeOperation(this, getLaneShape(), false);
-    } else {
-        return nullptr;
-    }
-}
-
-
-void
-GNELane::removeGeometryPoint(const Position clickedPosition, GNEUndoList* undoList) {
-    // edit depending if shape is being edited
-    if (isShapeEdited()) {
-        // get original shape
-        PositionVector shape = getLaneShape();
-        // check shape size
-        if (shape.size() > 2) {
-            // obtain index
-            int index = shape.indexOfClosest(clickedPosition);
-            // get snap radius
-            const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.laneGeometryPointRadius;
-            // check if we have to create a new index
-            if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
-                // remove geometry point
-                shape.erase(shape.begin() + index);
-                // commit new shape
-                undoList->begin(this, "remove geometry point of " + getTagStr());
-                GNEChange_Attribute::changeAttribute(this, SUMO_ATTR_CUSTOMSHAPE, toString(shape), undoList);
-                undoList->end();
-            }
-        }
     }
 }
 
@@ -747,14 +720,20 @@ GNELane::getAttribute(SumoXMLAttr key) const {
         case GNE_ATTR_PARENT:
             return getParentEdges().front()->getID();
         default:
-            return getCommonAttribute(&edge->getLaneStruct(myIndex), key);
+            return getCommonAttribute(key);
     }
 }
 
 
 double
 GNELane::getAttributeDouble(SumoXMLAttr key) const {
-    throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
+    return getCommonAttributeDouble(key);
+}
+
+
+Position
+GNELane::getAttributePosition(SumoXMLAttr key) const {
+    return getCommonAttributePosition(key);
 }
 
 
@@ -765,7 +744,7 @@ GNELane::getAttributePositionVector(SumoXMLAttr key) const {
         case SUMO_ATTR_CUSTOMSHAPE:
             return getParentEdges().front()->getNBEdge()->getLaneStruct(myIndex).customShape;
         default:
-            throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
+            return getCommonAttributePositionVector(key);
     }
 }
 
@@ -872,7 +851,7 @@ GNELane::isValid(SumoXMLAttr key, const std::string& value) {
         case GNE_ATTR_STOPOEXCEPTION:
             return canParseVehicleClasses(value);
         default:
-            return isCommonValid(key, value);
+            return isCommonAttributeValid(key, value);
     }
 }
 
@@ -900,12 +879,6 @@ GNELane::isAttributeComputed(SumoXMLAttr key) const {
         default:
             return false;
     }
-}
-
-
-const Parameterised::Map&
-GNELane::getACParametersMap() const {
-    return getParentEdges().front()->getNBEdge()->getLaneStruct(myIndex).getParametersMap();
 }
 
 
@@ -1000,7 +973,7 @@ GNELane::setAttribute(SumoXMLAttr key, const std::string& value) {
             edge->getLaneStruct(myIndex).laneStopOffset.setExceptions(value);
             break;
         default:
-            setCommonAttribute(&edge->getLaneStruct(myIndex), key, value);
+            setCommonAttribute(key, value);
             break;
     }
     // update template
@@ -1009,24 +982,6 @@ GNELane::setAttribute(SumoXMLAttr key, const std::string& value) {
     }
     // invalidate demand path calculator
     myNet->getDemandPathManager()->getPathCalculator()->invalidatePathCalculator();
-}
-
-
-void
-GNELane::setMoveShape(const GNEMoveResult& moveResult) {
-    // set custom shape
-    getParentEdges().front()->getNBEdge()->getLaneStruct(myIndex).customShape = moveResult.shapeToUpdate;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNELane::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    // commit new shape
-    undoList->begin(this, "moving " + toString(SUMO_ATTR_CUSTOMSHAPE) + " of " + getTagStr());
-    GNEChange_Attribute::changeAttribute(this, SUMO_ATTR_CUSTOMSHAPE, toString(moveResult.shapeToUpdate), undoList);
-    undoList->end();
 }
 
 
@@ -1383,6 +1338,8 @@ GNELane::drawArrows(const GUIVisualizationSettings& s) const {
                         glTranslated(0, 5, 0);
                         GLHelper::drawOutlineCircle(0.9, 0.8, 32);
                         glTranslated(0, -5, 0);
+                        break;
+                    default:
                         break;
                 }
             }
