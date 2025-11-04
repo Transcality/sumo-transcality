@@ -623,11 +623,13 @@ public:
 
     /// @}
 
-    /// @brief check if a GNEAccess can be created in a certain Edge
-    static bool accessCanBeCreated(GNEAdditional* busStopParent, GNEEdge* edge);
+    /// @brief check if a GNEAccess can be created in the given edge
+    static bool accessExists(const GNEAdditional* stoppingPlaceParent, const GNEEdge* edge);
+
+protected:
 
     /// @brief check if an overlapping is produced in rerouter if a interval with certain begin and end is inserted
-    static bool checkOverlappingRerouterIntervals(GNEAdditional* rerouter, const SUMOTime newBegin, const SUMOTime newEnd);
+    bool checkOverlappingRerouterIntervals(GNEAdditional* rerouter, const SUMOTime newBegin, const SUMOTime newEnd);
 
     /**@brief check if the given position over a lane is valid
      * @param[in] pos pos position of element over lane
@@ -636,13 +638,7 @@ public:
      * @param[in] friendlyPos Attribute of element
      * @return true if the element position is valid, false in otherweise
      */
-    static bool checkLanePosition(double pos, const double length, const double laneLength, const bool friendlyPos);
-
-    /**@brief fix given position over lane
-     * @param[in] pos pos position of element over lane
-     * @param[in] laneLength Length of the lane
-     */
-    static void fixLanePosition(double& pos, double& length, const double laneLength);
+    bool checkLanePosition(double pos, const double length, const double laneLength, const bool friendlyPos);
 
     /**@brief check if enable friendly pos in small lanes
      * @param[in] pos pos position of element over lane
@@ -651,7 +647,7 @@ public:
      * @param[in] friendlyPos Attribute of element
      * @return true if the element position is valid, false in otherweise
      */
-    static bool checkFriendlyPosSmallLanes(double pos, const double length, const double laneLength, const bool friendlyPos);
+    bool checkFriendlyPosSmallLanes(double pos, const double length, const double laneLength, const bool friendlyPos);
 
     /**@brief check if the given positions over a lane is valid
      * @param[in] from begin position of element over lane
@@ -660,14 +656,14 @@ public:
      * @param[in] friendlyPos Attribute of element
      * @return true if the element positions is valid, false in otherwise
      */
-    static bool checkLaneDoublePosition(double from, const double to, const double laneLength, const bool friendlyPos);
+    bool checkLaneDoublePosition(double from, const double to, const double laneLength, const bool friendlyPos);
 
     /**@brief fix the given positions over lane
      * @param[in] from begin position of element over lane
      * @param[in] to end position of element over lane
      * @param[in] laneLength Length of the lane
      */
-    static void fixLaneDoublePosition(double& from, double& to, const double laneLengt);
+    void fixLaneDoublePosition(double& from, double& to, const double laneLengt);
 
     /**@brief check if the given positions over two lanes are valid
      * @param[in] fromPos position of element over first lane
@@ -677,17 +673,8 @@ public:
      * @param[in] friendlyPos flag for friendlyPos
      * @return true if the element positions is valid, false in otherwise
      */
-    static bool checkMultiLanePosition(double fromPos, const double fromLaneLength, const double toPos, const double tolaneLength, const bool friendlyPos);
+    bool checkMultiLanePosition(double fromPos, const double fromLaneLength, const double toPos, const double tolaneLength, const bool friendlyPos);
 
-    /**@brief fix the given positions over two lanes
-     * @param[in] fromPos position of element over first lane
-     * @param[in] fromLaneLength length of the first lane
-     * @param[in] toPos position of element over second lane
-     * @param[in] toLaneLength length of the second lane
-     */
-    static void fixMultiLanePosition(double fromPos, const double fromLaneLength, double toPos, const double tolaneLength);
-
-protected:
     /// @brief get additional parent
     GNEAdditional* getAdditionalParent(const CommonXMLStructure::SumoBaseObject* sumoBaseObject, SumoXMLTag tag) const;
 

@@ -42,7 +42,7 @@
 void
 RODUAFrame::fillOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
-    oc.addCallExample("-c <CONFIGURATION>", "run routing with options from file");
+    oc.addCallExample("-c <CONFIGURATION>", TL("run routing with options from file"));
 
     // insert options sub-topics
     SystemFrame::addConfigurationOptions(oc); // fill this subtopic, too
@@ -144,6 +144,9 @@ RODUAFrame::addDUAOptions() {
 
     oc.doRegister("ptline-routing", new Option_Bool(false));
     oc.addDescription("ptline-routing", "Processing", TL("Route all public transport input"));
+
+    oc.doRegister("keep-flows", new Option_Bool(false));
+    oc.addDescription("keep-flows", "Processing", TL("Write flows instead of expanding them into vehicles"));
 
     oc.doRegister("route-choice-method", new Option_String("gawron"));
     oc.addDescription("route-choice-method", "Processing", TL("Choose a route choice method: gawron, logit, or lohse"));
@@ -251,7 +254,9 @@ RODUAFrame::checkOptions() {
         const int len = (int)filename.length();
         if (len > 4 && filename.substr(len - 4) == ".xml") {
             oc.setDefault("alternatives-output", filename.substr(0, len - 4) + ".alt.xml");
-        } else if (len > 4 && filename.substr(len - 3) == ".gz") {
+        } else if (len > 7 && filename.substr(len - 7) == ".xml.gz") {
+            oc.setDefault("alternatives-output", filename.substr(0, len - 7) + ".alt.xml.gz");
+        } else if (len > 3 && filename.substr(len - 3) == ".gz") {
             oc.setDefault("alternatives-output", filename.substr(0, len - 3) + ".alt.gz");
         } else {
             WRITE_WARNING(TL("Cannot derive file name for alternatives output, skipping it."));

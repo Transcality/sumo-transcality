@@ -20,12 +20,9 @@
 
 #include <netedit/GNENet.h>
 #include <netedit/GNESegment.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
-#include <utils/gui/windows/GUIAppEnum.h>
 
 #include "GNEDemandElementPlan.h"
 #include "GNERoute.h"
@@ -41,33 +38,10 @@ const double GNEDemandElementPlan::myArrivalPositionDiameter = SUMO_const_halfLa
 // ===========================================================================
 
 GNEDemandElementPlan::GNEDemandElementPlan(GNEDemandElement* planElement, const double departPosition, const double arrivalPosition) :
+    myMoveElementPlan(new GNEMoveElementPlan(planElement, myDepartPosition)),
     myDepartPosition(departPosition),
     myArrivalPosition(arrivalPosition),
     myPlanElement(planElement) {
-}
-
-
-GNEMoveOperation*
-GNEDemandElementPlan::getPlanMoveOperation() {
-    // get tag property
-    const auto tagProperty = myPlanElement->getTagProperty();
-    // only move personTrips defined over edges
-    if (tagProperty->planToEdge() || tagProperty->planConsecutiveEdges() || tagProperty->planEdge()) {
-        // get geometry end pos
-        const Position geometryEndPos = getPlanAttributePosition(GNE_ATTR_PLAN_GEOMETRY_ENDPOS);
-        // calculate circle width squared
-        const double circleWidthSquared = myArrivalPositionDiameter * myArrivalPositionDiameter;
-        // check if we clicked over a geometry end pos
-        if (myPlanElement->myNet->getViewNet()->getPositionInformation().distanceSquaredTo2D(geometryEndPos) <= ((circleWidthSquared + 2))) {
-            // continue depending of parent edges
-            if (myPlanElement->getParentEdges().size() > 0) {
-                return new GNEMoveOperation(myPlanElement, myPlanElement->getParentEdges().back()->getLaneByAllowedVClass(myPlanElement->getVClass()), myArrivalPosition, false);
-            } else {
-                return new GNEMoveOperation(myPlanElement, myPlanElement->getParentDemandElements().at(1)->getParentEdges().back()->getLaneByAllowedVClass(myPlanElement->getVClass()), myArrivalPosition, false);
-            }
-        }
-    }
-    return nullptr;
 }
 
 
@@ -495,7 +469,7 @@ GNEDemandElementPlan::getPlanAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_TO_TAZ:
             return myPlanElement->getParentTAZs().back()->getID();
         default:
-            return myPlanElement->getCommonAttribute(dynamic_cast<Parameterised*>(myPlanElement), key);
+            return myPlanElement->getCommonAttribute(key);
     }
 }
 
@@ -726,7 +700,7 @@ GNEDemandElementPlan::isPlanValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_ENDPOS:
             return GNEAttributeCarrier::canParse<double>(value);
         default:
-            return myPlanElement->isCommonValid(key, value);
+            return myPlanElement->isCommonAttributeValid(key, value);
     }
 }
 
@@ -802,7 +776,7 @@ GNEDemandElementPlan::setPlanAttribute(SumoXMLAttr key, const std::string& value
             recompute = true;
             break;
         default:
-            myPlanElement->setCommonAttribute(dynamic_cast<Parameterised*>(myPlanElement), key, value);
+            myPlanElement->setCommonAttribute(key, value);
             break;
     }
     // check if compute geometry and path

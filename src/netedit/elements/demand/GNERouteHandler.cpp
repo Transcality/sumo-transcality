@@ -21,26 +21,13 @@
 #include <netedit/changes/GNEChange_DemandElement.h>
 #include <netedit/dialogs/basic/GNEOverwriteElement.h>
 #include <netedit/dialogs/basic/GNEWarningBasicDialog.h>
-#include <netedit/elements/additional/GNETAZ.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
-#include <netedit/frames/demand/GNEVehicleFrame.h>
 #include <netedit/frames/GNEAttributesEditor.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanCreator.h>
 #include <netedit/GNEApplicationWindow.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNENetHelper.h>
-#include <netedit/GNETagPropertiesDatabase.h>
 #include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
-#include <utils/common/StringTokenizer.h>
-#include <utils/common/SUMOVehicleClass.h>
-#include <utils/vehicle/SUMORouteHandler.h>
 #include <utils/xml/NamespaceIDs.h>
-#include <utils/xml/SUMOSAXAttributes.h>
-#include <utils/xml/SUMOSAXHandler.h>
-#include <utils/xml/SUMOXMLDefinitions.h>
 
 #include "GNEContainer.h"
 #include "GNEPerson.h"
@@ -119,7 +106,8 @@ GNERouteHandler::buildVType(const CommonXMLStructure::SumoBaseObject* sumoBaseOb
                 const auto& vTypeDistributionID = sumoBaseObject->getParentSumoBaseObject()->getStringAttribute(SUMO_ATTR_ID);
                 distributionParent = myNet->getAttributeCarriers()->retrieveDemandElement(SUMO_TAG_VTYPE_DISTRIBUTION, vTypeDistributionID, false);
                 if (distributionParent) {
-                    vTypeRef = new GNEVTypeRef(distributionParent, vType, vTypeParameter.defaultProbability);
+                    // create vType reference without probability
+                    vTypeRef = new GNEVTypeRef(distributionParent, vType);
                 } else {
                     WRITE_WARNING(TLF("VType '%' with probability % cannot be referenced with distribution '%'", vTypeParameter.id, toString(vTypeParameter.defaultProbability), vTypeDistributionID));
                 }
@@ -211,11 +199,14 @@ GNERouteHandler::buildRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseOb
     } else {
         // parse edges
         const auto edges = parseEdges(SUMO_TAG_ROUTE, id, edgeIDs);
-        if (edges.empty()) {
-            return writeErrorEmptyEdges(SUMO_TAG_ROUTE, id);
+        // check edges
+        const auto validEdges = GNERoute::isRouteValid(edges);
+        // continue depending if route is valid
+        if (validEdges.size() > 0) {
+            return writeError(TLF("Could not build % with ID '%' in netedit; %.", toString(SUMO_TAG_ROUTE), id, validEdges));
         } else {
             // create GNERoute
-            GNEDemandElement* route = new GNERoute(id, myNet, myFilename, vClass, edges, color, repeat, cycleTime, routeParameters);
+            GNEDemandElement* route = new GNERoute(id, myNet, myFilename, vClass, edges, color, repeat, cycleTime, probability, routeParameters);
             // if this route was created within a route distribution, we have to create an extra routeRef
             GNEDemandElement* routeRef = nullptr;
             GNEDemandElement* distributionParent = nullptr;
@@ -223,7 +214,8 @@ GNERouteHandler::buildRoute(const CommonXMLStructure::SumoBaseObject* sumoBaseOb
                 const auto& routeDistributionID = sumoBaseObject->getParentSumoBaseObject()->getStringAttribute(SUMO_ATTR_ID);
                 distributionParent = myNet->getAttributeCarriers()->retrieveDemandElement(SUMO_TAG_ROUTE_DISTRIBUTION, routeDistributionID, false);
                 if (distributionParent) {
-                    routeRef = new GNERouteRef(distributionParent, route, probability);
+                    // create route reference without probability
+                    routeRef = new GNERouteRef(distributionParent, route);
                 } else {
                     WRITE_WARNING(TLF("Route '%' with probability % cannot be referenced with distribution '%'", id, toString(probability), routeDistributionID));
                 }
@@ -357,8 +349,11 @@ GNERouteHandler::buildVehicleEmbeddedRoute(const CommonXMLStructure::SumoBaseObj
     } else {
         // parse route edges
         const auto edges = parseEdges(GNE_TAG_ROUTE_EMBEDDED, vehicleParameters.id, edgeIDs);
-        if (edges.empty()) {
-            return writeErrorEmptyEdges(GNE_TAG_ROUTE_EMBEDDED, vehicleParameters.id);
+        // check edges
+        const auto validEdges = GNERoute::isRouteValid(edges);
+        // continue depending if route is valid
+        if (validEdges.size() > 0) {
+            return writeError(TLF("Could not build % with ID '%' in netedit; %.", toString(GNE_TAG_VEHICLE_WITHROUTE), vehicleParameters.id, validEdges));
         } else {
             // obtain  type
             GNEDemandElement* type = getType(vehicleParameters.vtypeid);
@@ -449,8 +444,11 @@ GNERouteHandler::buildFlowEmbeddedRoute(const CommonXMLStructure::SumoBaseObject
     } else {
         // parse route edges
         const auto edges = parseEdges(GNE_TAG_FLOW_WITHROUTE, vehicleParameters.id, edgeIDs);
-        if (edges.empty()) {
-            return writeErrorEmptyEdges(GNE_TAG_FLOW_WITHROUTE, vehicleParameters.id);
+        // check edges
+        const auto validEdges = GNERoute::isRouteValid(edges);
+        // continue depending if route is valid
+        if (validEdges.size() > 0) {
+            return writeError(TLF("Could not build % with ID '%' in netedit; %.", toString(GNE_TAG_FLOW_WITHROUTE), vehicleParameters.id, validEdges));
         } else {
             // obtain  type
             GNEDemandElement* type = getType(vehicleParameters.vtypeid);
@@ -1725,7 +1723,7 @@ GNERouteHandler::transformToVehicle(GNEVehicle* originalVehicle, bool createEmbe
             // generate route ID
             const std::string routeID = net->getAttributeCarriers()->generateDemandElementID(SUMO_TAG_ROUTE);
             // build route
-            routeHandler.buildRoute(nullptr, routeID, vClass, edgeIDs, routeColor, 0, 0, 0, {});
+            routeHandler.buildRoute(nullptr, routeID, vClass, edgeIDs, routeColor, 0, 0, DEFAULT_VEH_PROB, {});
             // set route ID in vehicle parameters
             vehicleParameters.routeid = routeID;
             // create vehicle
@@ -1827,7 +1825,7 @@ GNERouteHandler::transformToRouteFlow(GNEVehicle* originalVehicle, bool createEm
             // generate a new route id
             const std::string routeID = net->getAttributeCarriers()->generateDemandElementID(SUMO_TAG_ROUTE);
             // build route
-            routeHandler.buildRoute(nullptr, routeID, vClass, edgeIDs, routeColor, 0, 0, 0, {});
+            routeHandler.buildRoute(nullptr, routeID, vClass, edgeIDs, routeColor, 0, 0, DEFAULT_VEH_PROB, {});
             // set route ID in vehicle parameters
             vehicleParameters.routeid = routeID;
             // create vehicle

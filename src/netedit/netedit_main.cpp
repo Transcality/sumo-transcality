@@ -20,11 +20,12 @@
 /****************************************************************************/
 
 #include <signal.h>
-#include <utils/xml/XMLSubSys.h>
-#include <utils/options/OptionsIO.h>
-#include <utils/gui/settings/GUICompleteSchemeStorage.h>
-#include <utils/foxtools/MsgHandlerSynchronized.h>
 #include <utils/common/SystemFrame.h>
+#include <utils/foxtools/MsgHandlerSynchronized.h>
+#include <utils/gui/settings/GUICompleteSchemeStorage.h>
+#include <utils/options/OptionsIO.h>
+#include <utils/xml/XMLSubSys.h>
+#include <netedit/dialogs/GNECrashDialog.h>
 
 #ifdef HAVE_VERSION_H
 #include <version.h>
@@ -35,12 +36,10 @@
 #include "GNELoadThread.h"
 #include "GNETagPropertiesDatabase.h"
 
-
-// #define SECUREEXCEPTION
-
 // ===========================================================================
 // main function
 // ===========================================================================
+
 int
 main(int argc, char** argv) {
     // make the output aware of threading
@@ -54,9 +53,10 @@ main(int argc, char** argv) {
     reg.read();
     // set language
     gLanguage = reg.readStringEntry("gui", "language", gLanguage.c_str());
+    // declare return value (0 means all ok, 1 means error)
     int ret = 0;
-    // run netedit with try-catch if we're in debug-mode
-#ifdef SECUREEXCEPTION
+    // run netedit with try-catch if we're in release mode
+#ifndef _DEBUG
     try {
 #endif
         // initialise subsystems
@@ -65,7 +65,6 @@ main(int argc, char** argv) {
         GNELoadThread::fillOptions(neteditOptions);
         // set default options
         GNELoadThread::setDefaultOptions(neteditOptions);
-
         // set arguments called through console
         OptionsIO::setArgs(argc, argv);
         OptionsIO::getOptions(true);
@@ -74,7 +73,7 @@ main(int argc, char** argv) {
         } else {
             // create tagPropertiesdatabase
             const GNETagPropertiesDatabase* tagPropertiesDatabase = new GNETagPropertiesDatabase();
-
+            // check if we're only printing the attributes in console
             if (neteditOptions.isSet("attribute-help-output")) {
                 // write attribute help in console
                 tagPropertiesDatabase->writeAttributeHelp();
@@ -89,41 +88,56 @@ main(int argc, char** argv) {
                 } else {
                     // build the main window
                     GNEApplicationWindow* netedit = new GNEApplicationWindow(&application, tagPropertiesDatabase, "*.netc.cfg,*.netccfg");
-                    // build external runner
-                    GNEExternalRunner* externalRunner = new GNEExternalRunner(netedit);
-                    // set language
-                    gLanguage = neteditOptions.getString("language");
-                    // initialize GUICompleteSchemeStorage
-                    gSchemeStorage.init(&application, true);
-                    // build dependent elements
-                    netedit->dependentBuild();
-                    // add signal handler for CTRL+Q
-                    application.addSignal(SIGINT, netedit, MID_HOTKEY_CTRL_Q_CLOSE);
-                    // Create app
-                    application.create();
-                    // Load configuration given on command line
-                    if (argc > 1) {
-                        // Set default options
-                        OptionsIO::setArgs(argc, argv);
-                        // load options
-                        netedit->loadOptionOnStartup();
+#ifndef _DEBUG
+                    try {
+#endif
+                        // build external runner
+                        GNEExternalRunner* externalRunner = new GNEExternalRunner(netedit);
+                        // set language
+                        gLanguage = neteditOptions.getString("language");
+                        // initialize GUICompleteSchemeStorage
+                        gSchemeStorage.init(&application, true);
+                        // build dependent elements
+                        netedit->dependentBuild();
+                        // add signal handler for CTRL+Q
+                        application.addSignal(SIGINT, netedit, MID_HOTKEY_CTRL_Q_CLOSE);
+                        // Create app
+                        application.create();
+                        // Load configuration given on command line
+                        if (argc > 1) {
+                            // Set default options
+                            OptionsIO::setArgs(argc, argv);
+                            // load options
+                            netedit->loadOptionOnStartup();
+                        }
+                        // focus window at startup
+                        netedit->setFocus();
+                        // Run
+                        ret = application.run();
+                        // delete external runner
+                        delete externalRunner;
+                        // delete netedit
+                        delete netedit;
+#ifndef _DEBUG
+                    } catch (const ProcessError& e) {
+                        // write info
+                        if (std::string(e.what()).length() > 0) {
+                            WRITE_ERROR(e.what());
+                        }
+                        MsgHandler::getErrorInstance()->inform("Quitting (on error).", false);
+                        ret = 1;
+                        // open crash dialog with the exception
+                        GNECrashDialog(netedit, e);
                     }
-                    // focus window at startup
-                    netedit->setFocus();
-                    // Run
-                    ret = application.run();
-                    // delete external runner
-                    delete externalRunner;
-                    // delete netedit
-                    delete netedit;
+#endif
                 }
             }
             // delete tagPropertiesDatabase
             delete tagPropertiesDatabase;
         }
-#ifdef SECUREEXCEPTION
+#ifndef _DEBUG
     } catch (const std::exception& e) {
-        if (std::string(e.what()) != std::string("")) {
+        if (std::string(e.what()).length() > 0) {
             WRITE_ERROR(e.what());
         }
         MsgHandler::getErrorInstance()->inform("Quitting (on error).", false);
@@ -133,6 +147,7 @@ main(int argc, char** argv) {
         ret = 1;
     }
 #endif
+    // close system frame before return result
     SystemFrame::close();
     return ret;
 }

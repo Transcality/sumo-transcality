@@ -15,6 +15,8 @@ set(netedit_dialogs_SRCS
    GNEVClassesDialog.h
    GNEColorDialog.cpp
    GNEColorDialog.h
+   GNECrashDialog.cpp
+   GNECrashDialog.h
    GNEDialog.cpp
    GNEDialog.h
    GNEDialogEnum.h
@@ -24,6 +26,8 @@ set(netedit_dialogs_SRCS
    GNEHelpAttributesDialog.h
    GNEParametersDialog.cpp
    GNEParametersDialog.h
+   GNESaveDialog.cpp
+   GNESaveDialog.h
    GNEUndoListDialog.cpp
    GNEUndoListDialog.h
 )

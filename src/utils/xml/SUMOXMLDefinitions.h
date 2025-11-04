@@ -317,6 +317,7 @@ enum SumoXMLTag {
     SUMO_TAG_VIEWSETTINGS,
     SUMO_TAG_VIEWSETTINGS_3D,
     SUMO_TAG_VIEWSETTINGS_DECAL,
+    SUMO_TAG_VIEWSETTINGS_TRACKER,
     SUMO_TAG_VIEWSETTINGS_LIGHT,
     SUMO_TAG_VIEWSETTINGS_SCHEME,
     SUMO_TAG_VIEWSETTINGS_OPENGL,
@@ -329,6 +330,7 @@ enum SumoXMLTag {
     SUMO_TAG_VIEWSETTINGS_ADDITIONALS,
     SUMO_TAG_VIEWSETTINGS_POIS,
     SUMO_TAG_VIEWSETTINGS_POLYS,
+    SUMO_TAG_VIEWSETTINGS_DATA,
     SUMO_TAG_VIEWSETTINGS_LEGEND,
     SUMO_TAG_VIEWSETTINGS_EVENT,
     SUMO_TAG_VIEWSETTINGS_EVENT_JAM_TIME,
@@ -948,6 +950,8 @@ enum SumoXMLAttr {
 
     // write the tag name
     SUMO_ATTR_TAG                = 80,
+    SUMO_ATTR_OVERLAPDENSITY     = 81,
+    SUMO_ATTR_FLOW               = 82,
 
     /// @}
 
@@ -1474,6 +1478,8 @@ enum SumoXMLAttr {
     SUMO_ATTR_RIGHT_OF_WAY,
     /// @brief Fringe type of node
     SUMO_ATTR_FRINGE,
+    /// @brief Roundabout type of node
+    SUMO_ATTR_ROUNDABOUT,
     /// @brief whether a given shape is user-defined
     SUMO_ATTR_CUSTOMSHAPE,
     /// @brief A color information
@@ -1723,6 +1729,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_MAIN,
     SUMO_ATTR_SIDING,
     SUMO_ATTR_MINSAVING,
+    SUMO_ATTR_DEFER,
     SUMO_ATTR_LIMIT,
     SUMO_ATTR_ACTIVE,
     SUMO_ATTR_ARRIVALTIME,
@@ -1855,6 +1862,8 @@ enum SumoXMLAttr {
     GNE_ATTR_DEFAULT_VTYPE,
     /// @brief Flag to check if a default VType was modified
     GNE_ATTR_DEFAULT_VTYPE_MODIFIED,
+    /// @brief Flag to check if we're using a default probability
+    GNE_ATTR_DEFAULT_PROBABILITY,
     /// @brief flag to center camera after element creation
     GNE_ATTR_CENTER_AFTER_CREATION,
     /// @brief to busStop (used by personPlans)
@@ -2071,6 +2080,16 @@ enum class FringeType {
     // fringe edge within the network (i.e. due to pruning some road types)
     INNER,
     // not fringe (nothing is cut off)
+    DEFAULT
+};
+
+/// @brief classifying roundabout type for nodes
+enum class RoundaboutType {
+    // forced to be roundabout
+    YES,
+    // forced to not be roundabout
+    NO,
+    // computed
     DEFAULT
 };
 
@@ -2339,6 +2358,15 @@ enum class ReferencePosition {
     CENTER,
 };
 
+/// @enum mean data type
+enum class MeanDataType {
+    TRAFFIC,
+    EMISSIONS,
+    HARMONOISE,
+    AMITRAN,
+    DEFAULT,
+};
+
 /// @brief XML extension
 enum class XMLFileExtension {
     XML,
@@ -2567,6 +2595,9 @@ public:
     /// @brief fringe types
     static StringBijection<FringeType> FringeTypeValues;
 
+    /// @brief fringe types
+    static StringBijection<RoundaboutType> RoundaboutTypeValues;
+
     /// @brief person modes
     static StringBijection<PersonMode> PersonModeValues;
 
@@ -2605,6 +2636,9 @@ public:
 
     /// @brief reference positions (used creating certain elements in netedit)
     static StringBijection<ReferencePosition> ReferencePositions;
+
+    /// @brief reference positions (used creating certain elements in netedit)
+    static StringBijection<MeanDataType> MeanDataTypes;
 
     /// @brief XML file Extensions
     static StringBijection<XMLFileExtension> XMLFileExtensions;
@@ -2754,6 +2788,9 @@ private:
     /// @brief lane spread function values
     static StringBijection<FringeType>::Entry fringeTypeValuesInitializer[];
 
+    /// @brief lane spread function values
+    static StringBijection<RoundaboutType>::Entry roundaboutTypeValuesInitializer[];
+
     /// @brief person mode values
     static StringBijection<PersonMode>::Entry personModeValuesInitializer[];
 
@@ -2792,6 +2829,9 @@ private:
 
     /// @brief Reference position values
     static StringBijection<ReferencePosition>::Entry referencePositionValues[];
+
+    /// @brief Mean data type values
+    static StringBijection<MeanDataType>::Entry meanDataTypeValues[];
 
     /// @brief XML file extension values
     static StringBijection<XMLFileExtension>::Entry XMLFileExtensionValues[];

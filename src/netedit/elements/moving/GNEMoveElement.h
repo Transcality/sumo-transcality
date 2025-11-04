@@ -20,6 +20,8 @@
 #pragma once
 #include <config.h>
 
+#include <utils/xml/SUMOXMLDefinitions.h>
+
 #include "GNEMoveOffset.h"
 #include "GNEMoveResult.h"
 
@@ -27,11 +29,11 @@
 // class declaration
 // ===========================================================================
 
-class GNELane;
-class GNEMoveOperation;
+class GNEAttributeCarrier;
 class GNEUndoList;
 class GNEViewNet;
 class GUIGlObject;
+class Parameterised;
 
 // ===========================================================================
 // class definitions
@@ -41,7 +43,7 @@ class GNEMoveElement {
 
 public:
     /// @brief constructor
-    GNEMoveElement();
+    GNEMoveElement(GNEAttributeCarrier* movedElement);
 
     //// @brief empty destructor
     virtual ~GNEMoveElement();
@@ -50,6 +52,32 @@ public:
      * @note returned GNEMoveOperation can be nullptr
      */
     virtual GNEMoveOperation* getMoveOperation() = 0;
+
+    /// @name functions related with moving attributes
+    /// @{
+
+    /// @brief get moving attribute
+    virtual std::string getMovingAttribute(SumoXMLAttr key) const = 0;
+
+    /// @brief get moving attribute double
+    virtual double getMovingAttributeDouble(SumoXMLAttr key) const = 0;
+
+    /// @brief get moving attribute position
+    virtual Position getMovingAttributePosition(SumoXMLAttr key) const = 0;
+
+    /// @brief get moving attribute positionVector
+    virtual PositionVector getMovingAttributePositionVector(SumoXMLAttr key) const = 0;
+
+    /// @brief set moving attribute (using undo-list)
+    virtual void setMovingAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList* undoList) = 0;
+
+    /// @brief check if the given moving attribute is valid
+    virtual bool isMovingAttributeValid(SumoXMLAttr key, const std::string& value) const = 0;
+
+    /// @brief set moving attribute
+    virtual void setMovingAttribute(SumoXMLAttr key, const std::string& value) = 0;
+
+    /// @}
 
     /// @brief remove geometry point in the clicked position
     virtual void removeGeometryPoint(const Position clickedPosition, GNEUndoList* undoList) = 0;
@@ -60,15 +88,15 @@ public:
     /// @brief commit move element for the given offset
     static void commitMove(const GNEViewNet* viewNet, GNEMoveOperation* moveOperation, const GNEMoveOffset& offset, GNEUndoList* undoList);
 
-    /// @brief set move element lateral offset
-    void setMoveElementLateralOffset(const double value);
+    /// @brief move element lateral offset
+    double myMovingLateralOffset = 0;
 
 protected:
-    /// @brief move element lateral offset (used by elements placed over lanes
-    double myMoveElementLateralOffset = 0;
+    /// @brief pointer to element
+    GNEAttributeCarrier* myMovedElement = nullptr;
 
     /// @brief calculate move shape operation
-    GNEMoveOperation* calculateMoveShapeOperation(const GUIGlObject* obj, const PositionVector originalShape, const bool maintainShapeClosed);
+    GNEMoveOperation* getEditShapeOperation(const GUIGlObject* obj, const PositionVector originalShape, const bool maintainShapeClosed);
 
 private:
     /// @brief set move shape
@@ -77,27 +105,31 @@ private:
     /// @brief commit move shape
     virtual void commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) = 0;
 
-    /// @brief calculate lane offset
-    static double calculateLaneOffset(const GNEViewNet* viewNet, const GNELane* lane, const double firstPosition, const double lastPosition,
-                                      const GNEMoveOffset& offset, const double extremFrom, const double extremTo);
+    /// @brief calculate lane offset (used in calculateLanePosition)
+    static double calculateLaneOffset(const GNEViewNet* viewNet, const GNELane* lane, const double firstPosition,
+                                      const double lastPosition, const GNEMoveOffset& offset);
 
-    /// @brief calculate single movement over one lane
-    static void calculateMoveResult(GNEMoveResult& moveResult, const GNEViewNet* viewNet, const GNELane* lane, const double pos,
-                                    const GNEMoveOffset& offset, const double extremFrom, const double extremTo);
+    /// @brief calculate lane position over one lane with only one position (accesss, E1, star/end positions, etc.)
+    static void calculateLanePosition(double& starPos, const GNEViewNet* viewNet, const GNELane* lane,
+                                      const double posOverLane, const GNEMoveOffset& offset);
 
-    /// @brief calculate double movement over one lane
-    static void calculateMoveResult(GNEMoveResult& moveResult, const GNEViewNet* viewNet, const GNELane* lane, const double firstPos,
-                                    const double lastPos, const GNEMoveOffset& offset);
+    /// @brief calculate lane position over one lane with two positions (stoppingPlaces, E2 single lanes)
+    static void calculateLanePositions(double& starPos, double& endPos, const GNEViewNet* viewNet, const GNELane* lane,
+                                       const double firstPosOverLane, const double lastPosOverLane, const GNEMoveOffset& offset);
 
-    /// @brief calculate double movement over two lanes
-    static void calculateMoveResult(GNEMoveResult& moveResult, const GNEViewNet* viewNet, const GNELane* firstLane, const double firstPos,
-                                    const GNELane* lastLane, const double lastPos, const GNEMoveOffset& offset);
+    /// @brief calculate lane position over two lane with two positions (E2 Multilanes)
+    static void calculateLanePositions(double& starPos, double& endPos, const GNEViewNet* viewNet, const GNELane* firstLane,
+                                       const double firstPosOverLane, const GNELane* lastLane, const double lastPosOverLane,
+                                       const bool firstLaneClicked, const GNEMoveOffset& offset);
 
     /// @brief calculate new lane change
     static void calculateNewLaneChange(const GNEViewNet* viewNet, const GNELane* originalLane, const GNELane*& newLane, double& laneOffset);
 
     /// @brief calculate width/height shape
     static PositionVector calculateExtrapolatedVector(const GNEMoveOperation* moveOperation, const GNEMoveResult& moveResult);
+
+    /// @brief invalidate default constructor
+    GNEMoveElement() = delete;
 
     /// @brief Invalidated copy constructor.
     GNEMoveElement(const GNEMoveElement&) = delete;

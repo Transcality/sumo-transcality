@@ -77,25 +77,26 @@ struct GNENetHelper {
 
         /// @brief declare friend class
         friend class GNEAdditionalHandler;
-        friend class GNERouteHandler;
-        friend class GNEDataHandler;
-        friend class GNEMeanDataHandler;
-        friend class GNEJunction;
-        friend class GNEEdge;
-        friend class GNEDataSet;
-        friend class GNEDataInterval;
-        friend class GNEChange_Junction;
-        friend class GNEChange_EdgeType;
-        friend class GNEChange_Edge;
-        friend class GNEChange_TAZSourceSink;
         friend class GNEChange_Additional;
+        friend class GNEChange_DataInterval;
+        friend class GNEChange_DataSet;
+        friend class GNEChange_DemandElement;
+        friend class GNEChange_Edge;
+        friend class GNEChange_EdgeType;
+        friend class GNEChange_GenericData;
+        friend class GNEChange_Junction;
+        friend class GNEChange_MeanData;
         friend class GNEChange_Shape;
         friend class GNEChange_TAZElement;
-        friend class GNEChange_DemandElement;
-        friend class GNEChange_DataSet;
-        friend class GNEChange_DataInterval;
-        friend class GNEChange_GenericData;
-        friend class GNEChange_MeanData;
+        friend class GNEChange_TAZSourceSink;
+        friend class GNEDataHandler;
+        friend class GNEDataInterval;
+        friend class GNEDataSet;
+        friend class GNEDistributionRefDialog;
+        friend class GNEEdge;
+        friend class GNEJunction;
+        friend class GNEMeanDataHandler;
+        friend class GNERouteHandler;
         friend class GNETLSEditorFrame;
 
     public:
@@ -433,6 +434,8 @@ struct GNENetHelper {
         /// @brief get number of selected Wires
         int getNumberOfSelectedWires() const;
 
+        /// @brief return list of available POI parameters
+        std::vector<std::string> getPOIParamKeys() const;
         /// @}
 
         /// @name function for TAZ sourceSinks
@@ -1178,19 +1181,19 @@ struct GNENetHelper {
         /// @{
 
         /// @brief warns about unsaved changes in network and gives the user the option to abort
-        GNEDialog::Result askSaveNetwork(bool& abortSaving) const;
+        GNEDialog::Result askSaveNetwork(GNEDialog::Result& commonResult) const;
 
         /// @brief warns about unsaved changes in additionals and gives the user the option to abort
-        GNEDialog::Result askSaveAdditionalElements(bool& abortSaving) const;
+        GNEDialog::Result askSaveAdditionalElements(GNEDialog::Result& commonResult) const;
 
         /// @brief warns about unsaved changes in demand elements and gives the user the option to abort
-        GNEDialog::Result askSaveDemandElements(bool& abortSaving) const;
+        GNEDialog::Result askSaveDemandElements(GNEDialog::Result& commonResult) const;
 
         /// @brief warns about unsaved changes in data elements and gives the user the option to abort
-        GNEDialog::Result askSaveDataElements(bool& abortSaving) const;
+        GNEDialog::Result askSaveDataElements(GNEDialog::Result& commonResult) const;
 
         /// @brief warns about unsaved changes in meanData elements and gives the user the option to abort
-        GNEDialog::Result askSaveMeanDataElements(bool& abortSaving) const;
+        GNEDialog::Result askSaveMeanDataElements(GNEDialog::Result& commonResult) const;
 
         /// @}
 

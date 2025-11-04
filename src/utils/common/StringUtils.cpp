@@ -225,7 +225,9 @@ StringUtils::isoTimeString(const std::chrono::time_point<std::chrono::system_clo
 
     // Format the time
     std::ostringstream oss;
-    oss << std::put_time(&local_tm, "%Y-%m-%dT%H:%M:%S") << "."
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &local_tm);
+    oss << buf << "."
         << std::setw(6) << std::setfill('0') << std::abs(microseconds)
         << (hours_offset >= 0 ? "+" : "-")
         << std::setw(2) << std::setfill('0') << std::abs(hours_offset) << ":"
@@ -781,6 +783,25 @@ StringUtils::wrapText(const std::string s, int width) {
 void
 StringUtils::resetTranscoder() {
     myLCPTranscoder = nullptr;
+}
+
+
+std::string
+StringUtils::adjustDecimalValue(double value, int precision) {
+    // obtain value in string format with 20 decimals precision
+    auto valueStr = toString(value, precision);
+    // now clear all zeros
+    while (valueStr.size() > 1) {
+        if (valueStr.back() == '0') {
+            valueStr.pop_back();
+        } else if (valueStr.back() == '.') {
+            valueStr.pop_back();
+            return valueStr;
+        } else {
+            return valueStr;
+        }
+    }
+    return valueStr;
 }
 
 /****************************************************************************/

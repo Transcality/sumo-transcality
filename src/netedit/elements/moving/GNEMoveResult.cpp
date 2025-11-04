@@ -17,7 +17,7 @@
 ///
 // Class used for define move results
 /****************************************************************************/
-
+#include <config.h>
 
 #include "GNEMoveResult.h"
 
@@ -26,24 +26,9 @@
 // ===========================================================================
 
 GNEMoveResult::GNEMoveResult(const GNEMoveOperation* moveOperation) :
-    operationType(moveOperation->operationType),
-    firstLaneOffset(0),
-    newFirstLane(nullptr),
-    newFirstPos(0),
-    lastLaneOffset(0),
-    newLastLane(nullptr),
-    newLastPos(0) {}
+    operationType(moveOperation->operationType) {}
 
 
 GNEMoveResult::~GNEMoveResult() {}
-
-
-void
-GNEMoveResult::clearLanes() {
-    firstLaneOffset = 0;
-    newFirstLane = nullptr;
-    lastLaneOffset = 0;
-    newLastLane = nullptr;
-}
 
 /****************************************************************************/

@@ -2578,29 +2578,15 @@ GNENet::writeRouteDistributions(OutputDevice& device, const std::unordered_set<c
     for (const auto& element : sortedElements) {
         element.second->writeDemandElement(device);
     }
-    sortedElements.clear();
 }
 
 
 void
-GNENet::writeRoutes(OutputDevice& device, const std::unordered_set<const GNEAttributeCarrier*>& ACs, const bool additionalFile) const {
+GNENet::writeRoutes(OutputDevice& device, const std::unordered_set<const GNEAttributeCarrier*>& ACs, const bool /* additionalFile */) const {
     std::map<std::string, GNEDemandElement*> sortedRoutes;
     for (const auto& route : myAttributeCarriers->getDemandElements().at(SUMO_TAG_ROUTE)) {
         if (ACs.count(route.second) > 0) {
-            // first check if element is part of a distribution
-            int numRefs = 0;
-            for (const auto vTypeChild : route.second->getChildDemandElements()) {
-                if (vTypeChild->getTagProperty()->getTag() == GNE_TAG_ROUTEREF) {
-                    numRefs++;
-                }
-            }
-            // routes with reference 1 will be saved in route distribution
-            if (numRefs != 1) {
-                if ((additionalFile && (route.second->getChildAdditionals().size() > 0)) ||
-                        (!additionalFile && (route.second->getChildAdditionals().size() == 0))) {
-                    sortedRoutes[route.second->getID()] = route.second;
-                }
-            }
+            sortedRoutes[route.second->getID()] = route.second;
         }
     }
     for (const auto& route : sortedRoutes) {
@@ -2621,29 +2607,15 @@ GNENet::writeVTypeDistributions(OutputDevice& device, const std::unordered_set<c
     for (const auto& element : sortedElements) {
         element.second->writeDemandElement(device);
     }
-    sortedElements.clear();
 }
 
 
 void
-GNENet::writeVTypes(OutputDevice& device, const std::unordered_set<const GNEAttributeCarrier*>& ACs, const bool additionalFile) const {
+GNENet::writeVTypes(OutputDevice& device, const std::unordered_set<const GNEAttributeCarrier*>& ACs, const bool /* additionalFile */) const {
     std::map<std::string, GNEDemandElement*> sortedVTypes;
     for (const auto& vType : myAttributeCarriers->getDemandElements().at(SUMO_TAG_VTYPE)) {
         if (ACs.count(vType.second) > 0) {
-            // first check if element is part of a distribution
-            int numRefs = 0;
-            for (const auto vTypeChild : vType.second->getChildDemandElements()) {
-                if (vTypeChild->getTagProperty()->getTag() == GNE_TAG_VTYPEREF) {
-                    numRefs++;
-                }
-            }
-            // vTypes with reference 1 will be saved in vType distribution
-            if (numRefs != 1) {
-                if ((additionalFile && (vType.second->getChildAdditionals().size() > 0)) ||
-                        (!additionalFile && (vType.second->getChildAdditionals().size() == 0))) {
-                    sortedVTypes[vType.second->getID()] = vType.second;
-                }
-            }
+            sortedVTypes[vType.second->getID()] = vType.second;
         }
     }
     for (const auto& vType : sortedVTypes) {

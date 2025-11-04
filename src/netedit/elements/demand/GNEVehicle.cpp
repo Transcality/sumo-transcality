@@ -19,16 +19,15 @@
 /****************************************************************************/
 
 #include <microsim/devices/MSDevice_BTreceiver.h>
+#include <netedit/changes/GNEChange_Attribute.h>
+#include <netedit/changes/GNEChange_DemandElement.h>
+#include <netedit/elements/moving/GNEMoveElementVehicle.h>
+#include <netedit/frames/demand/GNETypeFrame.h>
 #include <netedit/GNENet.h>
 #include <netedit/GNESegment.h>
 #include <netedit/GNETagProperties.h>
 #include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
-#include <netedit/changes/GNEChange_Attribute.h>
-#include <netedit/changes/GNEChange_DemandElement.h>
-#include <netedit/frames/common/GNEMoveFrame.h>
-#include <netedit/frames/demand/GNETypeFrame.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIBaseVehicleHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
@@ -54,12 +53,6 @@ FXDEFMAP(GNEVehicle::GNESelectedVehiclesPopupMenu) GNESelectedVehiclesPopupMenuM
 // Object implementation
 FXIMPLEMENT(GNEVehicle::GNESingleVehiclePopupMenu,      GUIGLObjectPopupMenu,   GNESingleVehiclePopupMenuMap,       ARRAYNUMBER(GNESingleVehiclePopupMenuMap))
 FXIMPLEMENT(GNEVehicle::GNESelectedVehiclesPopupMenu,   GUIGLObjectPopupMenu,   GNESelectedVehiclesPopupMenuMap,    ARRAYNUMBER(GNESelectedVehiclesPopupMenuMap))
-
-// ===========================================================================
-// static definitions
-// ===========================================================================
-
-const double GNEVehicle::myArrivalPositionDiameter = SUMO_const_halfLaneWidth * 0.5;
 
 // ===========================================================================
 // GNEVehicle::GNESingleVehiclePopupMenu
@@ -445,7 +438,8 @@ GNEVehicle::GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net
 }
 
 
-GNEVehicle::GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEDemandElement* route, const SUMOVehicleParameter& vehicleParameters) :
+GNEVehicle::GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEDemandElement* route,
+                       const SUMOVehicleParameter& vehicleParameters) :
     GNEDemandElement(vehicleParameters.id, net, filename, tag, GNEPathElement::Options::DEMAND_ELEMENT),
     GNEDemandElementFlow(this, vehicleParameters) {
     // set parents
@@ -474,7 +468,8 @@ GNEVehicle::GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename,
 GNEVehicle::GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType,
                        GNEEdge* fromEdge, GNEEdge* toEdge) :
     GNEDemandElement(vehicleID, net, filename, tag, GNEPathElement::Options::DEMAND_ELEMENT),
-    GNEDemandElementFlow(this) {
+    GNEDemandElementFlow(this),
+    myMoveElementVehicle(new GNEMoveElementVehicle(this, fromEdge, departPos, toEdge, arrivalPos)) {
     // set parents
     setParents<GNEEdge*>({fromEdge, toEdge});
     setParent<GNEDemandElement*>(vehicleType);
@@ -484,7 +479,8 @@ GNEVehicle::GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net
 GNEVehicle::GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEEdge* fromEdge, GNEEdge* toEdge,
                        const SUMOVehicleParameter& vehicleParameters) :
     GNEDemandElement(vehicleParameters.id, net, filename, tag, GNEPathElement::Options::DEMAND_ELEMENT),
-    GNEDemandElementFlow(this, vehicleParameters) {
+    GNEDemandElementFlow(this, vehicleParameters),
+    myMoveElementVehicle(new GNEMoveElementVehicle(this, fromEdge, departPos, toEdge, arrivalPos)) {
     // set parents
     setParents<GNEEdge*>({fromEdge, toEdge});
     setParent<GNEDemandElement*>(vehicleType);
@@ -529,31 +525,21 @@ GNEVehicle::GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename,
 GNEVehicle::~GNEVehicle() {}
 
 
-GNEMoveOperation*
-GNEVehicle::getMoveOperation() {
-    // get first and last lanes
-    const GNELane* firstLane = getFirstPathLane();
-    const GNELane* lastLane = getLastPathLane();
-    // check both lanes
-    if (firstLane && lastLane) {
-        // get depart and arrival positions (doubles)
-        const double departPosDouble = getAttributeDouble(SUMO_ATTR_DEPARTPOS);
-        const double arrivalPosDouble = (getAttributeDouble(SUMO_ATTR_ARRIVALPOS) < 0) ? lastLane->getLaneShape().length2D() : getAttributeDouble(SUMO_ATTR_ARRIVALPOS);
-        // obtain diameter
-        const double diameter = getAttributeDouble(SUMO_ATTR_WIDTH) > getAttributeDouble(SUMO_ATTR_LENGTH) ? getAttributeDouble(SUMO_ATTR_WIDTH) : getAttributeDouble(SUMO_ATTR_LENGTH);
-        // return move operation depending if we're editing departPos or arrivalPos
-        if (myNet->getViewNet()->getPositionInformation().distanceSquaredTo2D(getAttributePosition(GNE_ATTR_PLAN_GEOMETRY_STARTPOS)) < (diameter * diameter)) {
-            return new GNEMoveOperation(this, firstLane, departPosDouble, lastLane, INVALID_DOUBLE,
-                                        myNet->getViewNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane(),
-                                        GNEMoveOperation::OperationType::MULTIPLE_LANES_MOVE_FIRST);
-        } else if (myNet->getViewNet()->getPositionInformation().distanceSquaredTo2D(getAttributePosition(GNE_ATTR_PLAN_GEOMETRY_ENDPOS)) < (myArrivalPositionDiameter * myArrivalPositionDiameter)) {
-            return new GNEMoveOperation(this, firstLane, INVALID_DOUBLE, lastLane, arrivalPosDouble,
-                                        myNet->getViewNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane(),
-                                        GNEMoveOperation::OperationType::MULTIPLE_LANES_MOVE_LAST);
-        }
-    }
-    // nothing to move
-    return nullptr;
+GNEMoveElement*
+GNEVehicle::getMoveElement() const {
+    return myMoveElementVehicle;
+}
+
+
+Parameterised*
+GNEVehicle::getParameters() {
+    return this;
+}
+
+
+const Parameterised*
+GNEVehicle::getParameters() const {
+    return this;
 }
 
 
@@ -592,8 +578,6 @@ GNEVehicle::writeDemandElement(OutputDevice& device) const {
         device.writeAttr(SUMO_ATTR_FROM_JUNCTION, getParentJunctions().front()->getID());
         device.writeAttr(SUMO_ATTR_TO_JUNCTION, getParentJunctions().back()->getID());
     }
-    // write flow attributes
-    writeFlowAttributes(this, device);
     // write parameters
     writeParams(device);
     // write route elements associated to this vehicle (except for calibrator FLows)
@@ -753,7 +737,7 @@ GNEVehicle::updateGeometry() {
                 posOverLane = departPos;
             }
             // update Geometry
-            myDemandElementGeometry.updateGeometry(firstPathLane->getLaneShape(), posOverLane, myMoveElementLateralOffset);
+            myDemandElementGeometry.updateGeometry(firstPathLane->getLaneShape(), posOverLane, 0 /*myMovingLateralOffset*/);
             // compute route embedded associated with this vehicle
             for (const auto& demandElement : getChildDemandElements()) {
                 if (demandElement->getTagProperty()->getTag() == GNE_TAG_ROUTE_EMBEDDED) {
@@ -1116,7 +1100,7 @@ GNEVehicle::drawLanePartialGL(const GUIVisualizationSettings& s, const GNESegmen
                 // get geometryEndPos
                 const Position geometryEndPosition = getAttributePosition(GNE_ATTR_PLAN_GEOMETRY_ENDPOS);
                 // check if endPos can be drawn
-                if (myNet->getViewNet()->getPositionInformation().distanceSquaredTo2D(geometryEndPosition) <= ((myArrivalPositionDiameter * myArrivalPositionDiameter) + 2)) {
+                if (myNet->getViewNet()->getPositionInformation().distanceSquaredTo2D(geometryEndPosition) <= ((GNEMoveElementVehicle::arrivalPositionDiameter * GNEMoveElementVehicle::arrivalPositionDiameter) + 2)) {
                     // push draw matrix
                     GLHelper::pushMatrix();
                     // Start with the drawing of the area translating matrix to origin
@@ -1126,7 +1110,7 @@ GNEVehicle::drawLanePartialGL(const GUIVisualizationSettings& s, const GNESegmen
                     // Set person plan color
                     GLHelper::setColor(pathColor);
                     // resolution of drawn circle depending of the zoom (To improve smoothness)
-                    GLHelper::drawFilledCircleDetailled(d, myArrivalPositionDiameter);
+                    GLHelper::drawFilledCircleDetailled(d, GNEMoveElementVehicle::arrivalPositionDiameter);
                     // pop draw matrix
                     GLHelper::popMatrix();
                 }
@@ -1537,7 +1521,7 @@ GNEVehicle::getAttributePosition(SumoXMLAttr key) const {
             }
         }
         default:
-            throw InvalidArgument(getTagStr() + " doesn't have a double attribute of type '" + toString(key) + "'");
+            return getCommonAttributePosition(key);
     }
 }
 
@@ -1799,12 +1783,6 @@ GNEVehicle::getHierarchyName() const {
         }
     }
     return getTagStr() + ": " + getAttribute(SUMO_ATTR_ID);
-}
-
-
-const Parameterised::Map&
-GNEVehicle::getACParametersMap() const {
-    return getParametersMap();
 }
 
 
@@ -2238,63 +2216,6 @@ void
 GNEVehicle::toggleAttribute(SumoXMLAttr key, const bool value) {
     // toggle flow attributes
     toggleFlowAttribute(key, value);
-}
-
-
-void
-GNEVehicle::setMoveShape(const GNEMoveResult& moveResult) {
-    if ((moveResult.newFirstPos != INVALID_DOUBLE) &&
-            (moveResult.operationType == GNEMoveOperation::OperationType::MULTIPLE_LANES_MOVE_FIRST)) {
-        // change depart
-        departPosProcedure = DepartPosDefinition::GIVEN;
-        parametersSet |= VEHPARS_DEPARTPOS_SET;
-        departPos = moveResult.newFirstPos;
-    }
-    if ((moveResult.operationType == GNEMoveOperation::OperationType::SINGLE_LANE_MOVE_LAST) ||
-            (moveResult.operationType == GNEMoveOperation::OperationType::MULTIPLE_LANES_MOVE_LAST)) {
-        // change arrival
-        arrivalPosProcedure = ArrivalPosDefinition::GIVEN;
-        parametersSet |= VEHPARS_ARRIVALPOS_SET;
-        arrivalPos = moveResult.newFirstPos;
-    }
-    // set lateral offset
-    myMoveElementLateralOffset = moveResult.firstLaneOffset;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNEVehicle::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    // reset lateral offset
-    myMoveElementLateralOffset = 0;
-    // check value
-    if (moveResult.newFirstPos != INVALID_DOUBLE) {
-        // continue depending if we're moving first or last position
-        if (moveResult.operationType == GNEMoveOperation::OperationType::MULTIPLE_LANES_MOVE_FIRST) {
-            // begin change attribute
-            undoList->begin(this, TLF("departPos of %", getTagStr()));
-            // now set departPos
-            setAttribute(SUMO_ATTR_DEPARTPOS, toString(moveResult.newFirstPos), undoList);
-            // check if depart lane has to be changed
-            if (moveResult.newFirstLane) {
-                // set new depart lane
-                setAttribute(SUMO_ATTR_DEPARTLANE, toString(moveResult.newFirstLane->getIndex()), undoList);
-            }
-        } else {
-            // begin change attribute
-            undoList->begin(this, TLF("arrivalPos of %", getTagStr()));
-            // now set arrivalPos
-            setAttribute(SUMO_ATTR_ARRIVALPOS, toString(moveResult.newFirstPos), undoList);
-            // check if arrival lane has to be changed
-            if (moveResult.newFirstLane) {
-                // set new arrival lane
-                setAttribute(SUMO_ATTR_ARRIVALLANE, toString(moveResult.newFirstLane->getIndex()), undoList);
-            }
-        }
-    }
-    // end change attribute
-    undoList->end();
 }
 
 /****************************************************************************/

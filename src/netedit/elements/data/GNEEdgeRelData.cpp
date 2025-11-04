@@ -102,8 +102,9 @@ GNEEdgeRelData::getColorValue(const GUIVisualizationSettings& s, int activeSchem
             } catch (NumberFormatException&) {
                 return GUIVisualizationSettings::MISSING_DATA;
             }
+        default:
+            return 0;
     }
-    return 0;
 }
 
 
@@ -314,14 +315,14 @@ GNEEdgeRelData::getAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_END:
             return myDataIntervalParent->getAttribute(SUMO_ATTR_END);
         default:
-            return getCommonAttribute(this, key);
+            return getCommonAttribute(key);
     }
 }
 
 
 double
 GNEEdgeRelData::getAttributeDouble(SumoXMLAttr key) const {
-    throw InvalidArgument(getTagStr() + " doesn't have a double attribute of type '" + toString(key) + "'");
+    return getCommonAttributeDouble(key);
 }
 
 
@@ -352,7 +353,7 @@ GNEEdgeRelData::isValid(SumoXMLAttr key, const std::string& value) {
             return SUMOXMLDefinitions::isValidNetID(value) && (myNet->getAttributeCarriers()->retrieveEdge(value, false) != nullptr) &&
                    (value != getParentEdges().front()->getID());
         default:
-            return isCommonValid(key, value);
+            return isCommonAttributeValid(key, value);
     }
 }
 
@@ -393,7 +394,7 @@ GNEEdgeRelData::setAttribute(SumoXMLAttr key, const std::string& value) {
             break;
         }
         default:
-            setCommonAttribute(this, key, value);
+            setCommonAttribute(key, value);
             if (!isTemplate()) {
                 myDataIntervalParent->getDataSetParent()->updateAttributeColors();
             }

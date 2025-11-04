@@ -25,11 +25,11 @@
 #include <netedit/dialogs/basic/GNEInformationBasicDialog.h>
 #include <netedit/dialogs/basic/GNEQuestionBasicDialog.h>
 #include <netedit/dialogs/basic/GNEWarningBasicDialog.h>
-#include <netedit/dialogs/GNEVClassesDialog.h>
-#include <netedit/dialogs/GNEGeometryPointDialog.h>
 #include <netedit/dialogs/fix/GNEFixAdditionalElementsDialog.h>
 #include <netedit/dialogs/fix/GNEFixDemandElementsDialog.h>
 #include <netedit/dialogs/fix/GNEFixNetworkElements.h>
+#include <netedit/dialogs/GNEGeometryPointDialog.h>
+#include <netedit/dialogs/GNEVClassesDialog.h>
 #include <netedit/elements/additional/GNEAdditionalHandler.h>
 #include <netedit/elements/additional/GNEPOI.h>
 #include <netedit/elements/additional/GNEPoly.h>
@@ -38,13 +38,6 @@
 #include <netedit/elements/network/GNEConnection.h>
 #include <netedit/elements/network/GNECrossing.h>
 #include <netedit/elements/network/GNEWalkingArea.h>
-#include <netedit/frames/GNEAttributesEditor.h>
-#include <netedit/frames/GNEConsecutiveSelector.h>
-#include <netedit/frames/GNEDrawingShape.h>
-#include <netedit/frames/GNEOverlappedInspection.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanCreator.h>
-#include <netedit/frames/GNEViewObjectSelector.h>
 #include <netedit/frames/common/GNEDeleteFrame.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
 #include <netedit/frames/common/GNEMoveFrame.h>
@@ -63,6 +56,13 @@
 #include <netedit/frames/demand/GNETypeDistributionFrame.h>
 #include <netedit/frames/demand/GNETypeFrame.h>
 #include <netedit/frames/demand/GNEVehicleFrame.h>
+#include <netedit/frames/GNEAttributesEditor.h>
+#include <netedit/frames/GNEConsecutiveSelector.h>
+#include <netedit/frames/GNEDrawingShape.h>
+#include <netedit/frames/GNEOverlappedInspection.h>
+#include <netedit/frames/GNEPathCreator.h>
+#include <netedit/frames/GNEPlanCreator.h>
+#include <netedit/frames/GNEViewObjectSelector.h>
 #include <netedit/frames/network/GNEAdditionalFrame.h>
 #include <netedit/frames/network/GNEConnectorFrame.h>
 #include <netedit/frames/network/GNECreateEdgeFrame.h>
@@ -80,6 +80,7 @@
 #include <utils/gui/div/GUIGlobalViewUpdater.h>
 #include <utils/gui/globjects/GUICursorDialog.h>
 #include <utils/gui/globjects/GUIGlObjectStorage.h>
+#include <utils/gui/images/GUITextureSubSys.h>
 #include <utils/gui/settings/GUICompleteSchemeStorage.h>
 #include <utils/gui/windows/GUIDanielPerspectiveChanger.h>
 #include <utils/gui/windows/GUIDialog_ViewSettings.h>
@@ -235,7 +236,10 @@ FXDEFMAP(GNEViewNet) GNEViewNetMap[] = {
     FXMAPFUNC(SEL_COMMAND, MID_GNE_SHAPEEDITED_RESET,                   GNEViewNet::onCmdResetShapeEdited),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_SHAPEEDITED_FINISH,                  GNEViewNet::onCmdFinishShapeEdited),
     // POIs
-    FXMAPFUNC(SEL_COMMAND, MID_GNE_POI_TRANSFORM,   GNEViewNet::onCmdTransformPOI),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_POI_ATTACH,              GNEViewNet::onCmdAttachPOI),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_POI_RELEASE,             GNEViewNet::onCmdReleasePOI),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_POI_TRANSFORM_POI,       GNEViewNet::onCmdTransformPOI),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_POI_TRANSFORM_POIGEO,    GNEViewNet::onCmdTransformPOIGEO),
     // Demand elements
     FXMAPFUNC(SEL_COMMAND, MID_GNE_REVERSE,     GNEViewNet::onCmdReverse),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_ADDREVERSE,  GNEViewNet::onCmdAddReverse),
@@ -1282,7 +1286,7 @@ std::vector<std::string>
 GNEViewNet::getEdgeDataAttrs() const {
     std::set<std::string> keys;
     for (const auto& genericData : myNet->getAttributeCarriers()->getGenericDatas().at(GNE_TAG_EDGEREL_SINGLE)) {
-        for (const auto& parameter : genericData.second->getACParametersMap()) {
+        for (const auto& parameter : genericData.second->getParameters()->getParametersMap()) {
             keys.insert(parameter.first);
         }
     }
@@ -1294,16 +1298,22 @@ std::vector<std::string>
 GNEViewNet::getRelDataAttrs() const {
     std::set<std::string> keys;
     for (const auto& genericData : myNet->getAttributeCarriers()->getGenericDatas().at(SUMO_TAG_TAZREL)) {
-        for (const auto& parameter : genericData.second->getACParametersMap()) {
+        for (const auto& parameter : genericData.second->getParameters()->getParametersMap()) {
             keys.insert(parameter.first);
         }
     }
     for (const auto& genericData : myNet->getAttributeCarriers()->getGenericDatas().at(SUMO_TAG_EDGEREL)) {
-        for (const auto& parameter : genericData.second->getACParametersMap()) {
+        for (const auto& parameter : genericData.second->getParameters()->getParametersMap()) {
             keys.insert(parameter.first);
         }
     }
     return std::vector<std::string>(keys.begin(), keys.end());
+}
+
+
+std::vector<std::string>
+GNEViewNet::getPOIParamKeys() const {
+    return myNet->getAttributeCarriers()->getPOIParamKeys();
 }
 
 
@@ -2967,66 +2977,107 @@ GNEViewNet::onCmdFinishShapeEdited(FXObject*, FXSelector, void*) {
 
 
 long
-GNEViewNet::onCmdTransformPOI(FXObject*, FXSelector, void*) {
+GNEViewNet::onCmdAttachPOI(FXObject*, FXSelector, void*) {
     // obtain POI at popup position
     GNEPOI* POI = getPOIAtPopupPosition();
-    if (POI) {
+    if (POI && (POI->getTagProperty()->getTag() != GNE_TAG_POILANE)) {
         // declare additional handler
         GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
-        // check what type of POI will be transformed
-        if (POI->getTagProperty()->getTag() == SUMO_TAG_POI) {
-            // obtain lanes around POI boundary
-            std::vector<GUIGlID> GLIDs = getObjectsInBoundary(POI->getCenteringBoundary());
-            std::vector<GNELane*> lanes;
-            for (const auto& GLID : GLIDs) {
-                GNELane* lane = dynamic_cast<GNELane*>(GUIGlObjectStorage::gIDStorage.getObjectBlocking(GLID));
-                if (lane) {
-                    lanes.push_back(lane);
-                }
-            }
-            if (lanes.empty()) {
-                WRITE_WARNINGF(TL("No lanes around % to attach it"), toString(SUMO_TAG_POI));
-            } else {
-                // obtain nearest lane to POI
-                GNELane* nearestLane = lanes.front();
-                double minorPosOverLane = nearestLane->getLaneShape().nearest_offset_to_point2D(POI->getPositionInView());
-                double minorLateralOffset = nearestLane->getLaneShape().positionAtOffset(minorPosOverLane).distanceTo(POI->getPositionInView());
-                for (const auto& lane : lanes) {
-                    double posOverLane = lane->getLaneShape().nearest_offset_to_point2D(POI->getPositionInView());
-                    double lateralOffset = lane->getLaneShape().positionAtOffset(posOverLane).distanceTo(POI->getPositionInView());
-                    if (lateralOffset < minorLateralOffset) {
-                        minorPosOverLane = posOverLane;
-                        minorLateralOffset = lateralOffset;
-                        nearestLane = lane;
-                    }
-                }
-                // get sumo base object of POI (And all common attributes)
-                CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
-                // add specific attributes
-                POIBaseObject->addStringAttribute(SUMO_ATTR_LANE, nearestLane->getID());
-                POIBaseObject->addDoubleAttribute(SUMO_ATTR_POSITION, minorPosOverLane);
-                POIBaseObject->addBoolAttribute(SUMO_ATTR_FRIENDLY_POS, POI->getFriendlyPos());
-                POIBaseObject->addDoubleAttribute(SUMO_ATTR_POSITION_LAT, 0);
-                // remove POI
-                myUndoList->begin(POI, TL("attach POI into lane"));
-                myNet->deleteAdditional(POI, myUndoList);
-                // add new POI use route handler
-                additionalHandler.parseSumoBaseObject(POIBaseObject);
-                myUndoList->end();
-            }
+        // obtain lanes around POI boundary
+        getObjectsInBoundary(POI->getCenteringBoundary());
+        if (myViewObjectsSelector.getLaneFront() == nullptr) {
+            WRITE_WARNINGF("No lanes around the % '%' to attach it", toString(SUMO_TAG_POI), POI->getID());
         } else {
+            // obtain nearest lane to POI
+            GNELane* nearestLane = myViewObjectsSelector.getLaneFront();
+            double minorPosOverLane = nearestLane->getLaneShape().nearest_offset_to_point2D(POI->getPositionInView());
+            double minorLateralOffset = nearestLane->getLaneShape().positionAtOffset(minorPosOverLane).distanceTo(POI->getPositionInView());
+            for (const auto& lane : myViewObjectsSelector.getLanes()) {
+                double posOverLane = lane->getLaneShape().nearest_offset_to_point2D(POI->getPositionInView());
+                double lateralOffset = lane->getLaneShape().positionAtOffset(posOverLane).distanceTo(POI->getPositionInView());
+                if (lateralOffset < minorLateralOffset) {
+                    minorPosOverLane = posOverLane;
+                    minorLateralOffset = lateralOffset;
+                    nearestLane = lane;
+                }
+            }
             // get sumo base object of POI (And all common attributes)
             CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
             // add specific attributes
-            POIBaseObject->addDoubleAttribute(SUMO_ATTR_X, POI->x());
-            POIBaseObject->addDoubleAttribute(SUMO_ATTR_Y, POI->y());
+            POIBaseObject->addStringAttribute(SUMO_ATTR_LANE, nearestLane->getID());
+            POIBaseObject->addDoubleAttribute(SUMO_ATTR_POSITION, minorPosOverLane);
+            POIBaseObject->addBoolAttribute(SUMO_ATTR_FRIENDLY_POS, (POI->getAttribute(SUMO_ATTR_FRIENDLY_POS) == GNEAttributeCarrier::TRUE_STR));
+            POIBaseObject->addDoubleAttribute(SUMO_ATTR_POSITION_LAT, 0);
             // remove POI
-            myUndoList->begin(POI, TL("release POI from lane"));
+            myUndoList->begin(POI, TL("attach POI into lane"));
             myNet->deleteAdditional(POI, myUndoList);
             // add new POI use route handler
             additionalHandler.parseSumoBaseObject(POIBaseObject);
             myUndoList->end();
         }
+    }
+    return 1;
+}
+
+
+long
+GNEViewNet::onCmdReleasePOI(FXObject*, FXSelector, void*) {
+    // obtain POI at popup position
+    GNEPOI* POI = getPOIAtPopupPosition();
+    if (POI && (POI->getTagProperty()->getTag() == GNE_TAG_POILANE)) {
+        // declare additional handler
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        // get sumo base object of POI (And all common attributes)
+        CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
+        // add specific attributes
+        POIBaseObject->addDoubleAttribute(SUMO_ATTR_X, POI->getPositionInView().x());
+        POIBaseObject->addDoubleAttribute(SUMO_ATTR_Y, POI->getPositionInView().y());
+        // remove POI
+        myUndoList->begin(POI, TL("release POI from lane"));
+        myNet->deleteAdditional(POI, myUndoList);
+        // add new POI use route handler
+        additionalHandler.parseSumoBaseObject(POIBaseObject);
+        myUndoList->end();
+    }
+    return 1;
+}
+
+
+long
+GNEViewNet::onCmdTransformPOI(FXObject*, FXSelector, void*) {
+    // obtain POI at popup position
+    GNEPOI* POI = getPOIAtPopupPosition();
+    if (POI && (POI->getTagProperty()->getTag() != SUMO_TAG_POI)) {
+        // declare additional handler
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        // get sumo base object of POI (And all common attributes)
+        CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
+        // remove POI
+        myUndoList->begin(POI, TL("transform to POI"));
+        myNet->deleteAdditional(POI, myUndoList);
+        // add new POI use route handler
+        additionalHandler.parseSumoBaseObject(POIBaseObject);
+        myUndoList->end();
+    }
+    return 1;
+}
+
+
+long
+GNEViewNet::onCmdTransformPOIGEO(FXObject*, FXSelector, void*) {
+    // obtain POI at popup position
+    GNEPOI* POI = getPOIAtPopupPosition();
+    if (POI && (POI->getTagProperty()->getTag() != SUMO_TAG_POI)) {
+        // declare additional handler
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        // get sumo base object of POI (And all common attributes)
+        CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
+        // remove POI
+        myUndoList->begin(POI, TL("transform to POI GEO"));
+        myNet->deleteAdditional(POI, myUndoList);
+        // add new POI use route handler
+        additionalHandler.parseSumoBaseObject(POIBaseObject);
+        myUndoList->end();
     }
     return 1;
 }
@@ -3693,7 +3744,7 @@ GNEViewNet::onCmdClearConnections(FXObject*, FXSelector, void*) {
         const auto frontElements = myMarkFrontElements.getACs();
         for (const auto& AC : frontElements) {
             if (AC->getTagProperty()->getTag() == SUMO_TAG_CONNECTION) {
-                myMarkFrontElements.unmarkAC(AC);
+                AC->unmarkForDrawingFront();
             }
         }
         // check if we're handling a selection
@@ -3727,7 +3778,7 @@ GNEViewNet::onCmdResetConnections(FXObject*, FXSelector, void*) {
         const auto frontElements = myMarkFrontElements.getACs();
         for (const auto& AC : frontElements) {
             if (AC->getTagProperty()->getTag() == SUMO_TAG_CONNECTION) {
-                myMarkFrontElements.unmarkAC(AC);
+                AC->unmarkForDrawingFront();
             }
         }
         // check if we're handling a selection
@@ -5871,7 +5922,7 @@ GNEViewNet::processLeftButtonPressNetwork(void* eventData) {
                 if (myMouseButtonKeyPressed.shiftKeyPressed()) {
                     // remove geometry point
                     if (myViewObjectsSelector.getNetworkElementFront() == myEditNetworkElementShapes.getEditedNetworkElement()) {
-                        myViewObjectsSelector.getNetworkElementFront()->removeGeometryPoint(getPositionInformation(), myUndoList);
+                        myViewObjectsSelector.getNetworkElementFront()->getMoveElement()->removeGeometryPoint(getPositionInformation(), myUndoList);
                     }
                 } else if (!myMoveSingleElement.beginMoveNetworkElementShape()) {
                     // process click  if there isn't movable elements (to move camera using drag an drop)

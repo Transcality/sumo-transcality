@@ -31,11 +31,13 @@
 
 #include <guisim/GUILane.h>
 #include <guisim/GUINet.h>
+#include <guisim/GUITrafficLightLogicWrapper.h>
 #include <microsim/MSEdgeControl.h>
 #include <microsim/MSInsertionControl.h>
 #include <microsim/MSStateHandler.h>
 #include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/devices/MSRoutingEngine.h>
+#include <microsim/traffic_lights/MSTLLogicControl.h>
 #include <netload/NLHandler.h>
 #include <traci-server/TraCIServer.h>
 #include <utils/common/MsgHandler.h>
@@ -1845,11 +1847,13 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
     GUIEvent_SimulationLoaded* ec = static_cast<GUIEvent_SimulationLoaded*>(e);
     // check whether the loading was successful
     if (ec->myNet == nullptr) {
-        // report failure
-        setStatusBarText(TLF("Loading of '%' failed!", ec->myFile));
-        if (GUIGlobals::gQuitOnEnd) {
-            closeAllWindows();
-            getApp()->exit(1);
+        if (ec->myFile.size() > 0) {
+            // report failure
+            setStatusBarText(TLF("Loading of '%' failed!", ec->myFile));
+            if (GUIGlobals::gQuitOnEnd) {
+                closeAllWindows();
+                getApp()->exit(1);
+            }
         }
     } else {
         // initialise simulation thread
@@ -1916,6 +1920,17 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
                     myCollisionSounds = settings.getEventDistribution("collision");
                     if (settings.getJamSoundTime() > 0) {
                         myJamSoundTime = settings.getJamSoundTime();
+                    }
+                    for (const std::string& tlsID : settings.getTrackers()) {
+                        if (MSNet::getInstance()->getTLSControl().knows(tlsID)) {
+                            MSTrafficLightLogic* tll = MSNet::getInstance()->getTLSControl().get(tlsID).getActive();
+                            GUITrafficLightLogicWrapper* tllW = GUINet::getGUIInstance()->getTLLWrapper(tll);
+                            if (tllW) {
+                                tllW->begin2TrackPhases(this);
+                            }
+                        } else {
+                            WRITE_WARNINGF("Tracker for unknown tlLogic '%' in settings file '%'", tlsID, fname);
+                        }
                     }
                 }
             } else {
@@ -2198,7 +2213,9 @@ GUIApplicationWindow::loadConfigOrNet(const std::string& file) {
         closeAllWindows();
         gSchemeStorage.saveViewport(0, 0, -1, 0); // recenter view
         myLoadThread->loadConfigOrNet(file);
-        setStatusBarText(TLF("Loading '%'.", file));
+        if (file.size() > 0) {
+            setStatusBarText(TLF("Loading '%'.", file));
+        }
         update();
     }
 }

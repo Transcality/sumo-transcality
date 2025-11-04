@@ -127,7 +127,7 @@ protected:
     void fillCommonAttributes(GNETagProperties* tagProperties);
 
     /// @brief fill common stoppingPlace attributes
-    void fillCommonStoppingPlaceAttributes(GNETagProperties* tagProperties, const bool includeColor);
+    void fillCommonStoppingPlaceAttributes(GNETagProperties* tagProperties, const bool includeColor, const bool parkingAreaAngle);
 
     /// @brief fill common POI attributes
     void fillCommonPOIAttributes(GNETagProperties* tagProperties);
@@ -244,7 +244,7 @@ protected:
     void fillDetectorThresholdAttributes(GNETagProperties* tagProperties, const bool includingJam);
 
     /// @brief fill distribution probability attribute
-    void fillDistributionProbability(GNETagProperties* tagProperties, const bool visible);
+    void fillDistributionProbability(GNETagProperties* tagProperties);
 
     /// @}
 

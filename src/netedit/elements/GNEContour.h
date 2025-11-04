@@ -89,12 +89,12 @@ public:
     /// @brief calculate contour for first geometry point
     void calculateContourFirstGeometryPoint(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
                                             const GUIGlObject* glObject, const PositionVector& shape, const double layer,
-                                            const double radius, const double scale) const;
+                                            const double radius, const double scale, const bool forceCalculation = false) const;
 
     /// @brief calculate contour for last geometry point
     void calculateContourLastGeometryPoint(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
                                            const GUIGlObject* glObject, const PositionVector& shape, const double layer,
-                                           const double radius, const double scale) const;
+                                           const double radius, const double scale, const bool forceCalculation = false) const;
 
     /// @brief calculate contour for middle geometry point
     void calculateContourMiddleGeometryPoints(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
@@ -134,7 +134,7 @@ public:
 
     /// @brief draw dotted contour (call out of this class only in special cases, for example in WalkingAreas)
     bool drawDottedContour(const GUIVisualizationSettings& s, GUIDottedGeometry::DottedContourType type,
-                           const double lineWidth, const bool addOffset) const;
+                           const double lineWidth, const bool addOffset, const double extraZOffset = 0) const;
     /// @}
 
 private:

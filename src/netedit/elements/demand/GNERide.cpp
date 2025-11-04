@@ -18,12 +18,8 @@
 // A class for visualizing rides in Netedit
 /****************************************************************************/
 
-#include <utils/gui/windows/GUIAppEnum.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/GNENet.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <utils/gui/div/GUIDesigns.h>
 
 #include "GNERide.h"
 
@@ -62,9 +58,21 @@ GNERide::GNERide(SumoXMLTag tag, GNEDemandElement* personParent, const GNEPlanPa
 GNERide::~GNERide() {}
 
 
-GNEMoveOperation*
-GNERide::getMoveOperation() {
-    return getPlanMoveOperation();
+GNEMoveElement*
+GNERide::getMoveElement() const {
+    return myMoveElementPlan;
+}
+
+
+Parameterised*
+GNERide::getParameters() {
+    return nullptr;
+}
+
+
+const Parameterised*
+GNERide::getParameters() const {
+    return nullptr;
 }
 
 
@@ -257,12 +265,6 @@ GNERide::getHierarchyName() const {
     return getPlanHierarchyName();
 }
 
-
-const Parameterised::Map&
-GNERide::getACParametersMap() const {
-    return getParametersMap();
-}
-
 // ===========================================================================
 // private
 // ===========================================================================
@@ -280,24 +282,6 @@ GNERide::setAttribute(SumoXMLAttr key, const std::string& value) {
             setPlanAttribute(key, value);
             break;
     }
-}
-
-
-void
-GNERide::setMoveShape(const GNEMoveResult& moveResult) {
-    // change both position
-    myArrivalPosition = moveResult.newLastPos;
-    // update geometry
-    updateGeometry();
-}
-
-
-void
-GNERide::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    undoList->begin(this, "arrivalPos of " + getTagStr());
-    // now adjust start position
-    setAttribute(SUMO_ATTR_ARRIVALPOS, toString(moveResult.newFirstPos), undoList);
-    undoList->end();
 }
 
 /****************************************************************************/

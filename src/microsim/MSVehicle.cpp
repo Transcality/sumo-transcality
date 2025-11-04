@@ -502,8 +502,8 @@ MSVehicle::Influencer::influenceSpeed(SUMOTime currentTime, double speed, double
             mySpeedTimeLine[0].second = speed;
             mySpeedAdaptationStarted = true;
         }
-        currentTime += DELTA_T;
-        const double td = STEPS2TIME(currentTime - mySpeedTimeLine[0].first) / MAX2(TS, STEPS2TIME(mySpeedTimeLine[1].first - mySpeedTimeLine[0].first));
+        currentTime += DELTA_T; // start slowing down in the step in which this command was issued (the input value of currentTime still reflects the previous step)
+        const double td = MIN2(1.0, STEPS2TIME(currentTime - mySpeedTimeLine[0].first) / MAX2(TS, STEPS2TIME(mySpeedTimeLine[1].first - mySpeedTimeLine[0].first)));
 
         speed = mySpeedTimeLine[0].second - (mySpeedTimeLine[0].second - mySpeedTimeLine[1].second) * td;
         if (myConsiderSafeVelocity) {
@@ -2191,7 +2191,9 @@ MSVehicle::brakeForOverlap(const MSLink* link, const MSLane* lane) const {
                          // ignore situations where the shadow lane is part of a double-connection with the current lane
                          && (myLaneChangeModel->getShadowLane() == nullptr
                              || myLaneChangeModel->getShadowLane()->getLinkCont().size() == 0
-                             || myLaneChangeModel->getShadowLane()->getLinkCont().front()->getLane() != link->getLane()));
+                             || myLaneChangeModel->getShadowLane()->getLinkCont().front()->getLane() != link->getLane())
+                         // emergency vehicles may do some crazy stuff
+                         && !myLaneChangeModel->hasBlueLight());
 
 #ifdef DEBUG_PLAN_MOVE
     if (DEBUG_COND) {
@@ -2611,6 +2613,27 @@ MSVehicle::planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVecto
         // move to next lane
         //  get the next link used
         std::vector<MSLink*>::const_iterator link = MSLane::succLinkSec(*this, view + 1, *lane, bestLaneConts);
+        if (lane->isLinkEnd(link) && myLaneChangeModel->hasBlueLight() && myCurrEdge != myRoute->end() - 1) {
+            // emergency vehicle is on the wrong lane. Obtain the link that it would use from the correct turning lane
+            const int currentIndex = lane->getIndex();
+            const MSLane* bestJump = nullptr;
+            for (const LaneQ& preb : getBestLanes()) {
+                if (preb.allowsContinuation &&
+                        (bestJump == nullptr
+                         || abs(currentIndex - preb.lane->getIndex()) < abs(currentIndex - bestJump->getIndex()))) {
+                    bestJump = preb.lane;
+                }
+            }
+            if (bestJump != nullptr) {
+                const MSEdge* nextEdge = *(myCurrEdge + 1);
+                for (auto cand_it = bestJump->getLinkCont().begin(); cand_it != bestJump->getLinkCont().end(); cand_it++) {
+                    if (&(*cand_it)->getLane()->getEdge() == nextEdge) {
+                        link = cand_it;
+                        break;
+                    }
+                }
+            }
+        }
 
         // Check whether this is a turn (to save info about the next upcoming turn)
         if (!encounteredTurn) {
@@ -5460,12 +5483,14 @@ MSVehicle::enterLaneAtMove(MSLane* enteredLane, bool onTeleporting) {
     if (!onTeleporting) {
         activateReminders(MSMoveReminder::NOTIFICATION_JUNCTION, enteredLane);
         if (MSGlobals::gLateralResolution > 0) {
+            myFurtherLanesPosLat.push_back(myState.myPosLat);
             // transform lateral position when the lane width changes
             assert(oldLane != nullptr);
             const MSLink* const link = oldLane->getLinkTo(myLane);
             if (link != nullptr) {
-                myFurtherLanesPosLat.push_back(myState.myPosLat);
                 myState.myPosLat += link->getLateralShift();
+            } else {
+                myState.myPosLat += (oldLane->getCenterOnEdge() - myLane->getCanonicalPredecessorLane()->getRightSideOnEdge()) / 2;
             }
         } else if (fabs(myState.myPosLat) > NUMERICAL_EPS) {
             const double overlap = MAX2(0.0, getLateralOverlap(myState.myPosLat, oldLane));
@@ -7558,9 +7583,9 @@ MSVehicle::isLeader(const MSLink* link, const MSVehicle* veh, const double gap) 
                             response2 = true;
                         }
                     } else {
-                        // brake for stuck foe
-                        response = foeEntry->haveRed();
-                        response2 = entry->haveRed();
+                        // let conflict entry time decide
+                        response = true;
+                        response2 = true;
                     }
                 } else if (entry->havePriority() != foeEntry->havePriority()) {
                     response = !entry->havePriority();

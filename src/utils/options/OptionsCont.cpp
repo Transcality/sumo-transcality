@@ -37,6 +37,7 @@
 #include <utils/common/UtilExceptions.h>
 #include <utils/common/FileHelpers.h>
 #include <utils/common/MsgHandler.h>
+#include <utils/common/StdDefs.h>
 #include <utils/common/StringTokenizer.h>
 #include <utils/common/StringUtils.h>
 #include <utils/xml/SUMOSAXAttributes.h>
@@ -617,6 +618,7 @@ OptionsCont::splitLines(std::ostream& os, std::string what,
 bool
 OptionsCont::processMetaOptions(bool missingOptions) {
     MsgHandler::setupI18n(getString("language"));
+    localizeDescriptions();
     if (missingOptions) {
         // no options are given
         std::cout << myFullName << std::endl;
@@ -718,6 +720,24 @@ OptionsCont::processMetaOptions(bool missingOptions) {
 }
 
 
+void 
+OptionsCont::localizeDescriptions() {
+    if (!myAmLocalized && gLocaleInitialized) {
+        // options
+        for (auto option : myAddresses) {
+            option.second->setDescription(TL(option.second->getDescription().c_str()));
+        }
+        // examples
+        for (auto example : myCallExamples) {
+            example.second = TL(example.second.c_str());
+        }
+        // other text
+        setApplicationDescription(TL(myAppDescription.c_str()));
+        myAmLocalized = true;
+    }
+}
+
+
 const std::vector<std::string>&
 OptionsCont::getSubTopics() const {
     return mySubTopics;
@@ -810,7 +830,7 @@ OptionsCont::printHelp(std::ostream& os) {
         }
         if (!foundTopic) {
             // print topic list
-            os << "Help Topics:" << std::endl;
+            os << TL("Help Topics:") << std::endl;
             for (const std::string& t : mySubTopics) {
                 os << "    " << t << std::endl;
             }
@@ -818,7 +838,7 @@ OptionsCont::printHelp(std::ostream& os) {
         return;
     }
     // print usage BNF
-    os << "Usage: " << myAppName << " [OPTION]*" << std::endl;
+    os << TL("Usage: ") << myAppName << TL(" [OPTION]*") << std::endl;
     // print additional text if any
     if (myAdditionalMessage.length() > 0) {
         os << myAdditionalMessage << std::endl << std::endl;
@@ -830,21 +850,21 @@ OptionsCont::printHelp(std::ostream& os) {
     os << std::endl;
     // print usage examples, calc size first
     if (myCallExamples.size() != 0) {
-        os << "Examples:" << std::endl;
+        os << TL("Examples:") << std::endl;
         for (const auto& callExample : myCallExamples) {
             os << "  " << myAppName << ' ' << callExample.first << std::endl;
             os << "    " << callExample.second << std::endl;
         }
     }
     os << std::endl;
-    os << "Report bugs at <https://github.com/eclipse-sumo/sumo/issues>." << std::endl;
-    os << "Get in contact via <sumo@dlr.de>." << std::endl;
+    os << TLF("Report bugs at %.", "<https://github.com/eclipse-sumo/sumo/issues>") << std::endl;
+    os << TLF("Get in contact via %.", "<sumo@dlr.de>") << std::endl;
 }
 
 
 void
 OptionsCont::printHelpOnTopic(const std::string& topic, int tooLarge, int maxSize, std::ostream& os) {
-    os << topic << " Options:" << std::endl;
+    os << TLF("% Options:", topic) << std::endl;
     for (const auto& entry : mySubTopicEntries[topic]) {
         // start length computation
         int csize = (int)entry.length() + 2;

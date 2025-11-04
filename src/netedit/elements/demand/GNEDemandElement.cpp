@@ -18,18 +18,17 @@
 // A abstract class for demand elements
 /****************************************************************************/
 
-#include <netedit/GNENet.h>
-#include <netedit/GNESegment.h>
-#include <netedit/GNETagPropertiesDatabase.h>
-#include <netedit/GNEViewParent.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanSelector.h>
 #include <netedit/frames/common/GNESelectorFrame.h>
 #include <netedit/frames/demand/GNEContainerFrame.h>
 #include <netedit/frames/demand/GNEContainerPlanFrame.h>
 #include <netedit/frames/demand/GNEPersonFrame.h>
 #include <netedit/frames/demand/GNEPersonPlanFrame.h>
 #include <netedit/frames/demand/GNEVehicleFrame.h>
+#include <netedit/frames/GNEPlanSelector.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNESegment.h>
+#include <netedit/GNETagPropertiesDatabase.h>
+#include <netedit/GNEViewParent.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/div/GUIParameterTableWindow.h>
@@ -73,18 +72,6 @@ GNEDemandElement::~GNEDemandElement() {}
 GNEHierarchicalElement*
 GNEDemandElement::getHierarchicalElement() {
     return this;
-}
-
-
-GNEMoveElement*
-GNEDemandElement::getMoveElement() {
-    return this;
-}
-
-
-void
-GNEDemandElement::removeGeometryPoint(const Position /*clickedPosition*/, GNEUndoList* /*undoList*/) {
-    // currently there isn't demand elements with removable geometry points
 }
 
 
@@ -144,7 +131,7 @@ GNEDemandElement::getNextChildDemandElement(const GNEDemandElement* demandElemen
 
 void
 GNEDemandElement::updateDemandElementGeometry(const GNELane* lane, const double posOverLane) {
-    myDemandElementGeometry.updateGeometry(lane->getLaneShape(), posOverLane, myMoveElementLateralOffset);
+    myDemandElementGeometry.updateGeometry(lane->getLaneShape(), posOverLane, /*myMovingLateralOffset*/ 0);
 }
 
 
@@ -156,7 +143,7 @@ GNEDemandElement::updateDemandElementStackLabel(const int stack) {
 
 void
 GNEDemandElement::updateDemandElementSpreadGeometry(const GNELane* lane, const double posOverLane) {
-    mySpreadGeometry.updateGeometry(lane->getLaneShape(), posOverLane, myMoveElementLateralOffset);
+    mySpreadGeometry.updateGeometry(lane->getLaneShape(), posOverLane, /*myMovingLateralOffset*/ 0);
 }
 
 
@@ -401,6 +388,18 @@ GNEDemandElement::selectGLObject() {
 void
 GNEDemandElement::updateGLObject() {
     updateGeometry();
+}
+
+
+Position
+GNEDemandElement::getAttributePosition(SumoXMLAttr key) const {
+    return getCommonAttributePosition(key);
+}
+
+
+PositionVector
+GNEDemandElement::getAttributePositionVector(SumoXMLAttr key) const {
+    return getCommonAttributePositionVector(key);
 }
 
 
@@ -759,7 +758,6 @@ GNEDemandElement::getColorByScheme(const GUIColorer& c, const SUMOVehicleParamet
             } else {
                 return c.getScheme().getColor(0);
             }
-            break;
         }
         case 4: {
             if (getRouteParent()->getColor() != RGBColor::DEFAULT_COLOR) {

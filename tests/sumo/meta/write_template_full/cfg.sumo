@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-09-15T15:03:04.564320+01:00 by Eclipse SUMO sumo v1_24_0+0788-3d60feeb020
+<!-- generated on 2025-10-31T11:35:42.684954+01:00 by Eclipse SUMO sumo v1_24_0+1699-ee9bf5b971d
 -->
 
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
@@ -66,6 +66,7 @@
         <fcd-output.filter-edges.input-file value="" type="FILE" help="Restrict fcd output to the edge selection from the given input file"/>
         <fcd-output.attributes value="" type="STR[]" help="List attributes that should be included in the FCD output"/>
         <fcd-output.filter-shapes value="" type="STR[]" help="List shape names that should be used to filter the FCD output"/>
+        <person-fcd-output value="" synonymes="person-fcd" type="FILE" help="Save fcd for persons and container to separate FILE"/>
         <device.ssm.filter-edges.input-file value="" type="FILE" help="Restrict SSM device output to the edge selection from the given input file"/>
         <full-output value="" type="FILE" help="Save a lot of information for each timestep (very redundant)"/>
         <queue-output value="" type="FILE" help="Save the vehicle queues at the junctions (experimental)"/>
@@ -221,6 +222,7 @@
         <mapmatch.junctions value="false" type="BOOL" help="Match positions to junctions instead of edges"/>
         <mapmatch.taz value="false" type="BOOL" help="Match positions to taz instead of edges"/>
         <weights.turnaround-penalty value="5" type="FLOAT" help="Apply the given time penalty when computing routing costs for turnaround internal lanes"/>
+        <weights.reversal-penalty value="60" type="FLOAT" help="Apply the given time penalty when computing routing costs for train reversal. Negative values disable reversal"/>
         <persontrip.walk-opposite-factor value="1" type="FLOAT" help="Use FLOAT as a factor on walking speed against vehicle traffic direction"/>
     </processing>
 
@@ -235,8 +237,8 @@
         <astar.landmark-distances value="" type="FILE" help="Initialize lookup table for astar ALT-variant from the given file"/>
         <persontrip.walkfactor value="0.75" type="FLOAT" help="Use FLOAT as a factor on pedestrian maximum speed during intermodal routing"/>
         <persontrip.transfer.car-walk value="parkingAreas" type="STR[]" help="Where are mode changes from car to walking allowed (possible values: &apos;parkingAreas&apos;, &apos;ptStops&apos;, &apos;allJunctions&apos; and combinations)"/>
-        <persontrip.transfer.taxi-walk value="" type="STR[]" help="Where taxis can drop off customers (&apos;allJunctions, &apos;ptStops&apos;)"/>
-        <persontrip.transfer.walk-taxi value="" type="STR[]" help="Where taxis can pick up customers (&apos;allJunctions, &apos;ptStops&apos;)"/>
+        <persontrip.transfer.taxi-walk value="" type="STR[]" help="Where taxis can drop off customers (&apos;allJunctions, &apos;ptStops&apos;, &apos;parkingAreas&apos;)"/>
+        <persontrip.transfer.walk-taxi value="" type="STR[]" help="Where taxis can pick up customers (&apos;allJunctions, &apos;ptStops&apos;, &apos;parkingAreas&apos;)"/>
         <persontrip.default.group value="" type="STR" help="When set, trips between the same origin and destination will share a taxi by default"/>
         <persontrip.taxi.waiting-time value="300" type="TIME" help="Estimated time for taxi pickup"/>
         <persontrip.ride-public-line value="false" type="BOOL" help="Only use the intended public transport line rather than any alternative line that stops at the destination"/>
@@ -449,6 +451,7 @@
         <device.taxi.dispatch-algorithm.output value="" type="FILE" help="Write information from the dispatch algorithm to FILE"/>
         <device.taxi.dispatch-algorithm.params value="" type="STR" help="Load dispatch algorithm parameters in format KEY1:VALUE1[,KEY2:VALUE]"/>
         <device.taxi.dispatch-period value="60" type="TIME" help="The period between successive calls to the dispatcher"/>
+        <device.taxi.dispatch-keep-unreachable value="3600" type="TIME" help="The time before aborting unreachable reservations"/>
         <device.taxi.idle-algorithm value="stop" type="STR" help="The behavior of idle taxis [stop|randomCircling|taxistand]"/>
         <device.taxi.idle-algorithm.output value="" type="FILE" help="Write information from the idling algorithm to FILE"/>
     </taxi_device>
@@ -541,6 +544,7 @@
         <window-size value="" type="STR[]" help="Create initial window with the given x,y size"/>
         <window-pos value="" type="STR[]" help="Create initial window at the given x,y position"/>
         <tracker-interval value="1" type="TIME" help="The aggregation period for value tracker windows"/>
+        <osg-view value="false" type="BOOL" help="Start with an OpenSceneGraph view instead of the regular 2D view"/>
         <gui-testing value="false" type="BOOL" help="Enable overlay for screen recognition"/>
         <gui-testing-debug value="false" type="BOOL" help="Enable output messages during GUI-Testing"/>
         <gui-testing.setting-output value="" type="FILE" help="Save gui settings in the given settings output file"/>

@@ -182,6 +182,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "viewsettings",                           SUMO_TAG_VIEWSETTINGS },
     { "view3D",                                 SUMO_TAG_VIEWSETTINGS_3D },
     { "decal",                                  SUMO_TAG_VIEWSETTINGS_DECAL },
+    { "tracker",                                SUMO_TAG_VIEWSETTINGS_TRACKER },
     { "light",                                  SUMO_TAG_VIEWSETTINGS_LIGHT },
     { "scheme",                                 SUMO_TAG_VIEWSETTINGS_SCHEME },
     { "opengl",                                 SUMO_TAG_VIEWSETTINGS_OPENGL },
@@ -194,6 +195,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "additionals",                            SUMO_TAG_VIEWSETTINGS_ADDITIONALS },
     { "pois",                                   SUMO_TAG_VIEWSETTINGS_POIS },
     { "polys",                                  SUMO_TAG_VIEWSETTINGS_POLYS },
+    { "dataSettings",                           SUMO_TAG_VIEWSETTINGS_DATA },
     { "legend",                                 SUMO_TAG_VIEWSETTINGS_LEGEND },
     { "event",                                  SUMO_TAG_VIEWSETTINGS_EVENT },
     { "jamTime",                                SUMO_TAG_VIEWSETTINGS_EVENT_JAM_TIME },
@@ -751,6 +753,8 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "eventTime",              SUMO_ATTR_EVENTTIME },
     { "blockTime",              SUMO_ATTR_BLOCKTIME },
     { "tag",                    SUMO_ATTR_TAG },
+    { "overlapDensity",         SUMO_ATTR_OVERLAPDENSITY },
+    { "flow",                   SUMO_ATTR_FLOW },
     // Edge
     { "id",                     SUMO_ATTR_ID },
     { "refId",                  SUMO_ATTR_REFID },
@@ -1124,6 +1128,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "indirect",               SUMO_ATTR_INDIRECT },
     { "rightOfWay",             SUMO_ATTR_RIGHT_OF_WAY },
     { "fringe",                 SUMO_ATTR_FRINGE },
+    { "roundabout",             SUMO_ATTR_ROUNDABOUT },
     { "color",                  SUMO_ATTR_COLOR },
     { "dir",                    SUMO_ATTR_DIR },
     { "state",                  SUMO_ATTR_STATE },
@@ -1335,6 +1340,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "main",                   SUMO_ATTR_MAIN },
     { "siding",                 SUMO_ATTR_SIDING },
     { "minSaving",              SUMO_ATTR_MINSAVING },
+    { "defer",                  SUMO_ATTR_DEFER },
     { "limit",                  SUMO_ATTR_LIMIT },
     { "active",                 SUMO_ATTR_ACTIVE },
     { "arrivalTime",            SUMO_ATTR_ARRIVALTIME },
@@ -1400,6 +1406,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "parameters",                         GNE_ATTR_PARAMETERS },
     { "flowParameter",                      GNE_ATTR_FLOWPARAMETERS },
     { "defaultVTypeModified",               GNE_ATTR_DEFAULT_VTYPE_MODIFIED },
+    { "defaultProbability",                 GNE_ATTR_DEFAULT_PROBABILITY },
     { "centerView",                         GNE_ATTR_CENTER_AFTER_CREATION },
     { "opposite",                           GNE_ATTR_OPPOSITE },
     { "shiftLaneIndex",                     GNE_ATTR_SHIFTLANEINDEX },
@@ -1548,6 +1555,12 @@ StringBijection<FringeType>::Entry SUMOXMLDefinitions::fringeTypeValuesInitializ
     {"outer",   FringeType::OUTER },
     {"inner",   FringeType::INNER },
     {"default", FringeType::DEFAULT } // default (must be the last one)
+};
+
+StringBijection<RoundaboutType>::Entry SUMOXMLDefinitions::roundaboutTypeValuesInitializer[] = {
+    {"1",       RoundaboutType::YES },
+    {"0",       RoundaboutType::NO },
+    {"default", RoundaboutType::DEFAULT } // default (must be the last one)
 };
 
 StringBijection<PersonMode>::Entry SUMOXMLDefinitions::personModeValuesInitializer[] = {
@@ -1731,6 +1744,14 @@ StringBijection<ReferencePosition>::Entry SUMOXMLDefinitions::referencePositionV
     {"center",  ReferencePosition::CENTER} //< must be the last one
 };
 
+StringBijection<MeanDataType>::Entry SUMOXMLDefinitions::meanDataTypeValues[] = {
+    {"traffic",     MeanDataType::TRAFFIC},
+    {"emissions",   MeanDataType::EMISSIONS},
+    {"harmonoise",  MeanDataType::HARMONOISE},
+    {"amitran",     MeanDataType::AMITRAN},
+    {"",            MeanDataType::DEFAULT} //< must be the last one
+};
+
 StringBijection<XMLFileExtension>::Entry SUMOXMLDefinitions::XMLFileExtensionValues[] = {
     {TL("XML files") + std::string(" (*.xml,*.xml.gz)"),    XMLFileExtension::XML},
     {TL("All files") + std::string(" (*)"),                 XMLFileExtension::ALL} //< must be the last one
@@ -1742,7 +1763,7 @@ StringBijection<TXTFileExtension>::Entry SUMOXMLDefinitions::TXTFileExtensionVal
 };
 
 StringBijection<CSVFileExtension>::Entry SUMOXMLDefinitions::CSVFileExtensionValues[] = {
-    {TL("CSV files") + std::string(" (*.txt)"), CSVFileExtension::CSV},
+    {TL("CSV files") + std::string(" (*.csv)"), CSVFileExtension::CSV},
     {TL("All files") + std::string(" (*)"),     CSVFileExtension::ALL} //< must be the last one
 };
 
@@ -1919,6 +1940,9 @@ StringBijection<RightOfWay> SUMOXMLDefinitions::RightOfWayValues(
 StringBijection<FringeType> SUMOXMLDefinitions::FringeTypeValues(
     SUMOXMLDefinitions::fringeTypeValuesInitializer, FringeType::DEFAULT);
 
+StringBijection<RoundaboutType> SUMOXMLDefinitions::RoundaboutTypeValues(
+    SUMOXMLDefinitions::roundaboutTypeValuesInitializer, RoundaboutType::DEFAULT);
+
 StringBijection<PersonMode> SUMOXMLDefinitions::PersonModeValues(
     SUMOXMLDefinitions::personModeValuesInitializer, PersonMode::PUBLIC);
 
@@ -1957,6 +1981,9 @@ StringBijection<ExcludeEmpty> SUMOXMLDefinitions::ExcludeEmptys(
 
 StringBijection<ReferencePosition> SUMOXMLDefinitions::ReferencePositions(
     SUMOXMLDefinitions::referencePositionValues, ReferencePosition::CENTER, false);
+
+StringBijection<MeanDataType> SUMOXMLDefinitions::MeanDataTypes(
+    SUMOXMLDefinitions::meanDataTypeValues, MeanDataType::DEFAULT, false);
 
 StringBijection<XMLFileExtension> SUMOXMLDefinitions::XMLFileExtensions(
     SUMOXMLDefinitions::XMLFileExtensionValues, XMLFileExtension::ALL, false);

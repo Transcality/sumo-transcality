@@ -31,10 +31,11 @@
 // class declaration
 // ===========================================================================
 
-class GNEFrame;
 class GNEAttributeCarrier;
 class GNEAttributesEditor;
 class GNEAttributesEditorRow;
+class GNEFrame;
+class MFXButtonTooltip;
 
 // ===========================================================================
 // class GNEAttributesEditorType
@@ -127,6 +128,9 @@ public:
     /// @brief called when user press the "Mark as front element" button
     long onCmdMarkAsFront(FXObject*, FXSelector, void*);
 
+    /// @brief called when user update the "Mark as front element" button
+    long onUpdMarkAsFront(FXObject*, FXSelector, void*);
+
     /// @brief called when user press the "Element dialog" button
     long onCmdOpenElementDialog(FXObject*, FXSelector, void*);
 
@@ -185,16 +189,16 @@ private:
     GNEAttributesEditor* myAttributesEditorParent;
 
     /// @brief pointer to front button
-    FXButton* myFrontButton = nullptr;
+    MFXButtonTooltip* myFrontButton = nullptr;
 
     /// @brief pointer to open dialog button (usually additionals)
-    FXButton* myOpenDialogButton = nullptr;
+    MFXButtonTooltip* myOpenDialogButton = nullptr;
 
     /// @brief pointer to open extended attributes button
-    FXButton* myOpenExtendedAttributesButton = nullptr;
+    MFXButtonTooltip* myOpenExtendedAttributesButton = nullptr;
 
     /// @brief pointer to open generic parameters editor button
-    FXButton* myOpenGenericParametersEditorButton = nullptr;
+    MFXButtonTooltip* myOpenGenericParametersEditorButton = nullptr;
 
     /// @brief frame for netedit buttons (helps and reset)
     FXHorizontalFrame* myFrameNeteditButtons = nullptr;

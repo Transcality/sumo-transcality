@@ -17,6 +17,28 @@
 ///
 // External runner for python and external tools
 /****************************************************************************/
+#include <config.h>
+
+#ifdef HAVE_BOOST
+#ifdef _MSC_VER
+#pragma warning(push, 0)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <boost/process.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/io.hpp>
+#pragma warning(pop)
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#include <boost/process.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/io.hpp>
+#pragma GCC diagnostic pop
+#endif
+#endif
 
 #include <netedit/GNEApplicationWindow.h>
 #include <netedit/dialogs/run/GNERunDialog.h>
@@ -80,6 +102,63 @@ GNEExternalRunner::errorOccurred() const {
 
 FXint
 GNEExternalRunner::run() {
+// check if use boost version, or the "classic" version
+#ifdef HAVE_BOOST
+    try {
+        // declare both streams for read out and err
+        boost::process::v1::opstream in;
+        boost::process::v1::ipstream out;
+        boost::process::v1::ipstream err;
+        // declare run command
+        const auto runCommand = myRunDialog->getRunCommand();
+        // Show command
+        myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::OUTPUT_OCCURRED, runCommand + "\n"), false);
+        // run command derivating the std_out to out and std_err to err
+        boost::process::v1::child c(runCommand,
+                boost::process::v1::std_in < in,
+                boost::process::v1::std_out > out,
+                boost::process::v1::std_err > err);
+        // declare a stdout reader thread
+        std::thread outReaderThread([&out, this]() {
+            std::string buffer;
+            // read until a \n appears
+            while (std::getline(out, buffer)) {
+                // clear '\r' character
+                if (!buffer.empty() && (buffer.back() == '\r')) {
+                    buffer.pop_back();
+                }
+                myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::OUTPUT_OCCURRED, buffer.c_str()), true);
+            }
+        });
+        // declare a stderr reader thread
+        std::thread errReaderThread([&err, this]() {
+            std::string buffer;
+            // read until a \n appears
+            while (std::getline(err, buffer)) {
+                // clear '\r' character
+                if (!buffer.empty() && (buffer.back() == '\r')) {
+                    buffer.pop_back();
+                }
+                myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::ERROR_OCCURRED, buffer.c_str()), true);
+            }
+        });
+        // wait until child process is finish
+        c.wait();
+        // use readers for read output
+        if (outReaderThread.joinable()) {
+            outReaderThread.join();
+        }
+        if (errReaderThread.joinable()) {
+            errReaderThread.join();
+        }
+        // add a end of line
+        myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::OUTPUT_OCCURRED, "\n"), true);
+        // return exit code
+        return c.exit_code();
+    } catch (...) {
+        return EXIT_FAILURE;
+    }
+#else
     // get run command
     const std::string runCommand = myRunDialog->getRunCommand();
     // declare buffer
@@ -138,6 +217,7 @@ GNEExternalRunner::run() {
     myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::MESSAGE_OCCURRED, std::string(TL("process finished\n"))), false);
     myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::TOOL_ENDED, ""), true);
     return 1;
+#endif
 }
 
 /****************************************************************************/

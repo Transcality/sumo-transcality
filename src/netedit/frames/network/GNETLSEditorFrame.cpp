@@ -156,6 +156,9 @@ GNETLSEditorFrame::updateModules() {
     if (myTLSPhases) {
         myTLSPhases->updateTLSPhases();
     }
+    if (myTLSFile) {
+        myTLSFile->updateTLSFile();
+    }
     update();
 }
 
@@ -934,6 +937,7 @@ GNETLSEditorFrame::TLSJunction::updateTLSJunction() {
     if ((myCurrentJunction == nullptr) ||
             (myCurrentJunction->getNBNode()->getControllingTLS().size() == 0)) {
         // no TLS
+        myJunctionIDTextField->setText(TL("No junction selected"));
         myTLSIDTextField->setText("");
         myTLSIDTextField->disable();
         myTLSTypeComboBox->disable();
@@ -943,7 +947,13 @@ GNETLSEditorFrame::TLSJunction::updateTLSJunction() {
     } else {
         // get first controled TLS
         const auto TLS = (*myCurrentJunction->getNBNode()->getControllingTLS().begin());
-        // set text field ID
+        // set TLS type in comboBox
+        const int index = myTLSTypeComboBox->findItem(myCurrentJunction->getAttribute(SUMO_ATTR_TLTYPE).c_str());
+        if (index != -1) {
+            myTLSTypeComboBox->setCurrentItem(index, FALSE);
+        }
+        // set text field IDs
+        myJunctionIDTextField->setText(myCurrentJunction->getID().c_str());
         myTLSIDTextField->setText(TLS->getID().c_str());
         // continue with more options
         if (myTLSEditorParent->myTLSAttributes->isSetDetectorsToggleButtonEnabled() ||

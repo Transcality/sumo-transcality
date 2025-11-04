@@ -19,7 +19,6 @@
 // A file used to reduce the size of GNEViewNet.h grouping structs and classes
 /****************************************************************************/
 
-#include <netedit/GNETagProperties.h>
 #include <netedit/elements/additional/GNEPOI.h>
 #include <netedit/elements/additional/GNEPoly.h>
 #include <netedit/elements/additional/GNETAZ.h>
@@ -33,18 +32,20 @@
 #include <netedit/elements/network/GNEWalkingArea.h>
 #include <netedit/frames/common/GNESelectorFrame.h>
 #include <netedit/frames/network/GNETLSEditorFrame.h>
+#include <netedit/GNETagProperties.h>
 #include <utils/foxtools/MFXMenuCheckIcon.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/div/GUIGlobalViewObjectsHandler.h>
+#include <utils/gui/images/GUITextureSubSys.h>
 #include <utils/options/OptionsCont.h>
 
-#include "GNEViewNetHelper.h"
-#include "GNEViewNet.h"
+#include "GNEApplicationWindow.h"
 #include "GNENet.h"
 #include "GNEUndoList.h"
+#include "GNEViewNet.h"
+#include "GNEViewNetHelper.h"
 #include "GNEViewParent.h"
-#include "GNEApplicationWindow.h"
 
 // ===========================================================================
 // static members
@@ -331,6 +332,22 @@ GNEViewNetHelper::InspectedElements::isInspectingMultipleElements() const {
 GNEViewNetHelper::MarkFrontElements::MarkFrontElements() {}
 
 
+const std::unordered_set<GNEAttributeCarrier*>&
+GNEViewNetHelper::MarkFrontElements::getACs() const {
+    return myMarkedACs;
+}
+
+
+void
+GNEViewNetHelper::MarkFrontElements::unmarkAll() {
+    // make a copy because container is modified in every iteration
+    const auto copy = myMarkedACs;
+    for (auto& AC : copy) {
+        AC->unmarkForDrawingFront();
+    }
+}
+
+
 void
 GNEViewNetHelper::MarkFrontElements::markAC(GNEAttributeCarrier* AC) {
     myMarkedACs.insert(AC);
@@ -345,22 +362,6 @@ GNEViewNetHelper::MarkFrontElements::unmarkAC(GNEAttributeCarrier* AC) {
             myMarkedACs.erase(it);
         }
     }
-}
-
-
-void
-GNEViewNetHelper::MarkFrontElements::unmarkAll() {
-    // make a copy because container is modified in every iteration
-    const auto copy = myMarkedACs;
-    for (auto& AC : copy) {
-        AC->unmarkForDrawingFront();
-    }
-}
-
-
-const std::unordered_set<GNEAttributeCarrier*>&
-GNEViewNetHelper::MarkFrontElements::getACs() const {
-    return myMarkedACs;
 }
 
 // ---------------------------------------------------------------------------
@@ -1508,7 +1509,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
     // check what type of AC will be moved
     if (myViewNet->myViewObjectsSelector.getJunctionFront() && (myViewNet->myViewObjectsSelector.getJunctionFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1518,7 +1519,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
         }
     } else if (myViewNet->myViewObjectsSelector.getLaneFront() && (myViewNet->myViewObjectsSelector.getLaneFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1528,7 +1529,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
         }
     } else if (myViewNet->myViewObjectsSelector.getCrossingFront() && (myViewNet->myViewObjectsSelector.getCrossingFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getCrossingFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getCrossingFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1538,7 +1539,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
         }
     } else if (myViewNet->myViewObjectsSelector.getConnectionFront() && (myViewNet->myViewObjectsSelector.getConnectionFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getConnectionFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getConnectionFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1547,15 +1548,8 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
             return false;
         }
     } else if (myViewNet->myViewObjectsSelector.getWalkingAreaFront() && (myViewNet->myViewObjectsSelector.getWalkingAreaFront() == editedElement)) {
-        // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getWalkingAreaFront()->getMoveOperation();
-        // continue if move operation is valid
-        if (moveOperation) {
-            myMoveOperation = moveOperation;
-            return true;
-        } else {
-            return false;
-        }
+        // currently walking areas cannot be moved (will be implemented in the future)
+        return false;
     } else {
         // there isn't moved items, then return false
         return false;
@@ -1572,7 +1566,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
     // check what type of AC will be moved
     if (myViewNet->myViewObjectsSelector.getPolyFront() && (markAC == myViewNet->myViewObjectsSelector.getPolyFront())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPolyFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPolyFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1582,7 +1576,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         }
     } else if (myViewNet->myViewObjectsSelector.getPOIFront() && (markAC == myViewNet->myViewObjectsSelector.getPOIFront())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPOIFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPOIFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1590,9 +1584,10 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         } else {
             return false;
         }
-    } else if (myViewNet->myViewObjectsSelector.getAdditionalFront() && (markAC == myViewNet->myViewObjectsSelector.getAdditionalFront())) {
+    } else if (myViewNet->myViewObjectsSelector.getAdditionalFront() && (markAC == myViewNet->myViewObjectsSelector.getAdditionalFront()) &&
+               myViewNet->myViewObjectsSelector.getAdditionalFront()->getMoveElement()) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getAdditionalFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getAdditionalFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1604,7 +1599,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         // check if over junction there is a geometry point
         if (myViewNet->myViewObjectsSelector.getEdgeFront() && (myViewNet->myViewObjectsSelector.getEdgeFront()->clickedOverGeometryPoint(myRelativeClickedPosition))) {
             // get move operation
-            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveOperation();
+            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveElement()->getMoveOperation();
             // continue if move operation is valid
             if (moveOperation) {
                 myMoveOperation = moveOperation;
@@ -1614,7 +1609,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
             }
         } else {
             // get move operation
-            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveOperation();
+            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveElement()->getMoveOperation();
             // continue if move operation is valid
             if (moveOperation) {
                 myMoveOperation = moveOperation;
@@ -1632,7 +1627,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
             return false;
         } else {
             // get move operation
-            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveOperation();
+            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveElement()->getMoveOperation();
             // continue if move operation is valid
             if (moveOperation) {
                 myMoveOperation = moveOperation;
@@ -1643,7 +1638,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         }
     } else if (myViewNet->myViewObjectsSelector.getLaneFront() && (markAC == myViewNet->myViewObjectsSelector.getLaneFront())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1664,10 +1659,11 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementDemandMode() {
     myRelativeClickedPosition = myViewNet->getPositionInformation();
     // get front AC
     const GNEAttributeCarrier* markAC = myViewNet->myViewObjectsSelector.getAttributeCarrierFront();
-    // check demand element
-    if (myViewNet->myViewObjectsSelector.getDemandElementFront() && (markAC == myViewNet->myViewObjectsSelector.getDemandElementFront())) {
+    // check if demand element can be moved
+    if (myViewNet->myViewObjectsSelector.getDemandElementFront() && (markAC == myViewNet->myViewObjectsSelector.getDemandElementFront() &&
+            myViewNet->myViewObjectsSelector.getDemandElementFront()->getMoveElement())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getDemandElementFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getDemandElementFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1675,7 +1671,6 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementDemandMode() {
         } else {
             return false;
         }
-
     } else {
         // there isn't moved items, then return false
         return false;
@@ -1874,7 +1869,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateJunctionSelection() {
     const auto selectedJunctions = myViewNet->getNet()->getAttributeCarriers()->getSelectedJunctions();
     // iterate over selected junctions
     for (const auto& junction : selectedJunctions) {
-        moveOperation = junction->getMoveOperation();
+        moveOperation = junction->getMoveElement()->getMoveOperation();
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
         }
@@ -1883,7 +1878,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateJunctionSelection() {
     const auto selectedEdges = myViewNet->getNet()->getAttributeCarriers()->getSelectedEdges();
     // iterate over selected edges
     for (const auto& edge : selectedEdges) {
-        moveOperation = edge->getMoveOperation();
+        moveOperation = edge->getMoveElement()->getMoveOperation();
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
         }
@@ -1897,7 +1892,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateEdgeSelection(const GNEEdge
     const auto selectedJunctions = myViewNet->getNet()->getAttributeCarriers()->getSelectedJunctions();
     // iterate over selected junctions
     for (const auto& junction : selectedJunctions) {
-        GNEMoveOperation* moveOperation = junction->getMoveOperation();
+        GNEMoveOperation* moveOperation = junction->getMoveElement()->getMoveOperation();
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
         }
@@ -1916,7 +1911,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateEdgeSelection(const GNEEdge
     const auto selectedEdges = myViewNet->getNet()->getAttributeCarriers()->getSelectedEdges();
     // iterate over edges between 0 and 180 degrees
     for (const auto& edge : selectedEdges) {
-        GNEMoveOperation* moveOperation = edge->getMoveOperation();
+        GNEMoveOperation* moveOperation = edge->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);

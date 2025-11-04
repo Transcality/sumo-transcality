@@ -436,6 +436,9 @@ public:
     /// @brief return index of edge within route
     int getRoutePosition() const;
 
+    /// @brief return the number of edges remaining in the route (include the current)
+    int getNumRemainingEdges() const;
+
     int getArrivalIndex() const {
         return myParameter->arrivalEdge;
     }
@@ -502,6 +505,9 @@ public:
 
     /// @brief removes a person or container
     void removeTransportable(MSTransportable* t);
+
+    /// @brief removes a person or containers mass
+    void removeTransportableMass(MSTransportable* t);
 
     /// @brief retrieve riding persons
     const std::vector<MSTransportable*>& getPersons() const;

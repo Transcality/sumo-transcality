@@ -19,33 +19,31 @@
 // Basically a container for an NBEdge with drawing and editing capabilities
 /****************************************************************************/
 
-#include <netedit/GNENet.h>
-#include <netedit/GNETagPropertiesDatabase.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNEViewNet.h>
-#include <netedit/GNEViewParent.h>
 #include <netedit/changes/GNEChange_Attribute.h>
 #include <netedit/changes/GNEChange_Lane.h>
 #include <netedit/elements/additional/GNERouteProbe.h>
 #include <netedit/elements/demand/GNEPlanParents.h>
 #include <netedit/elements/demand/GNERoute.h>
-#include <netedit/frames/common/GNEInspectorFrame.h>
+#include <netedit/elements/moving/GNEMoveElementEdge.h>
 #include <netedit/frames/common/GNEDeleteFrame.h>
+#include <netedit/frames/common/GNEInspectorFrame.h>
 #include <netedit/frames/common/GNEMoveFrame.h>
 #include <netedit/frames/data/GNEEdgeDataFrame.h>
 #include <netedit/frames/data/GNEEdgeRelDataFrame.h>
-#include <netedit/frames/demand/GNEVehicleFrame.h>
-#include <netedit/frames/demand/GNEPersonFrame.h>
-#include <netedit/frames/demand/GNEPersonPlanFrame.h>
 #include <netedit/frames/demand/GNEContainerFrame.h>
 #include <netedit/frames/demand/GNEContainerPlanFrame.h>
-#include <netedit/frames/network/GNEAdditionalFrame.h>
+#include <netedit/frames/demand/GNEPersonFrame.h>
+#include <netedit/frames/demand/GNEPersonPlanFrame.h>
+#include <netedit/frames/demand/GNEVehicleFrame.h>
 #include <netedit/frames/GNEElementTree.h>
 #include <netedit/frames/GNEViewObjectSelector.h>
+#include <netedit/frames/network/GNEAdditionalFrame.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNETagPropertiesDatabase.h>
+#include <netedit/GNEUndoList.h>
+#include <netedit/GNEViewParent.h>
 #include <utils/gui/div/GLHelper.h>
-#include <utils/gui/globjects/GLIncludes.h>
 #include <utils/options/OptionsCont.h>
-#include <utils/gui/div/GUIGlobalViewObjectsHandler.h>
 
 #include "GNEConnection.h"
 #include "GNECrossing.h"
@@ -81,6 +79,7 @@ GNEEdge::GNEEdge(GNENet* net, NBEdge* nbe, bool wasSplit, bool loaded):
     myAmResponsible(false),
     myWasSplit(wasSplit),
     myConnectionStatus(loaded ? FEATURE_LOADED : FEATURE_GUESSED),
+    myMoveElementEdge(new GNEMoveElementEdge(this)),
     myUpdateGeometry(true) {
     // set parents
     setParents<GNEJunction*>({
@@ -128,6 +127,24 @@ GNEEdge::~GNEEdge() {
     if (myAmResponsible) {
         delete myNBEdge;
     }
+}
+
+
+GNEMoveElement*
+GNEEdge::getMoveElement() const {
+    return myMoveElementEdge;
+}
+
+
+Parameterised*
+GNEEdge::getParameters() {
+    return myNBEdge;
+}
+
+
+const Parameterised*
+GNEEdge::getParameters() const {
+    return myNBEdge;
 }
 
 
@@ -528,99 +545,6 @@ GNEEdge::checkDrawMoveContour() const {
 }
 
 
-GNEMoveOperation*
-GNEEdge::getMoveOperation() {
-    // get geometry point radius
-    const double geometryPointRadius = getGeometryPointRadius();
-    // check if edge is selected
-    if (isAttributeCarrierSelected()) {
-        // check if both junctions are selected
-        if (getFromJunction()->isAttributeCarrierSelected() && getToJunction()->isAttributeCarrierSelected()) {
-            return processMoveBothJunctionSelected();
-        } else if (getFromJunction()->isAttributeCarrierSelected()) {
-            return processMoveFromJunctionSelected(myNBEdge->getGeometry(), myNet->getViewNet()->getPositionInformation(), geometryPointRadius);
-        } else if (getToJunction()->isAttributeCarrierSelected()) {
-            return processMoveToJunctionSelected(myNBEdge->getGeometry(), myNet->getViewNet()->getPositionInformation(), geometryPointRadius);
-        } else if (myNet->getViewNet()->getMoveMultipleElementValues().isMovingSelectedEdge()) {
-            if (myNet->getAttributeCarriers()->getNumberOfSelectedEdges() == 1) {
-                // special case: when only a single edge is selected, move all shape points (including custom end points)
-                return processMoveBothJunctionSelected();
-            } else {
-                // synchronized movement of a single point
-                return processNoneJunctionSelected(geometryPointRadius);
-            }
-        } else {
-            // calculate move shape operation (because there are only an edge selected)
-            return calculateMoveShapeOperation(this, myNBEdge->getGeometry(), false);
-        }
-    } else {
-        // calculate move shape operation
-        return calculateMoveShapeOperation(this, myNBEdge->getGeometry(), false);
-    }
-}
-
-
-void
-GNEEdge::removeGeometryPoint(const Position clickedPosition, GNEUndoList* undoList) {
-    // get geometry point radius
-    const double geometryPointRadius = getGeometryPointRadius();
-    // declare shape to move
-    PositionVector shape = myNBEdge->getGeometry();
-    // obtain flags for start and end positions
-    const bool customStartPosition = (myNBEdge->getGeometry().front().distanceSquaredTo2D(getFromJunction()->getNBNode()->getPosition()) > ENDPOINT_TOLERANCE);
-    const bool customEndPosition = (myNBEdge->getGeometry().back().distanceSquaredTo2D(getToJunction()->getNBNode()->getPosition()) > ENDPOINT_TOLERANCE);
-    // get variable for last index
-    const int lastIndex = (int)myNBEdge->getGeometry().size() - 1;
-    // flag to enable/disable remove geometry point
-    bool removeGeometryPoint = true;
-    // obtain index
-    const int index = myNBEdge->getGeometry().indexOfClosest(clickedPosition, true);
-    // check index
-    if (index == -1) {
-        removeGeometryPoint = false;
-    }
-    // check distance
-    if (shape[index].distanceSquaredTo2D(clickedPosition) > (geometryPointRadius * geometryPointRadius)) {
-        removeGeometryPoint = false;
-    }
-    // check custom start position
-    if (!customStartPosition && (index == 0)) {
-        removeGeometryPoint = false;
-    }
-    // check custom end position
-    if (!customEndPosition && (index == lastIndex)) {
-        removeGeometryPoint = false;
-    }
-    // check if we can remove geometry point
-    if (removeGeometryPoint) {
-        // check if we're removing first geometry proint
-        if (index == 0) {
-            // commit new geometry start
-            undoList->begin(this, "remove first geometry point of " + getTagStr());
-            GNEChange_Attribute::changeAttribute(this, GNE_ATTR_SHAPE_START, "", undoList);
-            undoList->end();
-        } else if (index == lastIndex) {
-            // commit new geometry end
-            undoList->begin(this, "remove last geometry point of " + getTagStr());
-            GNEChange_Attribute::changeAttribute(this, GNE_ATTR_SHAPE_END, "", undoList);
-            undoList->end();
-        } else {
-            // remove geometry point
-            shape.erase(shape.begin() + index);
-            // get innen shape
-            shape.pop_front();
-            shape.pop_back();
-            // remove double points
-            shape.removeDoublePoints((geometryPointRadius * geometryPointRadius));
-            // commit new shape
-            undoList->begin(this, "remove geometry point of " + getTagStr());
-            GNEChange_Attribute::changeAttribute(this, SUMO_ATTR_SHAPE, toString(shape), undoList);
-            undoList->end();
-        }
-    }
-}
-
-
 bool
 GNEEdge::hasCustomEndPoints() const {
     if (myNBEdge->getGeometry().front().distanceSquaredTo2D(getFromJunction()->getNBNode()->getPosition()) > ENDPOINT_TOLERANCE) {
@@ -879,7 +803,7 @@ GNEEdge::editEndpoint(Position pos, GNEUndoList* undoList) {
                 if (geom[index].distanceSquaredTo2D(pos) < (geometryPointRadius * geometryPointRadius)) {
                     newPos = geom[index];
                     // remove existent geometry point to avoid double points
-                    removeGeometryPoint(newPos, undoList);
+                    myMoveElementEdge->removeGeometryPoint(newPos, undoList);
                 }
                 setAttribute(GNE_ATTR_SHAPE_END, toString(newPos), undoList);
                 getToJunction()->invalidateShape();
@@ -888,7 +812,7 @@ GNEEdge::editEndpoint(Position pos, GNEUndoList* undoList) {
                 if (geom[index].distanceSquaredTo2D(pos) < (geometryPointRadius * geometryPointRadius)) {
                     newPos = geom[index];
                     // remove existent geometry point to avoid double points
-                    removeGeometryPoint(newPos, undoList);
+                    myMoveElementEdge->removeGeometryPoint(newPos, undoList);
                 }
                 setAttribute(GNE_ATTR_SHAPE_START, toString(newPos), undoList);
                 getFromJunction()->invalidateShape();
@@ -1260,14 +1184,20 @@ GNEEdge::getAttribute(SumoXMLAttr key) const {
         case GNE_ATTR_IS_ROUNDABOUT:
             return myNBEdge->getFromNode()->isRoundabout() && myNBEdge->getToNode()->isRoundabout() ? TRUE_STR : FALSE_STR;
         default:
-            return getCommonAttribute(myNBEdge, key);
+            return getCommonAttribute(key);
     }
 }
 
 
 double
 GNEEdge::getAttributeDouble(SumoXMLAttr key) const {
-    throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
+    return getCommonAttributeDouble(key);
+}
+
+
+Position
+GNEEdge::getAttributePosition(SumoXMLAttr key) const {
+    return getCommonAttributePosition(key);
 }
 
 
@@ -1277,7 +1207,7 @@ GNEEdge::getAttributePositionVector(SumoXMLAttr key) const {
         case SUMO_ATTR_SHAPE:
             return myNBEdge->getInnerGeometry();
         default:
-            throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
+            return getCommonAttributePositionVector(key);
     }
 }
 
@@ -1525,7 +1455,7 @@ GNEEdge::isValid(SumoXMLAttr key, const std::string& value) {
         case GNE_ATTR_STOPOEXCEPTION:
             return canParseVehicleClasses(value);
         default:
-            return isCommonValid(key, value);
+            return isCommonAttributeValid(key, value);
     }
 }
 
@@ -1559,12 +1489,6 @@ GNEEdge::isAttributeComputed(SumoXMLAttr key) const {
         default:
             return false;
     }
-}
-
-
-const Parameterised::Map&
-GNEEdge::getACParametersMap() const {
-    return myNBEdge->getParametersMap();
 }
 
 
@@ -2037,7 +1961,7 @@ GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value) {
             myNBEdge->myEdgeStopOffset.setExceptions(value);
             break;
         default:
-            setCommonAttribute(myNBEdge, key, value);
+            setCommonAttribute(key, value);
             break;
     }
     // get template editor
@@ -2049,55 +1973,6 @@ GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value) {
     }
     // invalidate demand path calculator
     myNet->getDemandPathManager()->getPathCalculator()->invalidatePathCalculator();
-}
-
-
-void
-GNEEdge::setMoveShape(const GNEMoveResult& moveResult) {
-    // get start and end points
-    const Position shapeStart = moveResult.shapeToUpdate.front();
-    const Position shapeEnd = moveResult.shapeToUpdate.back();
-    // get innen shape
-    PositionVector innenShape = moveResult.shapeToUpdate;
-    innenShape.pop_front();
-    innenShape.pop_back();
-    // set shape start
-    if (std::find(moveResult.geometryPointsToMove.begin(), moveResult.geometryPointsToMove.end(), 0) != moveResult.geometryPointsToMove.end()) {
-        setShapeStartPos(shapeStart);
-    }
-    // set innen geometry
-    setGeometry(innenShape, true);
-    // set shape end
-    if (std::find(moveResult.geometryPointsToMove.begin(), moveResult.geometryPointsToMove.end(), ((int)moveResult.shapeToUpdate.size() - 1)) != moveResult.geometryPointsToMove.end()) {
-        setShapeEndPos(shapeEnd);
-    }
-}
-
-
-void
-GNEEdge::commitMoveShape(const GNEMoveResult& moveResult, GNEUndoList* undoList) {
-    // make sure that newShape isn't empty
-    if (moveResult.shapeToUpdate.size() > 1) {
-        // get innen shape
-        PositionVector innenShapeToUpdate = moveResult.shapeToUpdate;
-        innenShapeToUpdate.pop_front();
-        innenShapeToUpdate.pop_back();
-        // commit new shape
-        undoList->begin(this, "moving " + toString(SUMO_ATTR_SHAPE) + " of " + getTagStr());
-        // update start position
-        if (std::find(moveResult.geometryPointsToMove.begin(), moveResult.geometryPointsToMove.end(), 0) != moveResult.geometryPointsToMove.end()) {
-            GNEChange_Attribute::changeAttribute(this, GNE_ATTR_SHAPE_START, toString(moveResult.shapeToUpdate.front()), undoList);
-        }
-        // check if update shape
-        if (innenShapeToUpdate.size() > 0) {
-            GNEChange_Attribute::changeAttribute(this, SUMO_ATTR_SHAPE, toString(innenShapeToUpdate), undoList);
-        }
-        // update end position
-        if (std::find(moveResult.geometryPointsToMove.begin(), moveResult.geometryPointsToMove.end(), ((int)moveResult.shapeToUpdate.size() - 1)) != moveResult.geometryPointsToMove.end()) {
-            GNEChange_Attribute::changeAttribute(this, GNE_ATTR_SHAPE_END, toString(moveResult.shapeToUpdate.back()), undoList);
-        }
-        undoList->end();
-    }
 }
 
 
@@ -2125,8 +2000,7 @@ GNEEdge::setNumLanes(int numLanes, GNEUndoList* undoList) {
         undoList->add(new GNEChange_Lane(this, myNBEdge->getLaneStruct(oldNumLanes - 1)), true);
     }
     for (int i = (oldNumLanes - 1); i > (numLanes - 1); i--) {
-        // delete leftmost lane
-        undoList->add(new GNEChange_Lane(this, getChildLanes()[i], myNBEdge->getLaneStruct(i), false), true);
+        myNet->deleteLane(getChildLanes().at(i), undoList, false);
     }
     if (oppositeID != "") {
         GNEChange_Attribute::changeAttribute(getChildLanes().back(), GNE_ATTR_OPPOSITE, oppositeID, undoList);
@@ -2927,7 +2801,7 @@ GNEEdge::calculateEdgeContour(const GUIVisualizationSettings& s, const GUIVisual
     // if we're selecting using a boundary, first don't calculate contour bt check if edge boundary is within selection boundary
     if (gViewObjectsHandler.selectingUsingRectangle() && gViewObjectsHandler.getSelectionTriangle().isBoundaryFullWithin(myEdgeBoundary)) {
         // simply add object in ViewObjectsHandler with full boundary
-        gViewObjectsHandler.selectObject(this, layer, false, true, nullptr);
+        gViewObjectsHandler.selectObject(this, layer, false, nullptr);
     } else {
         // get geometry point radius
         const auto geometryPointRadius = getGeometryPointRadius();
@@ -3067,146 +2941,9 @@ GNEEdge::areStackPositionOverlapped(const GNEEdge::StackPosition& vehicleA, cons
 }
 
 
-GNEMoveOperation*
-GNEEdge::processMoveFromJunctionSelected(const PositionVector originalShape, const Position mousePosition, const double snapRadius) {
-    // calculate squared snapRadius
-    const double squaredSnapRadius = (snapRadius * snapRadius);
-    // declare shape to move
-    PositionVector shapeToMove = originalShape;
-    // obtain nearest index
-    const int nearestIndex = originalShape.indexOfClosest(mousePosition);
-    // obtain nearest position
-    const Position nearestPosition = originalShape.positionAtOffset2D(originalShape.nearest_offset_to_point2D(mousePosition));
-    // generate indexes
-    std::vector<int> indexes;
-    // check conditions
-    if (nearestIndex == -1) {
-        return nullptr;
-    } else if (nearestPosition == Position::INVALID) {
-        // special case for extremes
-        if (mousePosition.distanceSquaredTo2D(shapeToMove[nearestIndex]) <= squaredSnapRadius) {
-            for (int i = 1; i <= nearestIndex; i++) {
-                indexes.push_back(i);
-            }
-            // move extrem without creating new geometry point
-            return new GNEMoveOperation(this, originalShape, indexes, shapeToMove, indexes);
-        } else {
-            return nullptr;
-        }
-    } else if (nearestPosition.distanceSquaredTo2D(shapeToMove[nearestIndex]) <= squaredSnapRadius) {
-        for (int i = 1; i <= nearestIndex; i++) {
-            indexes.push_back(i);
-        }
-        // move geometry point without creating new geometry point
-        return new GNEMoveOperation(this, originalShape, indexes, shapeToMove, indexes);
-    } else {
-        // create new geometry point and keep new index (if we clicked near of shape)
-        const int newIndex = shapeToMove.insertAtClosest(nearestPosition, true);
-        for (int i = 1; i <= newIndex; i++) {
-            indexes.push_back(i);
-        }
-        // move after setting new geometry point in shapeToMove
-        return new GNEMoveOperation(this, originalShape, indexes, shapeToMove, indexes);
-    }
-}
-
-
-GNEMoveOperation*
-GNEEdge::processMoveToJunctionSelected(const PositionVector originalShape, const Position mousePosition, const double snapRadius) {
-    // calculate squared snapRadius
-    const double squaredSnapRadius = (snapRadius * snapRadius);
-    // declare shape to move
-    PositionVector shapeToMove = originalShape;
-    // obtain nearest index
-    const int nearestIndex = originalShape.indexOfClosest(mousePosition);
-    // obtain nearest position
-    const Position nearestPosition = originalShape.positionAtOffset2D(originalShape.nearest_offset_to_point2D(mousePosition));
-    // generate indexes
-    std::vector<int> indexes;
-    // check conditions
-    if (nearestIndex == -1) {
-        return nullptr;
-    } else if (nearestPosition == Position::INVALID) {
-        // special case for extremes
-        if (mousePosition.distanceSquaredTo2D(shapeToMove[nearestIndex]) <= squaredSnapRadius) {
-            for (int i = nearestIndex; i < ((int)originalShape.size() - 1); i++) {
-                indexes.push_back(i);
-            }
-            // move extrem without creating new geometry point
-            return new GNEMoveOperation(this, originalShape, indexes, shapeToMove, indexes);
-        } else {
-            return nullptr;
-        }
-    } else if (nearestPosition.distanceSquaredTo2D(shapeToMove[nearestIndex]) <= squaredSnapRadius) {
-        for (int i = nearestIndex; i < ((int)originalShape.size() - 1); i++) {
-            indexes.push_back(i);
-        }
-        // move geometry point without creating new geometry point
-        return new GNEMoveOperation(this, originalShape, indexes, shapeToMove, indexes);
-    } else {
-        // create new geometry point and keep new index (if we clicked near of shape)
-        const int newIndex = shapeToMove.insertAtClosest(nearestPosition, true);
-        for (int i = newIndex; i < ((int)originalShape.size() - 1); i++) {
-            indexes.push_back(i);
-        }
-        // move after setting new geometry point in shapeToMove
-        return new GNEMoveOperation(this, originalShape, indexes, shapeToMove, indexes);
-    }
-}
-
-
-GNEMoveOperation*
-GNEEdge::processMoveBothJunctionSelected() {
-    std::vector<int> geometryPointsToMove;
-    for (int i = 0; i < (int)myNBEdge->getGeometry().size(); i++) {
-        geometryPointsToMove.push_back(i);
-    }
-    // move entire shape (including extremes)
-    return new GNEMoveOperation(this, myNBEdge->getGeometry(), geometryPointsToMove, myNBEdge->getGeometry(), geometryPointsToMove);
-}
-
-
-GNEMoveOperation*
-GNEEdge::processNoneJunctionSelected(const double snapRadius) {
-    // get move multiple element values
-    const auto& moveMultipleElementValues = myNet->getViewNet()->getMoveMultipleElementValues();
-    // declare shape to move
-    PositionVector shapeToMove = myNBEdge->getGeometry();
-    // first check if kept offset is larger than geometry
-    if (shapeToMove.length2D() < moveMultipleElementValues.getEdgeOffset()) {
-        return nullptr;
-    }
-    // declare offset
-    double offset = 0;
-    // set offset depending of convex angle
-    if (isConvexAngle()) {
-        offset = moveMultipleElementValues.getEdgeOffset();
-    } else {
-        offset = shapeToMove.length2D() - moveMultipleElementValues.getEdgeOffset();
-    }
-    // obtain offset position
-    const Position offsetPosition = myNBEdge->getGeometry().positionAtOffset2D(offset);
-    // obtain nearest index to offset position
-    const int nearestIndex = myNBEdge->getGeometry().indexOfClosest(offsetPosition);
-    // check conditions
-    if ((nearestIndex == -1) || (offsetPosition == Position::INVALID)) {
-        return nullptr;
-    } else if (offsetPosition.distanceSquaredTo2D(shapeToMove[nearestIndex]) <= (snapRadius * snapRadius)) {
-        // move geometry point without creating new geometry point
-        return new GNEMoveOperation(this, myNBEdge->getGeometry(), {nearestIndex}, shapeToMove, {nearestIndex});
-    } else  {
-        // create new geometry point and keep new index (if we clicked near of shape)
-        const int newIndex = shapeToMove.insertAtClosest(offsetPosition, true);
-        // move after setting new geometry point in shapeToMove
-        return new GNEMoveOperation(this, myNBEdge->getGeometry(), {nearestIndex}, shapeToMove, {newIndex});
-    }
-}
-
-
 double
 GNEEdge::getGeometryPointRadius() const {
     return drawBigGeometryPoints() ? SNAP_RADIUS * MIN2(1.0, myNet->getViewNet()->getVisualisationSettings().laneWidthExaggeration) : 0.5;
 }
-
 
 /****************************************************************************/

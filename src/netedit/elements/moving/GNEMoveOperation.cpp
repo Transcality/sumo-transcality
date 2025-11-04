@@ -17,6 +17,7 @@
 ///
 // Class used for define move operation
 /****************************************************************************/
+#include <config.h>
 
 #include <netedit/changes/GNEChange_Attribute.h>
 
@@ -31,8 +32,6 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
     moveElement(_moveElement),
     originalShape({_originalPosition}),
               shapeToMove({_originalPosition}),
-              allowChangeLane(false),
-              firstGeometryPoint(false),
 operationType(OperationType::POSITION) {
 }
 
@@ -42,8 +41,6 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
     moveElement(_moveElement),
     originalShape(_originalShape),
     shapeToMove(_originalShape),
-    allowChangeLane(false),
-    firstGeometryPoint(false),
     operationType(OperationType::ENTIRE_SHAPE) {
 }
 
@@ -55,7 +52,6 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
     moveElement(_moveElement),
     originalShape(_originalShape),
     shapeToMove(_originalShape),
-    allowChangeLane(false),
     firstGeometryPoint(_firstGeometryPoint),
     operationType(_operationType) {
 }
@@ -71,8 +67,6 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
     originalGeometryPoints(_originalgeometryPoints),
     shapeToMove(_shapeToMove),
     geometryPointsToMove(_geometryPointsToMove),
-    allowChangeLane(false),
-    firstGeometryPoint(false),
     operationType(OperationType::GEOMETRY_POINTS) {
 }
 
@@ -85,8 +79,7 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
     firstLane(_lane),
     firstPosition(_firstPosition * _lane->getLengthGeometryFactor()),
     allowChangeLane(_allowChangeLane),
-    firstGeometryPoint(false),
-    operationType(OperationType::SINGLE_LANE) {
+    operationType(OperationType::LANE) {
 }
 
 
@@ -94,15 +87,13 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
                                    const GNELane* _lane,
                                    const double _firstPosition,
                                    const double _lastPosition,
-                                   const bool _allowChangeLane,
-                                   const OperationType _operationType) :
+                                   const bool _allowChangeLane) :
     moveElement(_moveElement),
     firstLane(_lane),
-    firstPosition(_firstPosition * _lane->getLengthGeometryFactor()),
-    lastPosition(_lastPosition * _lane->getLengthGeometryFactor()),
+    firstPosition((_firstPosition == INVALID_DOUBLE) ? INVALID_DOUBLE : _firstPosition * _lane->getLengthGeometryFactor()),
+    lastPosition((_lastPosition == INVALID_DOUBLE) ? INVALID_DOUBLE : _lastPosition * _lane->getLengthGeometryFactor()),
     allowChangeLane(_allowChangeLane),
-    firstGeometryPoint(false),
-    operationType(_operationType) {
+    operationType(OperationType::LANE) {
 }
 
 
@@ -111,16 +102,16 @@ GNEMoveOperation::GNEMoveOperation(GNEMoveElement* _moveElement,
                                    const double _firstStartPos,
                                    const GNELane* _lastLane,
                                    const double _lastStartPos,
-                                   const bool _allowChangeLane,
-                                   const OperationType _operationType) :
+                                   const bool _clickedFirstLane,
+                                   const bool _allowChangeLane) :
     moveElement(_moveElement),
     firstLane(_firstLane),
     firstPosition((_firstStartPos != INVALID_DOUBLE) ? _firstStartPos * _firstLane->getLengthGeometryFactor() : INVALID_DOUBLE),
     lastLane(_lastLane),
     lastPosition((_lastStartPos != INVALID_DOUBLE) ? _lastStartPos * _lastLane->getLengthGeometryFactor() : INVALID_DOUBLE),
+    clickedFirstLane(_clickedFirstLane),
     allowChangeLane(_allowChangeLane),
-    firstGeometryPoint(false),
-    operationType(_operationType) {
+    operationType(OperationType::LANE) {
 }
 
 

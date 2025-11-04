@@ -50,7 +50,8 @@ public:
         SAVE_DONTSAVE_CANCEL,   // save/don't save/cancel buttons
         RUN_CANCEL_RESET,       // run/cancel/reset buttons (used in tools dialogs)
         RUN_ADVANCED_CANCEL,    // run/advanced/cancel buttons (used in tools dialogs)
-        RERUN_BACK_CLOSE        // rerun-abort/back buttons (used in run dialogs)
+        RERUN_BACK_CLOSE,       // rerun-abort/back buttons (used in run dialogs)
+        OK_COPY_REPORT          // ok, copy trace and report to github
     };
 
     /// @brief Open dialog type
@@ -67,17 +68,19 @@ public:
 
     /// @brief list of possible results when closing the dialog
     enum class Result {
-        ACCEPT, // dialog was closed accepting changes (used in ok, accept, yes buttons)
-        CANCEL, // dialog was closed canceling changes (used in cancel, no buttons)
-        ABORT,  // dialog was closed aborting changes (used in abort button)
+        ACCEPT,     // dialog was closed accepting changes (used in ok, accept, yes buttons)
+        CANCEL,     // dialog was closed canceling changes (used in cancel, no buttons)
+        ABORT,      // dialog was closed aborting changes (used in abort button)
+        ACCEPT_ALL, // dialog was closed acepting all changes (used in ok, accept, yes buttons)
+        CANCEL_ALL, // dialog was closed canceling all changes (used in cancel, no buttons)
     };
 
-    /// @brief constructor for resizable dialogs
+    /// @brief basic constructor
     GNEDialog(GNEApplicationWindow* applicationWindow, const std::string& name,
               GUIIcon titleIcon, DialogType type, Buttons buttons, OpenType openType,
               ResizeMode resizeMode);
 
-    /// @brief constructor for resizable dialogs with layout explicit
+    /// @brief constructor with layout explicit
     GNEDialog(GNEApplicationWindow* applicationWindow, const std::string& name,
               GUIIcon titleIcon, DialogType type, Buttons buttons, OpenType openType,
               ResizeMode resizeMode, const int width, const int height);
@@ -106,17 +109,23 @@ public:
     /// @brief called when abort is called either closing dialog or pressing abort button (can be reimplemented in children)
     virtual long onCmdAbort(FXObject*, FXSelector, void*);
 
-    /// @brief called when reset button is pressed (must be reimplemented in children)
+    /// @brief called when reset button is pressed (must be reimplemented in children depending of Buttons)
     virtual long onCmdReset(FXObject*, FXSelector, void*);
 
-    /// @brief called when run button is pressed (must be reimplemented in children)
+    /// @brief called when run button is pressed (must be reimplemented in children depending of Buttons)
     virtual long onCmdRun(FXObject*, FXSelector, void*);
 
-    /// @brief called when back button is pressed (must be reimplemented in children)
+    /// @brief called when back button is pressed (must be reimplemented in children depending of Buttons)
     virtual long onCmdBack(FXObject*, FXSelector, void*);
 
-    /// @brief called when advanced button is pressed (must be reimplemented in children)
+    /// @brief called when advanced button is pressed (must be reimplemented in children depending of Buttons)
     virtual long onCmdAdvanced(FXObject*, FXSelector, void*);
+
+    /// @brief called when copy button is pressed (must be reimplemented in children depending of Buttons)
+    virtual long onCmdCopy(FXObject*, FXSelector, void*);
+
+    /// @brief called when report button is pressed (must be reimplemented in children depending of Buttons)
+    virtual long onCmdReport(FXObject*, FXSelector, void*);
 
     /// @brief called when user presses a key on the dialog
     long onKeyPress(FXObject* obj, FXSelector sel, void* ptr);
@@ -156,6 +165,12 @@ protected:
 
     /// @brief advanced button
     FXButton* myAdvancedButton = nullptr;
+
+    /// @brief copy button
+    FXButton* myCopyButton = nullptr;
+
+    /// @brief report button
+    FXButton* myReportButton = nullptr;
 
     /// @brief dialog type
     DialogType myType = DialogType::DEFAULT;
