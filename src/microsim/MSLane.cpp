@@ -947,7 +947,6 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
                       << " patchSpeed=" << patchSpeed
                       << " speed=" << speed
                       << " nspeed=" << nspeed
-                      << " nextLane=" << nextLane->getID()
                       << " leaders=" << leaders.toString()
                       << " failed (@700)!\n";
         }
@@ -1015,6 +1014,7 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
         nextLane = (*link)->getViaLaneOrLane();
         if (!(*link)->opened(arrivalTime, speed, speed, aVehicle->getVehicleType().getLength(), aVehicle->getImpatience(),
                              cfModel.getMaxDecel(), 0, posLat, nullptr, false, aVehicle)
+                || (*link)->railSignalWasPassed()
                 || !(*link)->havePriority()) {
             // have to stop at junction
             std::string errorMsg = "";
@@ -1371,7 +1371,6 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
                   << "\n myVehicles=" << toString(myVehicles)
                   << " myPartial=" << toString(myPartialVehicles)
                   << " myManeuverReservations=" << toString(myManeuverReservations)
-                  << "\n leaders=" << nextLeaders.toString()
                   << "\n success!\n";
     }
 #endif
@@ -4718,6 +4717,18 @@ MSLane::getSpaceTillLastStanding(const MSVehicle* ego, bool& foundStopped) const
 bool
 MSLane::allowsVehicleClass(SUMOVehicleClass vclass, int routingMode) const {
     return (((routingMode & libsumo::ROUTING_MODE_IGNORE_TRANSIENT_PERMISSIONS) ? myOriginalPermissions : myPermissions) & vclass) == vclass;
+}
+
+
+const MSJunction*
+MSLane::getFromJunction() const {
+    return myEdge->getFromJunction();
+}
+
+
+const MSJunction*
+MSLane::getToJunction() const {
+    return myEdge->getToJunction();
 }
 
 /****************************************************************************/

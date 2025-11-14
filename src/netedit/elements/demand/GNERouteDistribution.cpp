@@ -67,7 +67,12 @@ GNERouteDistribution::writeDemandElement(OutputDevice& device) const {
     device.writeAttr(SUMO_ATTR_ID, getID());
     // write references
     for (const auto& refChild : getChildDemandElements()) {
-        refChild->writeDemandElement(device);
+        if (refChild->getTagProperty()->isDistributionReference()) {
+            if (refChild->getTagProperty()->isDistributionReference() &&
+                    (refChild->getParentDemandElements().front() == this)) {
+                refChild->writeDemandElement(device);
+            }
+        }
     }
     device.closeTag();
 }
@@ -114,7 +119,12 @@ GNERouteDistribution::getColor() const {
 
 void
 GNERouteDistribution::updateGeometry() {
-    // nothing to update
+    // update geometries of all vehicles
+    for (auto vehicle : getChildDemandElements()) {
+        if (vehicle->getTagProperty()->isVehicle()) {
+            vehicle->updateGeometry();
+        }
+    }
 }
 
 
@@ -151,8 +161,13 @@ GNERouteDistribution::splitEdgeGeometry(const double /*splitPosition*/, const GN
 
 
 void
-GNERouteDistribution::drawGL(const GUIVisualizationSettings&) const {
-    // Vehicle Types aren't draw
+GNERouteDistribution::drawGL(const GUIVisualizationSettings& s) const {
+    // draw all vehicles
+    for (auto vehicle : getChildDemandElements()) {
+        if (vehicle->getTagProperty()->isVehicle()) {
+            vehicle->drawGL(s);
+        }
+    }
 }
 
 

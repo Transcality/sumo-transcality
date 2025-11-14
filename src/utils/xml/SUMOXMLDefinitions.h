@@ -1097,6 +1097,8 @@ enum SumoXMLAttr {
     /// @{
     /// @brief charge in W/s of the Charging Stations
     SUMO_ATTR_CHARGINGPOWER,
+    /// @brief total charge in W/s of the Charging Stations
+    SUMO_ATTR_TOTALPOWER,
     /// @brief Eficiency of the charge in Charging Stations
     SUMO_ATTR_EFFICIENCY,
     /// @brief Allow/disallow charge in transit in Charging Stations
@@ -1874,10 +1876,6 @@ enum SumoXMLAttr {
     GNE_ATTR_STOPOFFSET,
     /// @brief stop exceptions (virtual, used by edge and lanes)
     GNE_ATTR_STOPOEXCEPTION,
-    /// @brief route distribution
-    GNE_ATTR_ROUTE_DISTRIBUTION,
-    /// @brief vehicle type distribution
-    GNE_ATTR_VTYPE_DISTRIBUTION,
     /// @brief poisson definition (used in flow)
     GNE_ATTR_POISSON,
     /// @brief stop index (position in the parent's children

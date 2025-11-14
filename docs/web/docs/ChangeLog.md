@@ -6,6 +6,10 @@ title: ChangeLog
 
 ### Bugfixes
 
+## Version 1.25.0 (13.11.2025)
+
+### Bugfixes
+
 - sumo
   - Fixed invalid consumption/emissions when loading and unloading persons/containers #17152, #17264 (regression in 1.22.0)
   - Fixed crash in rail simulation after rerouting #16958
@@ -34,16 +38,23 @@ title: ChangeLog
   - Option **--load-state.remove-vehicles** now permits to re-use the removed vehicle-id with a new route #17270
   - Fixed crash when vehicle is inserted on an internal lane with invalid route and option **--ignore-route-errors** #17248
   - Fixed inflated density in lane/edgeData output #16241
+  - Fixed emergency braking after teleport when using the EIDM carFollowModel #17317
+  - Fixed unsafe train insertion before short signal blocks #17323
 
 - netedit
   - Fixed invalid Id when joining traffic light junctions multiple times #17010 (regression in 1.11.0)
+  - Removed invalid elements from additional-mode element selector #17297 (regression in 1.11.0)
+  - Fixed missing 'allow="authority' attribute in closingReroute #17299 (regression in 1.11.0)
   - Rectangle selection of edges no longer selects additional objects #17213 (regression in 1.20.0)
   - Hints when moving/creating geometry points are working again #17032 (regression in 1.20.0)
   - Fix invalid contour of rerouter intervals when inspecting #17001 (regression in 1.20.0)
+  - Fixed inconsistencies when using 'mark as front element' #17285 (regression in 1.22.0)
   - POI locator sorts IDs again #16963 (regression in 1.22.0)
   - E2 detectors can be moved again #15551 (regression in 1.22.0)
   - Tool tip in inspect mode and create-object mode for mouse-over-attribute are working again #17239 (regression in 1.22.0)
+  - Adding members to a vTypeDistribution is working again #16948 (regression in 1.23.0)
   - Turnaround connections are now visible for bidi-rail edges (again) #16956 (regression in 1.23.1)
+  - Fixed invalid file contents when saving a vTypeDistribution under a new demand file name (regression in 1.24.0)
   - Inspected trip no longer shows superfluous id when gui setting addName is active #17061
   - Transforming a vehicle with route id into a flow now preserves the route id #17017
   - Disabled "Assign E1 Detector" mode for invalid tlTypes #16949
@@ -52,7 +63,7 @@ title: ChangeLog
   - Fixed vehicle id written upside down #17060
   - In demand mode/stop mode, embedded routes are no longer listed as candidate parents for new stops #17062
   - Fixed invalid rotation of dotted contours in routeProbe and vaporizers #16911
-  - Fixed freen when saving empty mean data elements #16812
+  - Fixed freeze when saving empty mean data elements #16812
   - POIs no longer write layer and color attributes with the default value #17128
   - Visual scaling of selected edges is now smooth #16977
   - Fixed invalid position of elements of detectors and stopping places in networks with elevation #17189
@@ -79,8 +90,11 @@ title: ChangeLog
   - Fixed invalid junction shape (with NaN) #17182
   - OpenDRIVE import: now handling problematic geometries that were causing NaN values #17163
   - Fixed misaligned crossing with custom width #17286
+  - VISUM importer now handles missing SURFACEID #17307
+
 
 - sumo-gui
+  - Rerouter notification edges are visible again for rerouters created in netedit (with attribute 'pos') #17298 (regression in 1.22.0)
   - Fixed bug where an unrelated vehicle becomes selected after a selected vehicle has left the simulation #16955
   - Edge and junction locator now works in [alternative-network mode](Simulation/Railways.md#abstract_networks) #17022
   - Loaded color scheme no longer resets on immediate modification #16976
@@ -89,7 +103,7 @@ title: ChangeLog
   - Start button is disabled when loading simulation aborts with an error #17063
   - Fixed wrong entries / paths for recent config #16906
   - Settings dialog now cancels changes on ESC #17050
-  - containerStop: custom container angle now applys to plan item `<stop>` #17089
+  - containerStop: custom container angle now applies to plan item `<stop>` #17089
   - Vehicles on edges that are shorter than their geometrical length are no longer exaggerated lengthwise #17074
   - Fixed crash when deleting last item of coloring/scaling scheme levels #17138 (also applies to netedit)
   - Rerouter ids are now shown #16715
@@ -108,7 +122,8 @@ title: ChangeLog
   - Fixed bug where intermodal routing failed when restricting taxi arrivals and the destination edge has a stopping place #17178 (also applies to sumo)
   - Fixed invalid error when using option **--bulk-routing** #17267
   - Option **--bulk-routing** now works for railways #17266
-
+  - Option **--ignore-errors** can now filter out loaded routes that violate edge permissions #17294
+  - option **--keep-vtype-distributions** ist now working for flows #17305
 
 - TraCI
   - Fixed exaggerated slowDown after the end of the desired slowDown duration #17172 (regression in 1.23.0)
@@ -120,6 +135,7 @@ title: ChangeLog
   - abstractRail.py: corrected naming of temporary net when using .net.xml.gz input with option **--split** #17029
   - routeSampler.py: mismatch-output for tazRelations is now also written as tazRelations #17049
   - osmWebWizard.py: no longer fails to start a second instance #16663
+  - netdiff.py: Fixed plain-output file names when running diff on .net.xml.gz files #17319
 
 ### Enhancements
 
@@ -129,7 +145,7 @@ title: ChangeLog
   - Added options **--device.rerouting.threshold.factor** and **--device.rerouting.threshold.constant** to avoid routing if the [improvement in travel time is too low](Demand/Automatic_Routing.md#improvement_thresholds) #4635
   - The junction model parameter `jmDriveRedSpeed` now takes effect when emergency vehicles with the bluelight device pass an intersection on red #17120
   - Vehicles with the bluelight device can now pass a junction from the wrong turn lane without first reducing their speed to 0 #17123
-  - Vehicles that are driving outside their edge now permit increased lateral acceleration and lateral speed to return to the road #17131  
+  - Vehicles that are driving outside their edge now permit increased lateral acceleration and lateral speed to return to the road #17131
   - Added option **--person-fcd-output** to separate the outputs of vehicles and persons. This also leads to cleanar tabular outputs (csv, parqet) #16814
   - Actuated tls with custom conditions now supports expression `p:TLINDEX` to retrieve the number of pedestrions on approach to a crossing #17229
   - All insertion warnings/errors now report the failure time #17259
@@ -151,7 +167,7 @@ title: ChangeLog
   - Settings dialog now shows available POI parameters for the 'show poi text param' feature #17158
   - meanData mode now permits setting edgeData type (i.e. to create edge-emission-output) #15696
   - Embedded routes are now hidden when creating vehicle or flow that references a route #17220
-
+  - POIs can be transformed between network coordinates and geo-coordinates #17118
 
 - sumo-gui
   - Various dialogs can now be closed with ESC #15463
@@ -175,7 +191,7 @@ title: ChangeLog
   - Element `<split>` now supports attribute `offset` to customize the lateral offset of newly created lanes #17103
   - Node attribute `roundabout="0"` can now be used to declare that a junction shall not be classified as a roundabout #10677
   - Invalid lane neighbor information with respect to connected junctions is now fixed automatically (with a warning) #17280
-  
+
 - TraCI
   - `vehicle.setSpeedMode` now takes effect for vehicles with the bluelight device #17122
 
@@ -186,7 +202,6 @@ title: ChangeLog
   - instantOutToEdgeData.py: new tool to convert induction loop output to edgeData #17048
   - createOvertakingReroutes.py: new tool for building railway rerouters #16448
   - tazRel2POI.py: [new tool for visualizing taz relations](Tools/District.md#tazrel2poipy) #17157
-  - duaIterate.py: option **--gzip** is enabled by default. Option **--no-gzip** may be used for the old behavior. #16777
   - randomTrips.py: options **--flows** and **--route-file** now writes flows and runs much faster #17200, #17204
 
 
@@ -195,12 +210,14 @@ title: ChangeLog
 - Option **--junctions.join-same** whas changed from type *BOOL* to type *FLOAT* and now requires a distance argument. The previous behavior can be approximated by setting a value of *0.01* #16969
 - sumo now warns when setting option **--threads** with an argument greater than 1 #17057
 - Added warnings and errors for different problems with a configuration file #17069
-- Command line output under Windows now usees UTF charset #17093
+- Command line output under Windows now uses UTF charset #17093
 - [Automatic rerouting](Demand/Automatic_Routing.md) will no longer take place if the new route has the same travel time as the old route. #4635
 - Vehicles with the bluelight device no longer set prefered lateral alignment to `arbitrary` #17124
 - duaIterate.py: option **--binary** was removed #16777
 - The attribute order in the FCD output of persons was changed and is now similar to the vehicles (affects only the type attribute).
 - The nightly sumogame now loads all 3D objects #3032
+- flowrouter.py option **--vclass** now defaults to 'passenger' (to avoid invalid routes in multimodal networks) #17296
+- duaIterate.py: option **--gzip** is enabled by default. Option **--no-gzip** may be used for the old behavior. #16777
 
 
 ## Version 1.24.0 (22.07.2025)

@@ -32,6 +32,13 @@
 GNEFileDialog::GNEFileDialog(GNEApplicationWindow* applicationWindow, const std::string elementFile,
                              const std::vector<std::string>& extensions, GNEFileDialog::OpenMode openMode,
                              GNEFileDialog::ConfigType configType):
+    GNEFileDialog(applicationWindow, applicationWindow, elementFile, extensions, openMode, configType) {
+}
+
+
+GNEFileDialog::GNEFileDialog(FXWindow* restoringWindow, GNEApplicationWindow* applicationWindow,
+                             const std::string elementFile, const std::vector<std::string>& extensions,
+                             GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType) :
     GNEDialog(applicationWindow, TLF("Save % as", elementFile), GUIIcon::SAVE,
               DialogType::FILE, GNEDialog::Buttons::ACCEPT_CANCEL, GNEDialog::OpenType::MODAL,
               GNEDialog::ResizeMode::RESIZABLE, 500, 300) {
@@ -54,6 +61,8 @@ GNEFileDialog::GNEFileDialog(GNEApplicationWindow* applicationWindow, const std:
     if (gCurrentFolder.length() > 0) {
         myFileSelector->setDirectory(gCurrentFolder);
     }
+    // set restoring window
+    setRestoringFocusWindow(restoringWindow);
     // open dialog without focusing the button
     openDialog(myFileSelector->getFilenameTextField());
 }
@@ -99,15 +108,6 @@ GNEFileDialog::getDirectory() const {
 }
 
 
-long
-GNEFileDialog::onCmdAccept(FXObject*, FXSelector, void*) {
-    // update current folder
-    gCurrentFolder = myFileSelector->getDirectory().c_str();
-    // close dialog accepting changes
-    return closeDialogAccepting();
-}
-
-
 std::string
 GNEFileDialog::assureExtension(const std::string& filename) const {
     // get group of extensions selected in comboBox
@@ -125,6 +125,21 @@ GNEFileDialog::assureExtension(const std::string& filename) const {
     } else {
         return filename;
     }
+}
+
+
+long
+GNEFileDialog::onCmdAccept(FXObject*, FXSelector, void*) {
+    const FXString directory = myFileSelector->getDirectory().c_str();
+    const FXString filename = myFileSelector->getFilename().c_str();
+    // update current folder
+    if (directory.length() > 0) {
+        gCurrentFolder = directory;
+    } else if (filename.length() > 0) {
+        gCurrentFolder = FXPath::directory(filename);
+    }
+    // close dialog accepting changes
+    return closeDialogAccepting();
 }
 
 /****************************************************************************/

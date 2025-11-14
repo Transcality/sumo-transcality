@@ -204,8 +204,6 @@ GNERouteRef::getAttribute(SumoXMLAttr key) const {
     switch (key) {
         case SUMO_ATTR_ID:
             return getMicrosimID();
-        case GNE_ATTR_ROUTE_DISTRIBUTION:
-            return getParentDemandElements().front()->getID();
         case SUMO_ATTR_REFID:
             return getParentDemandElements().back()->getID();
         case SUMO_ATTR_PROB:
@@ -246,7 +244,6 @@ GNERouteRef::getAttributePosition(SumoXMLAttr key) const {
 bool
 GNERouteRef::isAttributeEnabled(SumoXMLAttr key) const {
     switch (key) {
-        case GNE_ATTR_ROUTE_DISTRIBUTION:
         case SUMO_ATTR_REFID:
             return false;
         default:
@@ -285,6 +282,15 @@ GNERouteRef::isValid(SumoXMLAttr key, const std::string& value) {
     }
 }
 
+bool
+GNERouteRef::isAttributeComputed(SumoXMLAttr key) const {
+    switch (key) {
+        case SUMO_ATTR_PROB:
+            return myProbability == INVALID_DOUBLE;
+        default:
+            return false;
+    }
+}
 
 std::string
 GNERouteRef::getPopUpID() const {
@@ -294,7 +300,7 @@ GNERouteRef::getPopUpID() const {
 
 std::string
 GNERouteRef::getHierarchyName() const {
-    return TLF("%: % -> %", myTagProperty->getTagStr(), getAttribute(GNE_ATTR_ROUTE_DISTRIBUTION), getAttribute(SUMO_ATTR_REFID));
+    return TLF("%: %, %", myTagProperty->getTagStr(), getParentDemandElements().back()->getID(), getAttribute(SUMO_ATTR_PROB));
 }
 
 // ===========================================================================
@@ -306,7 +312,7 @@ GNERouteRef::setAttribute(SumoXMLAttr key, const std::string& value) {
     switch (key) {
         case SUMO_ATTR_PROB:
             if (value.empty()) {
-                myProbability = myTagProperty->getDefaultDoubleValue(key);
+                myProbability = INVALID_DOUBLE;
             } else {
                 myProbability = parse<double>(value);
             }

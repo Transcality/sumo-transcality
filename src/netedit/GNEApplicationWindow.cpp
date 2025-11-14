@@ -533,6 +533,9 @@ GNEApplicationWindow::GNEApplicationWindow(FXApp* app, const GNETagPropertiesDat
     TemplateHandler::parseTemplate(myOriginalSumoOptions, sumoTemplate);
     TemplateHandler::parseTemplate(myNetgenerateOptions, netgenerateTemplate);
     TemplateHandler::parseTemplate(myOriginalNetgenerateOptions, netgenerateTemplate);
+    // add extra option for automatic closing
+    myNetgenerateOptions.doRegister("close-dialog-automatic", new Option_Bool(true));
+    myNetgenerateOptions.addDescription("close-dialog-automatic", "report", TL("Close dialog automatic"));
 }
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -1306,12 +1309,8 @@ GNEApplicationWindow::handleEvent_NetworkLoaded(GUIEvent* e) {
     auto& neteditOptions = OptionsCont::getOptions();
     // check whether the loading was successful
     if (ec->net == nullptr) {
-        if (ec->file.size() > 0) {
-            // report failure
-            setStatusBarText(TLF("Loading of network '%' failed", ec->file));
-        } else {
-            setStatusBarText("");
-        }
+        // report failure
+        setStatusBarText(TLF("Loading of network '%' failed", ec->file));
     } else {
         // set new Net
         myNet = ec->net;

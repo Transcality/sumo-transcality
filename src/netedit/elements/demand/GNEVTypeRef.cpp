@@ -200,8 +200,6 @@ GNEVTypeRef::getAttribute(SumoXMLAttr key) const {
     switch (key) {
         case SUMO_ATTR_ID:
             return getMicrosimID();
-        case GNE_ATTR_VTYPE_DISTRIBUTION:
-            return getParentDemandElements().front()->getID();
         case SUMO_ATTR_REFID:
             return getParentDemandElements().back()->getID();
         case SUMO_ATTR_PROB:
@@ -242,7 +240,6 @@ GNEVTypeRef::getAttributePosition(SumoXMLAttr key) const {
 bool
 GNEVTypeRef::isAttributeEnabled(SumoXMLAttr key) const {
     switch (key) {
-        case GNE_ATTR_VTYPE_DISTRIBUTION:
         case SUMO_ATTR_REFID:
             return false;
         default:
@@ -282,6 +279,17 @@ GNEVTypeRef::isValid(SumoXMLAttr key, const std::string& value) {
 }
 
 
+bool
+GNEVTypeRef::isAttributeComputed(SumoXMLAttr key) const {
+    switch (key) {
+        case SUMO_ATTR_PROB:
+            return myProbability == INVALID_DOUBLE;
+        default:
+            return false;
+    }
+}
+
+
 std::string
 GNEVTypeRef::getPopUpID() const {
     return getTagStr();
@@ -290,7 +298,7 @@ GNEVTypeRef::getPopUpID() const {
 
 std::string
 GNEVTypeRef::getHierarchyName() const {
-    return TLF("%: % -> %", myTagProperty->getTagStr(), getAttribute(GNE_ATTR_VTYPE_DISTRIBUTION), getAttribute(SUMO_ATTR_REFID));
+    return TLF("%: %, %", myTagProperty->getTagStr(), getParentDemandElements().back()->getID(), getAttribute(SUMO_ATTR_PROB));
 }
 
 // ===========================================================================
@@ -302,7 +310,7 @@ GNEVTypeRef::setAttribute(SumoXMLAttr key, const std::string& value) {
     switch (key) {
         case SUMO_ATTR_PROB:
             if (value.empty()) {
-                myProbability = myTagProperty->getDefaultDoubleValue(key);
+                myProbability = INVALID_DOUBLE;
             } else {
                 myProbability = parse<double>(value);
             }

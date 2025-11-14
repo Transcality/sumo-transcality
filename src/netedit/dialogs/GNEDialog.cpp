@@ -110,6 +110,12 @@ GNEDialog::getContentFrame() const {
 }
 
 
+void
+GNEDialog::setRestoringFocusWindow(FXWindow* window) {
+    myRestoringFocusWindow = window;
+}
+
+
 long
 GNEDialog::onCmdAccept(FXObject*, FXSelector, void*) {
     return closeDialogAccepting();
@@ -255,8 +261,12 @@ GNEDialog::closeDialogAccepting() {
     hide();
     // set result
     myResult = Result::ACCEPT;
-    // restore focus to application window (to avoid problems in Linux)
-    myApplicationWindow->setFocus();
+    // restore focus
+    if (myRestoringFocusWindow) {
+        myRestoringFocusWindow->setFocus();
+    } else {
+        myApplicationWindow->setFocus();
+    }
     return 1;
 }
 
@@ -271,8 +281,12 @@ GNEDialog::closeDialogCanceling() {
     hide();
     // set result
     myResult = Result::CANCEL;
-    // restore focus to application window (to avoid problems in Linux)
-    myApplicationWindow->setFocus();
+    // restore focus
+    if (myRestoringFocusWindow) {
+        myRestoringFocusWindow->setFocus();
+    } else {
+        myApplicationWindow->setFocus();
+    }
     return 0;
 }
 
@@ -287,8 +301,12 @@ GNEDialog::closeDialogAborting() {
     hide();
     // set result
     myResult = Result::ABORT;
-    // restore focus to application window (to avoid problems in Linux)
-    myApplicationWindow->setFocus();
+    // restore focus
+    if (myRestoringFocusWindow) {
+        myRestoringFocusWindow->setFocus();
+    } else {
+        myApplicationWindow->setFocus();
+    }
     return 0;
 }
 
@@ -450,7 +468,7 @@ GNEDialog::buildDialog(GUIIcon titleIcon, GNEDialog::Buttons buttons) {
             myFocusButton = myRunButton;
             break;
         }
-        case Buttons::RERUN_BACK_CLOSE: {
+        case Buttons::RERUN_BACK_OK: {
             // run/abort button
             myRunButton = GUIDesigns::buildFXButton(buttonsFrame, TL("Rerun"), "", TL("Rerun tool"),
                                                     GUIIconSubSys::getIcon(GUIIcon::RESET), this,
@@ -460,7 +478,7 @@ GNEDialog::buildDialog(GUIIcon titleIcon, GNEDialog::Buttons buttons) {
                            GUIIconSubSys::getIcon(GUIIcon::BACK), this,
                            MID_GNE_BUTTON_BACK, GUIDesignButtonDialog);
             // cancel button
-            myAcceptButton = GUIDesigns::buildFXButton(buttonsFrame, TL("Close"), "", TL("Close"),
+            myAcceptButton = GUIDesigns::buildFXButton(buttonsFrame, TL("OK"), "", TL("OK"),
                              GUIIconSubSys::getIcon(GUIIcon::YES), this,
                              MID_GNE_BUTTON_ACCEPT, GUIDesignButtonDialog);
             // set focus button
