@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2025-10-20 12:28+0200\n"
-"PO-Revision-Date: 2025-11-04 12:29+0000\n"
+"PO-Revision-Date: 2025-11-05 10:40+0000\n"
 "Last-Translator: forevernull <forevernull@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/eclipse-sumo/applications/zh_Hans/>\n"
@@ -8151,7 +8151,7 @@ msgstr "使用 OpenDRIVE 控制器信息生成信号程序"
 
 #: src/netimport/NIFrame.cpp:381
 msgid "Ignore traffic signals which do not control any driving lane"
-msgstr ""
+msgstr "忽略那些不控制任何行车道的交通信号"
 
 #: src/netimport/NIFrame.cpp:392
 msgid ""
@@ -8474,7 +8474,7 @@ msgstr "无法发现路段 '%' 的到达节点(to-node)。"
 
 #: src/netimport/NIImporter_MATSim.cpp:281
 msgid "Ignoring edge % which has no lanes."
-msgstr ""
+msgstr "忽略没有车道的路段%。"
 
 #: src/netimport/NIImporter_MATSim.cpp:292
 msgid "Could not add intermediate node to split loop edge '%'."
@@ -8487,28 +8487,28 @@ msgstr "无法发现信号参考(reference) '%'。"
 #: src/netimport/NIImporter_OpenDrive.cpp:280
 msgid ""
 "Ignoring invalid geometry for inner edge '%' (xodr road '%') in junction '%'."
-msgstr ""
+msgstr "忽略无效的集合图形在路段%内部（xodr road %），对应路口为“%”。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:284
 msgid "Inner edge '%' (xodr road '%') in junction '%' has no geometry."
-msgstr ""
+msgstr "内部路段“%”（xodr road '%'）对应路口“%”没有几何图形。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:293
 #, c-format
 msgid "Junction '%' has no valid inner edges to determine its position."
-msgstr ""
+msgstr "路口%没有有效的内部路段来确定它的方向。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:294
 msgid "Could not determine position for junction '%'."
-msgstr ""
+msgstr "无法确定路口“%”位置。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:299
 msgid "Junction '%' resulted in invalid (NaN) position."
-msgstr ""
+msgstr "路口“%”导致了无效（NaN）位置。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:300
 msgid "Could not compute valid position for junction '%'."
-msgstr ""
+msgstr "无法为路口“%”计算有效位置。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:317
 #: src/netimport/NIImporter_OpenDrive.cpp:355
@@ -8610,7 +8610,7 @@ msgstr "路段 '%' 的章节部分(sections)未正确排序。"
 msgid ""
 "Almost duplicate s-value '%' for lane sections occurred at edge '%'; first "
 "entry was removed."
-msgstr ""
+msgstr "车道段出现了几乎重复的s值“%”，在路段“%”上；已删除第一个条目。"
 
 #: src/netimport/NIImporter_OpenDrive.cpp:1824
 msgid "Could not compute spiral geometry for edge '%' (cDot=% length=%)."
@@ -8799,7 +8799,7 @@ msgstr "路段 '%' 的预设车道宽度作为值(value) '%',它无法被解析(
 #: src/netimport/NIImporter_OpenStreetMap.cpp:2010
 #, c-format
 msgid "Using default width for edge '%' as value '%' could not be parsed."
-msgstr ""
+msgstr "路段“%”采用默认宽度，由于值%无法解析。"
 
 #: src/netimport/NIImporter_OpenStreetMap.cpp:2046
 msgid "Using minimum lane number from list (%) for edge '%'."
@@ -9182,7 +9182,7 @@ msgstr "忽略沒有节点信息的停止位置 '%'"
 
 #: src/netimport/NIImporter_VISUM.cpp:1168
 msgid "Ignoring stopping place '%' with invalid edge reference '%'"
-msgstr ""
+msgstr "忽略停止位置“%”（带有无效边缘引用“%”）"
 
 #: src/netimport/NIImporter_VISUM.cpp:1174
 msgid ""
@@ -9486,7 +9486,7 @@ msgstr "找不到连接通道(access)相接的路段 '%' 到停靠点 '%'"
 
 #: src/netimport/NIXMLPTHandler.cpp:264
 msgid "Duplicate ptLine id occurred ('%'); assuming overwriting is wished."
-msgstr ""
+msgstr "出现了重复的ptLine ID（'%'）；假定希望进行覆盖。"
 
 #: src/netimport/NIXMLPTHandler.cpp:305
 msgid "Found route outside line definition"
@@ -9755,11 +9755,11 @@ msgstr "正在从 '%'载入权重..."
 
 #: src/netload/NLBuilder.cpp:270
 msgid "Loading state from '%'"
-msgstr ""
+msgstr "正在从“%”加载状态"
 
 #: src/netload/NLBuilder.cpp:290
 msgid "Loading route-files incrementally from '%'"
-msgstr ""
+msgstr "正在从“%”中增量加载路线文件"
 
 #: src/netload/NLBuilder.cpp:298
 msgid "Loading done."
@@ -9796,7 +9796,7 @@ msgstr "不对称邻车道道 '%' (对于车道 '%' 而言)"
 
 #: src/netload/NLEdgeControlBuilder.cpp:206
 msgid "Mutually inconsistent neigh lane definitions for lanes '%', '%' and '%'"
-msgstr ""
+msgstr "车道“%”、“%”和“%”的邻近车道定义相互不一致"
 
 #: src/netload/NLEdgeControlBuilder.cpp:229
 #, c-format
@@ -10082,7 +10082,7 @@ msgstr "忽略來自非人行步道 '%' 的无效连接通道(access); 在公交
 msgid ""
 "It is strongly advisable to give an explicit position when using radius in "
 "the definition of rerouter '%'."
-msgstr ""
+msgstr "在使用半径定义重路由器“%”时，强烈建议明确给出其位置。"
 
 #: src/netwrite/NWFrame.cpp:54
 msgid "The generated net will be written to FILE"
@@ -10098,15 +10098,15 @@ msgstr "即使未自订，也要写出所有车道及它们的属性"
 
 #: src/netwrite/NWFrame.cpp:69
 msgid "Defines a prefix for edge and junction IDs"
-msgstr ""
+msgstr "为路段和路口ID定义前缀"
 
 #: src/netwrite/NWFrame.cpp:72
 msgid "Defines a prefix for junction IDs"
-msgstr ""
+msgstr "为路口ID定义前缀"
 
 #: src/netwrite/NWFrame.cpp:75
 msgid "Defines a prefix for edge IDs"
-msgstr ""
+msgstr "为路段ID定义前缀"
 
 #: src/netwrite/NWFrame.cpp:80
 msgid "Write geo coordinates in plain-xml"
@@ -10131,7 +10131,7 @@ msgstr "产生的路网将按照给定的字首(PREFIX) 及 dlr-navteq 格式写
 
 #: src/netwrite/NWFrame.cpp:97
 msgid "The dlr-navteq output format version to write"
-msgstr ""
+msgstr "要写入的dlr-navteq输出格式版本"
 
 #: src/netwrite/NWFrame.cpp:100
 msgid ""
@@ -10149,7 +10149,7 @@ msgstr "写出原始名称（如果给定）作为参数"
 
 #: src/netwrite/NWFrame.cpp:109
 msgid "Writes IDs of nodes remove with --geometry.remove into edge param"
-msgstr ""
+msgstr "使用--geometry.remove参数将移除的节点的ID写入到edge参数"
 
 #: src/netwrite/NWFrame.cpp:112
 msgid "Writes street signs as POIs to FILE"
@@ -10270,7 +10270,7 @@ msgstr "忽略选项 \"proj.plain-geo\", 因为沒有定义地理坐标转换"
 
 #: src/od2trips_main.cpp:63
 msgid "run with configuration file"
-msgstr ""
+msgstr "使用配置文件运行"
 
 #: src/od2trips_main.cpp:80
 msgid "Loads TAZ (districts; also from networks) from FILE(s)"
@@ -10371,12 +10371,12 @@ msgstr "开始于 % 的时间片段(timeSlice) 的持续时间无效。"
 #: src/od/ODDistrictCont.cpp:57
 #, c-format
 msgid "District '%' does not provide any valid source."
-msgstr ""
+msgstr "区域“%”未提供任何有效来源。"
 
 #: src/od/ODDistrictCont.cpp:73
 #, c-format
 msgid "District '%' does not provide any valid sink."
-msgstr ""
+msgstr "区域“%”未提供任何有效的接收器。"
 
 #: src/od/ODDistrictCont.cpp:84
 #, c-format
@@ -10581,16 +10581,16 @@ msgstr "无法从关系(relation) '%' 导入多边形 (缺少路径(ways))"
 
 #: src/polyconvert/PCLoaderOSM.cpp:204
 msgid ", (front-to-back dist: %)"
-msgstr ""
+msgstr ", (前后距离: %)"
 
 #: src/polyconvert/PCLoaderOSM.cpp:206
 msgid "Assembled polygon from relation '%' (name:%)%"
-msgstr ""
+msgstr "根据关系“%”（名称：%）组装的多边形%"
 
 #: src/polyconvert/PCLoaderOSM.cpp:208
 msgid ""
 "Could not import polygon from relation '%' (name:% reason: found gap of %m)."
-msgstr ""
+msgstr "无法从关系“%”（名称：% 原因：发现%m的间隙）中导入多边形。"
 
 #: src/polyconvert/PCLoaderOSM.cpp:231
 #, c-format
@@ -10623,7 +10623,7 @@ msgstr "无法增加多边形类型 '%' (可能该识别名(id)已被使用)。"
 
 #: src/polyconvert/polyconvert_main.cpp:64
 msgid "run with configuration options set in file"
-msgstr ""
+msgstr "使用文件中设置的配置选项运行"
 
 #: src/polyconvert/polyconvert_main.cpp:81
 msgid "Loads SUMO-network FILE as reference to offset and projection"
@@ -10669,7 +10669,7 @@ msgstr ""
 
 #: src/polyconvert/polyconvert_main.cpp:115
 msgid "Reads shapes from geojson FILE"
-msgstr ""
+msgstr "从geojson文件中读取形状"
 
 #: src/polyconvert/polyconvert_main.cpp:122
 msgid "Reads shapes from shapefiles FILE"
@@ -10775,7 +10775,7 @@ msgstr "填满多边形为预设值"
 
 #: src/polyconvert/polyconvert_main.cpp:225
 msgid "Sets STR as default icon"
-msgstr ""
+msgstr "将STR设为默认图标"
 
 #: src/polyconvert/polyconvert_main.cpp:228
 msgid "Sets FLOAT as default layer"
@@ -10902,7 +10902,7 @@ msgstr "使用最后一个可使用的路段来尝试更正无效的目的地路
 
 #: src/router/ROFrame.cpp:163
 msgid "Backtrack on route if the detour is longer than the gap by FACTOR"
-msgstr ""
+msgstr "如果绕行距离比间距长FACTOR倍，则回溯路线"
 
 #: src/router/ROFrame.cpp:175
 msgid "Aggregate routing queries with the same origin"
@@ -10940,7 +10940,7 @@ msgstr "在计算次要路段內部车道的路径成本时, 应用给定的时�
 msgid ""
 "Apply the given time penalty when computing routing costs across a traffic "
 "light"
-msgstr ""
+msgstr "在计算交通灯之间的路线成本时，应用给定的时间惩罚"
 
 #: src/router/ROFrame.cpp:230
 msgid "Defaults will override given values"
@@ -11080,7 +11080,7 @@ msgstr "车辆 '%' 的路径已修复。"
 
 #: src/router/RORouteDef.cpp:221
 msgid "Removing invalid edge '%' for from route for vehicle '%'."
-msgstr ""
+msgstr "正在移除无效路段“%”，从车辆“%”的路线中。"
 
 #: src/router/RORouteDef.cpp:229
 msgid ""
@@ -11294,13 +11294,13 @@ msgstr "选项 --vtype 需要选项 --additional-files 以载入车辆类型"
 #: src/tools/emissionsDrivingCycle_main.cpp:225
 #: src/tools/emissionsMap_main.cpp:88
 msgid "Vehicle type is not unique."
-msgstr ""
+msgstr "车辆类型不唯一。"
 
 #: src/tools/emissionsDrivingCycle_main.cpp:229
 #: src/tools/emissionsMap_main.cpp:92
 #, c-format
 msgid "Vehicle type '%' is not defined."
-msgstr ""
+msgstr "车辆类型“%”未定义。"
 
 #: src/tools/emissionsDrivingCycle_main.cpp:253
 msgid "Unreadable file '%'."
@@ -11425,17 +11425,17 @@ msgstr "在路径 '%' 內的一个路段是未知的!"
 
 #: src/utils/common/LinearApproxHelpers.cpp:34
 msgid "Cannot determine the minimum value from an empty map."
-msgstr ""
+msgstr "无法从空映射中确定最小值。"
 
 #: src/utils/common/LinearApproxHelpers.cpp:49
 msgid "Cannot determine the maximum value from an empty map."
-msgstr ""
+msgstr "无法从空映射中确定最大值。"
 
 #: src/utils/common/LinearApproxHelpers.cpp:100
 #: src/utils/common/LinearApproxHelpers.cpp:133
 #, c-format
 msgid "Mismatching data rows of % axis and % height values."
-msgstr ""
+msgstr "% 轴和 % 高度值的数据行不匹配。"
 
 #: src/utils/common/MapMatcher.h:51
 msgid "Cannot convert geo-positions because the network has no geo-reference"
@@ -11444,15 +11444,15 @@ msgstr "无法转换地理位置, 因为路网沒有地理参考系统(geo-refer
 #: src/utils/common/MsgHandler.cpp:169
 #, c-format
 msgid " done (%ms)."
-msgstr ""
+msgstr " 完成 (%ms)."
 
 #: src/utils/common/MsgHandler.cpp:171
 msgid " done."
-msgstr ""
+msgstr " 完成。"
 
 #: src/utils/common/MsgHandler.cpp:174
 msgid " failed."
-msgstr ""
+msgstr " 失败。"
 
 #: src/utils/common/MsgHandler.cpp:263
 msgid "Could not set locale to '%'."
@@ -11469,11 +11469,11 @@ msgstr "找不到定位(localized)信息。"
 
 #: src/utils/common/MsgHandler.cpp:286
 msgid "Warning: "
-msgstr ""
+msgstr "警告: "
 
 #: src/utils/common/MsgHandler.cpp:287
 msgid "Error: "
-msgstr ""
+msgstr "错误: "
 
 #: src/utils/common/Parameterised.cpp:106
 msgid "Invalid conversion from string to double (%)"
@@ -11514,7 +11514,7 @@ msgstr "StopOffset 需要一个偏移(offset)值"
 #: src/utils/common/SUMOVehicleClass.cpp:358
 #, c-format
 msgid "Unknown vehicle class '%' ignored."
-msgstr ""
+msgstr "未知的车辆类别“%”已被忽略。"
 
 #: src/utils/common/SUMOVehicleClass.cpp:360
 #, c-format
@@ -11594,11 +11594,11 @@ msgstr "将所警告及错误写入文件"
 
 #: src/utils/common/SystemFrame.cpp:113
 msgid "Writes timestamps in front of all messages"
-msgstr ""
+msgstr "在所有消息前加上时间戳"
 
 #: src/utils/common/SystemFrame.cpp:116
 msgid "Writes process ID in front of all messages"
-msgstr ""
+msgstr "在所有消息前加上进程ID"
 
 #: src/utils/common/SystemFrame.cpp:119
 msgid "Language to use in messages"
@@ -11610,7 +11610,7 @@ msgstr "每个输出文件中将包含许可证信息"
 
 #: src/utils/common/SystemFrame.cpp:125
 msgid "Write parsable metadata (configuration etc.) instead of comments"
-msgstr ""
+msgstr "编写可解析的元数据（如配置等），而非注释"
 
 #: src/utils/common/SystemFrame.cpp:128
 msgid ""
@@ -11630,23 +11630,24 @@ msgstr "定义经纬度(lon,lat)输出的逗号后的位数"
 msgid ""
 "Defines the standard compression algorithm (currently only for parquet "
 "output)"
-msgstr ""
+msgstr "定义标准压缩算法（目前仅适用于Parquet输出格式）"
 
 #: src/utils/common/SystemFrame.cpp:140
 msgid ""
 "Defines the standard output format if not derivable from the file name "
 "('xml', 'csv', 'parquet')"
-msgstr ""
+msgstr "如果无法从文件名（如“xml”、“csv”、“parquet”）推断出输出格式，则定义标准输出格"
+"式"
 
 #: src/utils/common/SystemFrame.cpp:143
 msgid ""
 "How to derive column headers from attribute names ('none', 'tag', 'auto', "
 "'plain')"
-msgstr ""
+msgstr "如何从属性名称（'none'、'tag'、'auto'、'plain'）派生出列标题"
 
 #: src/utils/common/SystemFrame.cpp:146
 msgid "Separator in CSV output"
-msgstr ""
+msgstr "CSV输出中的分隔符"
 
 #: src/utils/common/SystemFrame.cpp:149
 msgid ""
@@ -11690,39 +11691,41 @@ msgstr "已参数化的分配的格式无效"
 
 #: src/utils/distribution/Distribution_Parameterized.cpp:164
 msgid "minimum value % larger than maximum %"
-msgstr ""
+msgstr "最小值%比最大值大%"
 
 #: src/utils/distribution/Distribution_Parameterized.cpp:167
 msgid "minimum value % too large for distribution with mean % and deviation %"
-msgstr ""
+msgstr "最小值%对于平均值为%且偏差为%的分布而言过大"
 
 #: src/utils/distribution/Distribution_Parameterized.cpp:170
 msgid "maximum value % too small for distribution with mean % and deviation %"
-msgstr ""
+msgstr "最大值%对于平均值为%且偏差为%的分布来说过小"
 
 #: src/utils/distribution/Distribution_Parameterized.cpp:173
 msgid ""
 "maximum value % and minimum value % too close for distribution with mean % "
 "and deviation %"
-msgstr ""
+msgstr "最大值%和最小值%过于接近，无法与平均值%和偏差%一起分布"
 
 #: src/utils/emissions/EnergyParams.cpp:88
 msgid ""
 "Vehicle type '%' uses the emission class '%' which does not have proper "
 "defaults for its vehicle class. Please use a different emission model or "
 "complete the vType definition with further parameters."
-msgstr ""
+msgstr "车辆类型“%”使用的排放等级“%”没有为其车辆类别设置适当的默认值。请使用不同的排"
+"放模型，或使用更多参数来完善vType定义。"
 
 #: src/utils/emissions/EnergyParams.cpp:91
 msgid " And also set a vehicle mass!"
-msgstr ""
+msgstr " 同时设定车辆质量！"
 
 #: src/utils/emissions/EnergyParams.cpp:97
 #, c-format
 msgid ""
 "Vehicle type '%' uses the Energy model parameter 'internalMomentOfInertia' "
 "which is deprecated. Use 'rotatingMass' instead."
-msgstr ""
+msgstr "车辆类型“%”使用了已弃用的能量模型参数“internalMomentOfInertia”。请改用“rotati"
+"ngMass”。"
 
 #: src/utils/emissions/HelpersEnergy.cpp:227
 msgid "An acceleration given by the power was not found."
@@ -11730,7 +11733,7 @@ msgstr "未找到电力(power)给定的加速度。"
 
 #: src/utils/foxtools/MFXComboBoxIcon.cpp:88
 msgid "No matches found"
-msgstr ""
+msgstr "未找到匹配项"
 
 #: src/utils/foxtools/MFXDecalsTable.cpp:73
 msgid "Add decal"
@@ -11780,7 +11783,7 @@ msgstr "展开框架以显示所有内容"
 
 #: src/utils/foxtools/MFXGroupBoxModule.cpp:78
 msgid "Shrink frame to default width"
-msgstr ""
+msgstr "收缩框架至默认宽度"
 
 #: src/utils/foxtools/MFXTextFieldSearch.cpp:87
 msgid "Type to search..."
@@ -11788,12 +11791,12 @@ msgstr "键入搜索..."
 
 #: src/utils/foxtools/MFXUtils.cpp:46
 msgid "File Exists"
-msgstr ""
+msgstr "文件已存在"
 
 #: src/utils/foxtools/MFXUtils.cpp:46
 #, c-format
 msgid "Overwrite '%s'?"
-msgstr ""
+msgstr "覆盖“%s”吗？"
 
 #: src/utils/geom/GeoConvHelper.cpp:87
 msgid "Ignoring geoidgrids and vgridshift in projection"
@@ -11839,15 +11842,15 @@ msgstr "从 Gauss-Krueger 转换为 UTM 投影方法"
 
 #: src/utils/geom/GeoConvHelper.cpp:374
 msgid "Failed to create transformation, reason unknown."
-msgstr ""
+msgstr "创建转换失败，原因未知。"
 
 #: src/utils/geom/GeoConvHelper.cpp:376
 msgid "Failed to create transformation, %."
-msgstr ""
+msgstr "创建转换失败，%。"
 
 #: src/utils/geom/GeoConvHelper.cpp:381
 msgid "Failed to transform, %."
-msgstr ""
+msgstr "转换失败，%。"
 
 #: src/utils/geom/GeoConvHelper.cpp:464
 msgid "Could not transform (%,%)"
@@ -11873,23 +11876,23 @@ msgstr "尝试減去不同长度的 PositionVectors。"
 
 #: src/utils/geom/PositionVector.cpp:1574
 msgid "Trying to add PositionVectors of different lengths."
-msgstr ""
+msgstr "试图添加长度不同的位置向量。"
 
 #: src/utils/handlers/AdditionalHandler.cpp:975
 msgid "Invalid charge type '%' defined in chargingStation '%'."
-msgstr ""
+msgstr "无效的充电类型“%”，定义在充电站“%”中。"
 
 #: src/utils/handlers/AdditionalHandler.cpp:1129
 msgid ""
 "'pos', 'endPos' and 'length' cannot be defined together in a single lane "
 "area detector."
-msgstr ""
+msgstr "在单个车道区域检测器中，不能同时定义“起点位置”、“终点位置”和“长度”。"
 
 #: src/utils/handlers/AdditionalHandler.cpp:1132
 msgid ""
 "A single lane area detector requires two parameters of those 'pos', 'endPos' "
 "and 'length'."
-msgstr ""
+msgstr "单车道区域检测器需要提供“pos”、“endPos”和“length”中的两个参数。"
 
 #: src/utils/handlers/AdditionalHandler.cpp:1457
 msgid "Calibrators need either an edge or a lane"
@@ -11918,18 +11921,18 @@ msgstr "经度(lon)和纬度(lat)必须一起定义于兴趣点(POIs)內"
 #: src/utils/handlers/AdditionalHandler.cpp:1958
 #: src/utils/shapes/ShapeHandler.cpp:127
 msgid "Invalid icon % for POI '%', using default"
-msgstr ""
+msgstr "无效的icon % 为POI ‘%’，将使用默认图标"
 
 #: src/utils/handlers/AdditionalHandler.cpp:2054
 msgid "Calibrator Flows have to be defined within a %."
-msgstr ""
+msgstr "校准流量的定义必须在%以内。"
 
 #: src/utils/handlers/AdditionalHandler.cpp:2064
 #: src/utils/handlers/MeanDataHandler.cpp:273
 msgid ""
 "Attribute '%' defined in % with id '%' doesn't have a valid value (given "
 "'%')."
-msgstr ""
+msgstr "属性“%”，定义在%（id为%），有不合法的属性值（%）。"
 
 #: src/utils/handlers/CommonHandler.cpp:93
 msgid "Parameters must be defined within an object"
@@ -11952,77 +11955,79 @@ msgstr "解析 % 通用参数的密键(key)发生错误。 密键(key)含有无�
 
 #: src/utils/handlers/CommonHandler.cpp:143
 msgid "'%' must be defined within the definition of a %."
-msgstr ""
+msgstr "“%”必须在%的定义内定义。"
 
 #: src/utils/handlers/CommonHandler.cpp:146
 msgid "'%' must be defined within the definition of a '%' (found % '%')."
-msgstr ""
+msgstr "“%”必须在%的定义内定义（具体% “%”）。"
 
 #: src/utils/handlers/CommonHandler.cpp:149
 msgid "'%' must be defined within the definition of a '%' (found %)."
-msgstr ""
+msgstr "“%”必须在%的定义内定义（具体%）。"
 
 #: src/utils/handlers/CommonHandler.cpp:161
 msgid "Could not build % with ID '%' in netedit; '%' ist not a valid vType ID."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；% 不是一个有效的vType ID。"
 
 #: src/utils/handlers/CommonHandler.cpp:197
 msgid ""
 "Could not build % with ID '%' in netedit; Cannot have an external route and "
 "an embedded route in the same definition."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；不能在同一定义中同时包含外部路线和嵌入式路线。"
 
 #: src/utils/handlers/CommonHandler.cpp:200
 msgid ""
 "Could not build % with ID '%' in netedit; Cannot have multiple from-to "
 "attributes."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；不能有多个from-to属性。"
 
 #: src/utils/handlers/CommonHandler.cpp:203
 msgid ""
 "Could not build % with ID '%' in netedit; Cannot have from-to attributes and "
 "route attributes in the same definition."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；不能在同一定义中同时包含from-to属性和路线属性"
+"。"
 
 #: src/utils/handlers/CommonHandler.cpp:206
 msgid ""
 "Could not build % with ID '%' in netedit; Requires either a route or an "
 "embedded route or a from-to attribute (Edges, junctions or TAZs)."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；需要至少一个路线、嵌入式路线或起点-终点属性（"
+"路段、路口或交通分析区（TAZ））。"
 
 #: src/utils/handlers/CommonHandler.cpp:265
 msgid ""
 "Could not build % with ID '%' in netedit; Attribute % cannot be negative."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；属性%不能为负。"
 
 #: src/utils/handlers/CommonHandler.cpp:271
 msgid ""
 "Could not build % with ID '%' in netedit; Attribute % must be greather than "
 "zero."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；属性%必须大于0。"
 
 #: src/utils/handlers/CommonHandler.cpp:283
 #: src/utils/handlers/CommonHandler.cpp:301
 msgid ""
 "Could not build % with ID '%' in netedit; Attribute % cannot be negative (%)."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；属性%不能为负（%）。"
 
 #: src/utils/handlers/CommonHandler.cpp:289
 #: src/utils/handlers/CommonHandler.cpp:307
 msgid ""
 "Could not build % with ID '%' in netedit; Attribute % must be greather than "
 "zero (%)."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；属性%必须小于0（%）。"
 
 #: src/utils/handlers/CommonHandler.cpp:320
 msgid "Could not build % with ID '%' in netedit; % is invalid % ()"
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；%是非法 % ()"
 
 #: src/utils/handlers/CommonHandler.cpp:328
 #: src/utils/handlers/CommonHandler.cpp:340
 #: src/utils/handlers/CommonHandler.cpp:352
 msgid "Could not build %; ID cannot be empty"
-msgstr ""
+msgstr "无法构建%；ID不能为空"
 
 #: src/utils/handlers/CommonHandler.cpp:330
 #: src/utils/handlers/CommonHandler.cpp:354
@@ -12034,39 +12039,39 @@ msgstr "无法在 netedit 中构建 % (其识别名(ID)为 '%'); ID 含有无效
 msgid ""
 "Could not build % with ID '%' in netedit; detector ID contains invalid "
 "characters."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；检测器ID包含无效字符。"
 
 #: src/utils/handlers/CommonHandler.cpp:363
 msgid "Overwriting % with ID '%'"
-msgstr ""
+msgstr "覆盖%用ID “%”"
 
 #: src/utils/handlers/CommonHandler.cpp:369
 msgid ""
 "Could not build % with ID '%' in netedit; Found another % with the same ID."
-msgstr ""
+msgstr "无法在netedit中构建%（ID%）;发现%具有相同ID。"
 
 #: src/utils/handlers/CommonHandler.cpp:384
 msgid "Could not build % with ID '%' in netedit; Invalid position over lane."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；车道上有无效的位置。"
 
 #: src/utils/handlers/CommonHandler.cpp:390
 msgid "Could not build % with ID '%' in netedit; List of lanes isn't valid."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；车道列表无效。"
 
 #: src/utils/handlers/CommonHandler.cpp:396
 msgid ""
 "Could not build % with ID '%' in netedit; % parent with ID '%' doesn't exist."
-msgstr ""
+msgstr "无法在netedit中构建%（ID为%）；%的父级（ID为%）不存在。"
 
 #: src/utils/handlers/CommonHandler.cpp:402
 #, c-format
 msgid "Could not build % in netedit; % parent with ID '%' doesn't exist."
-msgstr ""
+msgstr "无法在netedit中构建%；% 父级（ID为%）不存在。"
 
 #: src/utils/handlers/CommonHandler.cpp:408
 #, c-format
 msgid "Could not build % in netedit; % parent doesn't exist."
-msgstr ""
+msgstr "无法在netedit中构建%；% 父级不存在。"
 
 #: src/utils/handlers/DataHandler.cpp:123
 msgid "Data elements cannot load attributes as params"
@@ -12078,11 +12083,11 @@ msgstr "平均数据(MeanData)无法载入属性作为参数(params)"
 
 #: src/utils/handlers/MeanDataHandler.cpp:183
 msgid "The netstate type 'hbefa' is deprecated. Using 'emissions' instead."
-msgstr ""
+msgstr "路网状态类型“hbefa”已弃用。请改用“emissions”。"
 
 #: src/utils/handlers/RouteHandler.cpp:649
 msgid "an embedded route cannot have their own ID"
-msgstr ""
+msgstr "嵌入式路线不能拥有自己的ID"
 
 #: src/utils/handlers/RouteHandler.cpp:716
 #: src/utils/handlers/RouteHandler.cpp:806
@@ -12097,11 +12102,11 @@ msgstr "属性 'to'、'toJunction '和 'toTaz '不能一起定义"
 
 #: src/utils/handlers/RouteHandler.cpp:984
 msgid "Speed and duration attributes cannot be defined together in walks"
-msgstr ""
+msgstr "在步行中，速度和持续时间属性不能同时定义"
 
 #: src/utils/handlers/RouteHandler.cpp:1103
 msgid "Speed and duration attributes cannot be defined together in tranships"
-msgstr ""
+msgstr "在转运中，速度和持续时间属性不能同时定义"
 
 #: src/utils/handlers/RouteHandler.cpp:1146
 #: src/utils/vehicle/SUMORouteHandler.cpp:206
@@ -12139,7 +12144,7 @@ msgstr "无法载入范本(template) '%'。"
 #: src/utils/iodevices/CSVFormatter.h:125
 msgid ""
 "Unexpected attribute '%', this file format does not support CSV output yet."
-msgstr ""
+msgstr "意外属性“%”，此文件格式尚不支持CSV输出。"
 
 #: src/utils/iodevices/OutputDevice.cpp:97
 msgid "No port number given."
@@ -12151,11 +12156,11 @@ msgstr "关闭输出装置时发生错误。"
 
 #: src/utils/iodevices/OutputDevice.cpp:312
 msgid "Attribute '%' is not support for filtering written attributes in %."
-msgstr ""
+msgstr "属性“%”不支持用于筛选%中的已写入属性。"
 
 #: src/utils/iodevices/OutputDevice.cpp:315
 msgid "Unknown attribute '%' to write in %."
-msgstr ""
+msgstr "未知属性“%”无法写入 %。"
 
 #: src/utils/iodevices/OutputDevice_File.cpp:46
 msgid "Could not redirect to NUL device (%)."
@@ -12165,7 +12170,7 @@ msgstr "无法重定向到NUL装置 (%)。"
 msgid ""
 "Unexpected attribute '%', this file format does not support Parquet output "
 "yet."
-msgstr ""
+msgstr "意外属性“%”，此文件格式尚不支持 Parquet 输出。"
 
 #: src/utils/options/Option.cpp:352
 #, c-format
@@ -12234,6 +12239,8 @@ msgid ""
 "A value for the option '%' was already set.\n"
 " Possible synonymes: "
 msgstr ""
+"选项“%”的值已设置。\n"
+" 可能的同义词： "
 
 #: src/utils/options/OptionsCont.cpp:625 src/utils/options/OptionsCont.cpp:646
 msgid " Build features: "
@@ -12273,31 +12280,31 @@ msgstr "将模式(schema)写入 '%'"
 
 #: src/utils/options/OptionsCont.cpp:833
 msgid "Help Topics:"
-msgstr ""
+msgstr "帮助主题："
 
 #: src/utils/options/OptionsCont.cpp:841
 msgid "Usage: "
-msgstr ""
+msgstr "用法： "
 
 #: src/utils/options/OptionsCont.cpp:841
 msgid " [OPTION]*"
-msgstr ""
+msgstr " [选项]*"
 
 #: src/utils/options/OptionsCont.cpp:853
 msgid "Examples:"
-msgstr ""
+msgstr "示例："
 
 #: src/utils/options/OptionsCont.cpp:860
 msgid "Report bugs at %."
-msgstr ""
+msgstr "在%上报bug。"
 
 #: src/utils/options/OptionsCont.cpp:861
 msgid "Get in contact via %."
-msgstr ""
+msgstr "通过%与我联系。"
 
 #: src/utils/options/OptionsCont.cpp:867
 msgid "% Options:"
-msgstr ""
+msgstr "% 选项："
 
 #: src/utils/options/OptionsIO.cpp:88 src/utils/options/OptionsIO.cpp:135
 msgid "Could not parse commandline options."
@@ -12317,7 +12324,7 @@ msgstr "无法载入设定(configuration)'%'。"
 
 #: src/utils/options/OptionsLoader.cpp:74
 msgid "Ignoring attribute '%' for option '%'"
-msgstr ""
+msgstr "忽略属性“%”，为选项“%”"
 
 #: src/utils/options/OptionsLoader.cpp:87
 msgid "Could not set option '%' (probably defined twice)."
@@ -12325,7 +12332,7 @@ msgstr "无法设定选项 '%' (可能定义了两次)。"
 
 #: src/utils/options/OptionsLoader.cpp:117
 msgid "Could not set option '%' because attribute 'value' is missing."
-msgstr ""
+msgstr "无法设置选项“%”，因为缺少属性“value”。"
 
 #: src/utils/options/OptionsParser.cpp:136
 #: src/utils/options/OptionsParser.cpp:143
@@ -12362,12 +12369,12 @@ msgstr "地标路段 '%' 不存在于路网內。"
 
 #: src/utils/router/AStarLookupTable.h:170
 msgid "Invalid coordinate in landmark file, could not find edge at  '%'"
-msgstr ""
+msgstr "地标文件中的坐标无效，无法找到路段在  '%'"
 
 #: src/utils/router/AStarLookupTable.h:182
 #, c-format
 msgid "Broken landmark file, could not parse '%' as coordinates."
-msgstr ""
+msgstr "地标文件已损坏，无法将“%”解析为坐标。"
 
 #: src/utils/router/AStarLookupTable.h:189
 #: src/utils/router/AStarLookupTable.h:202
@@ -12391,14 +12398,14 @@ msgstr "地标路段 '%' 沒有对照表, 重新计算中。"
 msgid ""
 "Not all network edges were found in the lookup table '%' for landmark edge "
 "'%'.%"
-msgstr ""
+msgstr "在查找表“%”中，并未找到地标边“%”的所有网络边。%"
 
 #: src/utils/router/AStarLookupTable.h:323
 #, c-format
 msgid ""
 "Landmark % is not reachable from % edges and is unable to reach % out of "
 "% total edges."
-msgstr ""
+msgstr "地标%无法从%的路段到达，且无法到达总路段数%中的%。"
 
 #: src/utils/router/AStarLookupTable.h:343
 msgid "Saving new matrix to '%'."
@@ -12409,15 +12416,15 @@ msgstr "将新的矩阵存入 '%'。"
 #: src/utils/router/SUMOAbstractRouter.h:228
 #, c-format
 msgid "No connection between edge '%' and edge '%' found."
-msgstr ""
+msgstr "未发现路段“%”和路段“%”之间存在连接。"
 
 #: src/utils/router/CHRouter.h:272
 msgid "Routing algorithm CH does not support dynamic closing of edges%"
-msgstr ""
+msgstr "CH算法不支持动态关闭路段%"
 
 #: src/utils/router/CHRouterWrapper.h:85
 msgid "Routing algorithm CHWrapper does not support dynamic closing of edges%"
-msgstr ""
+msgstr "路径规划算法CHWrapper不支持动态关闭路径%"
 
 #: src/utils/router/IntermodalNetwork.h:301
 #, c-format
@@ -12452,7 +12459,7 @@ msgstr "不使用大众运输路线 '%' 来安排人员的路径。 它只有不
 
 #: src/utils/router/IntermodalRouter.h:201
 msgid "No connection between % '%' and % '%' found."
-msgstr ""
+msgstr "在% “%”和% “%”之间未发现连接。"
 
 #: src/utils/router/IntermodalRouter.h:229
 #: src/utils/router/PedestrianRouter.h:126
@@ -12481,7 +12488,7 @@ msgstr "形状通用参数解析密键(key)时, 发生错误。 密键(key)含�
 
 #: src/utils/shapes/ShapeHandler.cpp:144
 msgid "Invalid characters for PoI ID '%'"
-msgstr ""
+msgstr "POI ID “%” 有无效字符"
 
 #: src/utils/shapes/ShapeHandler.cpp:175
 msgid "Either (x, y), (lon, lat) or (lane, pos) must be specified for PoI '%'."
@@ -12503,7 +12510,7 @@ msgstr "兴趣点(PoI) '%' 已经存在。"
 
 #: src/utils/shapes/ShapeHandler.cpp:218
 msgid "Invalid characters for Poly ID '%'"
-msgstr ""
+msgstr "Poly ID “%”有无效字符"
 
 #: src/utils/shapes/ShapeHandler.cpp:260
 msgid "Polygon's shape cannot be empty."
@@ -12525,43 +12532,43 @@ msgstr "从 % 中载入形状(shapes)失败。"
 
 #: src/utils/tests/InternalTest.cpp:318
 msgid "Could not open attributes enum file '%'."
-msgstr ""
+msgstr "无法打开属性枚举文件“%”。"
 
 #: src/utils/tests/InternalTest.cpp:332
 #, c-format
 msgid "In internal test file, value '%' cannot be parsed to int."
-msgstr ""
+msgstr "在内部测试文件中，值“%”无法解析为整数。"
 
 #: src/utils/tests/InternalTest.cpp:349 src/utils/tests/InternalTest.cpp:399
 #: src/utils/tests/InternalTest.cpp:434
 msgid "Could not open view positions file '%'."
-msgstr ""
+msgstr "无法打开位置文件“%”。"
 
 #: src/utils/tests/InternalTest.cpp:377
 #, c-format
 msgid "In internal test file, mainMenu value '%' cannot be parsed to int."
-msgstr ""
+msgstr "在内部测试文件中，mainMenu的值“%”无法解析为整数。"
 
 #: src/utils/tests/InternalTest.cpp:379
 #, c-format
 msgid "In internal test file, subMenuA value '%' cannot be parsed to int."
-msgstr ""
+msgstr "在内部测试文件中，subMenuA的值“%”无法解析为整数。"
 
 #: src/utils/tests/InternalTest.cpp:381
 #, c-format
 msgid "In internal test file, subMenuB value '%' cannot be parsed to int."
-msgstr ""
+msgstr "在内部测试文件中，subMenuB的值“%”无法解析为整数。"
 
 #: src/utils/tests/InternalTest.cpp:415 src/utils/tests/InternalTest.cpp:454
 #, c-format
 msgid "In internal test file, x value '%' cannot be parsed to int."
-msgstr ""
+msgstr "在内部测试文件中，x值“%”无法解析为整数。"
 
 #: src/utils/tests/InternalTest.cpp:417 src/utils/tests/InternalTest.cpp:456
 #: src/utils/tests/InternalTest.cpp:458 src/utils/tests/InternalTest.cpp:460
 #, c-format
 msgid "In internal test file, y value '%' cannot be parsed to int."
-msgstr ""
+msgstr "在内部测试文件中，y值“%”无法解析为整数。"
 
 #: src/utils/traction_wire/Circuit.cpp:44
 #, c-format
@@ -12664,51 +12671,51 @@ msgstr "路径文件应按出发时间排序, 忽略 '%'!"
 
 #: src/utils/vehicle/SUMORouteHandler.cpp:499
 msgid "Speed cannot be negative for stop%."
-msgstr ""
+msgstr "对于停靠点%而言，速度不能为负。"
 
 #: src/utils/vehicle/SUMORouteHandler.cpp:515
 msgid "Invalid duration or end time is given for a stop%."
-msgstr ""
+msgstr "对于停靠点%而言，无效的持续时长或结束时间。"
 
 #: src/utils/vehicle/SUMORouteHandler.cpp:519
 msgid "Triggers and waypoints cannot be combined%."
-msgstr ""
+msgstr "触发器和站点不能合并%。"
 
 #: src/utils/vehicle/SUMORouteHandler.cpp:526
 msgid "Stop at parkingArea overrides attribute 'parking' for stop%."
-msgstr ""
+msgstr "对停靠点%而言，在停车区域停车会覆盖属性“parking”。"
 
 #: src/utils/vehicle/SUMORouteHandler.cpp:567
 msgid "Invalid 'index' for stop%."
-msgstr ""
+msgstr "对停靠点%而言，无效索引值。"
 
 #: src/utils/vehicle/SUMOTrafficObject.cpp:45
 msgid "Missing parameter '%' for % '%'."
-msgstr ""
+msgstr "缺少参数“%”，对% “%”而言。"
 
 #: src/utils/vehicle/SUMOTrafficObject.cpp:65
 msgid "Invalid float value '%' for parameter '%' in % '%' (%)."
-msgstr ""
+msgstr "无效的浮点数“%”，针对参数“%”在% “%”上（%）。"
 
 #: src/utils/vehicle/SUMOTrafficObject.cpp:78
 msgid "Invalid distribution / float value '%' for parameter '%' in % '%' (%)."
-msgstr ""
+msgstr "无效的分布/浮点数“%”，为参数“%”在% “%”上（%）。"
 
 #: src/utils/vehicle/SUMOTrafficObject.cpp:91
 msgid "Invalid boolean value '%' for parameter '%' in % '%'."
-msgstr ""
+msgstr "无效的布尔值“%”，为参数“%”在% “%”上。"
 
 #: src/utils/vehicle/SUMOTrafficObject.cpp:104
 msgid "Invalid time value '%' for parameter '%' in % '%'."
-msgstr ""
+msgstr "无效的时间值“%”，为参数%在% “%”上。"
 
 #: src/utils/vehicle/SUMOVTypeParameter.cpp:675
 msgid "Invalid size of % table for vType '%' (at least 2 values are required)."
-msgstr ""
+msgstr "无效的表大小%，在vType“%”上（至少需要2个值）。"
 
 #: src/utils/vehicle/SUMOVTypeParameter.cpp:677
 msgid "Mismatching size of speedTable (%) and % table (%) for vType '%'."
-msgstr ""
+msgstr "速度表（%）的大小与%表（%）的大小不匹配，对于vType“%”。"
 
 #: src/utils/vehicle/SUMOVehicleParameter.cpp:716
 msgid "Invalid % % given for %. Using edge end instead."
@@ -12775,7 +12782,7 @@ msgstr "无效的跟车模式属性 %。必须大于 0"
 msgid ""
 "Invalid Car-Following-Model Attribute %. Cannot be parsed as a vector of "
 "<speed accel> pairs"
-msgstr ""
+msgstr "车辆跟驰模型属性%无效。无法解析为<速度 加速>对的向量"
 
 #: src/utils/vehicle/SUMOVehicleParserHelper.cpp:1327
 msgid ""
@@ -12824,12 +12831,12 @@ msgstr "% '%' 的形状(shape)未知。"
 msgid ""
 "Invalid Car-Following-Model Attribute %. An acceleration profile value "
 "cannot be negative"
-msgstr ""
+msgstr "车辆跟驰模型属性%无效。加速度曲线值不能为负"
 
 #: src/utils/vehicle/SUMOVehicleParserHelper.cpp:1802
 #, c-format
 msgid "Entry '%' of % table for vType '%' cannot be parsed as 'double'"
-msgstr ""
+msgstr "条目“%”（表%）无法解析为“double”类型，对于vType %"
 
 #: src/utils/vehicle/SUMOVehicleParserHelper.cpp:1821
 #: src/utils/vehicle/SUMOVehicleParserHelper.cpp:1837
@@ -12844,11 +12851,11 @@ msgstr ""
 msgid ""
 "Ignoring from % '%' used in % '%' and using instead the previous end element "
 "% '%'"
-msgstr ""
+msgstr "忽略来源% “%”在% “%”中使用，而使用之前的结束元素% “%”"
 
 #: src/utils/xml/CommonXMLStructure.cpp:1412
 msgid "Trying to get undefined parent '%' in SUMOBaseObject '%'"
-msgstr ""
+msgstr "尝试获取未定义父级“%”在SUMOBaseObject '%'"
 
 #: src/utils/xml/CommonXMLStructure.cpp:1429
 msgid "Undefined vehicleType parameter"
@@ -12887,7 +12894,7 @@ msgstr "路段 '%' 中缺少值 '%' 。"
 #: src/utils/xml/SAXWeightsHandler.cpp:162
 msgid ""
 "The value '%' of attribute '%' should be numeric in edge '%' at time step %."
-msgstr ""
+msgstr "值“%”（属性“%”）应为数字，路段%、时间步为 % 。"
 
 #: src/utils/xml/SUMOSAXReader.cpp:110 src/utils/xml/SUMOSAXReader.cpp:136
 msgid "Cannot read file '%'!"
@@ -12922,7 +12929,7 @@ msgstr "无法建立XML解析器(parser)。"
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1890
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1901
 msgid "XML files"
-msgstr ""
+msgstr "XML文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1746
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1751
@@ -12945,196 +12952,196 @@ msgstr ""
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1896
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1902
 msgid "All files"
-msgstr ""
+msgstr "所有文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1750
 msgid "Plain text files"
-msgstr ""
+msgstr "纯文本文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1755
 msgid "CSV files"
-msgstr ""
+msgstr "CSV文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1760
 msgid "Open scene graph files"
-msgstr ""
+msgstr "场景图文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1765
 msgid "All Image Files"
-msgstr ""
+msgstr "所有图像文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1766
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1792
 msgid "GIF Image"
-msgstr ""
+msgstr "GIF图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1767
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1793
 msgid "BMP Image"
-msgstr ""
+msgstr "BMP图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1768
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1794
 msgid "XPM Image"
-msgstr ""
+msgstr "XPM图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1769
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1795
 msgid "PCX Image"
-msgstr ""
+msgstr "PCX图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1770
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1796
 msgid "ICO Image"
-msgstr ""
+msgstr "ICO图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1771
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1797
 msgid "RGB Image"
-msgstr ""
+msgstr "RGB图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1772
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1798
 msgid "XBM Image"
-msgstr ""
+msgstr "XBM图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1773
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1799
 msgid "TARGA Image"
-msgstr ""
+msgstr "TARGA图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1774
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1800
 msgid "PNG Image"
-msgstr ""
+msgstr "PNG图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1775
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1801
 msgid "JPEG Image"
-msgstr ""
+msgstr "JPEG图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1776
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1802
 msgid "TIFF Image"
-msgstr ""
+msgstr "TIFF图"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1777
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1803
 msgid "Postscript"
-msgstr ""
+msgstr "附言（Postscript）"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1778
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1804
 msgid "Encapsulated Postscript"
-msgstr ""
+msgstr "封装式Postscript"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1779
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1805
 msgid "Portable Document Format"
-msgstr ""
+msgstr "便携式文档格式"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1780
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1806
 msgid "Scalable Vector Graphics"
-msgstr ""
+msgstr "可缩放矢量图形"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1781
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1807
 msgid "LATEX text strings"
-msgstr ""
+msgstr "LATEX 文本字符串"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1782
 msgid "Portable LaTeX Graphics"
-msgstr ""
+msgstr "便携式LaTeX图形"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1783
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1809
 msgid "All Files"
-msgstr ""
+msgstr "所有文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1787
 msgid "All Image and Video Files"
-msgstr ""
+msgstr "所有图像和视频文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1788
 msgid "All Video Files"
-msgstr ""
+msgstr "所有视频文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1789
 msgid "G264 Video"
-msgstr ""
+msgstr "G264视频"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1790
 msgid "HEVC Video"
-msgstr ""
+msgstr "HEVC视频"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1791
 msgid "MP4 Video"
-msgstr ""
+msgstr "MP4视频"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1808
 msgid "Portable"
-msgstr ""
+msgstr "便携的"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1814
 msgid "Plain text"
-msgstr ""
+msgstr "纯文本"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1819
 msgid "View settings files"
-msgstr ""
+msgstr "视图设置文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1824
 msgid "State GZipped XML files"
-msgstr ""
+msgstr "状态GZipped XML文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1830
 msgid "Sumo config"
-msgstr ""
+msgstr "Sumo配置"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1836
 msgid "Netedit config files"
-msgstr ""
+msgstr "Netedit配置文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1842
 msgid "Netconvert config files"
-msgstr ""
+msgstr "Netconvert配置文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1848
 msgid "OSM network files"
-msgstr ""
+msgstr "OSM路网文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1854
 msgid "SUMO network files"
-msgstr ""
+msgstr "SUMO路网文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1860
 msgid "TLS files"
-msgstr ""
+msgstr "TLS文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1866
 msgid "Junction files"
-msgstr ""
+msgstr "路口文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1872
 msgid "Edge type files"
-msgstr ""
+msgstr "路段类型文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1878
 msgid "Additional files"
-msgstr ""
+msgstr "附加文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1889
 msgid "Route files"
-msgstr ""
+msgstr "路径文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1895
 msgid "Edge data files"
-msgstr ""
+msgstr "路段数据文件"
 
 #: src/utils/xml/SUMOXMLDefinitions.cpp:1900
 msgid "Mean data files"
-msgstr ""
+msgstr "平均值数据文件"
 
 #: src/utils/xml/XMLSubSys.cpp:73
 msgid ""

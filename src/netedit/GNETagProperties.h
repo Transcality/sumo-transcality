@@ -71,9 +71,12 @@ public:
         // sub data elements
         GENERICDATA =       1ULL << 28, // Generic data (GNEEdgeData, GNELaneData...)
         MEANDATA =          1ULL << 29, // Mean datas
+        // distributions
+        DISTRIBUTION =      1ULL << 30, // Element is a distribution (routeDistribution or vTypeDistribution)
+        DISTRIBUTIONREF =   1ULL << 31, // Element is a distribution reference of routeDistribution or vTypeDistribution
         // other
-        INTERNALLANE =      1ULL << 30, // Internal Lane
-        OTHER =             1ULL << 31, // Other type (used for TAZSourceSinks, VTypes, etc.)
+        INTERNALLANE =      1ULL << 32, // Internal Lane
+        OTHER =             1ULL << 33, // Other type (used for TAZSourceSinks, VTypes, etc.)
     };
 
     /// @brief tag property
@@ -90,11 +93,10 @@ public:
         REQUIRE_PROJ =          1ULL << 9,  // Element require a geo-projection defined in network
         VCLASS_ICON =           1ULL << 10, // Element returns icon depending of their vClass
         SYMBOL =                1ULL << 11, // Element is a symbol (VSSSymbols, RerouterSymbols...)
-        DISTRIBUTIONREF =       1ULL << 12, // Element is a distribution reference of routeDistribution or vTypeDistribution
-        EXTENDED =              1ULL << 13, // Element contains extended attributes (Usually vTypes)
-        HIERARCHICAL =          1ULL << 14, // Element is a hierarchical
-        LISTED =                1ULL << 15, // Element is a listed elements (for example, rerouter children)
-        NO_PROPERTY =           1ULL << 16, // Element doesn't have properties
+        EXTENDED =              1ULL << 12, // Element contains extended attributes (Usually vTypes)
+        HIERARCHICAL =          1ULL << 13, // Element is a hierarchical
+        LISTED =                1ULL << 14, // Element is a listed elements (for example, rerouter children)
+        NO_PROPERTY =           1ULL << 15, // Element doesn't have properties
     };
 
     /// @brief element in which this element is placed
@@ -109,7 +111,7 @@ public:
         CONSECUTIVE_LANES =     1ULL << 4,  // Placed over consecutive lanes
         ROUTE =                 1ULL << 7,  // Placed over route
         ROUTE_EMBEDDED =        1ULL << 8,  // Placed over route embedded
-        BUSSTOP =               1ULL << 9,  // Placed over busStop
+        BUSSTOP =               1ULL << 9, // Placed over busStop
         TRAINSTOP =             1ULL << 10, // Placed over trainStop
         CONTAINERSTOP =         1ULL << 11, // Placed over containerStop
         CHARGINGSTATION =       1ULL << 12, // Placed over charging station
@@ -132,6 +134,18 @@ public:
         TO_PARKINGAREA =        1ULL << 29, // Ends in parkingArea
     };
 
+    /// @brief files in which element can be saved
+    enum class File : std::uint64_t {
+        NETWORK =       1ULL << 0,    // Element can be saved in a network file
+        ADDITIONAL =    1ULL << 1,    // Element can be saved in a additional file
+        DEMAND =        1ULL << 2,    // Element can be saved in a demand file
+        DATA =          1ULL << 3,    // Element can be saved in a data file
+        MEANDATA =      1ULL << 4,    // Element can be saved in a meanData file
+        JUNCTION =      1ULL << 5,    // Element can be saved in a joined junction file
+        TYPE =          1ULL << 6,    // Element can be saved in a edge type file
+        TLS =           1ULL << 7,    // Element can be saved in a TLS file
+    };
+
     // @brief conflicts
     enum class Conflicts : std::uint64_t {
         POS_LANE =                  1ULL << 0,  // Position over lane isn't valid
@@ -145,9 +159,9 @@ public:
     friend class GNEAttributeProperties;
 
     /// @brief parameter constructor
-    GNETagProperties(const SumoXMLTag tag, GNETagProperties* parent, const Type tagType, const Property tagProperty, const Over tagOver,
-                     const Conflicts conflicts, const GUIIcon icon, const GUIGlObjectType GLType, const SumoXMLTag XMLTag,
-                     const std::string tooltip, std::vector<SumoXMLTag> XMLParentTags = {},
+    GNETagProperties(const SumoXMLTag tag, GNETagProperties* parent, const Type type, const Property property, const Over over,
+                     const File file, const Conflicts conflicts, const GUIIcon icon, const GUIGlObjectType GLType, const SumoXMLTag XMLTag,
+                     const std::string tooltipText, std::vector<SumoXMLTag> XMLParentTags = {},
                      const unsigned int backgroundColor = FXRGBA(255, 255, 255, 255), const std::string selectorText = "");
 
     /// @brief parameter constructor for hierarchical elements
@@ -313,9 +327,6 @@ public:
     /// @brief return true if tag correspond to a vehicle/person/container type element
     bool isType() const;
 
-    /// @brief return true if tag correspond to a type distribution element
-    bool isTypeDist() const;
-
     /// @brief return true if tag correspond to a vehicle element
     bool isVehicle() const;
 
@@ -339,6 +350,18 @@ public:
 
     /// @brief return true if tag correspond to an element with a type as a first parent
     bool hasTypeParent() const;
+
+    /// @brief return true if tag correspond to a distribution element
+    bool isDistribution() const;
+
+    /// @brief return true if tag correspond to a dstribution reference element
+    bool isDistributionReference() const;
+
+    /// @brief return true if tag correspond to a type distribution element
+    bool isTypeDistribution() const;
+
+    /// @brief return true if tag correspond to a route distribution element
+    bool isRouteDistribution() const;
 
     /// @}
 
@@ -497,14 +520,13 @@ public:
 
     /// @}
 
+    /// @brief properties
+    /// @{
     /// @brief return true if tag correspond to an element child of another element (Example: E3->Entry/Exit)
     bool isChild() const;
 
     /// @brief return true if tag correspond to a symbol element
     bool isSymbol() const;
-
-    /// @brief return true if tag correspond to a dstribution reference element
-    bool isDistributionReference() const;
 
     /// @brief return true if tag correspond to an internal lane
     bool isInternalLane() const;
@@ -542,6 +564,36 @@ public:
     /// @brief return true if tag correspond to an element that has vClass icons
     bool vClassIcon() const;
 
+    /// @}
+
+    /// @brief file
+    /// @{
+    /// @brief element is saved in a network file
+    bool saveInNetworkFile() const;
+
+    /// @brief element is saved in an additional file
+    bool saveInAdditionalFile() const;
+
+    /// @brief element is saved in a demand file
+    bool saveInDemandFile() const;
+
+    /// @brief element is saved in a data file
+    bool saveInDataFile() const;
+
+    /// @brief element is saved in a meanData file
+    bool saveInMeanDataFile() const;
+
+    /// @brief element is saved in a junction file
+    bool saveInJunctionFile() const;
+
+    /// @brief element is saved in a edge type file
+    bool saveInEdgeTypeFile() const;
+
+    /// @brief element is saved in a TLS type file
+    bool saveInTLSFile() const;
+
+    /// @}
+
 protected:
     /// @brief add child
     void addChild(const GNETagProperties* child);
@@ -560,13 +612,16 @@ private:
     std::vector<const GNETagProperties*> myChildren;
 
     /// @brief tag Types
-    const Type myTagType = Type::OTHER;
+    const Type myType = Type::OTHER;
 
     /// @brief tag properties
-    const Property myTagProperty = Property::NO_PROPERTY;
+    const Property myProperty = Property::NO_PROPERTY;
 
     /// @brief tag over
-    const Over myTagOver = Over::VIEW;
+    const Over myOver = Over::VIEW;
+
+    /// @brief tag file
+    const File myFile = File::NETWORK;
 
     /// @brief conflicts
     const Conflicts myConflicts = Conflicts::NO_CONFLICTS;
@@ -638,6 +693,16 @@ constexpr GNETagProperties::Over operator|(GNETagProperties::Over a, GNETagPrope
 
 /// @brief override tag parent bit operator
 constexpr bool operator&(GNETagProperties::Over a, GNETagProperties::Over b) {
+    return (static_cast<std::uint64_t>(a) & static_cast<std::uint64_t>(b)) != 0;
+}
+
+/// @brief override tag parent bit operator
+constexpr GNETagProperties::File operator|(GNETagProperties::File a, GNETagProperties::File b) {
+    return static_cast<GNETagProperties::File>(static_cast<std::uint64_t>(a) | static_cast<std::uint64_t>(b));
+}
+
+/// @brief override tag parent bit operator
+constexpr bool operator&(GNETagProperties::File a, GNETagProperties::File b) {
     return (static_cast<std::uint64_t>(a) & static_cast<std::uint64_t>(b)) != 0;
 }
 

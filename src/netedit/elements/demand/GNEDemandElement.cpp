@@ -460,11 +460,11 @@ GNEDemandElement*
 GNEDemandElement::getTypeParent() const {
     if (getParentDemandElements().size() < 1) {
         throw InvalidArgument("This demand element doesn't have a type parent");
-    } else if (!getParentDemandElements().at(0)->getTagProperty()->isType()
-               && !getParentDemandElements().at(0)->getTagProperty()->isTypeDist()) {
-        throw InvalidArgument("The first parent isn't a type");
-    } else {
+    } else if ((getParentDemandElements().at(0)->getTagProperty()->isType()) ||
+               (getParentDemandElements().at(0)->getTagProperty()->isTypeDistribution())) {
         return getParentDemandElements().at(0);
+    } else {
+        throw InvalidArgument("The first parent isn't a type");
     }
 }
 
@@ -472,11 +472,12 @@ GNEDemandElement::getTypeParent() const {
 GNEDemandElement*
 GNEDemandElement::getRouteParent() const {
     if (getParentDemandElements().size() < 2) {
-        throw InvalidArgument("This demand element doesn't have two parent");
-    } else if (getParentDemandElements().at(1)->getTagProperty()->getTag() != SUMO_TAG_ROUTE) {
         throw InvalidArgument("This demand element doesn't have a route parent");
-    } else {
+    } else if ((getParentDemandElements().at(1)->getTagProperty()->isRoute()) ||
+               (getParentDemandElements().at(1)->getTagProperty()->isRouteDistribution())) {
         return getParentDemandElements().at(1);
+    } else {
+        throw InvalidArgument("The second parent isn't a route");
     }
 }
 
@@ -605,9 +606,17 @@ GNEDemandElement::replaceLastParentAdditional(SumoXMLTag tag, const std::string&
 
 
 void
-GNEDemandElement::replaceDemandElementParent(SumoXMLTag tag, const std::string& value, const int parentIndex) {
-    auto newDemandElement = myNet->getAttributeCarriers()->retrieveDemandElement(tag, value);
-    GNEHierarchicalElement::updateParent(this, parentIndex, newDemandElement);
+GNEDemandElement::replaceDemandElementParent(const std::vector<SumoXMLTag> tags, const std::string& value, const int parentIndex) {
+    GNEDemandElement* newDemandElement = nullptr;
+    // search demand element
+    for (auto it = tags.begin(); (it != tags.end()) && (newDemandElement == nullptr); it++) {
+        newDemandElement = myNet->getAttributeCarriers()->retrieveDemandElement(*it, value, false);
+    }
+    if (newDemandElement) {
+        GNEHierarchicalElement::updateParent(this, parentIndex, newDemandElement);
+    } else {
+        throw ProcessError("Attempted to replace with non-existant demand element " + value);
+    }
 }
 
 

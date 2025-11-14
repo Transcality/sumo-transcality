@@ -1847,13 +1847,11 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
     GUIEvent_SimulationLoaded* ec = static_cast<GUIEvent_SimulationLoaded*>(e);
     // check whether the loading was successful
     if (ec->myNet == nullptr) {
-        if (ec->myFile.size() > 0) {
-            // report failure
-            setStatusBarText(TLF("Loading of '%' failed!", ec->myFile));
-            if (GUIGlobals::gQuitOnEnd) {
-                closeAllWindows();
-                getApp()->exit(1);
-            }
+        // report failure
+        setStatusBarText(TLF("Loading of '%' failed!", ec->myFile));
+        if (GUIGlobals::gQuitOnEnd) {
+            closeAllWindows();
+            getApp()->exit(1);
         }
     } else {
         // initialise simulation thread
@@ -2006,7 +2004,6 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
                 myDemandScaleSpinner->setValue(OptionsCont::getOptions().getFloat("scale"));
             }
             myRunThread->getNet().getVehicleControl().setScale(myDemandScaleSpinner->getValue());
-            MSRoutingEngine::initGUIThreadRNG();
         }
     }
     getApp()->endWaitCursor();
@@ -2213,9 +2210,7 @@ GUIApplicationWindow::loadConfigOrNet(const std::string& file) {
         closeAllWindows();
         gSchemeStorage.saveViewport(0, 0, -1, 0); // recenter view
         myLoadThread->loadConfigOrNet(file);
-        if (file.size() > 0) {
-            setStatusBarText(TLF("Loading '%'.", file));
-        }
+        setStatusBarText(TLF("Loading '%'.", file));
         update();
     }
 }

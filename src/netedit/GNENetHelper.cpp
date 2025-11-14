@@ -2562,9 +2562,7 @@ GNENetHelper::AttributeCarriers::insertAdditional(GNEAdditional* additional) {
         }
         myNumberOfNetworkElements++;
         // add element in grid
-        if (additional->getTagProperty()->isPlacedInRTree()) {
-            myNet->addGLObjectIntoGrid(additional);
-        }
+        myNet->addGLObjectIntoGrid(additional);
         // update geometry after insertion of additionals if myUpdateGeometryEnabled is enabled
         if (myNet->isUpdateGeometryEnabled()) {
             additional->updateGeometry();
@@ -2595,9 +2593,7 @@ GNENetHelper::AttributeCarriers::deleteAdditional(GNEAdditional* additional) {
         additional->unmarkForDrawingFront();
         myNet->getViewNet()->getViewParent()->getInspectorFrame()->getHierarchicalElementTree()->removeCurrentEditedAttributeCarrier(additional);
         // remove element from grid
-        if (additional->getTagProperty()->isPlacedInRTree()) {
-            myNet->removeGLObjectFromGrid(additional);
-        }
+        myNet->removeGLObjectFromGrid(additional);
         // delete path element
         myNet->getNetworkPathManager()->removePath(additional);
         // additionals has to be saved
@@ -2694,23 +2690,6 @@ GNENetHelper::AttributeCarriers::deleteDemandElement(GNEDemandElement* demandEle
         // remove it from inspected elements and GNEElementTree
         myNet->getViewNet()->getInspectedElements().uninspectAC(demandElement);
         demandElement->unmarkForDrawingFront();
-        viewParent->getInspectorFrame()->getHierarchicalElementTree()->removeCurrentEditedAttributeCarrier(demandElement);
-        viewParent->getPersonPlanFrame()->getPersonHierarchy()->removeCurrentEditedAttributeCarrier(demandElement);
-        viewParent->getContainerPlanFrame()->getContainerHierarchy()->removeCurrentEditedAttributeCarrier(demandElement);
-        // update distribution frames
-        if (viewParent->getRouteDistributionFrame()->getDistributionSelector()->getCurrentDistribution() == demandElement) {
-            viewParent->getRouteDistributionFrame()->getDistributionSelector()->setDistribution(nullptr);
-        }
-        if (viewParent->getTypeDistributionFrame()->getDistributionSelector()->getCurrentDistribution() == demandElement) {
-            viewParent->getTypeDistributionFrame()->getDistributionSelector()->setDistribution(nullptr);
-        }
-        // special case for distribution references
-        if (demandElement->getTagProperty()->getTag() == GNE_TAG_VTYPEREF) {
-            viewParent->getTypeDistributionFrame()->getDistributionValuesEditor()->refreshRows();
-        }
-        if (demandElement->getTagProperty()->getTag() == GNE_TAG_ROUTEREF) {
-            viewParent->getRouteDistributionFrame()->getDistributionValuesEditor()->refreshRows();
-        }
         // if is the last inserted route, remove it from GNEViewNet
         if (myNet->getViewNet()->getLastCreatedRoute() == demandElement) {
             myNet->getViewNet()->setLastCreatedRoute(nullptr);
@@ -2720,6 +2699,23 @@ GNENetHelper::AttributeCarriers::deleteDemandElement(GNEDemandElement* demandEle
         // check if update demand elements frames
         if (updateFrames) {
             updateDemandElementFrames(demandElement->getTagProperty());
+            viewParent->getInspectorFrame()->getHierarchicalElementTree()->removeCurrentEditedAttributeCarrier(demandElement);
+            viewParent->getPersonPlanFrame()->getPersonHierarchy()->removeCurrentEditedAttributeCarrier(demandElement);
+            viewParent->getContainerPlanFrame()->getContainerHierarchy()->removeCurrentEditedAttributeCarrier(demandElement);
+            // update distribution frames
+            if (viewParent->getRouteDistributionFrame()->getDistributionSelector()->getCurrentDistribution() == demandElement) {
+                viewParent->getRouteDistributionFrame()->getDistributionSelector()->setDistribution(nullptr);
+            }
+            if (viewParent->getTypeDistributionFrame()->getDistributionSelector()->getCurrentDistribution() == demandElement) {
+                viewParent->getTypeDistributionFrame()->getDistributionSelector()->setDistribution(nullptr);
+            }
+            // special case for distribution references
+            if (demandElement->getTagProperty()->getTag() == GNE_TAG_VTYPEREF) {
+                viewParent->getTypeDistributionFrame()->getDistributionValuesEditor()->refreshRows();
+            }
+            if (demandElement->getTagProperty()->getTag() == GNE_TAG_ROUTEREF) {
+                viewParent->getRouteDistributionFrame()->getDistributionValuesEditor()->refreshRows();
+            }
         }
         // demandElements has to be saved
         myNet->getSavingStatus()->requireSaveDemandElements();
@@ -2791,9 +2787,7 @@ GNENetHelper::AttributeCarriers::deleteMeanData(GNEMeanData* meanData) {
         meanData->unmarkForDrawingFront();
         myNet->getViewNet()->getViewParent()->getInspectorFrame()->getHierarchicalElementTree()->removeCurrentEditedAttributeCarrier(meanData);
         // remove element from grid
-        if (meanData->getTagProperty()->isPlacedInRTree()) {
-            myNet->removeGLObjectFromGrid(meanData);
-        }
+        myNet->removeGLObjectFromGrid(meanData);
         // meanDatas has to be saved
         myNet->getSavingStatus()->requireSaveMeanDatas();
     }
@@ -3004,18 +2998,13 @@ GNENetHelper::ACTemplate::buildTemplates() {
     myTemplates[GNE_TAG_JPS_WALKABLEAREA] = new GNEPoly(GNE_TAG_JPS_WALKABLEAREA, myNet);
     myTemplates[GNE_TAG_JPS_OBSTACLE] = new GNEPoly(GNE_TAG_JPS_OBSTACLE, myNet);
     // vTypes
-    const auto vTypes = myNet->getTagPropertiesDatabase()->getTagPropertiesByType(GNETagProperties::Type::VTYPE);
-    for (const auto vType : vTypes) {
-        myTemplates[vType->getTag()] = new GNEVType(vType->getTag(), myNet);
-    }
+    myTemplates[SUMO_TAG_VTYPE] = new GNEVType(SUMO_TAG_VTYPE, myNet);
     // vType distributions
     myTemplates[SUMO_TAG_VTYPE_DISTRIBUTION] = new GNEVTypeDistribution(myNet);
     myTemplates[GNE_TAG_VTYPEREF] = new GNEVTypeRef(myNet);
-    // routes (basic and embedded)
-    const auto routes = myNet->getTagPropertiesDatabase()->getTagPropertiesByType(GNETagProperties::Type::ROUTE);
-    for (const auto route : routes) {
-        myTemplates[route->getTag()] = new GNERoute(route->getTag(), myNet);
-    }
+    // routes
+    myTemplates[SUMO_TAG_ROUTE] = new GNERoute(SUMO_TAG_ROUTE, myNet);
+    myTemplates[GNE_TAG_ROUTE_EMBEDDED] = new GNERoute(GNE_TAG_ROUTE_EMBEDDED, myNet);
     // route distribution
     myTemplates[SUMO_TAG_ROUTE_DISTRIBUTION] = new GNERouteDistribution(myNet);
     myTemplates[GNE_TAG_ROUTEREF] = new GNERouteRef(myNet);

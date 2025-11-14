@@ -54,6 +54,11 @@ public:
                   const std::vector<std::string>& extensions, GNEFileDialog::OpenMode openMode,
                   GNEFileDialog::ConfigType configType);
 
+    /// @brief constructor with restoring windows
+    GNEFileDialog(FXWindow* restoringWindow, GNEApplicationWindow* applicationWindow,
+                  const std::string elementFile, const std::vector<std::string>& extensions,
+                  GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType);
+
     /// @brief destructor
     ~GNEFileDialog();
 
@@ -69,6 +74,9 @@ public:
     /// @brief Return directory
     std::string getDirectory() const;
 
+    /// @brief check extensions
+    std::string assureExtension(const std::string& filename) const;
+
     /// @name FOX-callbacks
     /// @{
 
@@ -82,8 +90,7 @@ protected:
     GNEFileSelector* myFileSelector;
 
 private:
-    /// @brief check extensions
-    std::string assureExtension(const std::string& filename) const;
+
 
     /// @brief invalidate copy constructor
     GNEFileDialog(const GNEFileDialog&) = delete;

@@ -862,6 +862,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "wireClampLaneEnd",       SUMO_ATTR_OVERHEAD_WIRECLAMP_LANEEND },
     // Charging Station
     { "power",                  SUMO_ATTR_CHARGINGPOWER },
+    { "totalPower",             SUMO_ATTR_TOTALPOWER },
     { "efficiency",             SUMO_ATTR_EFFICIENCY },
     { "chargeInTransit",        SUMO_ATTR_CHARGEINTRANSIT },
     { "chargeDelay",            SUMO_ATTR_CHARGEDELAY},
@@ -1412,8 +1413,6 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "shiftLaneIndex",                     GNE_ATTR_SHIFTLANEINDEX },
     { "stopOffset",                         GNE_ATTR_STOPOFFSET },
     { "stopOException",                     GNE_ATTR_STOPOEXCEPTION },
-    { "routeDist.",                         GNE_ATTR_ROUTE_DISTRIBUTION },
-    { "typeDist.",                          GNE_ATTR_VTYPE_DISTRIBUTION },
     { "poisson",                            GNE_ATTR_POISSON },
     { "stopIndex",                          GNE_ATTR_STOPINDEX },
     { "pathStopIndex",                      GNE_ATTR_PATHSTOPINDEX },
@@ -1442,8 +1441,8 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "isRoundabout",                       GNE_ATTR_IS_ROUNDABOUT },
     { "frontElement",                       GNE_ATTR_FRONTELEMENT },
     { "edgesWithin",                        GNE_ATTR_EDGES_WITHIN },
+    { "noCommonAttributes",                 GNE_ATTR_NOCOMMON },
     // 'all' is a reserved keyword when configuring attribute filters and must not occur as an attribute name
-    { "noCommonAttributes",                GNE_ATTR_NOCOMMON },
 
     { "carriageLength",     SUMO_ATTR_CARRIAGE_LENGTH },
     { "locomotiveLength",   SUMO_ATTR_LOCOMOTIVE_LENGTH },
