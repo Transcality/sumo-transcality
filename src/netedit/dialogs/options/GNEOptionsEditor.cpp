@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,7 @@
 #include <netedit/GNEViewNet.h>
 #include <netedit/GNEViewParent.h>
 #include <utils/foxtools/MFXCheckButtonTooltip.h>
-#include <utils/foxtools/MFXGroupBoxModule.h>
+#include <netedit/frames/common/GNEGroupBoxModule.h>
 #include <utils/foxtools/MFXStaticToolTip.h>
 #include <utils/foxtools/MFXTextFieldSearch.h>
 #include <utils/gui/div/GUIDesigns.h>
@@ -92,8 +92,8 @@ GNEOptionsEditor::GNEOptionsEditor(GNEDialog* dialog, const std::string& titleNa
     FXVerticalFrame* elementsFrameTree = new FXVerticalFrame(elementsFrame, GUIDesignAuxiliarVerticalFrame);
     FXVerticalFrame* elementsFrameValues = new FXVerticalFrame(elementsFrame, GUIDesignAuxiliarFrame);
     // Create GroupBox modules
-    MFXGroupBoxModule* groupBoxTree = new MFXGroupBoxModule(elementsFrameTree, TL("Topics"));
-    MFXGroupBoxModule* groupBoxOptions = new MFXGroupBoxModule(elementsFrameValues, TL("Options"));
+    GNEGroupBoxModule* groupBoxTree = new GNEGroupBoxModule(elementsFrameTree, TL("Topics"));
+    GNEGroupBoxModule* groupBoxOptions = new GNEGroupBoxModule(elementsFrameValues, TL("Options"));
     // create FXTreeList
     myTopicsTreeList = new FXTreeList(groupBoxTree->getCollapsableFrame(), this, MID_GNE_SELECT, GUIDesignTreeListFixedWidth);
     myTopicsTreeList->setWidth(TREELISTWIDTH);
@@ -121,23 +121,25 @@ GNEOptionsEditor::GNEOptionsEditor(GNEDialog* dialog, const std::string& titleNa
                     const std::string description = myOptionsContainer.getDescription(entry);
                     // get default value
                     const std::string defaultValue = myOptionsContainer.getValueString(entry);
+                    // check if is editable
+                    const bool editable = myOptionsContainer.isEditable(entry);
                     // continue depending of type
                     if (type == "STR") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionString(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionString(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if (type == "TIME") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionTime(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionTime(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if ((type == "FILE") || (type == "NETWORK") || (type == "ADDITIONAL") || (type == "ROUTE") || (type == "DATA")) {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFilename(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFilename(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if (type == "BOOL") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionBool(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionBool(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if (type == "INT") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionInt(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionInt(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if (type == "FLOAT") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFloat(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFloat(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if (type == "INT[]") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionIntVector(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionIntVector(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     } else if (type == "STR[]") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionStringVector(this, myEntriesFrame, topic, entry, description, defaultValue));
+                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionStringVector(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
                     }
                 }
             }
@@ -226,11 +228,11 @@ GNEOptionsEditor::onCmdShowToolTipsMenu(FXObject*, FXSelector, void*) {
 long
 GNEOptionsEditor::onCmdSaveOptions(FXObject*, FXSelector, void*) {
     // open file dialog
-    const auto optionsFileDialog = GNEFileDialog(this, myDialog->getApplicationWindow(),
-                                   TL("options file"),
-                                   SUMOXMLDefinitions::XMLFileExtensions.getStrings(),
-                                   GNEFileDialog::OpenMode::SAVE,
-                                   GNEFileDialog::ConfigType::NETEDIT);
+    const GNEFileDialog optionsFileDialog(myDialog->getApplicationWindow(), myDialog,
+                                          TL("options file"),
+                                          SUMOXMLDefinitions::XMLFileExtensions.getStrings(),
+                                          GNEFileDialog::OpenMode::SAVE,
+                                          GNEFileDialog::ConfigType::NETEDIT);
     // check file
     if (optionsFileDialog.getResult() == GNEDialog::Result::ACCEPT) {
         std::ofstream out(StringUtils::transcodeToLocal(optionsFileDialog.getFilename()));
@@ -244,11 +246,11 @@ GNEOptionsEditor::onCmdSaveOptions(FXObject*, FXSelector, void*) {
 long
 GNEOptionsEditor::onCmdLoadOptions(FXObject*, FXSelector, void*) {
     // open file dialog
-    const auto optionsFileDialog = GNEFileDialog(this, myDialog->getApplicationWindow(),
-                                   TL("options file"),
-                                   SUMOXMLDefinitions::XMLFileExtensions.getStrings(),
-                                   GNEFileDialog::OpenMode::LOAD_SINGLE,
-                                   GNEFileDialog::ConfigType::NETEDIT);
+    const GNEFileDialog optionsFileDialog(myDialog->getApplicationWindow(), myDialog,
+                                          TL("options file"),
+                                          SUMOXMLDefinitions::XMLFileExtensions.getStrings(),
+                                          GNEFileDialog::OpenMode::LOAD_SINGLE,
+                                          GNEFileDialog::ConfigType::NETEDIT);
     // check file
     if ((optionsFileDialog.getResult() == GNEDialog::Result::ACCEPT) && loadConfiguration(optionsFileDialog.getFilename())) {
         // update entries

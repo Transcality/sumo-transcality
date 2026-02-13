@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2021-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2021-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -31,14 +31,14 @@
 // ===========================================================================
 
 GNETractionSubstation::GNETractionSubstation(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_TRACTION_SUBSTATION, ""),
+    GNEAdditional(net, SUMO_TAG_TRACTION_SUBSTATION),
     GNEAdditionalSquared(this) {
 }
 
 
-GNETractionSubstation::GNETractionSubstation(const std::string& id, GNENet* net, const std::string& filename, const Position& pos,
+GNETractionSubstation::GNETractionSubstation(const std::string& id, GNENet* net, FileBucket* fileBucket, const Position& pos,
         const double voltage, const double currentLimit, const Parameterised::Map& parameters) :
-    GNEAdditional(id, net, filename, SUMO_TAG_TRACTION_SUBSTATION, ""),
+    GNEAdditional(id, net, SUMO_TAG_TRACTION_SUBSTATION, fileBucket, ""),
     GNEAdditionalSquared(this, pos),
     Parameterised(parameters),
     myVoltage(voltage),

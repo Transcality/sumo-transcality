@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -126,8 +126,8 @@ public:
         throw ProcessError(TL("Do not use this method"));
     }
 
-    void prohibit(const std::map<const E*, double>& toProhibit) {
-        std::map<const _IntermodalEdge*, double> toProhibitPE;
+    void prohibit(const std::map<const E*, RouterProhibition>& toProhibit) {
+        typename _InternalRouter::Prohibitions toProhibitPE;
         for (auto item : toProhibit) {
             toProhibitPE[myPedNet->getBothDirections(item.first).first] = item.second;
             toProhibitPE[myPedNet->getBothDirections(item.first).second] = item.second;

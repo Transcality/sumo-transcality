@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -64,7 +64,7 @@ GNEElementTable::ColumnHeader::ColumnHeader(GNEElementTable* elementTable, const
             myLabels.push_back(std::make_pair(attrProperty->getAttr(), new FXLabel(horizontalFrameLabels, attrProperty->getAttrStr().c_str(),
                                               nullptr, GUIDesignLabelThick(JUSTIFY_NORMAL))));
             // check if this attribute is sortable
-            if (attrProperty->isNumerical()) {
+            if (attrProperty->isSortable()) {
                 mySortableAttrs.push_back(attrProperty->getAttr());
             }
         }
@@ -140,7 +140,7 @@ GNEElementTable::Row::Row(GNEElementTable* elementTable, const size_t rowIndex,
     // create horizontal frame for text fields packed uniformly
     FXHorizontalFrame* textFieldsFrame = new FXHorizontalFrame(this, GUIDesignAuxiliarHorizontalFrameUniform);
     // create text fields
-    const auto toolTip = AC->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->getStaticTooltipMenu();
+    const auto toolTip = AC->getNet()->getGNEApplicationWindow()->getStaticTooltipMenu();
     for (const auto& attrProperty : AC->getTagProperty()->getAttributeProperties()) {
         // check if this attribute can be edited in dialog
         if (attrProperty->isDialogEditor()) {
@@ -273,7 +273,7 @@ GNEElementTable::Row::onCmdEditRow(FXObject* sender, FXSelector, void*) {
                 }
             } else {
                 // set value in GNEAttributeCarrier using undo-redo
-                myAC->setAttribute(attributeTextField.first, value, myAC->getNet()->getViewNet()->getUndoList());
+                myAC->setAttribute(attributeTextField.first, value, myAC->getNet()->getUndoList());
                 // restore black color and kill focus
                 attributeTextField.second->setTextColor(GUIDesignTextColorBlack);
                 attributeTextField.second->setBackColor(GUIDesignBackgroundColorWhite);
@@ -305,7 +305,8 @@ GNEElementTable::Row::onCmdOpenVClassDialog(FXObject*, FXSelector, void*) {
     const int allowColumnIndex = myElementTable->myColumnHeader->getAttributeIndex(SUMO_ATTR_ALLOW);
     if (allowColumnIndex >= 0) {
         // declare allowVClassesDialog
-        const auto allowVClassesDialog = new GNEVClassesDialog(myAC->getNet()->getViewNet()->getViewParent()->getGNEAppWindows(),
+        const auto allowVClassesDialog = new GNEVClassesDialog(myAC->getNet()->getGNEApplicationWindow(),
+                myElementTable->myElementList->getDialogParent(),
                 SUMO_ATTR_ALLOW, myAC->getAttribute(SUMO_ATTR_ALLOW));
         // continue depending of result
         if (allowVClassesDialog->getResult() == GNEDialog::Result::ACCEPT) {

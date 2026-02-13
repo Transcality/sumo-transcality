@@ -247,6 +247,8 @@ the input file.
 TLS Link indices can be access using either
 
 - [sumolib](../Tools/Sumolib.md) using
+  [connection.getTLLinkIndex()](https://sumo.dlr.de/pydoc/sumolib.net.connection.html)
+- [sumolib](../Tools/Sumolib.md) using
   [tls.getConnections()](https://sumo.dlr.de/pydoc/sumolib.net.html#TLS)
 - or [TraCI](../TraCI.md) using
   [traci.trafficlight.getControlledLinks()](../TraCI/Traffic_Lights_Value_Retrieval.md#structure_of_compound_object_controlled_links)
@@ -275,6 +277,13 @@ However, when introducing new *g*/*G* relationships, correctness is only
 ensured by loading the network and the new signal plan into
 [netconvert](../netconvert.md) and thus updating the right-of-way
 rules.
+
+# Traffic Lights with fixed  timing
+
+The simplest type of traffic light in SUMO has fixed timings and is declared with `<tlLogic>`-attribute `type="static"`.
+This type of traffic light will cycle through a fixed sequence of states and spent time in each state according to the `duration` attribute of each state.
+By default the phase sequence will be in order of the phase elements in the input file, starting anew with the first phase after the last phase has ended.
+The order of the phases can be changed by defining attribute `next` for some or all phases (if multiple indices are defined in `next`, the first entry is used and all others are ignored).
 
 # Traffic Lights that respond to traffic
 

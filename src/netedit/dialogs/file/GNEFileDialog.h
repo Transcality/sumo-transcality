@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -52,12 +52,13 @@ public:
     /// @brief constructor
     GNEFileDialog(GNEApplicationWindow* applicationWindow, const std::string elementFile,
                   const std::vector<std::string>& extensions, GNEFileDialog::OpenMode openMode,
-                  GNEFileDialog::ConfigType configType);
+                  GNEFileDialog::ConfigType configType, const std::string initialFolder = "");
 
-    /// @brief constructor with restoring windows
-    GNEFileDialog(FXWindow* restoringWindow, GNEApplicationWindow* applicationWindow,
+    /// @brief constructor with dialog parent
+    GNEFileDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
                   const std::string elementFile, const std::vector<std::string>& extensions,
-                  GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType);
+                  GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType,
+                  const std::string initialFolder = "");
 
     /// @brief destructor
     ~GNEFileDialog();
@@ -90,7 +91,10 @@ protected:
     GNEFileSelector* myFileSelector;
 
 private:
-
+    /// @brief builder
+    void buildFileDialog(const std::string elementFile, const std::vector<std::string>& extensions,
+                         GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType,
+                         const std::string initialFolder);
 
     /// @brief invalidate copy constructor
     GNEFileDialog(const GNEFileDialog&) = delete;

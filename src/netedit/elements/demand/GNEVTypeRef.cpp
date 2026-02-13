@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,19 +30,19 @@
 // ===========================================================================
 
 GNEVTypeRef::GNEVTypeRef(GNENet* net) :
-    GNEDemandElement("", net, "", GNE_TAG_VTYPEREF, GNEPathElement::Options::DEMAND_ELEMENT) {
+    GNEDemandElement(net, GNE_TAG_VTYPEREF) {
 }
 
 
 GNEVTypeRef::GNEVTypeRef(GNEDemandElement* distributionParent, GNEDemandElement* vTypeParent) :
-    GNEDemandElement(distributionParent, GNE_TAG_VTYPEREF, GNEPathElement::Options::DEMAND_ELEMENT) {
+    GNEDemandElement(distributionParent, GNE_TAG_VTYPEREF) {
     // set parents
     setParents<GNEDemandElement*>({distributionParent, vTypeParent});
 }
 
 
 GNEVTypeRef::GNEVTypeRef(GNEDemandElement* distributionParent, GNEDemandElement* vTypeParent, const double probability) :
-    GNEDemandElement(distributionParent, GNE_TAG_VTYPEREF, GNEPathElement::Options::DEMAND_ELEMENT),
+    GNEDemandElement(distributionParent, GNE_TAG_VTYPEREF),
     myProbability(probability) {
     // set parents
     setParents<GNEDemandElement*>({distributionParent, vTypeParent});

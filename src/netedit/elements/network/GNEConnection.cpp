@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -25,6 +25,7 @@
 #include <netedit/GNENet.h>
 #include <netedit/GNETagProperties.h>
 #include <netedit/GNEUndoList.h>
+#include <utils/common/MsgHandler.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
@@ -340,7 +341,7 @@ void
 GNEConnection::smootShape() {
     auto shape = getConnectionShape();
     shape = shape.bezier(5);
-    setAttribute(SUMO_ATTR_CUSTOMSHAPE, toString(shape), myNet->getViewNet()->getUndoList());
+    setAttribute(SUMO_ATTR_CUSTOMSHAPE, toString(shape), myNet->getUndoList());
 }
 
 
@@ -356,8 +357,8 @@ GNEConnection::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
         // check if we're in supermode network
         if (myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork()) {
             // create menu commands
-            FXMenuCommand* mcCustomShape = GUIDesigns::buildFXMenuCommand(ret, "Set custom connection shape", nullptr, &parent, MID_GNE_CONNECTION_EDIT_SHAPE);
-            GUIDesigns::buildFXMenuCommand(ret, "Smooth connection shape", nullptr, &parent, MID_GNE_CONNECTION_SMOOTH_SHAPE);
+            FXMenuCommand* mcCustomShape = GUIDesigns::buildFXMenuCommand(ret, TL("Set custom connection shape"), nullptr, &parent, MID_GNE_CONNECTION_EDIT_SHAPE);
+            GUIDesigns::buildFXMenuCommand(ret, TL("Smooth connection shape"), nullptr, &parent, MID_GNE_CONNECTION_SMOOTH_SHAPE);
             // check if menu commands has to be disabled
             NetworkEditMode editMode = myNet->getViewNet()->getEditModes().networkEditMode;
             // check if we're in the correct edit mode
@@ -427,7 +428,7 @@ GNEConnection::drawGL(const GUIVisualizationSettings& s) const {
 
 void
 GNEConnection::deleteGLObject() {
-    myNet->deleteNetworkElement(this, myNet->getViewNet()->getUndoList());
+    myNet->deleteNetworkElement(this, myNet->getUndoList());
 }
 
 
@@ -940,7 +941,7 @@ GNEConnection::isAttributeComputed(SumoXMLAttr key) const {
 void
 GNEConnection::setAttribute(SumoXMLAttr key, const std::string& value) {
     if (!existNBEdgeConnection()) {
-        WRITE_WARNINGF("Cannot restore attribute '%=%' for computed connection from lane '%'", toString(key), value, getParentLanes().front()->getID());
+        WRITE_WARNINGF(TL("Cannot restore attribute '%=%' for computed connection from lane '%'"), toString(key), value, getParentLanes().front()->getID());
         return;
     }
     NBEdge::Connection& nbCon = getNBEdgeConnection();

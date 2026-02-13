@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -23,35 +23,32 @@
 
 #include <netbuild/NBTypeCont.h>
 
-
 // ===========================================================================
 // class declarations
 // ===========================================================================
+
 class GNELaneType;
 class GNEEdgeTemplate;
 class GNECreateEdgeFrame;
 
-
 // ===========================================================================
 // class definitions
 // ===========================================================================
+
 class GNEEdgeType : public GNENetworkElement, public Parameterised, public NBTypeCont::EdgeTypeDefinition {
+
 public:
     /// @brief GNECreateEdgeFrame need access to setAttribute
     friend class GNECreateEdgeFrame;
 
-    /**@brief Constructor for default edge (empty ID)
-     * @param[in] createEdgeFrame Frame in which edgeType is created
-     */
-    GNEEdgeType(GNECreateEdgeFrame* createEdgeFrame);
+    /// @brief default constructor
+    GNEEdgeType(GNENet* net);
+
+    /// @brief default constructor
+    GNEEdgeType(GNENet* net, const std::string& ID);
 
     /// @brief copy constructor (this doesn't create new lanes)
     GNEEdgeType(const GNEEdgeType* edgeType);
-
-    /**@brief Constructor
-     * @param[in] net The net to inform about gui updates
-     */
-    GNEEdgeType(GNENet* net);
 
     /**@brief Constructor (parameters)
      * @param[in] net The net to inform about gui updates

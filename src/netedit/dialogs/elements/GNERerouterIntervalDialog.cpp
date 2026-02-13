@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,14 +30,15 @@
 #include <utils/gui/div/GUIDesigns.h>
 
 #include "GNEAttributeCarrierDialog.h"
+#include "GNERerouterDialog.h"
 #include "GNERerouterIntervalDialog.h"
 
 // ===========================================================================
 // member method definitions
 // ===========================================================================
 
-GNERerouterIntervalDialog::GNERerouterIntervalDialog(GNEAdditional* rerouterInterval) :
-    GNETemplateElementDialog<GNEAdditional>(rerouterInterval, DialogType::REROUTERINTERVAL) {
+GNERerouterIntervalDialog::GNERerouterIntervalDialog(GNEAdditional* rerouterInterval, GNEDialog* rerouterDialogParent) :
+    GNETemplateElementDialog<GNEAdditional>(rerouterInterval, rerouterDialogParent, DialogType::REROUTERINTERVAL) {
     // Create auxiliar frames for tables
     FXHorizontalFrame* columns = new FXHorizontalFrame(myContentFrame, GUIDesignAuxiliarHorizontalFrame);
     FXVerticalFrame* columnLeft = new FXVerticalFrame(columns, GUIDesignAuxiliarVerticalFrame);
@@ -94,7 +95,8 @@ GNERerouterIntervalDialog::onCmdAccept(FXObject*, FXSelector, void*) {
     // continue depending of info
     if (infoB.size() > 0) {
         // open question dialog box with two lines
-        GNEWarningBasicDialog(myElement->getNet()->getViewNet()->getViewParent()->getGNEAppWindows(), warningTitle, infoA, infoB);
+        GNEWarningBasicDialog(myElement->getNet()->getGNEApplicationWindow(),
+                              warningTitle, infoA, infoB);
         return 1;
     } else {
         // close dialog accepting changes
@@ -143,7 +145,7 @@ GNERerouterIntervalDialog::ClosingReroutesList::addNewElement() {
 long
 GNERerouterIntervalDialog::ClosingReroutesList::openElementDialog(const size_t rowIndex) {
     // open attribute carrier dialog
-    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentEdges().front());
+    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentEdges().front(), myElementDialogParent);
     return 1;
 }
 
@@ -174,7 +176,7 @@ GNERerouterIntervalDialog::ClosingLaneReroutesList::addNewElement() {
 long
 GNERerouterIntervalDialog::ClosingLaneReroutesList::openElementDialog(const size_t rowIndex) {
     // open attribute carrier dialog
-    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentLanes().front());
+    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentLanes().front(), myElementDialogParent);
     return 1;
 }
 
@@ -205,7 +207,7 @@ GNERerouterIntervalDialog::DestProbReroutesList::addNewElement() {
 long
 GNERerouterIntervalDialog::DestProbReroutesList::openElementDialog(const size_t rowIndex) {
     // open attribute carrier dialog
-    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentEdges().front());
+    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentEdges().front(), myElementDialogParent);
     return 1;
 }
 
@@ -240,7 +242,7 @@ GNERerouterIntervalDialog::RouteProbReroutesList::addNewElement() {
 long
 GNERerouterIntervalDialog::RouteProbReroutesList::openElementDialog(const size_t rowIndex) {
     // open attribute carrier dialog
-    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentDemandElements().front());
+    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentDemandElements().front(), myElementDialogParent);
     return 1;
 }
 
@@ -271,7 +273,7 @@ GNERerouterIntervalDialog::ParkingAreaReroutesList::addNewElement() {
 long
 GNERerouterIntervalDialog::ParkingAreaReroutesList::openElementDialog(const size_t rowIndex) {
 // open attribute carrier dialog
-    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentAdditionals().back());
+    GNEAttributeCarrierDialog(myEditedElements.at(rowIndex)->getParentAdditionals().back(), myElementDialogParent);
     return 1;
 }
 

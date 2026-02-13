@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -719,6 +719,8 @@ enum {
     MID_GNE_TOOLBARFILE_SAVESUMOCONFIG_AS,
     /// @brief save network as
     MID_GNE_TOOLBARFILE_SAVENETWORK_AS,
+    /// @brief save additionals element as
+    MID_GNE_TOOLBARFILE_SAVEADDITIONALELEMENTS_AS,
     /// @brief save additionals unified
     MID_GNE_TOOLBARFILE_SAVEADDITIONALELEMENTS_UNIFIED,
     /// @brief save JuPedSim as
@@ -733,16 +735,22 @@ enum {
     MID_GNE_TOOLBARFILE_SAVEEDGETYPES_AS,
     /// @brief reload edge types
     MID_GNE_TOOLBARFILE_RELOAD_EDGETYPES,
+    /// @brief save demand elements as
+    MID_GNE_TOOLBARFILE_SAVEDEMANDELEMENTS_AS,
     /// @brief save demand elements unified
     MID_GNE_TOOLBARFILE_SAVEDEMANDELEMENTS_UNIFIED,
     /// @brief reload demand elements
     MID_GNE_TOOLBARFILE_RELOAD_DEMANDELEMENTS,
+    /// @brief save data elements as
+    MID_GNE_TOOLBARFILE_SAVEDATAELEMENTS_AS,
     /// @brief save data elements unified
     MID_GNE_TOOLBARFILE_SAVEDATAELEMENTS_UNIFIED,
     /// @brief reload data elements
     MID_GNE_TOOLBARFILE_RELOAD_DATAELEMENTS,
     /// @brief open meanData file
     MID_GNE_TOOLBARFILE_OPENMEANDATAELEMENTS,
+    /// @brief save meanDatas as
+    MID_GNE_TOOLBARFILE_SAVEMEANDATAELEMENTS_AS,
     /// @brief save meanDatas unified
     MID_GNE_TOOLBARFILE_SAVEMEANDATAELEMENTS_UNIFIED,
     /// @brief reload meanDatas
@@ -1701,8 +1709,6 @@ enum {
     MID_GNE_UNDOLIST_UPDATE,
     /// @brief check if recomputing is needed
     MID_GNE_RECOMPUTINGNEEDED,
-    /// @brief create automatic filename if it was not defined previously
-    MID_GNE_AUTOMATICFILENAME,
 
     /// @}
 
@@ -1756,6 +1762,8 @@ enum {
     MID_LANGUAGE_HU,
     /// @brief change language to japanese
     MID_LANGUAGE_JA,
+    /// @brief change language to korean
+    MID_LANGUAGE_KO,
 
     /// @}
 

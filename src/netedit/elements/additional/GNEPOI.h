@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -49,7 +49,7 @@ public:
     /**@brief Constructor
      * @param[in] id The name of the POI
      * @param[in] net net in which this polygon is placed
-     * @param[in] filename file in which this element is stored
+     * @param[in] fileBucket file in which this element is stored
      * @param[in] type The (abstract) type of the POI
      * @param[in] color The color of the POI
      * @param[in] pos The position X or Lon of the POI
@@ -63,14 +63,14 @@ public:
      * @param[in] name POI's name
      * @param[in] parameters generic parameters
      */
-    GNEPOI(const std::string& id, GNENet* net, const std::string& filename, const std::string& type, const RGBColor& color,
+    GNEPOI(const std::string& id, GNENet* net, FileBucket* fileBucket, const std::string& type, const RGBColor& color,
            const Position& pos, const bool geo, POIIcon icon, const double layer, const double angle, const std::string& imgFile,
            const double width, const double height, const std::string& name, const Parameterised::Map& parameters);
 
     /**@brief Constructor
      * @param[in] id The name of the POI
      * @param[in] net net in which this polygon is placed
-     * @param[in] filename file in which this element is stored
+     * @param[in] fileBucket file in which this element is stored
      * @param[in] type The (abstract) type of the POI
      * @param[in] color The color of the POI
      * @param[in] icon the POI icon
@@ -85,7 +85,7 @@ public:
      * @param[in] name POI's name
      * @param[in] parameters generic parameters
      */
-    GNEPOI(const std::string& id, GNENet* net, const std::string& filename, const std::string& type, const RGBColor& color, GNELane* lane,
+    GNEPOI(const std::string& id, GNENet* net, FileBucket* fileBucket, const std::string& type, const RGBColor& color, GNELane* lane,
            const double posOverLane, const bool friendlyPos, const double posLat, POIIcon icon, const double layer, const double angle,
            const std::string& imgFile, const double width, const double height, const std::string& name, const Parameterised::Map& parameters);
 

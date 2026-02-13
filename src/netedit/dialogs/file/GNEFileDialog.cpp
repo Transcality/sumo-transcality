@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -31,40 +31,22 @@
 
 GNEFileDialog::GNEFileDialog(GNEApplicationWindow* applicationWindow, const std::string elementFile,
                              const std::vector<std::string>& extensions, GNEFileDialog::OpenMode openMode,
-                             GNEFileDialog::ConfigType configType):
-    GNEFileDialog(applicationWindow, applicationWindow, elementFile, extensions, openMode, configType) {
-}
-
-
-GNEFileDialog::GNEFileDialog(FXWindow* restoringWindow, GNEApplicationWindow* applicationWindow,
-                             const std::string elementFile, const std::vector<std::string>& extensions,
-                             GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType) :
+                             GNEFileDialog::ConfigType configType, const std::string initialFolder) :
     GNEDialog(applicationWindow, TLF("Save % as", elementFile), GUIIcon::SAVE,
               DialogType::FILE, GNEDialog::Buttons::ACCEPT_CANCEL, GNEDialog::OpenType::MODAL,
               GNEDialog::ResizeMode::RESIZABLE, 500, 300) {
-    // update title and icon if we are opening
-    if (openMode != GNEFileDialog::OpenMode::SAVE) {
-        updateIcon(GUIIcon::OPEN);
-        updateTitle(TLF("Open %", elementFile));
-    }
-    // create file selector
-    myFileSelector = new GNEFileSelector(this, extensions, openMode, configType);
-    // retarget accept button to file selector
-    myAcceptButton->setTarget(myFileSelector);
-    myAcceptButton->setSelector(FXFileSelector::ID_ACCEPT);
-    // check if we have saved settings in registry
-    setWidth(getApp()->reg().readIntEntry("GNEFileDialog", "width", getWidth()));
-    setHeight(getApp()->reg().readIntEntry("GNEFileDialog", "height", getHeight()));
-    myFileSelector->setFileBoxStyle(getApp()->reg().readUnsignedEntry("GNEFileDialog", "style", myFileSelector->getFileBoxStyle()));
-    myFileSelector->showHiddenFiles((getApp()->reg().readUnsignedEntry("GNEFileDialog", "showhidden", myFileSelector->showHiddenFiles()) == 1) ? TRUE : FALSE);
-    // set initial directory
-    if (gCurrentFolder.length() > 0) {
-        myFileSelector->setDirectory(gCurrentFolder);
-    }
-    // set restoring window
-    setRestoringFocusWindow(restoringWindow);
-    // open dialog without focusing the button
-    openDialog(myFileSelector->getFilenameTextField());
+    buildFileDialog(elementFile, extensions, openMode, configType, initialFolder);
+}
+
+
+GNEFileDialog::GNEFileDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+                             const std::string elementFile, const std::vector<std::string>& extensions,
+                             GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType,
+                             const std::string initialFolder) :
+    GNEDialog(applicationWindow, parentDialog, TLF("Save % as", elementFile), GUIIcon::SAVE,
+              DialogType::FILE, GNEDialog::Buttons::ACCEPT_CANCEL, GNEDialog::OpenType::MODAL,
+              GNEDialog::ResizeMode::RESIZABLE, 500, 300) {
+    buildFileDialog(elementFile, extensions, openMode, configType, initialFolder);
 }
 
 
@@ -140,6 +122,36 @@ GNEFileDialog::onCmdAccept(FXObject*, FXSelector, void*) {
     }
     // close dialog accepting changes
     return closeDialogAccepting();
+}
+
+
+void
+GNEFileDialog::buildFileDialog(const std::string elementFile, const std::vector<std::string>& extensions,
+                               GNEFileDialog::OpenMode openMode, GNEFileDialog::ConfigType configType,
+                               const std::string initialFolder) {
+    // update title and icon if we are opening
+    if (openMode != GNEFileDialog::OpenMode::SAVE) {
+        updateIcon(GUIIcon::OPEN);
+        updateTitle(TLF("Open %", elementFile));
+    }
+    // create file selector
+    myFileSelector = new GNEFileSelector(this, extensions, openMode, configType);
+    // retarget accept button to file selector
+    myAcceptButton->setTarget(myFileSelector);
+    myAcceptButton->setSelector(FXFileSelector::ID_ACCEPT);
+    // check if we have saved settings in registry
+    setWidth(getApp()->reg().readIntEntry("GNEFileDialog", "width", getWidth()));
+    setHeight(getApp()->reg().readIntEntry("GNEFileDialog", "height", getHeight()));
+    myFileSelector->setFileBoxStyle(getApp()->reg().readUnsignedEntry("GNEFileDialog", "style", myFileSelector->getFileBoxStyle()));
+    myFileSelector->showHiddenFiles((getApp()->reg().readUnsignedEntry("GNEFileDialog", "showhidden", myFileSelector->showHiddenFiles()) == 1) ? TRUE : FALSE);
+    // set initial directory
+    if (initialFolder.size() > 0) {
+        myFileSelector->setDirectory(initialFolder.c_str());
+    } else if (gCurrentFolder.length() > 0) {
+        myFileSelector->setDirectory(gCurrentFolder);
+    }
+    // open dialog without focusing the button
+    openDialog(myFileSelector->getFilenameTextField());
 }
 
 /****************************************************************************/

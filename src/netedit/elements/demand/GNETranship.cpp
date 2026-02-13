@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,14 +32,14 @@
 #pragma warning(disable: 4355) // mask warning about "this" in initializers
 #endif
 GNETranship::GNETranship(SumoXMLTag tag, GNENet* net) :
-    GNEDemandElement("", net, "", tag, GNEPathElement::Options::DEMAND_ELEMENT),
+    GNEDemandElement(net, tag),
     GNEDemandElementPlan(this, -1, -1) {
 }
 
 
 GNETranship::GNETranship(SumoXMLTag tag, GNEDemandElement* containerParent, const GNEPlanParents& planParameters,
                          const double departPosition, const double arrivalPosition, const double speed, const SUMOTime duration) :
-    GNEDemandElement(containerParent, tag, GNEPathElement::Options::DEMAND_ELEMENT),
+    GNEDemandElement(containerParent, tag),
     GNEDemandElementPlan(this, departPosition, arrivalPosition),
     mySpeed(speed),
     myDuration(duration) {

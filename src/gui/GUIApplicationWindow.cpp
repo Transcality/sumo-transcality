@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -222,6 +222,8 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_HU,    GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_JA,    GUIApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_JA,    GUIApplicationWindow::onUpdChangeLanguage),
+    FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_KO,    GUIApplicationWindow::onCmdChangeLanguage),
+    FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_KO,    GUIApplicationWindow::onUpdChangeLanguage),
     // keys
     FXMAPFUNC(SEL_KEYPRESS,              0,     GUIApplicationWindow::onKeyPress),
     FXMAPFUNC(SEL_KEYRELEASE,            0,     GUIApplicationWindow::onKeyRelease),
@@ -540,8 +542,8 @@ GUIApplicationWindow::fillMenuBar() {
                       TL("Open in netedit"), "Ctrl+T", TL("Opens current simulation in NETEDIT."),
                       GUIIconSubSys::getIcon(GUIIcon::NETEDIT_MINI), this, MID_HOTKEY_CTRL_T_OPENNETEDIT_OPENSUMO);
     myOpenNetInNetedit = GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
-                      TL("Open network in netedit"), "Ctrl+Shift+T", TL("Opens current network in NETEDIT."),
-                      GUIIconSubSys::getIcon(GUIIcon::NETEDIT_MINI), this, MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET);
+                         TL("Open network in netedit"), "Ctrl+Shift+T", TL("Opens current network in NETEDIT."),
+                         GUIIconSubSys::getIcon(GUIIcon::NETEDIT_MINI), this, MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET);
     // build settings menu
     mySettingsMenu = new FXMenuPane(this);
     GUIDesigns::buildFXMenuTitle(myMenuBar, TL("&Settings"), nullptr, mySettingsMenu);
@@ -2273,10 +2275,28 @@ GUIApplicationWindow::closeAllWindows() {
             (*it)->hide();
         }
     }
+    // save decals and viewport
+    for (GUIGlChildWindow* window : myGLWindows) {
+        GUISUMOAbstractView* view = window->getView();
+        gSchemeStorage.saveDecals(view->getDecals());
+        gSchemeStorage.saveViewport(view->getChanger().getXPos(), view->getChanger().getYPos(), 
+                                     view->getChanger().getZPos(), view->getChanger().getRotation());
+    }
     // delete the simulation
     myRunThread->deleteSim();
     // reset the caption
     setTitle(MFXUtils::getTitleText("SUMO " VERSION_STRING));
+    // clear decals and release GPU textures
+    for (GUIGlChildWindow* window : myGLWindows) {
+        GUISUMOAbstractView* view = window->getView();
+        if (view->makeCurrent()) {
+            view->clearDecals();
+            view->processPendingTextureDeletes();
+            GUITextureSubSys::resetTextures();
+            GLHelper::resetFont();
+            view->makeNonCurrent();
+        }
+    }
     // remove trackers and other external windows (must be delayed until deleteSim)
     while (!myGLWindows.empty()) {
         delete myGLWindows.front();
@@ -2298,9 +2318,6 @@ GUIApplicationWindow::closeAllWindows() {
     if (myTestCoordinate) {
         myTestCoordinate->setText(TL("N/A"));
     }
-    //
-    GUITexturesHelper::clearTextures();
-    GLHelper::resetFont();
     update();
 }
 
@@ -2388,16 +2405,16 @@ GUIApplicationWindow::updateTimeLCD(SUMOTime time) {
     str << std::setfill('0');
     const bool hideFraction = myAmGaming || DELTA_T % 1000 == 0;
     if (myShowTimeAsHMS) {
-        SUMOTime day = time / 86400000;
+        SUMOTime day = time / SUMOTime_DAY;
         if (day > 0) {
             str << day << '-';
-            time %= 86400000;
+            time %= SUMOTime_DAY;
         }
         str << std::setw(2);
-        str << time / 3600000 << '-';
-        time %= 3600000;
-        str << std::setw(2) << time / 60000 << '-';
-        time %= 60000;
+        str << time / SUMOTime_HOUR << '-';
+        time %= SUMOTime_HOUR;
+        str << std::setw(2) << time / SUMOTime_MINUTE << '-';
+        time %= SUMOTime_MINUTE;
     }
     str << std::setw(2) << time / 1000;
     if (!hideFraction) {

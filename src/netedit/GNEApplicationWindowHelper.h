@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,26 +21,27 @@
 #include <config.h>
 
 #include <netedit/dialogs/file/GNEFileDialog.h>
+#include <netedit/GNETagProperties.h>
 #include <utils/common/SUMOTime.h>
-#include <utils/foxtools/MFXSynchQue.h>
-#include <utils/foxtools/MFXRecentNetworks.h>
-#include <utils/foxtools/MFXThreadEvent.h>
 #include <utils/foxtools/MFXInterThreadEventClient.h>
+#include <utils/foxtools/MFXRecentNetworks.h>
+#include <utils/foxtools/MFXSynchQue.h>
+#include <utils/foxtools/MFXThreadEvent.h>
 #include <utils/geom/Position.h>
 #include <utils/gui/div/GUIMessageWindow.h>
 #include <utils/gui/windows/GUIMainWindow.h>
-#include <utils/shapes/ShapeHandler.h>
 #include <utils/options/OptionsCont.h>
+#include <utils/shapes/ShapeHandler.h>
 #include <utils/tests/InternalTestStep.h>
 
 #include "GNEViewNetHelper.h"
-
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 
 class GNEApplicationWindow;
+class FileBucket;
 class GNENet;
 class GNENetgenerateDialog;
 class GNEPythonTool;
@@ -1108,17 +1109,17 @@ struct GNEApplicationWindowHelper {
 
     public:
         /// @brief Constructor
-        GNESumoConfigHandler(OptionsCont& sumoOptions, const std::string& file);
+        GNESumoConfigHandler(GNEApplicationWindow* applicationWindow, const std::string& sumoConfigFile);
 
         /// @brief load SUMO config
         bool loadSumoConfig();
 
     private:
-        /// @brief sumo options
-        OptionsCont& mySumoOptions;
+        /// @brief pointer to current GNEApplicationWindow
+        GNEApplicationWindow* myApplicationWindow;
 
         /// @brief SUMO config file
-        const std::string myFile;
+        const std::string mySumoConfigFile;
 
         /// @brief Invalidated copy constructor.
         GNESumoConfigHandler(const GNESumoConfigHandler&) = delete;
@@ -1127,25 +1128,143 @@ struct GNEApplicationWindowHelper {
         GNESumoConfigHandler& operator=(const GNESumoConfigHandler&) = delete;
     };
 
+    /// @brief netconvert config handler
+    class GNENetconvertConfigHandler {
+
+    public:
+        /// @brief Constructor
+        GNENetconvertConfigHandler(const std::string& file);
+
+        /// @brief load netconvert config
+        bool loadNetconvertConfig();
+
+    private:
+        /// @brief netconvert config file
+        const std::string myNetconvertConfigFile;
+
+        /// @brief Invalidated copy constructor.
+        GNENetconvertConfigHandler(const GNENetconvertConfigHandler&) = delete;
+
+        /// @brief Invalidated assignment operator.
+        GNENetconvertConfigHandler& operator=(const GNENetconvertConfigHandler&) = delete;
+    };
+
     /// @brief netedit config handler
     class GNENeteditConfigHandler {
 
     public:
         /// @brief Constructor
-        GNENeteditConfigHandler(const std::string& file);
+        GNENeteditConfigHandler(GNEApplicationWindow* applicationWindow, const std::string& neteditConfigFile);
 
         /// @brief load netedit config
         bool loadNeteditConfig();
 
     private:
+        /// @brief pointer to current GNEApplicationWindow
+        GNEApplicationWindow* myApplicationWindow;
+
         /// @brief netedit config file
-        const std::string myFile;
+        const std::string myNeteditConfigFile;
 
         /// @brief Invalidated copy constructor.
         GNENeteditConfigHandler(const GNENeteditConfigHandler&) = delete;
 
         /// @brief Invalidated assignment operator.
         GNENeteditConfigHandler& operator=(const GNENeteditConfigHandler&) = delete;
+    };
+
+    /// @brief modul for handling file buckets
+    class FileBucketHandler {
+
+    public:
+        /// @brief constructor
+        FileBucketHandler(GNEApplicationWindow* applicationWindow, OptionsCont& neteditOptions, OptionsCont& sumoOptions);
+
+        /// @brief destructor
+        ~FileBucketHandler();
+
+        /// @brief register AC
+        void registerAC(const GNEAttributeCarrier* AC);
+
+        /// @brief delete AC
+        void unregisterAC(const GNEAttributeCarrier* AC);
+
+        /// @brief update filename vinculated with this AC
+        FileBucket* updateAC(const GNEAttributeCarrier* AC, const std::string& filename);
+
+        /// @brief check if the given filename can be assigned to the given AC
+        bool checkFilename(const GNEAttributeCarrier* AC, const std::string& filename) const;
+
+        /// @brief get current config directory (if we defined a netedit, sumo or netconvert config)
+        std::string getConfigDirectory() const;
+
+        /// @brief get current config patter (if we defined a netedit, sumo or netconvert config)
+        std::string getConfigFilePrefix(const std::string& sufix) const;
+
+        /// @brief functions related with buckets
+        /// @{
+
+        /// @brief get default bucket
+        FileBucket* getDefaultBucket(const FileBucket::Type type) const;
+
+        /// @brief get bucket
+        FileBucket* getBucket(const FileBucket::Type type, const std::string& filename, const bool create);
+
+        /// @brief get vector with all fileBuckets related with the given file type
+        const std::vector<FileBucket*>& getFileBuckets(const FileBucket::Type type) const;
+
+        /// @}
+
+        /// @brief functions related with filenames
+        /// @{
+
+        /// @brief get default filename associated with the given tipe
+        std::string getDefaultFilename(const FileBucket::Type type) const;
+
+        /// @brief get default folder associated with the given tipe
+        std::string getDefaultFolder(const FileBucket::Type type) const;
+
+        /// brief set default additional file
+        void setDefaultFilenameFile(const FileBucket::Type type, const std::string& filename);
+
+        /// @brief check if at least we have an additional file defined
+        bool isFilenameDefined(const FileBucket::Type type) const;
+
+        /// brief set default files for all buckets
+        void resetDefaultFilenames();
+
+        /// @}
+
+        /// @brief update options
+        void updateOptions();
+
+    private:
+        /// @brief parse filenames
+        std::string parseFilenames(const std::vector<FileBucket::Type> types) const;
+
+        /// @brief removed empty buckets
+        void removeEmptyBuckets();
+
+        /// @brief get prefix of the given filename
+        std::string getPrefix(FileBucket::Type type, const std::vector<std::string> invalidExtensions) const;
+
+        /// @brief pointer to application window
+        GNEApplicationWindow* myApplicationWindow = nullptr;
+
+        /// @brief reference to netedit options
+        OptionsCont& myNeteditOptions;
+
+        /// @brief reference to sumo options
+        OptionsCont& mySumoOptions;
+
+        /// @brief map with the buckets
+        std::map<FileBucket::Type, std::vector<FileBucket*> > myBuckets;
+
+        /// @brief Invalidated copy constructor.
+        FileBucketHandler(const FileBucketHandler&) = delete;
+
+        /// @brief Invalidated assignment operator.
+        FileBucketHandler& operator=(const FileBucketHandler&) = delete;
     };
 
     /// @brief toggle edit options Network menu commands (called in GNEApplicationWindow::onCmdToggleEditOptions)

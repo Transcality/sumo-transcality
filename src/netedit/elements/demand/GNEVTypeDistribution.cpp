@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,12 +30,13 @@
 // ===========================================================================
 
 GNEVTypeDistribution::GNEVTypeDistribution(GNENet* net) :
-    GNEDemandElement("", net, "", SUMO_TAG_VTYPE_DISTRIBUTION, GNEPathElement::Options::DEMAND_ELEMENT) {
+    GNEDemandElement(net, SUMO_TAG_VTYPE_DISTRIBUTION) {
 }
 
 
-GNEVTypeDistribution::GNEVTypeDistribution(const std::string& ID, GNENet* net, const std::string& filename, const int deterministic) :
-    GNEDemandElement(ID, net, filename, SUMO_TAG_VTYPE_DISTRIBUTION, GNEPathElement::Options::DEMAND_ELEMENT),
+GNEVTypeDistribution::GNEVTypeDistribution(const std::string& ID, GNENet* net, FileBucket* fileBucket,
+        const int deterministic) :
+    GNEDemandElement(ID, net, SUMO_TAG_VTYPE_DISTRIBUTION, fileBucket),
     myDeterministic(deterministic) {
 }
 
@@ -209,7 +210,7 @@ GNEVTypeDistribution::getAttribute(SumoXMLAttr key) const {
             } else {
                 return toString(myDeterministic);
             }
-        case GNE_ATTR_DEMAND_FILE:
+        case GNE_ATTR_SAVEFILE:
             return getCommonAttribute(key);
         default:
             // get value of first referenced vType

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,15 +19,16 @@
 /****************************************************************************/
 #include <config.h>
 
+#include <utils/common/FileBucket.h>
 #include <utils/common/MsgHandler.h>
 #include <utils/common/RGBColor.h>
 #include <utils/common/SUMOVehicleClass.h>
 #include <utils/options/OptionsCont.h>
 #include <utils/shapes/Shape.h>
 #include <utils/vehicle/SUMOVehicleParserHelper.h>
+#include <utils/xml/NamespaceIDs.h>
 #include <utils/xml/SUMOSAXHandler.h>
 #include <utils/xml/XMLSubSys.h>
-#include <utils/xml/NamespaceIDs.h>
 
 #include "RouteHandler.h"
 
@@ -36,8 +37,8 @@
 // method definitions
 // ===========================================================================
 
-RouteHandler::RouteHandler(const std::string& filename, const bool hardFail) :
-    CommonHandler(filename),
+RouteHandler::RouteHandler(FileBucket* fileBucket, const bool hardFail) :
+    CommonHandler(fileBucket),
     myHardFail(hardFail),
     myFlowBeginDefault(string2time(OptionsCont::getOptions().getString("begin"))),
     myFlowEndDefault(string2time(OptionsCont::getOptions().getString("end"))) {
@@ -495,7 +496,7 @@ RouteHandler::parseSumoBaseObject(CommonXMLStructure::SumoBaseObject* obj) {
 void
 RouteHandler::parseVType(const SUMOSAXAttributes& attrs) {
     // parse vehicleType
-    SUMOVTypeParameter* vehicleTypeParameter = SUMOVehicleParserHelper::beginVTypeParsing(attrs, myHardFail, myFilename);
+    SUMOVTypeParameter* vehicleTypeParameter = SUMOVehicleParserHelper::beginVTypeParsing(attrs, myHardFail, myFileBucket->getFilename());
     if (vehicleTypeParameter) {
         // set tag
         myCommonXMLStructure.getCurrentSumoBaseObject()->setTag(SUMO_TAG_VTYPE);
@@ -1185,7 +1186,11 @@ RouteHandler::parseStopParameters(SUMOVehicleParameter::Stop& stop, const SUMOSA
     }
     // legacy attribute
     if (attrs.hasAttribute(SUMO_ATTR_CONTAINER_TRIGGERED)) {
-        stop.parametersSet |= STOP_TRIGGER_SET;
+        if (attrs.hasAttribute(SUMO_ATTR_SPEED)) {
+            WRITE_WARNING(TLF("Attributes '%' and '%' cannot be loaded simultaneously. Ignoring '%'", toString(SUMO_ATTR_SPEED), toString(SUMO_ATTR_CONTAINER_TRIGGERED), toString(SUMO_ATTR_CONTAINER_TRIGGERED)));
+        } else {
+            stop.parametersSet |= STOP_TRIGGER_SET;
+        }
     }
     if (attrs.hasAttribute(SUMO_ATTR_PARKING)) {
         stop.parametersSet |= STOP_PARKING_SET;
@@ -1275,7 +1280,7 @@ RouteHandler::parseStopParameters(SUMOVehicleParameter::Stop& stop, const SUMOSA
     bool expectTrigger = !attrs.hasAttribute(SUMO_ATTR_DURATION) && !attrs.hasAttribute(SUMO_ATTR_UNTIL) && !attrs.hasAttribute(SUMO_ATTR_SPEED);
     std::vector<std::string> triggers = attrs.getOpt<std::vector<std::string> >(SUMO_ATTR_TRIGGERED, nullptr, ok);
     // legacy
-    if (attrs.getOpt<bool>(SUMO_ATTR_CONTAINER_TRIGGERED, nullptr, ok, false)) {
+    if (attrs.getOpt<bool>(SUMO_ATTR_CONTAINER_TRIGGERED, nullptr, ok, false) && !attrs.hasAttribute(SUMO_ATTR_SPEED)) {
         triggers.push_back(toString(SUMO_TAG_CONTAINER));
     };
     SUMOVehicleParameter::parseStopTriggers(triggers, expectTrigger, stop);

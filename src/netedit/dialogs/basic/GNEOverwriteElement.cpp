@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,8 +32,7 @@
 // ===========================================================================
 
 GNEOverwriteElement::GNEOverwriteElement(CommonHandler* commonHandler, const GNEAttributeCarrier* AC) :
-    GNEDialog(AC->getNet()->getViewNet()->getViewParent()->getGNEAppWindows(),
-              TLF("Overwrite % '%'", AC->getTagProperty()->getTagStr(), AC->getID()), GUIIcon::QUESTION_SMALL,
+    GNEDialog(AC->getNet()->getGNEApplicationWindow(), TLF("Overwrite % '%'", AC->getTagProperty()->getTagStr(), AC->getID()), GUIIcon::QUESTION_SMALL,
               DialogType::OVERWRITE, GNEDialog::Buttons::YES_NO_CANCEL, GNEDialog::OpenType::MODAL, ResizeMode::STATIC),
     myCommonHandler(commonHandler) {
     // create dialog layout (obtained from FXMessageBox)

@@ -13,7 +13,8 @@ set(netedit_SRCS
    GNEApplicationWindowHelper.h
    GNEAttributeProperties.cpp
    GNEAttributeProperties.h
-   GNEEvent_NetworkLoaded.h
+   GNEEvent_FileLoaded.cpp
+   GNEEvent_FileLoaded.h
    GNEExternalRunner.cpp
    GNEExternalRunner.h
    GNEInternalTest.cpp
@@ -90,7 +91,7 @@ endif ()
 add_dependencies(netedit generate-templates-h generate-version-h install_dll)
 
 # finally, define output folder (in our case, SUMO/bin)
-install(TARGETS netedit RUNTIME DESTINATION bin)
+install(TARGETS netedit RUNTIME DESTINATION bin COMPONENT runtime)
 
 # now we're going to define the templates.h dependency.
 # First we define a custom target for templates.h
@@ -101,13 +102,13 @@ set_property(TARGET generate-templates-h PROPERTY FOLDER "CMake")
 
 # for generating dependences we need a SUMO binary compiled, then add sumo as dependency of generate-templates-h.
 # this will compile SUMO BEFORE generate templates.h
-add_dependencies(generate-templates-h sumo netgenerate)
+add_dependencies(generate-templates-h sumo netconvert netgenerate)
 
-# create CMake custom command that generates templates.h file (OUTPUT) giving as argument python executable (PYTHON_EXECUTABLE),
+# create CMake custom command that generates templates.h file (OUTPUT) giving as argument python executable (Python_EXECUTABLE),
 # the python script <SUMO>/tools/build_config/templates.py (<SUMO/src/netedit>/../../tools/build_config/templates.py) and the sumo binary
 add_custom_command(OUTPUT templates.h
-                   COMMAND ${PYTHON_EXECUTABLE} ${SUMO_TOOLS_DIR}/build_config/templates.py $<TARGET_FILE:sumo> $<TARGET_FILE:netgenerate>
-                   DEPENDS sumo netgenerate
+                   COMMAND ${Python_EXECUTABLE} ${SUMO_TOOLS_DIR}/build_config/templates.py $<TARGET_FILE:sumo> $<TARGET_FILE:netconvert> $<TARGET_FILE:netgenerate>
+                   DEPENDS sumo netconvert netgenerate
                    )
 
 # Finally mark the generated templates.h as a generated file

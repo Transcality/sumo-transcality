@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,16 +32,16 @@
 // ===========================================================================
 
 GNEOverheadWire::GNEOverheadWire(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_OVERHEAD_WIRE_SECTION, ""),
+    GNEAdditional(net, SUMO_TAG_OVERHEAD_WIRE_SECTION),
     myMoveElementLaneDouble(new GNEMoveElementLaneDouble(this, SUMO_ATTR_STARTPOS, myStartPosOverLane,
                             SUMO_ATTR_ENDPOS, myEndPosPosOverLane, myFriendlyPosition)) {
 }
 
 
-GNEOverheadWire::GNEOverheadWire(const std::string& id, GNENet* net, const std::string& filename, std::vector<GNELane*> lanes, GNEAdditional* substation,
+GNEOverheadWire::GNEOverheadWire(const std::string& id, GNENet* net, FileBucket* fileBucket, std::vector<GNELane*> lanes, GNEAdditional* substation,
                                  const double startPos, const double endPos, const bool friendlyPos, const std::vector<std::string>& forbiddenInnerLanes,
                                  const Parameterised::Map& parameters) :
-    GNEAdditional(id, net, filename, SUMO_TAG_OVERHEAD_WIRE_SECTION, ""),
+    GNEAdditional(id, net, SUMO_TAG_OVERHEAD_WIRE_SECTION, fileBucket, ""),
     Parameterised(parameters),
     myStartPosOverLane(startPos),
     myEndPosPosOverLane(endPos),

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -41,11 +41,11 @@ GNEInductionLoopDetector::GNEInductionLoopDetector(GNENet* net) :
 }
 
 
-GNEInductionLoopDetector::GNEInductionLoopDetector(const std::string& id, GNENet* net, const std::string& filename, GNELane* lane,
+GNEInductionLoopDetector::GNEInductionLoopDetector(const std::string& id, GNENet* net, FileBucket* fileBucket, GNELane* lane,
         const double pos, const SUMOTime freq, const std::string& outputFilename, const std::vector<std::string>& vehicleTypes,
         const std::vector<std::string>& nextEdges, const std::string& detectPersons, const std::string& name, const bool friendlyPos,
         const Parameterised::Map& parameters) :
-    GNEDetector(id, net, filename, SUMO_TAG_INDUCTION_LOOP, freq, outputFilename, vehicleTypes, nextEdges,
+    GNEDetector(id, net, fileBucket, SUMO_TAG_INDUCTION_LOOP, freq, outputFilename, vehicleTypes, nextEdges,
                 detectPersons, name, parameters),
     myPosOverLane(pos),
     myFriendlyPos(friendlyPos),
@@ -123,7 +123,7 @@ GNEInductionLoopDetector::updateGeometry() {
 bool
 GNEInductionLoopDetector::checkDrawRelatedContour() const {
     // get TLS Attributes
-    const auto& TLSAttributes = myNet->getViewNet()->getViewParent()->getTLSEditorFrame()->getTLSAttributes();
+    const auto& TLSAttributes = myNet->getViewParent()->getTLSEditorFrame()->getTLSAttributes();
     // check detectors
     if (myNet->getViewNet()->selectingDetectorsTLSMode() &&
             (TLSAttributes->getE1Detectors().count(getParentLanes().front()->getID()) > 0) &&

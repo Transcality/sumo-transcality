@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -18,10 +18,11 @@
 // The "About" - dialog for netedit, (adapted from GUIDialog_AboutSUMO)
 /****************************************************************************/
 
+#include <netedit/GNEApplicationWindow.h>
 #include <utils/common/MsgHandler.h>
 #include <utils/foxtools/MFXLinkLabel.h>
-#include <utils/gui/images/GUIIconSubSys.h>
 #include <utils/gui/div/GUIDesigns.h>
+#include <utils/gui/images/GUIIconSubSys.h>
 
 #ifdef HAVE_VERSION_H
 #include <version.h>
@@ -55,7 +56,7 @@ GNEAboutDialog::GNEAboutDialog(GNEApplicationWindow* applicationWindow) :
     // SUMO_HOME
     new FXLabel(descriptionFrame, std::string("SUMO_HOME: " + std::string(getenv("SUMO_HOME"))).c_str(), nullptr, GUIDesignLabelAboutInfo);
     // copyright notice
-    new FXLabel(myContentFrame, "Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.", nullptr, GUIDesignLabelAboutInfo);
+    new FXLabel(myContentFrame, "Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.", nullptr, GUIDesignLabelAboutInfo);
     new FXLabel(myContentFrame, TL("This application is based on code provided by the Eclipse SUMO project."), nullptr, GUIDesignLabelAboutInfo);
     new FXLabel(myContentFrame, TL("These core components are available under the conditions of the Eclipse Public License v2."), nullptr, GUIDesignLabelAboutInfo);
     (new MFXLinkLabel(myContentFrame, "SPDX-License-Identifier: EPL-2.0", nullptr, GUIDesignLabelAboutInfo))->setTipText("https://www.eclipse.org/legal/epl-v20.html");

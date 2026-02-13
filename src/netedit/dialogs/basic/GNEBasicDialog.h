@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -34,6 +34,11 @@ public:
                    const std::string& info, GUIIcon titleIcon, DialogType type,
                    GNEDialog::Buttons buttons, GUIIcon largeIcon);
 
+    /// @brief Constructor
+    GNEBasicDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+                   const std::string& title, const std::string& info, GUIIcon titleIcon,
+                   DialogType type, GNEDialog::Buttons buttons, GUIIcon largeIcon);
+
     /// @brief Destructor
     ~GNEBasicDialog();
 
@@ -41,6 +46,9 @@ public:
     void runInternalTest(const InternalTestStep::DialogArgument* dialogArgument);
 
 private:
+    /// @brief builder
+    void builder(const std::string& info, GUIIcon largeIcon);
+
     /// @brief Invalidated copy constructor.
     GNEBasicDialog(const GNEBasicDialog&) = delete;
 

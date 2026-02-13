@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -55,7 +55,7 @@ GNEMoveElementLaneSingle::~GNEMoveElementLaneSingle() {}
 GNEMoveOperation*
 GNEMoveElementLaneSingle::getMoveOperation() {
     // check if allow change lane is enabled
-    const bool allowChangeLane = myMovedElement->getNet()->getViewNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane();
+    const bool allowChangeLane = myMovedElement->getNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane();
     // continue depending if we're moving the start or the end position
     if (myPositionType == PositionType::ENDPOS) {
         return new GNEMoveOperation(this, myMovedElement->getHierarchicalElement()->getParentLanes().front(), INVALID_DOUBLE,
@@ -236,11 +236,11 @@ GNEMoveElementLaneSingle::fixMovingProblem() {
     const double adjustedPosition = (myPosOverLane == INVALID_DOUBLE) ? 0 : (myPosOverLane < 0) ? (myPosOverLane + laneLenght) : myPosOverLane;
     // check conditions
     if (adjustedPosition < 0) {
-        myMovedElement->setAttribute(myPosAttr, "0", myMovedElement->getNet()->getViewNet()->getUndoList());
+        myMovedElement->setAttribute(myPosAttr, "0", myMovedElement->getNet()->getUndoList());
     } else if (adjustedPosition > laneLenght) {
-        myMovedElement->setAttribute(myPosAttr, toString(laneLenght), myMovedElement->getNet()->getViewNet()->getUndoList());
+        myMovedElement->setAttribute(myPosAttr, toString(laneLenght), myMovedElement->getNet()->getUndoList());
     } else if ((myPositionType == PositionType::STARPOS) && (adjustedPosition > (laneLenght - POSITION_EPS))) {
-        myMovedElement->setAttribute(myPosAttr, toString(laneLenght - POSITION_EPS), myMovedElement->getNet()->getViewNet()->getUndoList());
+        myMovedElement->setAttribute(myPosAttr, toString(laneLenght - POSITION_EPS), myMovedElement->getNet()->getUndoList());
     }
 }
 

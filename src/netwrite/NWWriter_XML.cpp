@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -60,23 +60,22 @@ NWWriter_XML::writeNetwork(const OptionsCont& oc, const std::string& prefix, NBN
         writeTrafficLights(prefix, nb.getTLLogicCont(), nb.getEdgeCont());
         writeConfig(oc, prefix, haveTypes);
     }
-    if (oc.isSet("junctions.join-output")) {
+    if (oc.isSet("junctions.join-output") && (oc.getString("junctions.join-output").size() > 0)) {
         writeJoinedJunctions(oc.getString("junctions.join-output"), nb.getNodeCont());
     }
-    if (oc.isSet("street-sign-output")) {
+    if (oc.isSet("street-sign-output") && (oc.getString("street-sign-output").size() > 0)) {
         writeStreetSigns(oc, nb.getEdgeCont());
     }
-    if (oc.exists("ptstop-output") && oc.isSet("ptstop-output")) {
+    if (oc.exists("ptstop-output") && oc.isSet("ptstop-output") && (oc.getString("ptstop-output").size() > 0)) {
         writePTStops(oc, nb.getPTStopCont());
     }
-    if (oc.exists("ptline-output") && oc.isSet("ptline-output")) {
+    if (oc.exists("ptline-output") && oc.isSet("ptline-output") && (oc.getString("ptline-output").size() > 0)) {
         writePTLines(oc, nb.getPTLineCont());
     }
-
-    if (oc.exists("parking-output") && oc.isSet("parking-output")) {
+    if (oc.exists("parking-output") && oc.isSet("parking-output") && (oc.getString("parking-output").size() > 0)) {
         writeParkingAreas(oc, nb.getParkingCont(), nb.getEdgeCont());
     }
-    if (oc.exists("taz-output") && oc.isSet("taz-output")) {
+    if (oc.exists("taz-output") && oc.isSet("taz-output") && (oc.getString("taz-output").size() > 0)) {
         writeDistricts(oc, nb.getDistrictCont());
     }
 }

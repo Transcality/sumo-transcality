@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -87,11 +87,11 @@ FXDEFMAP(GNETLSEditorFrame::TLSFile) TLSFileMap[] = {
 };
 
 // Object implementation
-FXIMPLEMENT(GNETLSEditorFrame::TLSJunction,     MFXGroupBoxModule,  TLSJunctionMap,     ARRAYNUMBER(TLSJunctionMap))
-FXIMPLEMENT(GNETLSEditorFrame::TLSPrograms,     MFXGroupBoxModule,  TLSProgramsMap,     ARRAYNUMBER(TLSProgramsMap))
-FXIMPLEMENT(GNETLSEditorFrame::TLSAttributes,   MFXGroupBoxModule,  TLSAttributesMap,   ARRAYNUMBER(TLSAttributesMap))
-FXIMPLEMENT(GNETLSEditorFrame::TLSPhases,       MFXGroupBoxModule,  TLSPhasesMap,       ARRAYNUMBER(TLSPhasesMap))
-FXIMPLEMENT(GNETLSEditorFrame::TLSFile,         MFXGroupBoxModule,  TLSFileMap,         ARRAYNUMBER(TLSFileMap))
+FXIMPLEMENT(GNETLSEditorFrame::TLSJunction,     GNEGroupBoxModule,  TLSJunctionMap,     ARRAYNUMBER(TLSJunctionMap))
+FXIMPLEMENT(GNETLSEditorFrame::TLSPrograms,     GNEGroupBoxModule,  TLSProgramsMap,     ARRAYNUMBER(TLSProgramsMap))
+FXIMPLEMENT(GNETLSEditorFrame::TLSAttributes,   GNEGroupBoxModule,  TLSAttributesMap,   ARRAYNUMBER(TLSAttributesMap))
+FXIMPLEMENT(GNETLSEditorFrame::TLSPhases,       GNEGroupBoxModule,  TLSPhasesMap,       ARRAYNUMBER(TLSPhasesMap))
+FXIMPLEMENT(GNETLSEditorFrame::TLSFile,         GNEGroupBoxModule,  TLSFileMap,         ARRAYNUMBER(TLSFileMap))
 
 
 // ===========================================================================
@@ -197,10 +197,11 @@ bool
 GNETLSEditorFrame::isTLSSaved() {
     if (myTLSPrograms->checkHaveModifications()) {
         // show question dialog
-        const auto questionDialog = GNEQuestionBasicDialog(myViewNet->getViewParent()->getGNEAppWindows(), GNEDialog::Buttons::YES_NO_CANCEL,
-                                    TL("Save TLS Changes"),
-                                    TL("There are unsaved changes in the currently edited traffic light."),
-                                    TL("Do you want to save it before changing mode?"));
+        const GNEQuestionBasicDialog questionDialog(myViewNet->getViewParent()->getGNEAppWindows(),
+                GNEDialog::Buttons::YES_NO_CANCEL,
+                TL("Save TLS Changes"),
+                TL("There are unsaved changes in the currently edited traffic light."),
+                TL("Do you want to save it before changing mode?"));
         // continue depending of result
         if (questionDialog.getResult() == GNEDialog::Result::ACCEPT) {
             // save modifications
@@ -555,7 +556,7 @@ GNETLSEditorFrame::getSteps2Time(const SUMOTime value) {
 // ---------------------------------------------------------------------------
 
 GNETLSEditorFrame::TLSAttributes::TLSAttributes(GNETLSEditorFrame* TLSEditorParent) :
-    MFXGroupBoxModule(TLSEditorParent, TL("Traffic Light Attributes")),
+    GNEGroupBoxModule(TLSEditorParent, TL("Traffic Light Attributes")),
     myTLSEditorParent(TLSEditorParent) {
     // create frame, label and TextField for Offset (By default disabled)
     FXHorizontalFrame* horizontalFrame = new FXHorizontalFrame(getCollapsableFrame(), GUIDesignAuxiliarHorizontalFrame);
@@ -817,13 +818,13 @@ GNETLSEditorFrame::TLSAttributes::onCmdSetParameters(FXObject*, FXSelector, void
 
 long
 GNETLSEditorFrame::TLSAttributes::onCmdParametersDialog(FXObject*, FXSelector, void*) {
+    auto GNEApp = myTLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows();
     // continue depending of myEditedDef
     if (myTLSEditorParent->myEditedDef) {
         // get previous parameters
         const auto previousParameters = getParameters();
         // open parameters dialog
-        const auto parametersDialog = GNEParametersDialog(myTLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows(),
-                                      myTLSEditorParent->myEditedDef->getParametersMap());
+        const GNEParametersDialog parametersDialog(GNEApp, myTLSEditorParent->myEditedDef->getParametersMap());
         // continue depending of result
         if (parametersDialog.getResult() == GNEDialog::Result::ACCEPT) {
             // set parameters in myEditedDef
@@ -880,7 +881,7 @@ GNETLSEditorFrame::TLSAttributes::updateE1Detectors() {
 // ---------------------------------------------------------------------------
 
 GNETLSEditorFrame::TLSJunction::TLSJunction(GNETLSEditorFrame* TLSEditorParent) :
-    MFXGroupBoxModule(TLSEditorParent, TL("Traffic Light")),
+    GNEGroupBoxModule(TLSEditorParent, TL("Traffic Light")),
     myTLSEditorParent(TLSEditorParent),
     myCurrentJunction(nullptr) {
     const auto staticTooltip = TLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows()->getStaticTooltipMenu();
@@ -1339,7 +1340,7 @@ GNETLSEditorFrame::TLSJunction::refreshTLSJunction() {
 // ---------------------------------------------------------------------------
 
 GNETLSEditorFrame::TLSPrograms::TLSPrograms(GNETLSEditorFrame* TLSEditorParent) :
-    MFXGroupBoxModule(TLSEditorParent, TL("Traffic Light Programs")),
+    GNEGroupBoxModule(TLSEditorParent, TL("Traffic Light Programs")),
     myTLSEditorParent(TLSEditorParent) {
     // create frame, label and comboBox for programID
     FXHorizontalFrame* programFrame = new FXHorizontalFrame(getCollapsableFrame(), GUIDesignAuxiliarHorizontalFrame);
@@ -1566,6 +1567,7 @@ GNETLSEditorFrame::TLSPrograms::discardChanges(const bool editJunctionAgain) {
 
 long
 GNETLSEditorFrame::TLSPrograms::onCmdCreate(FXObject*, FXSelector, void*) {
+    auto GNEApp = myTLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows();
     // get current edited junction (needed because onCmdDiscardChanges clear junction)
     GNEJunction* currentJunction = myTLSEditorParent->myTLSJunction->getCurrentJunction();
     // abort because we onCmdOk assumes we wish to save an edited definition
@@ -1573,7 +1575,7 @@ GNETLSEditorFrame::TLSPrograms::onCmdCreate(FXObject*, FXSelector, void*) {
     // check number of edges
     if (currentJunction->getGNEIncomingEdges().empty() && currentJunction->getGNEOutgoingEdges().empty()) {
         // open warning dialog
-        GNEWarningBasicDialog(myTLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows(),
+        GNEWarningBasicDialog(GNEApp,
                               TL("TLS cannot be created"),
                               TL("Traffic Light cannot be created because junction must have"),
                               TL("at least one incoming edge and one outgoing edge.")
@@ -1583,7 +1585,7 @@ GNETLSEditorFrame::TLSPrograms::onCmdCreate(FXObject*, FXSelector, void*) {
     // check number of connections
     if (currentJunction->getGNEConnections().empty()) {
         // open warning dialog
-        GNEWarningBasicDialog(myTLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows(),
+        GNEWarningBasicDialog(GNEApp,
                               TL("TLS cannot be created"),
                               TL("Traffic Light cannot be created because junction"),
                               TL("must have at least one connection.")
@@ -1599,7 +1601,7 @@ GNETLSEditorFrame::TLSPrograms::onCmdCreate(FXObject*, FXSelector, void*) {
     }
     if (!connectionControlled) {
         // open warning dialog
-        GNEWarningBasicDialog(myTLSEditorParent->getViewNet()->getViewParent()->getGNEAppWindows(),
+        GNEWarningBasicDialog(GNEApp,
                               TL("TLS cannot be created"),
                               TL("Traffic Light cannot be created because junction"),
                               TL("must have at least one controlled connection.")
@@ -1873,7 +1875,7 @@ GNETLSEditorFrame::TLSPrograms::switchProgram() {
 // ---------------------------------------------------------------------------
 
 GNETLSEditorFrame::TLSPhases::TLSPhases(GNETLSEditorFrame* TLSEditorParent) :
-    MFXGroupBoxModule(TLSEditorParent, TL("Phases"), MFXGroupBoxModule::Options::COLLAPSIBLE | MFXGroupBoxModule::Options::EXTENSIBLE),
+    GNEGroupBoxModule(TLSEditorParent, TL("Phases"), GNEGroupBoxModule::Options::COLLAPSIBLE | GNEGroupBoxModule::Options::EXTENSIBLE),
     myTLSEditorParent(TLSEditorParent) {
     // create GNETLSTable
     myPhaseTable = new GNETLSTable(this);
@@ -2818,7 +2820,7 @@ GNETLSEditorFrame::TLSPhases::updateStateSize(const int col) {
 // ---------------------------------------------------------------------------
 
 GNETLSEditorFrame::TLSFile::TLSFile(GNETLSEditorFrame* TLSEditorParent) :
-    MFXGroupBoxModule(TLSEditorParent, TL("TLS Program File")),
+    GNEGroupBoxModule(TLSEditorParent, TL("TLS Program File")),
     myTLSEditorParent(TLSEditorParent) {
     FXHorizontalFrame* buttonsFrame = new FXHorizontalFrame(getCollapsableFrame(), GUIDesignAuxiliarHorizontalFrame);
     // create create tlDef button

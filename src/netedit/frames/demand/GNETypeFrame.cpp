@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,8 +32,6 @@
 
 #include "GNETypeFrame.h"
 
-#define TEMPORAL_FILENAME std::string()
-
 // ===========================================================================
 // FOX callback mapping
 // ===========================================================================
@@ -49,8 +47,8 @@ FXDEFMAP(GNETypeFrame::TypeEditor) typeEditorMap[] = {
 };
 
 // Object implementation
-FXIMPLEMENT(GNETypeFrame::TypeSelector,         MFXGroupBoxModule,  typeSelectorMap,        ARRAYNUMBER(typeSelectorMap))
-FXIMPLEMENT(GNETypeFrame::TypeEditor,           MFXGroupBoxModule,  typeEditorMap,          ARRAYNUMBER(typeEditorMap))
+FXIMPLEMENT(GNETypeFrame::TypeSelector,         GNEGroupBoxModule,  typeSelectorMap,        ARRAYNUMBER(typeSelectorMap))
+FXIMPLEMENT(GNETypeFrame::TypeEditor,           GNEGroupBoxModule,  typeEditorMap,          ARRAYNUMBER(typeEditorMap))
 
 // ===========================================================================
 // method definitions
@@ -61,7 +59,7 @@ FXIMPLEMENT(GNETypeFrame::TypeEditor,           MFXGroupBoxModule,  typeEditorMa
 // ---------------------------------------------------------------------------
 
 GNETypeFrame::TypeSelector::TypeSelector(GNETypeFrame* typeFrameParent) :
-    MFXGroupBoxModule(typeFrameParent, TL("Current Type")),
+    GNEGroupBoxModule(typeFrameParent, TL("Current Type")),
     myTypeFrameParent(typeFrameParent),
     myCurrentType(nullptr) {
     // Create MFXComboBoxIcon
@@ -189,7 +187,7 @@ GNETypeFrame::TypeSelector::onCmdSelectItem(FXObject*, FXSelector, void*) {
 // ---------------------------------------------------------------------------
 
 GNETypeFrame::TypeEditor::TypeEditor(GNETypeFrame* typeFrameParent) :
-    MFXGroupBoxModule(typeFrameParent, TL("Type Editor")),
+    GNEGroupBoxModule(typeFrameParent, TL("Type Editor")),
     myTypeFrameParent(typeFrameParent) {
     // Create new vehicle type
     myCreateTypeButton = GUIDesigns::buildFXButton(getCollapsableFrame(), TL("Create Type"), "", "", GUIIconSubSys::getIcon(GUIIcon::VTYPE), this, MID_GNE_CREATE, GUIDesignButton);
@@ -250,14 +248,15 @@ GNETypeFrame::TypeEditor::refreshTypeEditorModule() {
 
 long
 GNETypeFrame::TypeEditor::onCmdCreateType(FXObject*, FXSelector, void*) {
+    auto net = myTypeFrameParent->myViewNet->getNet();
     // obtain a new valid Type ID
-    const std::string typeID = myTypeFrameParent->myViewNet->getNet()->getAttributeCarriers()->generateDemandElementID(SUMO_TAG_VTYPE);
+    const std::string typeID = net->getAttributeCarriers()->generateDemandElementID(SUMO_TAG_VTYPE);
     // create new vehicle type
-    GNEDemandElement* type = new GNEVType(typeID, myTypeFrameParent->myViewNet->getNet(), TEMPORAL_FILENAME);
+    GNEDemandElement* type = new GNEVType(typeID, net, net->getGNEApplicationWindow()->getFileBucketHandler()->getDefaultBucket(FileBucket::Type::DEMAND));
     // add it using undoList (to allow undo-redo)
-    myTypeFrameParent->myViewNet->getUndoList()->begin(type, TL("create vehicle type"));
-    myTypeFrameParent->myViewNet->getUndoList()->add(new GNEChange_DemandElement(type, true), true);
-    myTypeFrameParent->myViewNet->getUndoList()->end();
+    net->getUndoList()->begin(type, TL("create vehicle type"));
+    net->getUndoList()->add(new GNEChange_DemandElement(type, true), true);
+    net->getUndoList()->end();
     // set created vehicle type in selector
     myTypeFrameParent->myTypeSelector->setCurrentType(type);
     return 1;
@@ -348,7 +347,8 @@ GNETypeFrame::TypeEditor::deleteType() {
             info = TLF("Delete % '%' will remove % vehicles. Continue?", toString(SUMO_TAG_VTYPE), myTypeFrameParent->myTypeSelector->getCurrentType()->getID(), numChildren);
         }
         // Ask confirmation to user
-        const auto questionDialog = GNEQuestionBasicDialog(myTypeFrameParent->getViewNet()->getViewParent()->getGNEAppWindows(), GNEDialog::Buttons::YES_NO, title, info);
+        const GNEQuestionBasicDialog questionDialog(myTypeFrameParent->getViewNet()->getViewParent()->getGNEAppWindows(),
+                GNEDialog::Buttons::YES_NO, title, info);
         // continue depending of answer
         if (questionDialog.getResult() == GNEDialog::Result::ACCEPT) {
             // begin undo list operation

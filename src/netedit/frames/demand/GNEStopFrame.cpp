@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -39,7 +39,7 @@
 // ---------------------------------------------------------------------------
 
 GNEStopFrame::HelpCreation::HelpCreation(GNEStopFrame* StopFrameParent) :
-    MFXGroupBoxModule(StopFrameParent, TL("Help")),
+    GNEGroupBoxModule(StopFrameParent, TL("Help")),
     myStopFrameParent(StopFrameParent) {
     myInformationLabel = new MFXDynamicLabel(getCollapsableFrame(), "", 0, GUIDesignLabelFrameInformation);
 }
@@ -216,9 +216,8 @@ GNEStopFrame::addStop(const GNEViewNetHelper::ViewObjectsSelector& viewObjects, 
                          viewObjects.getLaneFront(), viewObjects.getAdditionalFront());
         if (myStopParentBaseObject->getTag() != SUMO_TAG_NOTHING) {
             // declare route handler
-            GNERouteHandler routeHandler(myViewNet->getNet(), myStopParentBaseObject->hasStringAttribute(GNE_ATTR_DEMAND_FILE) ?
-                                         myStopParentBaseObject->getStringAttribute(GNE_ATTR_DEMAND_FILE) : "",
-                                         myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed());
+            GNERouteHandler routeHandler(myViewNet->getNet(), myStopTagSelector->getCurrentTemplateAC()->getFileBucket(),
+                                         myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), true);
             // build stop
             routeHandler.buildStop(myStopParentBaseObject->getSumoBaseObjectChildren().front(), myPlanParameters,
                                    myStopParentBaseObject->getSumoBaseObjectChildren().front()->getStopParameter());

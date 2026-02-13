@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,7 @@
 #include "ROLane.h"
 #include "ROPerson.h"
 
+bool ROPerson::myHaveWarnedPTMissing(false);
 const std::string ROPerson::PlanItem::UNDEFINED_STOPPING_PLACE;
 
 // ===========================================================================
@@ -451,8 +452,24 @@ ROPerson::computeRoute(const RORouterProvider& provider,
                 }
             }
             trip->setItems(best, bestVeh);
+
+            // test after routing to ensuer network was initialized
+            if (!myHaveWarnedPTMissing && (trip->getModes() & SVC_BUS) != 0) {
+                myHaveWarnedPTMissing = true;
+                if (!provider.getIntermodalRouter().getNetwork()->hasPTSchedules()) {
+                    WRITE_WARNINGF("Person '%' is configured to use public transport but no schedules are loaded.", getID());
+                }
+            }
         }
         time += it->getDuration();
+    }
+    if (RONet::getInstance()->getMaxTraveltime() > 0) {
+        double costs = STEPS2TIME(time - getParameter().depart);
+        if (costs > RONet::getInstance()->getMaxTraveltime()) {
+            errorHandler->inform("Person '" + getID() + "' has no valid route (traveltime " + time2string(TIME2STEPS(costs)) + " exceeds max-traveltime)");
+            myRoutingSuccess = false;
+            return;
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -190,6 +190,9 @@ RODUAFrame::addDUAOptions() {
 
     oc.doRegister("railway.max-train-length", new Option_Float(1000.0));
     oc.addDescription("railway.max-train-length", "Processing", TL("Use FLOAT as a maximum train length when initializing the railway router"));
+
+    oc.doRegister("max-traveltime", new Option_String("-1", "TIME"));
+    oc.addDescription("max-traveltime", "Processing", TL("Declare routing failure if traveltime exceeds the given positive TIME"));
 }
 
 

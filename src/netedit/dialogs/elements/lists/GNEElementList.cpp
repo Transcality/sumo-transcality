@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -47,9 +47,10 @@ FXIMPLEMENT_ABSTRACT(GNEElementList, FXVerticalFrame, GNEElementListMap, ARRAYNU
 // method definitions
 // ===========================================================================
 
-GNEElementList::GNEElementList(FXVerticalFrame* contentFrame, const GNETagProperties* tagProperty, GNEElementList::Options options) :
+GNEElementList::GNEElementList(GNEDialog* parentDialog, FXVerticalFrame* contentFrame, SumoXMLTag tag, GNEElementList::Options options) :
     FXVerticalFrame(contentFrame, GUIDesignAuxiliarVerticalFrame),
-    myTagProperty(tagProperty) {
+    myDialogParent(parentDialog),
+    myTagProperty(parentDialog->getApplicationWindow()->getTagPropertiesDatabase()->getTagProperty(tag, true)) {
     // horizontal frame for buttons
     FXHorizontalFrame* buttonFrame = new FXHorizontalFrame(this, GUIDesignAuxiliarHorizontalFrame);
     // create add button
@@ -100,6 +101,12 @@ GNEElementList::isListValid() const {
 }
 
 
+GNEDialog*
+GNEElementList::getDialogParent() {
+    return myDialogParent;
+}
+
+
 long
 GNEElementList::onCmdAddRow(FXObject*, FXSelector, void*) {
     return addNewElement();
@@ -124,7 +131,7 @@ GNEElementList::removeElementRecursively(GNEAdditional* additionalElement) const
         removeElementRecursively(demandChild);
     }
     // delete element
-    additionalElement->getNet()->getViewNet()->getUndoList()->add(new GNEChange_Additional(additionalElement, false), true);
+    additionalElement->getNet()->getUndoList()->add(new GNEChange_Additional(additionalElement, false), true);
 }
 
 
@@ -140,7 +147,7 @@ GNEElementList::removeElementRecursively(GNEDemandElement* demandElement) const 
         removeElementRecursively(demandChild);
     }
     // delete element
-    demandElement->getNet()->getViewNet()->getUndoList()->add(new GNEChange_DemandElement(demandElement, false), true);
+    demandElement->getNet()->getUndoList()->add(new GNEChange_DemandElement(demandElement, false), true);
 }
 
 /****************************************************************************/

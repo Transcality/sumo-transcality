@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -34,7 +34,7 @@
 // ===========================================================================
 
 GNECalibratorFlow::GNECalibratorFlow(GNENet* net) :
-    GNEAdditional("", net, "", GNE_TAG_CALIBRATOR_FLOW, ""),
+    GNEAdditional(net, GNE_TAG_CALIBRATOR_FLOW),
     GNEAdditionalListed(this) {
     // set VPH and speed enabled
     toggleAttribute(SUMO_ATTR_VEHSPERHOUR, true);
@@ -44,7 +44,8 @@ GNECalibratorFlow::GNECalibratorFlow(GNENet* net) :
 }
 
 
-GNECalibratorFlow::GNECalibratorFlow(GNEAdditional* calibratorParent, GNEDemandElement* vehicleType, GNEDemandElement* route) :
+GNECalibratorFlow::GNECalibratorFlow(GNEAdditional* calibratorParent, const SUMOTime begin, const SUMOTime end,
+                                     GNEDemandElement* vehicleType, GNEDemandElement* route) :
     GNEAdditional(calibratorParent, GNE_TAG_CALIBRATOR_FLOW, ""),
     GNEAdditionalListed(this) {
     // set parents
@@ -54,6 +55,11 @@ GNECalibratorFlow::GNECalibratorFlow(GNEAdditional* calibratorParent, GNEDemandE
     updateCenteringBoundary(false);
     // reset ID
     id.clear();
+    // set begin and end
+    depart = begin;
+    repetitionEnd = end;
+    // set default vehsperhour
+    setAttribute(SUMO_ATTR_VEHSPERHOUR, "1800");
 }
 
 

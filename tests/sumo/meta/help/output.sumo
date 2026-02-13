@@ -1,5 +1,5 @@
-Eclipse SUMO sumo v1_25_0+0052-ed3ec406d98
- Copyright (C) 2001-2025 German Aerospace Center (DLR) and others; https://sumo.dlr.de
+Eclipse SUMO sumo v1_25_0+1031-30c9dee08ac
+ Copyright (C) 2001-2026 German Aerospace Center (DLR) and others; https://sumo.dlr.de
 A microscopic, multi-modal traffic simulation.
 
 Usage: sumo [OPTION]*
@@ -336,6 +336,10 @@ Processing Options:
                                         yellow
   --railsignal-moving-block            Let railsignals operate in moving-block
                                         mode by default
+  --railsignal.moving-block.default-classes STR[]  List vehicle classes that
+                                        default to moving-block operations
+  --railsignal.moving-block.max-dist FLOAT  Maximum signal distance above which
+                                        zipper conflicts are ignored
   --railsignal.max-block-length FLOAT  Do not build blocks longer than FLOAT
                                         and issue a warning instead
   --railsignal.default-classes STR[]   List vehicle classes that uses
@@ -1048,7 +1052,7 @@ GUI Only Options:
                                         simulation steps
   -B, --breakpoints STR[]              Use TIME[] as times when the simulation
                                         should halt
-  --edgedata-files FILE                Load edge/lane weights for visualization
+  -m, --edgedata-files FILE            Load edge/lane weights for visualization
                                         from FILE
   -N, --alternative-net-file FILE      Load a secondary road network for
                                         abstract visualization from FILE

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -68,7 +68,7 @@ ROEdge::ROEdge(const std::string& id, RONode* from, RONode* to, int index, const
     myAmSource(false),
     myUsingTTTimeLine(false),
     myUsingETimeLine(false),
-    myRestrictions(nullptr),
+    mySpeedRestrictions(nullptr),
     myCombinedPermissions(0),
     myOtherTazConnector(nullptr),
     myTimePenalty(0) {
@@ -178,7 +178,7 @@ double
 ROEdge::getEffort(const ROVehicle* const veh, double time) const {
     double ret = 0;
     if (!getStoredEffort(time, ret)) {
-        return myLength / MIN2(veh->getMaxSpeed(), getVClassMaxSpeed(veh->getVClass())) + myTimePenalty;
+        return myLength / getMaxSpeed(veh);
     }
     return ret;
 }
@@ -230,7 +230,7 @@ ROEdge::getTravelTime(const ROVehicle* const veh, double time) const {
             }
         }
     }
-    const double speed = veh != nullptr ? MIN2(veh->getMaxSpeed(), veh->getType()->speedFactor.getParameter(0) * getVClassMaxSpeed(veh->getVClass())) : mySpeed;
+    const double speed = veh != nullptr ? getMaxSpeed(veh) : mySpeed;
     return myLength / speed + myTimePenalty;
 }
 
@@ -239,8 +239,7 @@ double
 ROEdge::getNoiseEffort(const ROEdge* const edge, const ROVehicle* const veh, double time) {
     double ret = 0;
     if (!edge->getStoredEffort(time, ret)) {
-        const double v = MIN2(veh->getMaxSpeed(), edge->getVClassMaxSpeed(veh->getVClass()));
-        ret = HelpersHarmonoise::computeNoise(veh->getType()->emissionClass, v, 0);
+        ret = HelpersHarmonoise::computeNoise(veh->getType()->emissionClass, edge->getMaxSpeed(veh), 0);
     }
     return ret;
 }

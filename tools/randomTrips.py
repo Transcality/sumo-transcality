@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2010-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2010-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -51,7 +51,7 @@ def get_options(args=None):
     # input
     op.add_argument("-n", "--net-file", category="input", dest="netfile", required=True, type=op.net_file,
                     help="define the net file (mandatory)")
-    op.add_argument("-a", "--additional-files", category="input", dest="additional", type=op.additional_file,
+    op.add_argument("-a", "--additional-files", category="input", dest="additional", type=op.additional_file_list,
                     help="define additional files to be loaded by the router")
     op.add_argument("--weights-prefix", category="input", dest="weightsprefix", type=op.file,
                     help="loads probabilities for being source, destination and via-edge from the files named " +

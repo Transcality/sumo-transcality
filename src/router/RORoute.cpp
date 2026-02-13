@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -96,10 +96,10 @@ RORoute::isValid(const ROVehicle& veh, bool ignoreErrors, MsgHandler* mh) const 
 
 bool
 RORoute::isPermitted(const ROVehicle* veh, MsgHandler* mh) const {
-    const bool hasRestrictions = RONet::getInstance()->hasRestrictions();
+    const bool hasRestrictions = RONet::getInstance()->hasParamRestrictions();
     const bool hasPermissions = RONet::getInstance()->hasPermissions();
     if (hasRestrictions || hasPermissions) {
-        for (const ROEdge* e: myRoute) {
+        for (const ROEdge* e : myRoute) {
             if ((hasPermissions && e->prohibits(veh)) || (hasRestrictions && e->restricts(veh))) {
                 mh->informf("Vehicle '%' is not permitted on Edge '%'", veh->getID(), e->getID());
                 return false;

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -39,12 +39,12 @@
 #include <netedit/frames/network/GNECrossingFrame.h>
 #include <netedit/frames/network/GNETLSEditorFrame.h>
 #include <netedit/GNENet.h>
+#include <netedit/GNEApplicationWindow.h>
 #include <netedit/GNEUndoList.h>
 #include <netedit/GNEViewParent.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
-#include <utils/gui/images/GUITextureSubSys.h>
 #include <utils/gui/images/GUITextureSubSys.h>
 #include <utils/gui/windows/GUIAppEnum.h>
 #include <utils/options/OptionsCont.h>
@@ -156,7 +156,7 @@ bool
 GNEJunction::checkDrawFromContour() const {
     // get modes and viewParent (for code legibility)
     const auto& modes = myNet->getViewNet()->getEditModes();
-    const auto& viewParent = myNet->getViewNet()->getViewParent();
+    const auto& viewParent = myNet->getViewParent();
     const auto& inspectedElements = myNet->getViewNet()->getInspectedElements();
     // continue depending of current status
     if (inspectedElements.isInspectingSingleElement()) {
@@ -221,7 +221,7 @@ bool
 GNEJunction::checkDrawToContour() const {
     // get modes and viewParent (for code legibility)
     const auto& modes = myNet->getViewNet()->getEditModes();
-    const auto& viewParent = myNet->getViewNet()->getViewParent();
+    const auto& viewParent = myNet->getViewParent();
     const auto& inspectedElements = myNet->getViewNet()->getInspectedElements();
     // continue depending of current status
     if (inspectedElements.isInspectingSingleElement()) {
@@ -245,22 +245,22 @@ GNEJunction::checkDrawToContour() const {
             }
         } else if (modes.networkEditMode == NetworkEditMode::NETWORK_MOVE) {
             // check if we're moving a junction
-            const auto movedJunction = dynamic_cast<GNEJunction*>(myNet->getViewNet()->getMoveSingleElementValues().getMovedElement());
-            if (movedJunction && (movedJunction != this)) {
+            const auto moveElementJunction = dynamic_cast<GNEMoveElementJunction*>(myNet->getViewNet()->getMoveSingleElementValues().getMovedElement());
+            if (moveElementJunction && (moveElementJunction->getJunction() != this)) {
                 // continue depending of junction shape
                 if (myNBNode->getShape().area() < 4) {
                     // calculate distance between both centers
                     const double junctionBubbleRadius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.junctionBubbleRadius;
                     const double radiusTo = getExaggeration(myNet->getViewNet()->getVisualisationSettings()) * junctionBubbleRadius;
-                    if (myNBNode->getPosition().distanceSquaredTo2D(movedJunction->getPositionInView()) < (radiusTo * radiusTo)) {
+                    if (myNBNode->getPosition().distanceSquaredTo2D(moveElementJunction->getJunction()->getPositionInView()) < (radiusTo * radiusTo)) {
                         // add both it in the list of merging junction
-                        gViewObjectsHandler.addMergingJunctions(movedJunction);
+                        gViewObjectsHandler.addMergingJunctions(moveElementJunction->getJunction());
                         gViewObjectsHandler.addMergingJunctions(this);
                         return true;
                     }
-                } else if (myNBNode->getShape().around(movedJunction->getNBNode()->getPosition())) {
+                } else if (myNBNode->getShape().around(moveElementJunction->getJunction()->getNBNode()->getPosition())) {
                     // add both it in the list of merging junction
-                    gViewObjectsHandler.addMergingJunctions(movedJunction);
+                    gViewObjectsHandler.addMergingJunctions(moveElementJunction->getJunction());
                     gViewObjectsHandler.addMergingJunctions(this);
                     return true;
                 }
@@ -298,7 +298,7 @@ GNEJunction::checkDrawToContour() const {
 
 bool
 GNEJunction::checkDrawRelatedContour() const {
-    if (myNet->getViewNet()->getViewParent()->getCrossingFrame()->getEdgesSelector()->getCurrentJunction() == this) {
+    if (myNet->getViewParent()->getCrossingFrame()->getEdgesSelector()->getCurrentJunction() == this) {
         return true;
     }
     // check opened popup
@@ -313,7 +313,7 @@ bool
 GNEJunction::checkDrawOverContour() const {
     // get modes and viewParent (for code legibility)
     const auto& modes = myNet->getViewNet()->getEditModes();
-    const auto& viewParent = myNet->getViewNet()->getViewParent();
+    const auto& viewParent = myNet->getViewParent();
     const auto& viewObjectsSelector = myNet->getViewNet()->getViewObjectsSelector();
     if (viewObjectsSelector.getJunctionFront() != this) {
         return false;
@@ -718,8 +718,8 @@ GNEJunction::drawGL(const GUIVisualizationSettings& s) const {
 void
 GNEJunction::deleteGLObject() {
     // Check if edge can be deleted
-    if (GNEDeleteFrame::SubordinatedElements(this).checkElements(myNet->getViewNet()->getViewParent()->getDeleteFrame()->getProtectElements())) {
-        myNet->deleteJunction(this, myNet->getViewNet()->getUndoList());
+    if (GNEDeleteFrame::SubordinatedElements(this).checkElements(myNet->getViewParent()->getDeleteFrame()->getProtectElements())) {
+        myNet->deleteJunction(this, myNet->getUndoList());
     }
 }
 
@@ -1364,6 +1364,8 @@ GNEJunction::getAttribute(SumoXMLAttr key) const {
             return SUMOXMLDefinitions::RightOfWayValues.getString(myNBNode->getRightOfWay());
         case SUMO_ATTR_FRINGE:
             return SUMOXMLDefinitions::FringeTypeValues.getString(myNBNode->getFringeType());
+        case SUMO_ATTR_ROUNDABOUT:
+            return SUMOXMLDefinitions::RoundaboutTypeValues.getString(myNBNode->getRoundaboutType());
         case SUMO_ATTR_NAME:
             return myNBNode->getName();
         default:
@@ -1407,6 +1409,7 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList
         case SUMO_ATTR_RADIUS:
         case SUMO_ATTR_RIGHT_OF_WAY:
         case SUMO_ATTR_FRINGE:
+        case SUMO_ATTR_ROUNDABOUT:
         case SUMO_ATTR_NAME:
             GNEChange_Attribute::changeAttribute(this, key, value, undoList, true);
             break;
@@ -1431,7 +1434,8 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList
             myNet->getViewNet()->updateObjectsInPosition(newPosition);
             for (const auto& junction : myNet->getViewNet()->getViewObjectsSelector().getJunctions()) {
                 // check distance position
-                if ((junctionToMerge == nullptr) && (junction != this) && (junction->getPositionInView().distanceTo2D(newPosition) < POSITION_EPS) &&
+                if ((junctionToMerge == nullptr) && (junction != this) &&
+                        (junction->getPositionInView().distanceTo2D(newPosition) < myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.junctionBubbleRadius) &&
                         myNet->getViewNet()->askMergeJunctions(this, junction, alreadyAsked)) {
                     junctionToMerge = junction;
                 }
@@ -1454,7 +1458,7 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList
                 // change junction position
                 GNEChange_Attribute::changeAttribute(this, key, toString(newPosition), undoList, true);
                 // calculate delta using new position
-                const bool moveOnlyCenter = myNet->getViewNet()->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveOnlyJunctionCenter();
+                const bool moveOnlyCenter = myNet->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveOnlyJunctionCenter();
                 const Position delta = myNBNode->getPosition() - (moveOnlyCenter ? myNBNode->getPosition() : orig);
                 // set new position of adjacent edges
                 for (const auto& edge : myGNEIncomingEdges) {
@@ -1636,6 +1640,8 @@ GNEJunction::isValid(SumoXMLAttr key, const std::string& value) {
             return SUMOXMLDefinitions::RightOfWayValues.hasString(value);
         case SUMO_ATTR_FRINGE:
             return SUMOXMLDefinitions::FringeTypeValues.hasString(value);
+        case SUMO_ATTR_ROUNDABOUT:
+            return SUMOXMLDefinitions::RoundaboutTypeValues.hasString(value);
         case SUMO_ATTR_NAME:
             return true;
         default:
@@ -1812,7 +1818,7 @@ GNEJunction::drawJunctionAsShape(const GUIVisualizationSettings& s, const GUIVis
 
 void
 GNEJunction::drawJunctionCenter(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d) const {
-    if (myNet->getViewNet()->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveOnlyJunctionCenter()) {
+    if (myNet->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveOnlyJunctionCenter()) {
         // push matrix
         GLHelper::pushMatrix();
         // set color
@@ -2004,6 +2010,9 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value) {
             break;
         case SUMO_ATTR_FRINGE:
             myNBNode->setFringeType(SUMOXMLDefinitions::FringeTypeValues.get(value));
+            break;
+        case SUMO_ATTR_ROUNDABOUT:
+            myNBNode->setRoundaboutType(SUMOXMLDefinitions::RoundaboutTypeValues.get(value));
             break;
         case SUMO_ATTR_NAME:
             myNBNode->setName(value);

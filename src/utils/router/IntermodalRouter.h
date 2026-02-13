@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@
 #include <utils/common/MsgHandler.h>
 #include <utils/common/SUMOTime.h>
 #include <utils/common/ToString.h>
+#include <utils/vehicle/SUMOVehicle.h>
 #include <utils/iodevices/OutputDevice.h>
 #include "SUMOAbstractRouter.h"
 #include "DijkstraRouter.h"
@@ -52,6 +53,7 @@ template<class E, class L, class N, class V>
 class IntermodalRouter : public SUMOAbstractRouter<E, IntermodalTrip<E, N, V> > {
 public:
     typedef IntermodalNetwork<E, L, N, V> Network;
+    typedef typename SUMOAbstractRouter<E, SUMOVehicle>::Prohibitions _Prohibitions;
 
 private:
     typedef void(*CreateNetCallback)(IntermodalRouter <E, L, N, V>&);
@@ -113,7 +115,7 @@ public:
     bool compute(const E* from, const E* to,
                  const double departPos, const std::string& originStopID,
                  const double arrivalPos, const std::string& stopID,
-                 const double speed, const V* const vehicle, 
+                 const double speed, const V* const vehicle,
                  const SUMOVTypeParameter& pars,
                  const SVCPermissions modeSet, const SUMOTime msTime,
                  std::vector<TripItem>& into, const double externalFactor = 0.) {
@@ -236,9 +238,9 @@ public:
         }
     }
 
-    void prohibit(const std::map<const E*, double>& toProhibit) {
+    void prohibit(const _Prohibitions& toProhibit) {
         createNet();
-        std::map<const _IntermodalEdge*, double> toProhibitPE;
+        typename _InternalRouter::Prohibitions toProhibitPE;
         for (auto item : toProhibit) {
             toProhibitPE[myIntermodalNet->getBothDirections(item.first).first] = item.second;
             toProhibitPE[myIntermodalNet->getBothDirections(item.first).second] = item.second;
@@ -262,8 +264,8 @@ public:
     void writeWeights(OutputDevice& dev) {
         createNet();
         SUMOVTypeParameter dummyVT(DEFAULT_PEDTYPE_ID, SVC_PEDESTRIAN);
-        _IntermodalTrip trip(nullptr, nullptr, 0., 0., DEFAULT_PEDESTRIAN_SPEED, 0, nullptr, 
-                dummyVT, nullptr, SVC_PASSENGER | SVC_BICYCLE | SVC_BUS);
+        _IntermodalTrip trip(nullptr, nullptr, 0., 0., DEFAULT_PEDESTRIAN_SPEED, 0, nullptr,
+                             dummyVT, nullptr, SVC_PASSENGER | SVC_BICYCLE | SVC_BUS);
         for (_IntermodalEdge* e : myIntermodalNet->getAllEdges()) {
             dev.openTag(SUMO_TAG_EDGE);
             dev.writeAttr(SUMO_ATTR_ID, e->getID());

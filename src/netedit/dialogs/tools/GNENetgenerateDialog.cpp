@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -111,11 +111,11 @@ GNENetgenerateDialog::runInternalTest(const InternalTestStep::DialogArgument* /*
 long
 GNENetgenerateDialog::onCmdOpenOutputFile(FXObject*, FXSelector, void*) {
     // get output file
-    const auto networkFileDialog = GNEFileDialog(this, myApplicationWindow,
-                                   TL("network file"),
-                                   SUMOXMLDefinitions::NetFileExtensions.getStrings(),
-                                   GNEFileDialog::OpenMode::SAVE,
-                                   GNEFileDialog::ConfigType::NETEDIT);
+    const GNEFileDialog networkFileDialog(myApplicationWindow, this,
+                                          TL("network file"),
+                                          SUMOXMLDefinitions::NetFileExtensions.getStrings(),
+                                          GNEFileDialog::OpenMode::SAVE,
+                                          GNEFileDialog::ConfigType::NETEDIT);
     // check file
     if (networkFileDialog.getResult() == GNEDialog::Result::ACCEPT) {
         myOutputTextField->setText(networkFileDialog.getFilename().c_str(), TRUE);

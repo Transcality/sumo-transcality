@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -47,7 +47,7 @@ public:
     };
 
     /// @brief constructor
-    GNEElementList(FXVerticalFrame* contentFrame, const GNETagProperties* tagProperty, GNEElementList::Options options);
+    GNEElementList(GNEDialog* parentDialog, FXVerticalFrame* contentFrame, SumoXMLTag tag, GNEElementList::Options options);
 
     /// @brief destructor
     ~GNEElementList();
@@ -60,6 +60,9 @@ public:
 
     /// @brief check if the current list is valid
     bool isListValid() const;
+
+    /// @brief pointer to dialog parent
+    GNEDialog* getDialogParent();
 
     /// @brief update element list
     virtual long updateList() = 0;
@@ -90,6 +93,9 @@ public:
 protected:
     /// @brief FOX needs this
     FOX_CONSTRUCTOR(GNEElementList)
+
+    /// @brief pointer to dialog parent
+    GNEDialog* myDialogParent = nullptr;
 
     /// @brief pointer to tag property
     const GNETagProperties* myTagProperty = nullptr;

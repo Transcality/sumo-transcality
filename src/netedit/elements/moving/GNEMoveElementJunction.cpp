@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -50,6 +50,12 @@ GNEMoveElementJunction::getMoveOperation() {
         // return move junction position
         return new GNEMoveOperation(this, myJunction->getNBNode()->getPosition());
     }
+}
+
+
+GNEJunction*
+GNEMoveElementJunction::getJunction() const {
+    return myJunction;
 }
 
 
@@ -135,7 +141,7 @@ GNEMoveElementJunction::setMoveShape(const GNEMoveResult& moveResult) {
         // move geometry
         myJunction->moveJunctionGeometry(moveResult.shapeToUpdate.front(), false);
         // check if move only center
-        const bool onlyMoveCenter = myJunction->getNet()->getViewNet()->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveOnlyJunctionCenter();
+        const bool onlyMoveCenter = myJunction->getNet()->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveOnlyJunctionCenter();
         // set new position of adjacent edges depending if we're moving a selection
         for (const auto& NBEdge : myJunction->getNBNode()->getEdges()) {
             myJunction->getNet()->getAttributeCarriers()->retrieveEdge(NBEdge->getID())->updateJunctionPosition(myJunction, onlyMoveCenter ? myJunction->getNBNode()->getPosition() : orig);

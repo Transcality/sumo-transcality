@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2006-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2006-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -57,13 +57,30 @@ FXIMPLEMENT_ABSTRACT(GNEDialog, FXDialogBox, MFXDialogBoxMap, ARRAYNUMBER(MFXDia
 // method definitions
 // ===========================================================================
 
-GNEDialog::GNEDialog(GNEApplicationWindow* applicationWindow, const std::string& name,
-                     GUIIcon titleIcon, DialogType type, Buttons buttons, OpenType openType,
-                     ResizeMode resizeMode) :
+GNEDialog::GNEDialog(GNEApplicationWindow* applicationWindow,
+                     const std::string& name, GUIIcon titleIcon, DialogType type, Buttons buttons,
+                     OpenType openType, ResizeMode resizeMode) :
     FXDialogBox(applicationWindow->getApp(), name.c_str(),
                 (resizeMode == ResizeMode::STATIC) ? GUIDesignGNEDialogStatic : GUIDesignGNEDialogResizable,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     myApplicationWindow(applicationWindow),
+    myType(type),
+    myOpenType(openType) {
+    // build dialog only if applicationWindow was created
+    if (applicationWindow->id()) {
+        buildDialog(titleIcon, buttons);
+    }
+}
+
+
+GNEDialog::GNEDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+                     const std::string& name, GUIIcon titleIcon, DialogType type, Buttons buttons,
+                     OpenType openType, ResizeMode resizeMode) :
+    FXDialogBox(applicationWindow->getApp(), name.c_str(),
+                (resizeMode == ResizeMode::STATIC) ? GUIDesignGNEDialogStatic : GUIDesignGNEDialogResizable,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+    myApplicationWindow(applicationWindow),
+    myParentDialog(parentDialog),
     myType(type),
     myOpenType(openType) {
     // build dialog only if applicationWindow was created
@@ -92,6 +109,26 @@ GNEDialog::GNEDialog(GNEApplicationWindow* applicationWindow, const std::string&
 }
 
 
+GNEDialog::GNEDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+                     const std::string& name, GUIIcon titleIcon, DialogType type, Buttons buttons,
+                     OpenType openType, ResizeMode resizeMode, const int width, const int height) :
+    FXDialogBox(applicationWindow->getApp(), name.c_str(),
+                (resizeMode == ResizeMode::STATIC) ? GUIDesignGNEDialogStaticExplicit : GUIDesignGNEDialogResizableExplicit,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+    myApplicationWindow(applicationWindow),
+    myParentDialog(parentDialog),
+    myType(type),
+    myOpenType(openType) {
+    // build dialog only if applicationWindow was created
+    if (applicationWindow->id()) {
+        // build dialog
+        buildDialog(titleIcon, buttons);
+        // set explicit size
+        resize(width, height);
+    }
+}
+
+
 GNEDialog::Result
 GNEDialog::getResult() const {
     return myResult;
@@ -107,12 +144,6 @@ GNEDialog::getApplicationWindow() const {
 FXVerticalFrame*
 GNEDialog::getContentFrame() const {
     return myContentFrame;
-}
-
-
-void
-GNEDialog::setRestoringFocusWindow(FXWindow* window) {
-    myRestoringFocusWindow = window;
 }
 
 
@@ -179,9 +210,16 @@ GNEDialog::onKeyPress(FXObject* obj, FXSelector sel, void* ptr) {
         FXEvent* event = (FXEvent*)ptr;
         if (event->code == KEY_Escape) {
             return closeDialogAborting();
-        } else {
-            return FXDialogBox::onKeyPress(obj, sel, ptr);
+        } else if (event->code == KEY_Return) {
+            if (myAcceptButton->hasFocus()) {
+                return closeDialogAccepting();
+            } else if (myCancelButton->hasFocus()) {
+                return closeDialogCanceling();
+            } else if (myAbortButton && myAbortButton->hasFocus()) {
+                return closeDialogAborting();
+            }
         }
+        return FXDialogBox::onKeyPress(obj, sel, ptr);
     }
 }
 
@@ -262,8 +300,8 @@ GNEDialog::closeDialogAccepting() {
     // set result
     myResult = Result::ACCEPT;
     // restore focus
-    if (myRestoringFocusWindow) {
-        myRestoringFocusWindow->setFocus();
+    if (myParentDialog) {
+        myParentDialog->setFocus();
     } else {
         myApplicationWindow->setFocus();
     }
@@ -282,8 +320,8 @@ GNEDialog::closeDialogCanceling() {
     // set result
     myResult = Result::CANCEL;
     // restore focus
-    if (myRestoringFocusWindow) {
-        myRestoringFocusWindow->setFocus();
+    if (myParentDialog) {
+        myParentDialog->setFocus();
     } else {
         myApplicationWindow->setFocus();
     }
@@ -302,8 +340,8 @@ GNEDialog::closeDialogAborting() {
     // set result
     myResult = Result::ABORT;
     // restore focus
-    if (myRestoringFocusWindow) {
-        myRestoringFocusWindow->setFocus();
+    if (myParentDialog) {
+        myParentDialog->setFocus();
     } else {
         myApplicationWindow->setFocus();
     }

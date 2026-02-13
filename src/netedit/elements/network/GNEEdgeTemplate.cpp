@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,7 @@
 // ===========================================================================
 
 GNEEdgeTemplate::GNEEdgeTemplate(const GNEEdge* edge) :
-    GNEAttributeCarrier(SUMO_TAG_EDGE, edge->getNet(), "", false),
+    GNEAttributeCarrier(SUMO_TAG_EDGE, edge->getNet()),
     myEdge(edge) {
     // update lane templates
     updateLaneTemplates();
@@ -63,6 +63,12 @@ GNEEdgeTemplate::getParameters() {
 const Parameterised*
 GNEEdgeTemplate::getParameters() const {
     return nullptr;
+}
+
+
+FileBucket*
+GNEEdgeTemplate::getFileBucket() const {
+    return myEdge->getFileBucket();
 }
 
 

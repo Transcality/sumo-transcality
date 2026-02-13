@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -74,7 +74,7 @@ GNEMoveElementVehicle::getMoveOperation() {
         const double startPosDouble = myVehicle->getAttributeDouble(SUMO_ATTR_DEPARTPOS);
         const double endPosDouble = (myVehicle->getAttributeDouble(SUMO_ATTR_ARRIVALPOS) < 0) ? lastLane->getLaneShape().length2D() : myVehicle->getAttributeDouble(SUMO_ATTR_ARRIVALPOS);
         // check if allow change lane
-        const bool allowChangeLane = myVehicle->getNet()->getViewNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane();
+        const bool allowChangeLane = myVehicle->getNet()->getViewParent()->getMoveFrame()->getCommonMoveOptions()->getAllowChangeLane();
         // obtain diameter
         const double diameter = myVehicle->getAttributeDouble(SUMO_ATTR_WIDTH) > myVehicle->getAttributeDouble(SUMO_ATTR_LENGTH) ? myVehicle->getAttributeDouble(SUMO_ATTR_WIDTH) : myVehicle->getAttributeDouble(SUMO_ATTR_LENGTH);
         // return move operation depending if we're editing departPos or arrivalPos

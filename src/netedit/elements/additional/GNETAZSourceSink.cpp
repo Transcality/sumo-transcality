@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,12 +28,12 @@
 // ===========================================================================
 
 GNETAZSourceSink::GNETAZSourceSink(SumoXMLTag sourceSinkTag, GNENet* net) :
-    GNEAttributeCarrier(sourceSinkTag, net, "", true) {
+    GNEAttributeCarrier(sourceSinkTag, net) {
 }
 
 
 GNETAZSourceSink::GNETAZSourceSink(SumoXMLTag sourceSinkTag, GNEAdditional* TAZParent, GNEEdge* edge, const double departWeight) :
-    GNEAttributeCarrier(sourceSinkTag, TAZParent->getNet(), TAZParent->getFilename(), false),
+    GNEAttributeCarrier(sourceSinkTag, TAZParent->getNet(), TAZParent->getFileBucket()),
     myWeight(departWeight) {
     // set parents
     setParent<GNEEdge*>(edge);
@@ -46,6 +46,12 @@ GNETAZSourceSink::GNETAZSourceSink(SumoXMLTag sourceSinkTag, GNEAdditional* TAZP
 
 
 GNETAZSourceSink::~GNETAZSourceSink() {}
+
+
+GNEHierarchicalElement*
+GNETAZSourceSink::getHierarchicalElement() {
+    return this;
+}
 
 
 GNEMoveElement*
@@ -66,11 +72,10 @@ GNETAZSourceSink::getParameters() const {
 }
 
 
-GNEHierarchicalElement*
-GNETAZSourceSink::getHierarchicalElement() {
-    return this;
+FileBucket*
+GNETAZSourceSink::getFileBucket() const {
+    return getParentAdditionals().front()->getFileBucket();
 }
-
 
 void
 GNETAZSourceSink::writeTAZSourceSink(OutputDevice& device) const {

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -95,11 +95,6 @@ GUILane::GUILane(const std::string& id, double maxSpeed, double friction, double
     myAmClosed(false),
     myLengthGeometryFactor2(myLengthGeometryFactor),
     myLock(true) {
-    if (MSGlobals::gUseMesoSim) {
-        myShape = splitAtSegments(shape);
-        assert(fabs(myShape.length() - shape.length()) < POSITION_EPS);
-        assert(myShapeSegments.size() == myShape.size());
-    }
     initRotations(myShape, myShapeRotations, myShapeLengths, myShapeColors);
     //
     myHalfLaneWidth = myWidth / 2.;
@@ -114,6 +109,18 @@ GUILane::~GUILane() {
     }
     delete myParkingAreas;
     delete myTesselation;
+}
+
+
+void
+GUILane::updateMesoGUISegments() {
+#ifdef _DEBUG
+    const double origLength = myShape.length();
+#endif
+    myShape = splitAtSegments(myShape);
+    assert(fabs(myShape.length() - origLength) < POSITION_EPS);
+    assert(myShapeSegments.size() == myShape.size());
+    initRotations(myShape, myShapeRotations, myShapeLengths, myShapeColors);
 }
 
 
@@ -247,7 +254,7 @@ GUILane::drawLinkNo(const GUIVisualizationSettings& s) const {
         return;
     }
     // draw all links
-    if (getEdge().isCrossing()) {
+    if (isCrossing()) {
         // draw indices at the start and end of the crossing
         const MSLink* const link = getLogicalPredecessorLane()->getLinkTo(this);
         PositionVector shape = getShape(s.secondaryShape);
@@ -273,7 +280,7 @@ GUILane::drawTLSLinkNo(const GUIVisualizationSettings& s, const GUINet& net) con
     if (noLinks == 0) {
         return;
     }
-    if (getEdge().isCrossing()) {
+    if (isCrossing()) {
         // draw indices at the start and end of the crossing
         const MSLink* const link = getLogicalPredecessorLane()->getLinkTo(this);
         int linkNo = net.getLinkTLIndex(link);
@@ -314,7 +321,7 @@ GUILane::drawLinkRules(const GUIVisualizationSettings& s, const GUINet& net) con
         drawLinkRule(s, net, nullptr, shape, 0, 0);
         return;
     }
-    if (getEdge().isCrossing()) {
+    if (isCrossing()) {
         // draw rules at the start and end of the crossing
         const MSLink* const link = getLogicalPredecessorLane()->getLinkTo(this);
         const MSLink* link2 = myLinks.front();
@@ -522,7 +529,7 @@ GUILane::drawLane2LaneConnections(double exaggeration, bool s2) const {
         GLHelper::setColor(GUIVisualizationSettings::getLinkColor(link->getState()));
         glBegin(GL_LINES);
         Position p1 = myEdge->isWalkingArea() ? getShape(s2).getCentroid() : getShape(s2)[-1];
-        Position p2 = connected->getEdge().isWalkingArea() ? connected->getShape(s2).getCentroid() : connected->getShape(s2)[0];
+        Position p2 = connected->isWalkingArea() ? connected->getShape(s2).getCentroid() : connected->getShape(s2)[0];
         if (exaggeration > 1) {
             p1 = centroid + ((p1 - centroid) * exaggeration);
             p2 = centroid + ((p2 - centroid) * exaggeration);
@@ -1609,7 +1616,8 @@ GUILane::closeTraffic(bool rebuildAllowed) {
 PositionVector
 GUILane::splitAtSegments(const PositionVector& shape) {
     assert(MSGlobals::gUseMesoSim);
-    int no = MELoop::numSegmentsFor(myLength, OptionsCont::getOptions().getFloat("meso-edgelength"));
+    const MESegment::MesoEdgeType& edgeType = MSNet::getInstance()->getMesoType(getEdge().getEdgeType());
+    int no = MELoop::numSegmentsFor(myLength, edgeType.edgeLength);
     const double slength = myLength / no;
     PositionVector result = shape;
     double offset = 0;

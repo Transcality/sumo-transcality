@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -249,13 +249,11 @@ MSEdge::closeBuilding() {
 
 
 void
-MSEdge::updateMesoType() {
-    assert(MSGlobals::gUseMesoSim);
-    if (!myLanes->empty()) {
-        MSGlobals::gMesoNet->updateSegmentsForEdge(*this);
+MSEdge::postLoadInitLaneChanger() {
+    if (myLaneChanger != nullptr) {
+        myLaneChanger->postloadInitLC();
     }
 }
-
 
 void
 MSEdge::buildLaneChanger() {
@@ -510,6 +508,26 @@ MSEdge::allowedLanes(SUMOVehicleClass vclass) const {
 }
 
 
+const std::vector<MSLane*>*
+MSEdge::allowedLanes(SUMOVehicleClass vclass, bool ignoreTransientPermissions) const {
+    const SVCPermissions& minP = ignoreTransientPermissions ? myOriginalMinimumPermissions : myMinimumPermissions;
+    if ((minP & vclass) == vclass) {
+        return myLanes.get();
+    } else {
+        const SVCPermissions comP = ignoreTransientPermissions ? myOriginalCombinedPermissions : myCombinedPermissions;
+        if ((comP & vclass) == vclass) {
+            const AllowedLanesCont& allowedCont = ignoreTransientPermissions ? myOrigAllowed : myAllowed;
+            for (const auto& allowed : allowedCont) {
+                if ((allowed.first & vclass) == vclass) {
+                    return allowed.second.get();
+                }
+            }
+        }
+        return nullptr;
+    }
+}
+
+
 // ------------
 SUMOTime
 MSEdge::incVaporization(SUMOTime) {
@@ -732,9 +750,9 @@ MSEdge::getDepartLane(MSVehicle& veh) const {
 
 
 MSLane*
-MSEdge::getFirstAllowed(SUMOVehicleClass vClass, bool defaultFirst) const {
+MSEdge::getFirstAllowed(SUMOVehicleClass vClass, bool defaultFirst, int routingMode) const {
     for (std::vector<MSLane*>::const_iterator i = myLanes->begin(); i != myLanes->end(); ++i) {
-        if ((*i)->allowsVehicleClass(vClass)) {
+        if ((*i)->allowsVehicleClass(vClass, routingMode)) {
             return *i;
         }
     }

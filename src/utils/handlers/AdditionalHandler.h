@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,9 +30,9 @@ class AdditionalHandler : public CommonHandler {
 
 public:
     /**@brief Constructor
-     * @param[in] filename Name of the parsed file
+     * @param[in] bucket FileBucket in which place the element
      */
-    AdditionalHandler(const std::string& filename);
+    AdditionalHandler(FileBucket* fileBucket);
 
     /// @brief Destructor
     virtual ~AdditionalHandler();
@@ -45,9 +45,6 @@ public:
 
     /// @brief parse SumoBaseObject (it's called recursivelly)
     void parseSumoBaseObject(CommonXMLStructure::SumoBaseObject* obj);
-
-    /// @brief run post parser tasks
-    virtual bool postParserTasks() = 0;
 
     /// @name build functions
     /// @{

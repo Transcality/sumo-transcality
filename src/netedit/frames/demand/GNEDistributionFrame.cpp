@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -61,10 +61,10 @@ FXDEFMAP(GNEDistributionFrame::DistributionValuesEditor) DistributionValuesEdito
 };
 
 // Object implementation
-FXIMPLEMENT(GNEDistributionFrame::DistributionEditor,       MFXGroupBoxModule,  DistributionEditorMap,          ARRAYNUMBER(DistributionEditorMap))
-FXIMPLEMENT(GNEDistributionFrame::DistributionSelector,     MFXGroupBoxModule,  DistributionSelectorMap,        ARRAYNUMBER(DistributionSelectorMap))
+FXIMPLEMENT(GNEDistributionFrame::DistributionEditor,       GNEGroupBoxModule,  DistributionEditorMap,          ARRAYNUMBER(DistributionEditorMap))
+FXIMPLEMENT(GNEDistributionFrame::DistributionSelector,     GNEGroupBoxModule,  DistributionSelectorMap,        ARRAYNUMBER(DistributionSelectorMap))
 FXIMPLEMENT(GNEDistributionFrame::DistributionRow,          FXHorizontalFrame,  DistributionRowMap,             ARRAYNUMBER(DistributionRowMap))
-FXIMPLEMENT(GNEDistributionFrame::DistributionValuesEditor, MFXGroupBoxModule,  DistributionValuesEditorMap,    ARRAYNUMBER(DistributionValuesEditorMap))
+FXIMPLEMENT(GNEDistributionFrame::DistributionValuesEditor, GNEGroupBoxModule,  DistributionValuesEditorMap,    ARRAYNUMBER(DistributionValuesEditorMap))
 
 
 // ===========================================================================
@@ -76,7 +76,7 @@ FXIMPLEMENT(GNEDistributionFrame::DistributionValuesEditor, MFXGroupBoxModule,  
 // ---------------------------------------------------------------------------
 
 GNEDistributionFrame::DistributionEditor::DistributionEditor(GNEFrame* frameParent, SumoXMLTag distributionTag, GUIIcon icon) :
-    MFXGroupBoxModule(frameParent, TL("Distribution Editor")),
+    GNEGroupBoxModule(frameParent, TL("Distribution Editor")),
     myFrameParent(frameParent),
     myDistributionTag(distributionTag) {
     // get staticTooltip menu
@@ -108,12 +108,14 @@ GNEDistributionFrame::DistributionEditor::onCmdCreateDistribution(FXObject*, FXS
     auto undoList = myFrameParent->getViewNet()->getUndoList();
     // obtain a new valid ID
     const auto distributionID = myFrameParent->getViewNet()->getNet()->getAttributeCarriers()->generateDemandElementID(myDistributionTag);
+    // get bucket
+    auto bucket = myFrameParent->getViewNet()->getNet()->getACTemplates()->getTemplateAC(myDistributionTag)->getFileBucket();
     // create new distribution
     GNEDemandElement* distribution = nullptr;
     if (myDistributionTag == SUMO_TAG_VTYPE_DISTRIBUTION) {
-        distribution = new GNEVTypeDistribution(distributionID, myFrameParent->getViewNet()->getNet(), TEMPORAL_FILENAME, -1);
+        distribution = new GNEVTypeDistribution(distributionID, myFrameParent->getViewNet()->getNet(), bucket, -1);
     } else if (myDistributionTag == SUMO_TAG_ROUTE_DISTRIBUTION) {
-        distribution = new GNERouteDistribution(distributionID, myFrameParent->getViewNet()->getNet(), TEMPORAL_FILENAME);
+        distribution = new GNERouteDistribution(distributionID, myFrameParent->getViewNet()->getNet(), bucket);
     } else {
         throw ProcessError("Invalid distribution");
     }
@@ -160,7 +162,7 @@ GNEDistributionFrame::DistributionEditor::onUpdDeleteDistribution(FXObject* send
 // ---------------------------------------------------------------------------
 
 GNEDistributionFrame::DistributionSelector::DistributionSelector(GNEFrame* frameParent) :
-    MFXGroupBoxModule(frameParent, TL("Distribution selector")),
+    GNEGroupBoxModule(frameParent, TL("Distribution selector")),
     myFrameParent(frameParent) {
     // Create MFXComboBoxIcon
     myDistributionsComboBox = new MFXComboBoxIcon(getCollapsableFrame(), frameParent->getViewNet()->getViewParent()->getGNEAppWindows()->getStaticTooltipMenu(),
@@ -361,7 +363,7 @@ GNEDistributionFrame::DistributionRow::onCmdSetProbability(FXObject*, FXSelector
     }
     // if is valid, update value in AC
     if (myDistributionReference->isValid(SUMO_ATTR_PROB, myProbabilityTextField->getText().text())) {
-        myDistributionReference->setAttribute(SUMO_ATTR_PROB, myProbabilityTextField->getText().text(), myDistributionReference->getNet()->getViewNet()->getUndoList());
+        myDistributionReference->setAttribute(SUMO_ATTR_PROB, myProbabilityTextField->getText().text(), myDistributionReference->getNet()->getUndoList());
         myDistributionValuesEditorParent->updateSumLabel();
         // update probablity text field (needed for show the default value)
         myProbabilityTextField->setText(myDistributionReference->getAttribute(SUMO_ATTR_PROB).c_str(), FALSE);
@@ -384,7 +386,7 @@ GNEDistributionFrame::DistributionRow::onCmdSetProbability(FXObject*, FXSelector
 
 GNEDistributionFrame::DistributionValuesEditor::DistributionValuesEditor(GNEFrame* frameParent, DistributionEditor* distributionEditor,
         DistributionSelector* distributionSelector, GNEAttributesEditor* attributesEditor) :
-    MFXGroupBoxModule(frameParent, TL("Distribution values")),
+    GNEGroupBoxModule(frameParent, TL("Distribution values")),
     myFrameParent(frameParent),
     myDistributionEditor(distributionEditor),
     myDistributionSelector(distributionSelector),

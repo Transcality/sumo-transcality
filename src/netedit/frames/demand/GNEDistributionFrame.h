@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,7 +21,7 @@
 #include <config.h>
 
 #include <netedit/frames/GNEFrame.h>
-#include <utils/foxtools/MFXGroupBoxModule.h>
+#include <netedit/frames/common/GNEGroupBoxModule.h>
 #include <utils/gui/images/GUIIcons.h>
 #include <utils/xml/SUMOXMLDefinitions.h>
 
@@ -52,7 +52,7 @@ public:
     // class DistributionEditor
     // ===========================================================================
 
-    class DistributionEditor : public MFXGroupBoxModule {
+    class DistributionEditor : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNEDistributionFrame::DistributionEditor)
 
@@ -114,7 +114,7 @@ public:
     // class DistributionSelector
     // ===========================================================================
 
-    class DistributionSelector : public MFXGroupBoxModule {
+    class DistributionSelector : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNEDistributionFrame::DistributionSelector)
 
@@ -247,7 +247,7 @@ public:
     // class DistributionValuesEditor
     // ===========================================================================
 
-    class DistributionValuesEditor : public MFXGroupBoxModule {
+    class DistributionValuesEditor : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNEDistributionFrame::DistributionValuesEditor)
 

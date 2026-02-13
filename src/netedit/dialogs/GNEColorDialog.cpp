@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2006-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2006-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -43,16 +43,18 @@ GNEColorDialog::GNEColorDialog(GNEApplicationWindow* applicationWindow, const RG
     GNEDialog(applicationWindow, TL("Edit color"), GUIIcon::COLORWHEEL, DialogType::COLOR,
               Buttons::ACCEPT_CANCEL_RESET, OpenType::MODAL, ResizeMode::STATIC, 600, 300),
     myOriginalColor(color) {
-    myColorbox = new FXColorSelector(getContentFrame(), this, FXColorDialog::ID_COLORSELECTOR, LAYOUT_FILL_X | LAYOUT_FILL_Y);
-    // set color
-    myColorbox->setRGBA(MFXUtils::getFXColor(color));
-    // hide buttons
-    myColorbox->acceptButton()->disable();
-    myColorbox->acceptButton()->hide();
-    myColorbox->cancelButton()->disable();
-    myColorbox->cancelButton()->hide();
-    // open dialog
-    openDialog();
+    // build dialog
+    builder(color);
+}
+
+
+GNEColorDialog::GNEColorDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+                               const RGBColor color):
+    GNEDialog(applicationWindow, parentDialog, TL("Edit color"), GUIIcon::COLORWHEEL, DialogType::COLOR,
+              Buttons::ACCEPT_CANCEL_RESET, OpenType::MODAL, ResizeMode::STATIC, 600, 300),
+    myOriginalColor(color) {
+    // build dialog
+    builder(color);
 }
 
 
@@ -105,4 +107,19 @@ GNEColorDialog::onCmdColor(FXObject*, FXSelector, void* ptr) {
     } else {
         return 0;
     }
+}
+
+
+void
+GNEColorDialog::builder(const RGBColor color) {
+    myColorbox = new FXColorSelector(getContentFrame(), this, FXColorDialog::ID_COLORSELECTOR, LAYOUT_FILL_X | LAYOUT_FILL_Y);
+    // set color
+    myColorbox->setRGBA(MFXUtils::getFXColor(color));
+    // hide buttons
+    myColorbox->acceptButton()->disable();
+    myColorbox->acceptButton()->hide();
+    myColorbox->cancelButton()->disable();
+    myColorbox->cancelButton()->hide();
+    // open dialog
+    openDialog();
 }

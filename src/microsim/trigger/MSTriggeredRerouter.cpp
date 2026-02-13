@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -181,7 +181,7 @@ MSTriggeredRerouter::myStartElement(int element,
         bool ok;
         const std::string allow = attrs.getOpt<std::string>(SUMO_ATTR_ALLOW, getID().c_str(), ok, "", false);
         const std::string disallow = attrs.getOpt<std::string>(SUMO_ATTR_DISALLOW, getID().c_str(), ok, "");
-        const SUMOTime until = attrs.getOptSUMOTimeReporting(SUMO_ATTR_UNTIL, nullptr, ok, -1);
+        const SUMOTime until = attrs.getOptSUMOTimeReporting(SUMO_ATTR_UNTIL, nullptr, ok, TIME2STEPS(-1));
         SVCPermissions permissions = parseVehicleClasses(allow, disallow);
         myParsedRerouteInterval.closed[closedEdge] = std::make_pair(permissions, STEPS2TIME(until));
     }
@@ -534,11 +534,12 @@ MSTriggeredRerouter::triggerRouting(SUMOTrafficObject& tObject, MSMoveReminder::
         SUMOVehicle& veh = static_cast<SUMOVehicle&>(tObject);
         bool newDestination = false;
         ConstMSEdgeVector newRoute;
+        MSParkingArea* oldParkingArea = veh.getNextParkingArea();
         MSParkingArea* newParkingArea = rerouteParkingArea(rerouteDef, veh, newDestination, newRoute);
         if (newParkingArea != nullptr) {
             // adapt plans of any riders
             for (MSTransportable* p : veh.getPersons()) {
-                p->rerouteParkingArea(veh.getNextParkingArea(), newParkingArea);
+                p->rerouteParkingArea(oldParkingArea, newParkingArea);
             }
 
             if (newDestination) {
@@ -566,10 +567,20 @@ MSTriggeredRerouter::triggerRouting(SUMOTrafficObject& tObject, MSMoveReminder::
             std::string errorMsg;
             if (veh.replaceParkingArea(newParkingArea, errorMsg)) {
                 veh.replaceRouteEdges(newRoute, routeCost, savings, getID() + ":" + toString(SUMO_TAG_PARKING_AREA_REROUTE), false, false, false);
+                if (oldParkingArea->isReservable()) {
+                    oldParkingArea->removeSpaceReservation(&veh);
+                }
+                if (newParkingArea->isReservable()) {
+                    newParkingArea->addSpaceReservation(&veh);
+                }
             } else {
                 WRITE_WARNING("Vehicle '" + veh.getID() + "' at rerouter '" + getID()
                               + "' could not reroute to new parkingArea '" + newParkingArea->getID()
                               + "' reason=" + errorMsg + ", time=" + time2string(MSNet::getInstance()->getCurrentTimeStep()) + ".");
+            }
+        } else {
+            if (oldParkingArea && oldParkingArea->isReservable()) {
+                oldParkingArea->addSpaceReservation(&veh);
             }
         }
         return false;
@@ -854,17 +865,17 @@ MSTriggeredRerouter::getUserProbability() const {
 
 
 double
-MSTriggeredRerouter::getStoppingPlaceOccupancy(MSStoppingPlace* sp) {
+MSTriggeredRerouter::getStoppingPlaceOccupancy(MSStoppingPlace* sp, const SUMOVehicle* veh) {
     return (double)(sp->getElement() == SUMO_TAG_PARKING_AREA
-                    ? dynamic_cast<MSParkingArea*>(sp)->getOccupancy()
+                    ? dynamic_cast<MSParkingArea*>(sp)->getOccupancyIncludingRemoteReservations(veh)
                     : sp->getStoppedVehicles().size());
 }
 
 
 double
-MSTriggeredRerouter::getLastStepStoppingPlaceOccupancy(MSStoppingPlace* sp) {
+MSTriggeredRerouter::getLastStepStoppingPlaceOccupancy(MSStoppingPlace* sp, const SUMOVehicle* veh) {
     return (double)(sp->getElement() == SUMO_TAG_PARKING_AREA
-                    ? dynamic_cast<MSParkingArea*>(sp)->getLastStepOccupancy()
+                    ? dynamic_cast<MSParkingArea*>(sp)->getLastStepOccupancyIncludingRemoteReservations(veh)
                     : sp->getStoppedVehicles().size());
 }
 

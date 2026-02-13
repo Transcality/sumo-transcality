@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -20,12 +20,6 @@
 #include <config.h>
 
 #include <foreign/fontstash/fontstash.h>
-#include <netedit/GNENet.h>
-#include <netedit/GNETagPropertiesDatabase.h>
-#include <netedit/GNEViewParent.h>
-#include <netedit/frames/GNEAttributesEditor.h>
-#include <netedit/frames/GNEPathCreator.h>
-#include <netedit/frames/GNEPlanCreator.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
 #include <netedit/frames/common/GNEMoveFrame.h>
 #include <netedit/frames/common/GNESelectorFrame.h>
@@ -35,6 +29,13 @@
 #include <netedit/frames/demand/GNEPersonFrame.h>
 #include <netedit/frames/demand/GNEPersonPlanFrame.h>
 #include <netedit/frames/demand/GNEVehicleFrame.h>
+#include <netedit/frames/GNEAttributesEditor.h>
+#include <netedit/frames/GNEPathCreator.h>
+#include <netedit/frames/GNEPlanCreator.h>
+#include <netedit/GNEApplicationWindow.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNETagPropertiesDatabase.h>
+#include <netedit/GNEViewParent.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/div/GUIParameterTableWindow.h>
@@ -47,22 +48,26 @@
 // member method definitions
 // ===========================================================================
 
-GNEAdditional::GNEAdditional(const std::string& id, GNENet* net, const std::string& filename,
-                             SumoXMLTag tag, const std::string& additionalName) :
-    GNEAttributeCarrier(tag, net, filename, id.empty()),
-    GUIGlObject(net->getTagPropertiesDatabase()->getTagProperty(tag, true)->getGLType(), id,
-                GUIIconSubSys::getIcon(net->getTagPropertiesDatabase()->getTagProperty(tag, true)->getGUIIcon())),
-    GNEPathElement(GNEPathElement::Options::ADDITIONAL_ELEMENT),
-    myAdditionalName(additionalName) {
+GNEAdditional::GNEAdditional(GNENet* net, SumoXMLTag tag) :
+    GNEAttributeCarrier(tag, net),
+    GUIGlObject(myTagProperty->getGLType(), "", GUIIconSubSys::getIcon(myTagProperty->getGUIIcon())),
+    GNEPathElement(GNEPathElement::Options::ADDITIONAL_ELEMENT) {
 }
 
 
-GNEAdditional::GNEAdditional(GNEAdditional* additionalParent, SumoXMLTag tag, const std::string& additionalName) :
-    GNEAttributeCarrier(tag, additionalParent->getNet(), additionalParent->getFilename(), false),
-    GUIGlObject(additionalParent->getNet()->getTagPropertiesDatabase()->getTagProperty(tag, true)->getGLType(), additionalParent->getID(),
-                GUIIconSubSys::getIcon(additionalParent->getNet()->getTagPropertiesDatabase()->getTagProperty(tag, true)->getGUIIcon())),
+GNEAdditional::GNEAdditional(const std::string& id, GNENet* net, SumoXMLTag tag, FileBucket* fileBucket, const std::string& name) :
+    GNEAttributeCarrier(tag, net, fileBucket),
+    GUIGlObject(myTagProperty->getGLType(), id, GUIIconSubSys::getIcon(myTagProperty->getGUIIcon())),
     GNEPathElement(GNEPathElement::Options::ADDITIONAL_ELEMENT),
-    myAdditionalName(additionalName) {
+    myAdditionalName(name) {
+}
+
+
+GNEAdditional::GNEAdditional(GNEAdditional* additionalParent, SumoXMLTag tag, const std::string& name) :
+    GNEAttributeCarrier(tag, additionalParent->getNet(), additionalParent->getFileBucket()),
+    GUIGlObject(myTagProperty->getGLType(), "", GUIIconSubSys::getIcon(myTagProperty->getGUIIcon())),
+    GNEPathElement(GNEPathElement::Options::ADDITIONAL_ELEMENT),
+    myAdditionalName(name) {
 }
 
 
@@ -84,6 +89,20 @@ GNEAdditional::getGUIGlObject() {
 const GUIGlObject*
 GNEAdditional::getGUIGlObject() const {
     return this;
+}
+
+
+FileBucket*
+GNEAdditional::getFileBucket() const {
+    if (myTagProperty->saveInParentFile()) {
+        if (isTemplate()) {
+            return nullptr;
+        } else {
+            return getParentAdditionals().front()->getFileBucket();
+        }
+    } else {
+        return myFileBucket;
+    }
 }
 
 
@@ -134,7 +153,7 @@ GNEAdditional::fixAdditionalProblem() {
 
 
 void
-GNEAdditional::openAdditionalDialog() {
+GNEAdditional::openAdditionalDialog(FXWindow* /* restoringFocusWindow */) {
     throw InvalidArgument(getTagStr() + " doesn't have an additional dialog");
 }
 
@@ -173,7 +192,7 @@ bool
 GNEAdditional::checkDrawFromContour() const {
     // get modes and viewParent (for code legibility)
     const auto& modes = myNet->getViewNet()->getEditModes();
-    const auto& viewParent = myNet->getViewNet()->getViewParent();
+    const auto& viewParent = myNet->getViewParent();
     const auto& inspectedElements = myNet->getViewNet()->getInspectedElements();
     // continue depending of current status
     if (inspectedElements.isInspectingSingleElement()) {
@@ -232,10 +251,10 @@ bool
 GNEAdditional::checkDrawToContour() const {
     // get modes and viewParent (for code legibility)
     const auto& modes = myNet->getViewNet()->getEditModes();
-    const auto& viewParent = myNet->getViewNet()->getViewParent();
+    const auto& viewParent = myNet->getViewParent();
     const auto& inspectedElements = myNet->getViewNet()->getInspectedElements();
     // check conditions
-    if (myNet->getViewNet()->getViewParent()->getInspectorFrame()->getAttributesEditor()->isReparenting()) {
+    if (myNet->getViewParent()->getInspectorFrame()->getAttributesEditor()->isReparenting()) {
         return false;
     } else if (inspectedElements.isInspectingSingleElement()) {
         const auto inspectedAC = inspectedElements.getFirstAC();
@@ -297,7 +316,7 @@ GNEAdditional::checkDrawToContour() const {
 
 bool
 GNEAdditional::checkDrawRelatedContour() const {
-    const auto& neteditAttributesEditor = myNet->getViewNet()->getViewParent()->getInspectorFrame()->getAttributesEditor();
+    const auto& neteditAttributesEditor = myNet->getViewParent()->getInspectorFrame()->getAttributesEditor();
     if (neteditAttributesEditor->isReparenting()) {
         return neteditAttributesEditor->checkNewParent(this);
     }
@@ -315,7 +334,7 @@ GNEAdditional::checkDrawOverContour() const {
     if (myNet->getViewNet()->getViewObjectsSelector().getGUIGlObjectFront() != this) {
         return false;
     } else {
-        const auto& viewParent = myNet->getViewNet()->getViewParent();
+        const auto& viewParent = myNet->getViewParent();
         if (modes.isCurrentSupermodeDemand()) {
             // get current plan selector
             GNEPlanSelector* planSelector = nullptr;
@@ -486,7 +505,7 @@ GNEAdditional::markAsFrontElement() {
 
 void
 GNEAdditional::deleteGLObject() {
-    myNet->deleteAdditional(this, myNet->getViewNet()->getUndoList());
+    myNet->deleteAdditional(this, myNet->getUndoList());
 }
 
 
@@ -498,7 +517,7 @@ GNEAdditional::selectGLObject() {
         selectAttributeCarrier();
     }
     // update information label
-    myNet->getViewNet()->getViewParent()->getSelectorFrame()->getSelectionInformation()->updateInformationLabel();
+    myNet->getViewParent()->getSelectorFrame()->getSelectionInformation()->updateInformationLabel();
 }
 
 
@@ -824,7 +843,7 @@ GNEAdditional::calculateContourPolygons(const GUIVisualizationSettings& s, const
     // get edit modes
     const auto& editModes = myNet->getViewNet()->getEditModes();
     // check if draw geometry points
-    if (editModes.isCurrentSupermodeNetwork() && !myNet->getViewNet()->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveWholePolygons()) {
+    if (editModes.isCurrentSupermodeNetwork() && !myNet->getViewParent()->getMoveFrame()->getNetworkMoveOptions()->getMoveWholePolygons()) {
         // check if we're in move mode
         const bool moveMode = (editModes.networkEditMode == NetworkEditMode::NETWORK_MOVE);
         // get geometry point radius (size depends if we're in move mode)
