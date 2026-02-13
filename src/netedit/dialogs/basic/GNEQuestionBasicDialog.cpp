@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2006-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2006-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -25,16 +25,29 @@
 // method definitions
 // ===========================================================================
 
-GNEQuestionBasicDialog::GNEQuestionBasicDialog(GNEApplicationWindow* applicationWindow,
-        GNEDialog::Buttons buttons, const std::string& name, const std::string& info) :
+GNEQuestionBasicDialog::GNEQuestionBasicDialog(GNEApplicationWindow* applicationWindow, GNEDialog::Buttons buttons,
+        const std::string& name, const std::string& info) :
     GNEBasicDialog(applicationWindow, name, info, GUIIcon::QUESTION_SMALL,
                    DialogType::QUESTION, buttons, GUIIcon::QUESTION_LARGE) {
 }
 
 
-GNEQuestionBasicDialog::GNEQuestionBasicDialog(GNEApplicationWindow* applicationWindow,
-        GNEDialog::Buttons buttons, const std::string& name, const std::string& infoLineA,
-        const std::string& infoLineB) :
+GNEQuestionBasicDialog::GNEQuestionBasicDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+        GNEDialog::Buttons buttons, const std::string& name, const std::string& info) :
+    GNEBasicDialog(applicationWindow, parentDialog, name, info, GUIIcon::QUESTION_SMALL,
+                   DialogType::QUESTION, buttons, GUIIcon::QUESTION_LARGE) {
+}
+
+
+GNEQuestionBasicDialog::GNEQuestionBasicDialog(GNEApplicationWindow* applicationWindow, GNEDialog::Buttons buttons,
+        const std::string& name, const std::string& infoLineA, const std::string& infoLineB) :
     GNEBasicDialog(applicationWindow, name, infoLineA + "\n" + infoLineB, GUIIcon::QUESTION_SMALL,
+                   DialogType::QUESTION, buttons, GUIIcon::QUESTION_LARGE) {
+}
+
+
+GNEQuestionBasicDialog::GNEQuestionBasicDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+        GNEDialog::Buttons buttons, const std::string& name, const std::string& infoLineA, const std::string& infoLineB) :
+    GNEBasicDialog(applicationWindow, parentDialog, name, infoLineA + "\n" + infoLineB, GUIIcon::QUESTION_SMALL,
                    DialogType::QUESTION, buttons, GUIIcon::QUESTION_LARGE) {
 }

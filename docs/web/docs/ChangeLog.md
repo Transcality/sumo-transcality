@@ -6,6 +6,203 @@ title: ChangeLog
 
 ### Bugfixes
 
+- sumo-gui
+  - Fixed crash when drawing persons #17616
+
+- netedit
+  - python tool dialogs now permit selecting multiple files #17615, #17619 (regression in 1.25.0)
+  
+- netconvert
+  - NEMA computation now works for 4-arm junction without right-turns (also affects some signal plans of non-NEMA junctions) #17610  
+
+- TraCI
+  - `trafficlight.getSpentDuration` now works correctly after calling `setRedYellowGreenState` #17598
+
+- tools
+  - osmWebWizard.py: fixed various platform issues that prevent running. #17503
+  - patchRailConflicts.py: no longer declaring rail signals that do not control any links #17588
+  - plotXMLAttributes.py: fixed missing labels on barplots with a non-numerical axis #17611
+
+
+### Enhancements
+
+- meso
+  - edge-type specific meso parameters now support `edgeLength` #17582
+
+
+- tools
+  - osmWebWizard.py: now automatically saves osmGet configuration for easier updating of a scenario #17570
+  - osmWebWizard.py: now permits selection of public transport modes to import #8628
+  - osmWebWizadr.py: now permits to set a 'verbose' checkbox which gets forward to all applications #17573
+  - osmGet.py: now attempts to download again after timeout and tries to use proxies (also affects osmWebWizard) #17597
+  - plotXMLAttrbutes.py: added option **--join** to configure the separator when joining values or labels #17612
+
+
+## Version 1.26.0 (29.01.2026)
+
+### Bugfixes
+
+- sumo
+  - Fixed deadlock in roundabout #17330 (regression in 1.24.0)
+  - Fixed inconsistent computation of attribute flow in edgeData output #17349
+  - Fixed invalid braking when trying to avoid junction blockage #17318
+  - Fixed incosistent lane-changing inside roundabout while on an internal lane #17336
+  - Fixed emergency braking in roundabout #17306
+  - Fixed invalid warning after train rerouting #17343
+  - Fixed problems when configuring calibrator with period > 1 (period now truncated to 1) #6589, #17371
+  - Fixed invalid error about stops when configuring vehicles to ignore temporary permission changes #17380
+  - Fixed unsafe sublane-change due to missed neighbor vehicles #17388
+  - Fixed invalid expected sublane speeds at lane split with forbidden connections #17390
+  - Fixed failure to return from outside lane bounds after lane width change in the sublane model #17383
+  - Fixed collisions involving pedestrian crossings #17385
+  - Fixed invalid braking after lane change #17408
+  - Fixed bug where vehicles block each others lane change #10763
+  - Fixed right-of-way violation when entering roundabout #17409
+  - Fixed invalid braking at intersection with sublane model #17410
+  - Fixed unsafe lane-changing ahead of roundabout #17411
+  - Fixed broken vehicle flows where total vehicle count overflows a 32-bit integer #17396
+  - A closingReroute with configured permissions no longer affects vehicle with an unaffected vehicle class #17426
+  - Fixed missing railsignal vehicle-events on sub-driveways #17442
+  - Fixed unsafe train insertion when driveways start and end in the middle of the block #17453
+  - Fixed missing driveway foes when a sequence of bidi-edges is interrupted by a unidirectional edge #17367
+  - Fixed bug where pedestrian walks into vehicle #17462
+  - Fixed unsafe lookahead time when computing crossing conflicts between vehicles and pedestrians (now attribute `jmTimegapMinor` takes effect) #17463
+  - vehicles approaching a non-priority crossing no longer yield unless a person steps onto the crossing #17465
+  - Fixed infinite traffic from poisson flow at specific random seeds #17468
+  - Fixed inconsistency where a route with a single edge and departPos > arrivalPos causes no error on loading but rerouting (now results in a warning) #10246
+  - Fixed invalid error when combining option **--device.rerouting.mode** with taz-routing #17490
+  - Fixed undefined behavior when computing route cost between taz #17489
+  - Fixed missing events when vehicle is inserted on `<instantInductionLoop>` #17510
+  - Fixed crash when running rail signal simulation with **--tls.all-off** #17516
+  - Fixed bug where vehicle stops despite stop attribute `onDemand` when there is no demand #17523
+  - Fixed invalid default stop startPos if endPos is defined as negative #17522
+  - Fixed unsafe train insertion when combining rail signals with traffic lights #17546, #17547
+  - Fixed invalid vehicle mass for personTrip with car #17551
+  - Fixed non-deterministic moving-block simulation #17557
+  - Fixed invalid signal state when using WAUT and loading state #17526
+  - Fixed unsave signal state if a junction where rail lines cross is defined as rail_signal #17580
+
+- netedit
+  - lane selection count now updates when selecting with shift-click #17394 (regression in 1.11.0)
+  - In move mode, grabbed and merged geometry points are indicated again (with contour instead of color) #17032 (regression in 1.20.0)
+  - Fixed crash in calibrator dialog #17398 (regression in 1.25.0)
+  - Merging junctions in move mode is working again #17358 (regression in 1.25.0)
+  - Creating calibrator flows is working again #17399 (regression in 1.25.0)
+  - No longer saving an invalid network when edges from prohibition elements are deleted #17331
+  - selection scaling now work for tazRelations #17382
+  - Remove some unsupported combinations of taz/junctions for rides, transport, and tranships #17414
+  - Fixed bug where paths in the configuration were absolute when they should have been relative #17446
+  - Fixed problem when locking lanes #17514
+  - Trying to load waypoints with triggers now issues a warning #17534
+  - Fixed visualization of parkingArea with onRoad=true or lefthand=true #17499, #17538
+
+- sumo-gui
+  - saving selection to file no longer uses **--output-prefix** #17368
+  - fixed crash when tracking a vehicle which already left #17472
+  - Fixed invalid positioning of parking spaces #17478
+  - Fixed crash when person performs a jump #17506
+  - Fixed invalid color when vehicle passes a waypoint and coloring *by speed* is active #17524
+
+- netconvert
+  - Fixed crash when removing traffic light crossing via xml input #17515
+  - Negative split pos is now relative to custom edge length #17527
+  - Fixed invalid handling custom edge length when splitting at an existing node #17528
+  - Split at position 0 now sets node type #17533
+  - Elements written with **--ptstop-output** are now assigned as trainStop where appropriate #17535
+  - Elements written with **--ptstop-output** now preserve their 'lines' attribute #17530
+  - Fixed invalid busStop direction in ptline-output #17537
+  - Fixed invalid ptlines with option --ptstop-output.no-bidi #17571
+
+
+- duarouter
+  - Fixed crash when loading invalid routes with option **--skip-new-routes** and **--ignore-errors** #17348 (regression in 1.25.0)
+  - Option **--ignore-errors** now works when origin or destination are prohibited by option **--restriction-params** #17387
+  - Any routes that are repaired with option **--repair** no longer trigger an error (and thus do not require option **--ignore-errors** anymore) #17369
+  - Fixed invalid route when two stops on the same edge require looping back #17484
+  - Fixed invalid route when departPos > arrivalPos and from=to #17482
+  - stop arrival times for flows are now shifted #17504
+
+- TraCI / Libsumo
+  - function traci.vehicle.rerouteParkingArea now finds looped route from the current edge #17353
+  - libsumo macOS wheels work again #15945
+
+- tools
+  - osmGet.py: fixed missing road nodes when using option **--shapes** #17293 (regression in 1.20.0)
+  - netdiff.py: fixed crash involving removed `<neigh>` attribute #17345
+  - generateRerouters.py: Fixed invalid output when no detours are possible #17361
+  - generateRerouters.py: now find notification edges for consecutive closed edges #17360
+  - tazRel2POI.py: fixed invalid error on skipped taz #17379
+  - countEdgeUsage.py: Fixed invalid count for vehroute-output involving replaced routes #17401
+  - sumolib.xml.parse_fast: No longer yields records for element names that start with the same string as the requested element #17403
+  - gtfs2pt.py: Fixed bug that was causing invalid stop assignments and large detours #17540
+  - driveways2poly.py: fixed crash on rail signals without links #17550
+  - remap_additionals.py: fixed bug where wrong edge was picked among parallel edges #17556
+
+- Options **--output-prefix** and **--output-suffix** can now be freely combined #17545
+
+### Enhancements
+
+- sumo
+  - Routing with randomized weights (**--weights.random-factor**) is now stable with respect to network changes, vehicle composition and state loading. The random noise for each edge only depends on the random seed and vehicle id (also applies to duarouter). If thew new option **--weights.random-factor.dynamic** is set, the randomness in the simulation also varies over time. #17325
+  - The new option **--output-suffix** can be used to modify the names of all output files (similar to **--output-prefix**). The suffix will be inserted right before the file name extension. #17338
+  - edgeData output definitions now support attribute `aggregate="taz"` which will aggregated data within each loaded taz definition #11104
+  - Added option shortcut **-m** for **--edgedata-files** #17400
+  - A warning is now given when loading personTrips with mode "public" and no public transport was loaded #2825
+  - Departure on closed edge with option to ignore transient permissions (**--device.rerouting.mode 8**) now delays departure instead of raising an error #17461
+  - ChargingStation attribute `totalPower` can now be used to limit the total power when charging multiple vehicles at the same time. #17173
+  - Timeloss is now discounted when braking/accelerating for planned stops. Thus, a punctual public transport vehicle does not have any timeLoss #5287
+  - Tram simulation
+    - Tram simulation now defaults to moving-block mode. This can be configured with the new option **--railsignal.moving-block-default-classes** #17542
+    - Train insertion in moving-block mode ignores zipper conflicts to improve operations where when rail signals are sparse #17544
+    - Rail signals in moving block mode ignore zipper conflicts if they are beyond 200m (configurable with new option **--railsignal.moving-block.max-dist**) #17542
+
+- netedit
+  - Automatically sets sumo option **--junction-taz** if at least one vehicle is configured to start/end at a junction #17405
+  - The written sumocfg now tracks network file name changes #17314
+  - Configurations with unsupported options can now be loaded with warnings instead of errors #17445
+  - Added support for junction attribute 'roundabout' #17271
+
+- duarouter
+  - The speedFactor configured in a vehicle, trip or flow is now taken into account when computing costs #17424
+  - Added option **--max-traveltime** which lets routing fail if traveling takes too long #17422
+  - Rerouters with element `closingReroute` can now be loaded from an **--additional-file** to influence routing #12501
+  - Rerouters with element `closingLaneReroute` can now be loaded from an **--additional-file** to influence routing #17428
+  - consistency of stops and vias is now checked #17485
+
+- netconvert
+  - now keeps more stops from OSM despite minor data errors #17575
+
+- TraCI
+  - function traci.simulation.findRoute now supports optional attributes departPos, arrivalPos #17352
+  - `traci.vehicle.setSpeedMode` bit 2 (ignoring deceleration constraints) now also applies when validating deceleration for `traci.vehicle.setStop` #17477
+  - traci and libsumo python libraries now provide the standard __version__ attribute #17366
+
+- tools
+  - attributeCompare.py: Now supports special id-attribute @FILE #17334
+  - [visum_convertXMLRoutes.py](Tools/Import/VISUM.md#visum_convertxmlroutespy): new tool for importing VISUM routes file #17347
+  - generateRerouters.py: Added option **--closed-edges.input-file** for loading edges to close from a selection file #17359
+  - generateRerouters.py: major speed-up #17362
+  - tazRel2POI.py: Added option **--reference-taz** to allow filtering relations to those that interact with a specific taz #17375
+  - tazRel2POI.py: supports multiple taz input files #17378
+  - route2OD.py: supports separating multiple input files with ',' #17377
+  - edgesInDistricts.py: now supports geo polygons #17376
+  - edgeDataDiff.py: now include mean_abs in output #17404
+  - generateDetectors.py: supports generating nextEdges attribute #17509
+  - addStops2Routes.py: allows placing stops on vias #14818
+  - filterElements.py: Added option **--remove-parent** which filters parent element based on child attributes #17539
+  - gtfs2pt.py: now warns about large detours (i.e. implausible  routes) #17567
+  - patchRailConflicts.py: new tool for adding tram rail signals
+
+### Miscellaneous
+
+- Fixed invalid meta data in python wheels
+- Started Korean Language translation #17420
+- add manylinux_2_28 support #16771
+- dlr-navteq output no longer defaults to option **--numerical-ids** #17520
+- It is no longer possible to end a rail_signal block with a traffic light (this was found to be unsafe in the context of single-track operations). Both types of signaling should only ever be combined in tram simulation which defaults to moving block so no adverse effects are expected #17542
+- the default download location for the nightly wheels changed to https://sumo.dlr.de/daily/ciwheels
+
+
 ## Version 1.25.0 (13.11.2025)
 
 ### Bugfixes
@@ -299,7 +496,7 @@ title: ChangeLog
   - Fixed unsafe signal plan when crossings use linkIndex2 #16657
   - Fixed missing yellow phase when crossing re-uses vehicular link index #16658
   - OSM import: fixed low default speed for edge type *highway.service* when used by public transport #16763
-  - Fixed bug where small roundabouts where sometimes not detected #16787
+  - Fixed bug where small roundabouts were sometimes not detected #16787
   - Fixed inconsistent opposite-driving information in network #16905
   - Fixed invalid connection when defining split with `type="zipper"` #16923
 

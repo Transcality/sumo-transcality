@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -73,10 +73,15 @@ public:
 
     /**@brief Constructor
      * @param[in] net pointer to GNEViewNet of this data element element belongs
-     * @param[in] dataSetID data set ID
-     * @param[in] filename file in which this dataSet is stored
      */
-    GNEDataSet(const std::string& dataSetID, GNENet* net, const std::string& filename);
+    GNEDataSet(GNENet* net);
+
+    /**@brief Constructor
+     * @param[in] net pointer to GNEViewNet of this data element element belongs
+     * @param[in] dataSetID data set ID
+     * @param[in] fileBucket file in which this element is stored
+     */
+    GNEDataSet(const std::string& dataSetID, GNENet* net, FileBucket* fileBucket);
 
     /// @brief Destructor
     ~GNEDataSet();
@@ -103,6 +108,9 @@ public:
     const GUIGlObject* getGUIGlObject() const override;
 
     /// @}
+
+    /// @brief get reference to fileBucket in which save this AC
+    FileBucket* getFileBucket() const override;
 
     /// @brief update attribute colors deprecated
     void updateAttributeColors();

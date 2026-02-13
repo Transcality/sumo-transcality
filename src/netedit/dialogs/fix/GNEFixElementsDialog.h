@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -22,7 +22,7 @@
 
 #include <netedit/dialogs/basic/GNEErrorBasicDialog.h>
 #include <netedit/dialogs/basic/GNEInformationBasicDialog.h>
-#include <utils/foxtools/MFXGroupBoxModule.h>
+#include <netedit/frames/common/GNEGroupBoxModule.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/windows/GUIAppEnum.h>
 
@@ -86,12 +86,12 @@ public:
     };
 
     /// @brief GNEFixOptions module
-    class FixOptions : public MFXGroupBoxModule {
+    class FixOptions : public GNEGroupBoxModule {
 
     public:
         /// @brief constructor
         FixOptions(GNEFixElementsDialog<T>* fixElementDialog, FXVerticalFrame* frameParent, const std::string& title) :
-            MFXGroupBoxModule(frameParent, title, MFXGroupBoxModule::Options::SAVE),
+            GNEGroupBoxModule(frameParent, title, GNEGroupBoxModule::Options::SAVE),
             myFixElementDialogParent(fixElementDialog) {
             // register this fix option to list of fix options
             fixElementDialog->registerFixOptions(this);
@@ -184,7 +184,7 @@ public:
 
         /// @brief default constructor
         FixOptions() :
-            MFXGroupBoxModule() {
+            GNEGroupBoxModule() {
         }
 
         /// @brief add option to options container (used for adjust width and enable/disable)
@@ -214,7 +214,7 @@ public:
             }
         }
 
-        /// @brief save save list of conflicted items to a file (Reimplemented from MFXGroupBoxModule)
+        /// @brief save save list of conflicted items to a file (Reimplemented from GNEGroupBoxModule)
         bool saveContents() const {
             // open file dialog to save list of conflicted items
             const FXString file = MFXUtils::getFilename2Write(myTable,
@@ -235,13 +235,13 @@ public:
                     // close output device
                     device.close();
                     // open information message box
-                    GNEInformationBasicDialog(myFixElementDialogParent->myApplicationWindow,
+                    GNEInformationBasicDialog(myFixElementDialogParent->myApplicationWindow, myFixElementDialogParent,
                                               TL("Saving successfully"),
                                               TL("List of conflicted items was successfully saved"));
                     return true;
                 } catch (IOError& e) {
                     // open message box error
-                    GNEErrorBasicDialog(myFixElementDialogParent->myApplicationWindow,
+                    GNEErrorBasicDialog(myFixElementDialogParent->myApplicationWindow, myFixElementDialogParent,
                                         TL("Saving list of conflicted items failed"), e.what());
                     return false;
                 }
@@ -256,9 +256,8 @@ public:
     };
 
     /// @brief Constructor
-    GNEFixElementsDialog(GNEApplicationWindow* mainWindow, const std::string title,
-                         GUIIcon icon, DialogType type):
-        GNEDialog(mainWindow, title.c_str(), icon, type, GNEDialog::Buttons::ACCEPT_CANCEL,
+    GNEFixElementsDialog(GNEApplicationWindow* applicationWindow, const std::string title, GUIIcon icon, DialogType type):
+        GNEDialog(applicationWindow, title.c_str(), icon, type, GNEDialog::Buttons::ACCEPT_CANCEL,
                   GNEDialog::OpenType::MODAL, ResizeMode::STATIC) {
         // create left and right frames
         FXHorizontalFrame* columnFrame = new FXHorizontalFrame(myContentFrame, GUIDesignAuxiliarHorizontalFrame);

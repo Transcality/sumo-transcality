@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -1063,7 +1063,7 @@ Person::moveToXY(const std::string& personID, const std::string& edgeID, const d
                 p->removeStage(0);
                 assert(p->getStageType(0) == MSStageType::WALKING);
                 if (angle == INVALID_DOUBLE_VALUE) {
-                    if (lane != nullptr && !lane->getEdge().isWalkingArea()) {
+                    if (lane != nullptr && !lane->isWalkingArea()) {
                         angle = GeomHelper::naviDegree(lane->getShape().rotationAtOffset(lanePos));
                     } else {
                         // compute angle outside road network or on walkingarea from old and new position

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -26,11 +26,11 @@
 // method definitions
 // ===========================================================================
 
-GNEGeneralHandler::GNEGeneralHandler(GNENet* net, const std::string& file, const bool allowUndoRedo) :
-    GeneralHandler(file),
-    myAdditionalHandler(net, file, allowUndoRedo),
-    myDemandHandler(net, file, allowUndoRedo),
-    myMeanDataHandler(net, file, allowUndoRedo) {
+GNEGeneralHandler::GNEGeneralHandler(GNENet* net, FileBucket* fileBucket, const bool allowUndoRedo) :
+    GeneralHandler(fileBucket),
+    myAdditionalHandler(net, fileBucket, allowUndoRedo),
+    myDemandHandler(net, fileBucket, allowUndoRedo, true),
+    myMeanDataHandler(net, fileBucket, allowUndoRedo) {
 }
 
 
@@ -42,20 +42,6 @@ GNEGeneralHandler::forceOverwriteElements() {
     myAdditionalHandler.forceOverwriteElements();
     myDemandHandler.forceOverwriteElements();
     myMeanDataHandler.forceOverwriteElements();
-}
-
-
-bool
-GNEGeneralHandler::postParserTasks() {
-    if (isAdditionalFile()) {
-        return myAdditionalHandler.postParserTasks();
-    } else if (isRouteFile()) {
-        return myDemandHandler.postParserTasks();
-    } else if (isMeanDataFile()) {
-        return myMeanDataHandler.postParserTasks();
-    } else {
-        return true;
-    }
 }
 
 

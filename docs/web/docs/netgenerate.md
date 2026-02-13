@@ -101,6 +101,7 @@ Files](Basics/Using_the_Command_Line_Applications.md#configuration_files).
 | **--write-license** {{DT_BOOL}} | Include license info into every output file; *default:* **false** |
 | **--write-metadata** {{DT_BOOL}} | Write parsable metadata (configuration etc.) instead of comments; *default:* **false** |
 | **--output-prefix** {{DT_STR}} | Prefix which is applied to all output files. The special string 'TIME' is replaced by the current time. |
+| **--output-suffix** {{DT_STR}} | Suffix which is applied to all output files. The special string 'TIME' is replaced by the current time. |
 | **--precision** {{DT_INT}} | Defines the number of digits after the comma for floating point output; *default:* **2** |
 | **--precision.geo** {{DT_INT}} | Defines the number of digits after the comma for lon,lat output; *default:* **6** |
 | **--output.compression** {{DT_STR}} | Defines the standard compression algorithm (currently only for parquet output) |
@@ -366,3 +367,11 @@ Options](Basics/Using_the_Command_Line_Applications.md#random_number_options).
 |--------|-------------|
 | **--random** {{DT_BOOL}} | Initialises the random number generator with the current system time; *default:* **false** |
 | **--seed** {{DT_INT}} | Initialises the random number generator with the given value; *default:* **23423** |
+
+# Perturbance Distributions
+
+Options **--perturb-x**, **--perturb-y** and **--perturb-z** accept any of the following values:
+
+- `norm(m,s)`: normal distribution with mean *m* and deviation *s*
+- `normc(m,s,a,b)`: truncated normal distribution with mean *m*, deviation *s* lower boundary *a* and upper boundary *b*
+- `s`: normal distribution with mean *0* and deviation *s*

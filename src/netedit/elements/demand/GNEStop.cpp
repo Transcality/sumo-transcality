@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -38,7 +38,7 @@
 #pragma warning(disable: 4355) // mask warning about "this" in initializers
 #endif
 GNEStop::GNEStop(SumoXMLTag tag, GNENet* net) :
-    GNEDemandElement("", net, "", tag, GNEPathElement::Options::DEMAND_ELEMENT),
+    GNEDemandElement(net, tag),
     GNEDemandElementPlan(this, -1, -1),
     myMoveElementLaneDouble(new GNEMoveElementLaneDouble(this, SUMO_ATTR_STARTPOS, startPos, SUMO_ATTR_ENDPOS, endPos, friendlyPos)),
     myCreationIndex(myNet->getAttributeCarriers()->getStopIndex()) {
@@ -59,8 +59,9 @@ GNEStop::GNEStop(SumoXMLTag tag, GNENet* net) :
 }
 
 
-GNEStop::GNEStop(SumoXMLTag tag, GNEDemandElement* stopParent, GNEAdditional* stoppingPlace, const SUMOVehicleParameter::Stop& stopParameter) :
-    GNEDemandElement(stopParent, tag, GNEPathElement::Options::DEMAND_ELEMENT),
+GNEStop::GNEStop(SumoXMLTag tag, GNEDemandElement* stopParent, GNEAdditional* stoppingPlace,
+                 const SUMOVehicleParameter::Stop& stopParameter) :
+    GNEDemandElement(stopParent, tag),
     SUMOVehicleParameter::Stop(stopParameter),
     GNEDemandElementPlan(this, -1, -1),
     myMoveElementLaneDouble(new GNEMoveElementLaneDouble(this, SUMO_ATTR_STARTPOS, startPos, SUMO_ATTR_ENDPOS, endPos, friendlyPos)),
@@ -100,8 +101,9 @@ GNEStop::GNEStop(SumoXMLTag tag, GNEDemandElement* stopParent, GNEAdditional* st
 }
 
 
-GNEStop::GNEStop(SumoXMLTag tag, GNEDemandElement* stopParent, GNELane* lane, const SUMOVehicleParameter::Stop& stopParameter) :
-    GNEDemandElement(stopParent, tag, GNEPathElement::Options::DEMAND_ELEMENT),
+GNEStop::GNEStop(SumoXMLTag tag, GNEDemandElement* stopParent, GNELane* lane,
+                 const SUMOVehicleParameter::Stop& stopParameter) :
+    GNEDemandElement(stopParent, tag),
     SUMOVehicleParameter::Stop(stopParameter),
     GNEDemandElementPlan(this, -1, -1),
     myMoveElementLaneDouble(new GNEMoveElementLaneDouble(this, SUMO_ATTR_STARTPOS, startPos, SUMO_ATTR_ENDPOS, endPos, friendlyPos)),
@@ -249,8 +251,8 @@ GNEStop::getColor() const {
         if ((inspectedAC->getTagProperty()->isRoute() || inspectedAC->getTagProperty()->isVehicle()) && (inspectedAC != getParentDemandElements().front())) {
             return RGBColor::GREY;
         }
-    } else if (myNet->getViewNet()->getViewParent()->getStopFrame()->shown()) {
-        if (myNet->getViewNet()->getViewParent()->getStopFrame()->getStopParentSelector()->getCurrentDemandElement() != getParentDemandElements().front()) {
+    } else if (myNet->getViewParent()->getStopFrame()->shown()) {
+        if (myNet->getViewParent()->getStopFrame()->getStopParentSelector()->getCurrentDemandElement() != getParentDemandElements().front()) {
             return RGBColor::GREY;
         }
     }
@@ -966,7 +968,7 @@ GNEStop::canDrawVehicleStop() const {
 bool
 GNEStop::drawIndex() const {
     // get stop frame
-    const auto stopFrame = myNet->getViewNet()->getViewParent()->getStopFrame();
+    const auto stopFrame = myNet->getViewParent()->getStopFrame();
     // check conditions
     if (myNet->getViewNet()->getInspectedElements().isACInspected(getParentDemandElements().front())) {
         return true;

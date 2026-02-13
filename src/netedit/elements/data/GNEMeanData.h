@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -31,10 +31,10 @@ class GNEMeanData : public GNEAttributeCarrier, public GNEHierarchicalElement {
 
 public:
     /// @brief Default constructor
-    GNEMeanData(SumoXMLTag tag, std::string ID, GNENet* net, const std::string& filename);
+    GNEMeanData(SumoXMLTag tag, std::string ID, GNENet* net, FileBucket* fileBucket);
 
     /// @brief Parameter constructor
-    GNEMeanData(SumoXMLTag tag, std::string ID, GNENet* net, const std::string& filename, const std::string& file,
+    GNEMeanData(SumoXMLTag tag, std::string ID, GNENet* net, FileBucket* fileBucket, const std::string& file,
                 const std::string& type, const SUMOTime period, const SUMOTime begin, const SUMOTime end,
                 const bool trackVehicles, const std::vector<SumoXMLAttr>& writtenAttributes, const bool aggregate,
                 const std::vector<std::string>& edges, const std::string& edgeFile, const std::string& excludeEmpty,
@@ -66,6 +66,9 @@ public:
     const GUIGlObject* getGUIGlObject() const override;
 
     /// @}
+
+    /// @brief get reference to fileBucket in which save this AC
+    FileBucket* getFileBucket() const override;
 
     /**@brief write meanData element into a xml file
      * @param[in] device device in which write parameters of meanData element

@@ -27,7 +27,7 @@ jobs:
 
     steps:
     - name: Cloning SUMO
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         path: sumo
         fetch-depth: 0
@@ -35,30 +35,14 @@ jobs:
         # to work around actions/checkout#1467
         ref: ${{ github.ref }}
 
-    - name: Preparing Build System
-      run: |
-        brew update
-        brew install --cask xquartz
-        brew install xerces-c fox proj gdal gl2ps ccache googletest fmt swig eigen apache-arrow
-
-    - name: Cloning jupedsim
-      uses: actions/checkout@v5
-      with:
-        repository: PedestrianDynamics/jupedsim
-        ref: ${{ matrix.jps_version }}
-        path: jupedsim
-
     - name: ccache
       if: github.event_name != 'schedule'
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ${{ matrix.os }}
 
-    - name: Building libjupedsim
-      run: |
-        cmake -B jupedsim-build -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache jupedsim
-        cmake --build jupedsim-build -j4 --config Release
-        sudo cmake --install jupedsim-build --config Release
+    - name: Installing dependencies
+      run: sumo/build_config/install_dependencies.sh
 
     - name: Building SUMO
       run: |
@@ -78,7 +62,7 @@ jobs:
         make CTEST_OUTPUT_ON_FAILURE=1 examples test
 
     - name: Uploading artifacts (SUMO examples with outputs)
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.os }}-examples
         path: sumo/docs/examples
@@ -87,10 +71,13 @@ jobs:
       run: |
         export DYLD_FALLBACK_LIBRARY_PATH=/usr/local/lib:$DYLD_FALLBACK_LIBRARY_PATH
         brew install texttest
-        sumo/tests/runTests.sh -b ci -v ci -ts meta
+        python3 -m venv testenv
+        source testenv/bin/activate
+        python -m pip install -r sumo/tools/req_ci.txt -r sumo/tools/requirements.txt
+        sumo/tests/runTests.sh -b ci -v ci -finverse $PWD/sumo/tests/filter_files/macos_failures.txt
 
     - name: Uploading artifacts (SUMO binaries and FMU)
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.os }}-binaries
         path: sumo/bin
@@ -103,7 +90,7 @@ jobs:
         dmgenv/bin/python3 sumo/tools/build_config/buildMacOSInstaller.py --create-framework-pkg
 
     - name: Uploading macOS installer pkg
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.os }}-installer-unsigned
         path: framework-pkg/*.pkg

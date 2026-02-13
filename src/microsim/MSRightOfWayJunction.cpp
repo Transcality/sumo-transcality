@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -64,8 +64,8 @@ MSRightOfWayJunction::postloadInit() {
     for (MSLane* const lane : myIncomingLanes) {
         // ... set information for every link
         for (MSLink* const link : lane->getLinkCont()) {
-            if (link->getLane()->getEdge().isWalkingArea() ||
-                    (lane->getEdge().isWalkingArea() && !link->getLane()->getEdge().isCrossing())) {
+            if (link->getLane()->isWalkingArea() ||
+                    (lane->isWalkingArea() && !link->getLane()->isCrossing())) {
                 continue;
             }
             sortedLinks.emplace_back(lane, link);
@@ -78,13 +78,13 @@ MSRightOfWayJunction::postloadInit() {
         // ... set information for every link
         const MSLane* walkingAreaFoe = nullptr;
         for (MSLink* const link : lane->getLinkCont()) {
-            if (link->getLane()->getEdge().isWalkingArea()) {
+            if (link->getLane()->isWalkingArea()) {
                 if (lane->getPermissions() != SVC_PEDESTRIAN) {
                     // vehicular lane connects to a walkingarea
                     walkingAreaFoe = link->getLane();
                 }
                 continue;
-            } else if ((lane->getEdge().isWalkingArea() && !link->getLane()->getEdge().isCrossing())) {
+            } else if ((lane->isWalkingArea() && !link->getLane()->isCrossing())) {
                 continue;
             }
             if (myLogic->getLogicSize() <= requestPos) {
@@ -138,7 +138,7 @@ MSRightOfWayJunction::postloadInit() {
                         // both cases are encoded in a positive linkResponse
                         // (case 2 only if netconvert option --tls.ignore-internal-junction-jam was not set)
                         myLinkFoeInternalLanes[link].push_back(myInternalLanes[li]);
-                        if (linkResponse.test(c) || sortedLinks[c].second->isIndirect() ||
+                        if (link->getLane()->isCrossing() || linkResponse.test(c) || sortedLinks[c].second->isIndirect() ||
                                 link->getLane()->getBidiLane() == sortedLinks[c].second->getLaneBefore()) {
                             const std::vector<MSLane::IncomingLaneInfo>& l = myInternalLanes[li]->getIncomingLanes();
                             if (l.size() == 1 && l[0].lane->getEdge().isInternal()) {
@@ -158,14 +158,14 @@ MSRightOfWayJunction::postloadInit() {
                 exitLink->setRequestInformation((int)requestPos, false, false, std::vector<MSLink*>(),
                                                 myLinkFoeInternalLanes[link], link->getViaLane());
                 for (const auto& ili : exitLink->getLane()->getIncomingLanes()) {
-                    if (ili.lane->getEdge().isWalkingArea()) {
+                    if (ili.lane->isWalkingArea()) {
                         exitLink->addWalkingAreaFoeExit(ili.lane);
                         break;
                     }
                 }
             }
             // the exit link for a crossing is needed for the pedestrian model
-            if (MSGlobals::gUsingInternalLanes && link->getLane()->getEdge().isCrossing()) {
+            if (MSGlobals::gUsingInternalLanes && link->getLane()->isCrossing()) {
                 MSLink* exitLink = link->getLane()->getLinkCont()[0];
                 exitLink->setRequestInformation((int)requestPos, false, false, std::vector<MSLink*>(),
                                                 myLinkFoeInternalLanes[link], link->getLane());
@@ -174,7 +174,7 @@ MSRightOfWayJunction::postloadInit() {
         }
         if (walkingAreaFoe != nullptr && lane->getLinkCont().size() > 1) {
             for (const MSLink* const link : lane->getLinkCont()) {
-                if (!link->getLane()->getEdge().isWalkingArea()) {
+                if (!link->getLane()->isWalkingArea()) {
                     MSLink* exitLink = link->getViaLane()->getLinkCont()[0];
                     exitLink->addWalkingAreaFoe(walkingAreaFoe);
                 }

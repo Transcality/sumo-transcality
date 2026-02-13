@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -36,7 +36,7 @@ public:
     /// @brief constructor
     GNETemplateElementList(GNETemplateElementDialog<elementDialogType>* elementDialogParent,
                            FXVerticalFrame* contentFrame, SumoXMLTag tag, GNEElementList::Options options) :
-        GNEElementList(contentFrame, elementDialogParent->getApplicationWindow()->getTagPropertiesDatabase()->getTagProperty(tag, true), options),
+        GNEElementList(elementDialogParent, contentFrame, tag, options),
         myElementDialogParent(elementDialogParent) {
         // update table
         updateList();
@@ -50,7 +50,7 @@ public:
     /// @brief insert element
     long insertElement(elementType* element) {
         // add change command
-        element->getNet()->getViewNet()->getUndoList()->add(new GNEChange_Type(element, true), true);
+        element->getNet()->getUndoList()->add(new GNEChange_Type(element, true), true);
         // update table
         return updateList();
     }
@@ -95,6 +95,8 @@ public:
         for (const auto& element : sortedTuples) {
             myEditedElements.push_back(std::get<6>(element));
         }
+        // sort children
+        myElementDialogParent->getElement()->sortChildren(myEditedElements);
         // update table
         return updateList();
     }

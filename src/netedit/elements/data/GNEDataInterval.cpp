@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,7 +32,7 @@
 // ===========================================================================
 
 GNEDataInterval::GNEDataInterval(GNEDataSet* dataSetParent, const double begin, const double end) :
-    GNEAttributeCarrier(SUMO_TAG_DATAINTERVAL, dataSetParent->getNet(), dataSetParent->getFilename(), false),
+    GNEAttributeCarrier(SUMO_TAG_DATAINTERVAL, dataSetParent->getNet(), dataSetParent->getFileBucket()),
     myDataSetParent(dataSetParent),
     myBegin(begin),
     myEnd(end) {
@@ -192,6 +192,16 @@ GNEDataInterval::checkDrawMoveContour() const {
 }
 
 
+FileBucket*
+GNEDataInterval::getFileBucket() const {
+    if (isTemplate()) {
+        return nullptr;
+    } else {
+        return myDataSetParent->getFileBucket();
+    }
+}
+
+
 bool
 GNEDataInterval::isDataIntervalValid() const {
     return true;
@@ -249,7 +259,7 @@ GNEDataInterval::removeGenericDataChild(GNEGenericData* genericData) {
         myGenericDataChildren.erase(it);
         // remove it from inspected ACs and GNEElementTree
         myDataSetParent->getNet()->getViewNet()->getInspectedElements().uninspectAC(genericData);
-        myDataSetParent->getNet()->getViewNet()->getViewParent()->getInspectorFrame()->getHierarchicalElementTree()->removeCurrentEditedAttributeCarrier(genericData);
+        myDataSetParent->getNet()->getViewParent()->getInspectorFrame()->getHierarchicalElementTree()->removeCurrentEditedAttributeCarrier(genericData);
         // update colors
         genericData->getDataIntervalParent()->getDataSetParent()->updateAttributeColors();
         // delete path element

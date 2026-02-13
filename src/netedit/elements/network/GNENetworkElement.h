@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -38,6 +38,12 @@ class GNEMoveOperation;
 class GNENetworkElement : public GNEAttributeCarrier, public GUIGlObject, public GNEHierarchicalElement {
 
 public:
+    /**@brief Constructor for templates
+     * @param[in] tag SUMO Tag assigned to this type of object
+     * @param[in] net GNENet in which this AttributeCarrier is stored
+     */
+    GNENetworkElement(GNENet* net, SumoXMLTag tag);
+
     /**@brief Constructor.
      * @param[in] net The net to inform about gui updates
      * @param[in] id of the element
@@ -48,6 +54,9 @@ public:
     /// @brief Destructor
     virtual ~GNENetworkElement();
 
+    /// @brief methods to retrieve the elements linked to this network element
+    /// @{
+
     /// @brief get GNEHierarchicalElement associated with this AttributeCarrier
     GNEHierarchicalElement* getHierarchicalElement() override;
 
@@ -56,6 +65,11 @@ public:
 
     /// @brief get GUIGlObject associated with this AttributeCarrier (constant)
     const GUIGlObject* getGUIGlObject() const override;
+
+    /// @}
+
+    /// @brief get reference to fileBucket in which save this AC
+    FileBucket* getFileBucket() const override;
 
     /// @brief check if current network element is valid to be written into XML (by default true, can be reimplemented in children)
     virtual bool isNetworkElementValid() const;

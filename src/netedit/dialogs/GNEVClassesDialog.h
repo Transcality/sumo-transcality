@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -88,8 +88,12 @@ public:
     };
 
     /// @brief Constructor
-    GNEVClassesDialog(GNEApplicationWindow* mainWindow, SumoXMLAttr attr,
+    GNEVClassesDialog(GNEApplicationWindow* applicationWindow, SumoXMLAttr attr,
                       const std::string originalVClasses);
+
+    /// @brief Constructor with parent dialog
+    GNEVClassesDialog(GNEApplicationWindow* applicationWindow, GNEDialog* parentDialog,
+                      SumoXMLAttr attr, const std::string originalVClasses);
 
     /// @brief destructor
     ~GNEVClassesDialog();
@@ -140,6 +144,9 @@ protected:
     std::map<SUMOVehicleClass, VClassRow* > myVClassMap;
 
 private:
+    /// @brief builder
+    void builder();
+
     /// @brief Invalidated copy constructor.
     GNEVClassesDialog(const GNEVClassesDialog&) = delete;
 

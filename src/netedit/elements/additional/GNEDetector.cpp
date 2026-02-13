@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,15 +32,15 @@
 // ===========================================================================
 
 GNEDetector::GNEDetector(GNENet* net, SumoXMLTag tag) :
-    GNEAdditional("", net, "", tag, "") {
+    GNEAdditional(net, tag) {
 }
 
 
-GNEDetector::GNEDetector(const std::string& id, GNENet* net, const std::string& filename, SumoXMLTag tag,
+GNEDetector::GNEDetector(const std::string& id, GNENet* net, FileBucket* fileBucket, SumoXMLTag tag,
                          const SUMOTime period, const std::string& outputFilename, const std::vector<std::string>& vehicleTypes,
                          const std::vector<std::string>& nextEdges, const std::string& detectPersons, const std::string& name,
                          const Parameterised::Map& parameters) :
-    GNEAdditional(id, net, filename, tag, name),
+    GNEAdditional(id, net, tag, fileBucket, name),
     Parameterised(parameters),
     myPeriod(period),
     myOutputFilename(outputFilename),

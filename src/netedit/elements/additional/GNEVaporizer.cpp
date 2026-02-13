@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -31,13 +31,13 @@
 // ===========================================================================
 
 GNEVaporizer::GNEVaporizer(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_VAPORIZER, "") {
+    GNEAdditional(net, SUMO_TAG_VAPORIZER) {
 }
 
 
-GNEVaporizer::GNEVaporizer(GNENet* net, const std::string& filename, GNEEdge* edge, SUMOTime from, SUMOTime end,
+GNEVaporizer::GNEVaporizer(GNENet* net, FileBucket* fileBucket, GNEEdge* edge, SUMOTime from, SUMOTime end,
                            const std::string& name, const Parameterised::Map& parameters) :
-    GNEAdditional(edge->getID(), net, filename, SUMO_TAG_VAPORIZER, name),
+    GNEAdditional(edge->getID(), net, SUMO_TAG_VAPORIZER, fileBucket, name),
     Parameterised(parameters),
     myBegin(from),
     myEnd(end) {

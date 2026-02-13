@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -101,6 +101,13 @@ public:
         return myRandomSeed;
     }
 
+    /** @brief Returns an upper bound for the speed factor of this vehicle
+     * @return the maximum speed factor
+     */
+    inline double getChosenSpeedFactor() const {
+        return getParameter().wasSet(VEHPARS_SPEEDFACTOR_SET) ? getParameter().speedFactor :  getType()->speedFactor.getParameter(0);
+    }
+
     /** @brief Returns the time the vehicle starts at, -1 for triggered vehicles
      *
      * @return The vehicle's depart time
@@ -128,7 +135,7 @@ public:
     /// @brief Returns the vehicle's maximum speed
     inline double getMaxSpeed() const {
         return MIN2(getType()->maxSpeed,
-                    getType()->desiredMaxSpeed * getType()->speedFactor.getParameter(0));
+                    getType()->desiredMaxSpeed * getChosenSpeedFactor());
     }
 
     virtual const ROEdge* getDepartEdge() const = 0;

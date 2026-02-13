@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -20,6 +20,7 @@
 #include <config.h>
 
 #include <regex>
+
 #include <netedit/dialogs/file/GNEFileDialog.h>
 #include <netedit/dialogs/tools/GNEPythonToolDialog.h>
 #include <netedit/dialogs/tools/GNERunPythonToolDialog.h>
@@ -2230,9 +2231,9 @@ GNEApplicationWindowHelper::SupermodeCommands::buildSupermodeCommands(FXMenuPane
 // GNESumoConfigHandler - methods
 // ---------------------------------------------------------------------------
 
-GNEApplicationWindowHelper::GNESumoConfigHandler::GNESumoConfigHandler(OptionsCont& sumoOptions, const std::string& file) :
-    mySumoOptions(sumoOptions),
-    myFile(file) {
+GNEApplicationWindowHelper::GNESumoConfigHandler::GNESumoConfigHandler(GNEApplicationWindow* applicationWindow, const std::string& sumoConfigFile) :
+    myApplicationWindow(applicationWindow),
+    mySumoConfigFile(sumoConfigFile) {
 }
 
 
@@ -2240,50 +2241,99 @@ bool
 GNEApplicationWindowHelper::GNESumoConfigHandler::loadSumoConfig() {
     // get options
     auto& neteditOptions = OptionsCont::getOptions();
+    auto& sumoOptions = myApplicationWindow->getSumoOptions();
     // reset options
-    mySumoOptions.resetDefault();
+    sumoOptions.resetDefault();
     neteditOptions.resetDefault();
     // make all options writables
-    mySumoOptions.resetWritable();
+    sumoOptions.resetWritable();
     neteditOptions.resetWritable();
     // build parser
     XERCES_CPP_NAMESPACE::SAXParser parser;
     parser.setValidationScheme(XERCES_CPP_NAMESPACE::SAXParser::Val_Never);
     parser.setDisableDefaultEntityResolution(true);
     // start the parsing
-    OptionsLoader handler(mySumoOptions);
+    OptionsLoader handler(sumoOptions);
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(myFile).c_str());
+        parser.parse(StringUtils::transcodeToLocal(mySumoConfigFile).c_str());
+        // allow to load with invalid options
         if (handler.errorOccurred()) {
-            WRITE_ERROR(TL("Could not load SUMO configuration '") + myFile + "'.");
-            return false;
+            WRITE_WARNING(TLF("There are invalid options in sumo configuration '%'.", mySumoConfigFile));
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TL("Could not load SUMO configuration '") + myFile + "':\n " + StringUtils::transcode(e.getMessage()));
+        WRITE_ERROR(TLF("Could not load sumo configuration '%':\n %", mySumoConfigFile, StringUtils::transcode(e.getMessage())));
         return false;
     }
     // relocate files
-    mySumoOptions.relocateFiles(myFile);
-    // set loaded files in netedit options
-    neteditOptions.set("sumocfg-file", myFile);
-    neteditOptions.set("net-file", mySumoOptions.getString("net-file"));
-    // check if we need to define the configuration file
-    if (neteditOptions.getString("configuration-file").empty()) {
-        const auto newConfiguration = StringUtils::replace(neteditOptions.getString("configuration-file"), ".sumocfg", ".netecfg");
-        neteditOptions.resetWritable();
-        neteditOptions.set("configuration-file", newConfiguration);
+    sumoOptions.relocateFiles(mySumoConfigFile);
+    // configure files in bucket
+    myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::SUMO_CONFIG, mySumoConfigFile);
+    // set load options in netedit
+    neteditOptions.resetWritable();
+    if (sumoOptions.getString("net-file").size() > 0) {
+        myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::NETWORK, sumoOptions.getString("net-file"));
+    } else {
+        WRITE_ERROR(TLF("No network defined in sumo configuration '%'.", mySumoConfigFile));
+        return false;
     }
+    neteditOptions.set("additional-files", sumoOptions.getString("additional-files"));
+    neteditOptions.set("route-files", sumoOptions.getString("route-files"));
+    // relocate files
+    neteditOptions.relocateFiles(mySumoConfigFile);
     return true;
 }
+
+// ---------------------------------------------------------------------------
+// GNENetconvertConfigHandler - methods
+// ---------------------------------------------------------------------------
+
+GNEApplicationWindowHelper::GNENetconvertConfigHandler::GNENetconvertConfigHandler(const std::string& sumoConfigFile) :
+    myNetconvertConfigFile(sumoConfigFile) {
+}
+
+
+bool
+GNEApplicationWindowHelper::GNENetconvertConfigHandler::loadNetconvertConfig() {
+    // get options
+    auto& neteditOptions = OptionsCont::getOptions();
+    // reset options and mark all options as writables
+    neteditOptions.resetDefault();
+    neteditOptions.resetWritable();
+    // build parser
+    XERCES_CPP_NAMESPACE::SAXParser parser;
+    parser.setValidationScheme(XERCES_CPP_NAMESPACE::SAXParser::Val_Never);
+    parser.setDisableDefaultEntityResolution(true);
+    // start the parsing
+    OptionsLoader handler(neteditOptions);
+    try {
+        parser.setDocumentHandler(&handler);
+        parser.setErrorHandler(&handler);
+        parser.parse(StringUtils::transcodeToLocal(myNetconvertConfigFile).c_str());
+        // allow to load with invalid options
+        if (handler.errorOccurred()) {
+            WRITE_WARNING(TLF("There are invalid options in netconvert configuration '%'.", myNetconvertConfigFile));
+        }
+    } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
+        WRITE_ERROR(TLF("Could not load netconvert configuration '%':\n %", myNetconvertConfigFile, StringUtils::transcode(e.getMessage())));
+        return false;
+    }
+    // relocate files
+    neteditOptions.relocateFiles(myNetconvertConfigFile);
+    // set load options in netdit
+    neteditOptions.resetWritable();
+    return true;
+}
+
 
 // ---------------------------------------------------------------------------
 // GNENeteditConfigHandler - methods
 // ---------------------------------------------------------------------------
 
-GNEApplicationWindowHelper::GNENeteditConfigHandler::GNENeteditConfigHandler(const std::string& file) :
-    myFile(file) {
+GNEApplicationWindowHelper::GNENeteditConfigHandler::GNENeteditConfigHandler(GNEApplicationWindow* applicationWindow, const std::string& neteditConfigFile) :
+    myApplicationWindow(applicationWindow),
+    myNeteditConfigFile(neteditConfigFile) {
 }
 
 
@@ -2307,28 +2357,414 @@ GNEApplicationWindowHelper::GNENeteditConfigHandler::loadNeteditConfig() {
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(myFile).c_str());
+        parser.parse(StringUtils::transcodeToLocal(myNeteditConfigFile).c_str());
+        // allow to load with invalid options
         if (handler.errorOccurred()) {
-            WRITE_ERROR(TL("Could not load netedit configuration '") + myFile + "'.");
-            return false;
+            WRITE_WARNING(TLF("There are invalid options in netedit configuration '%'.", myNeteditConfigFile));
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TL("Could not load netedit configuration '") + myFile + "':\n " + StringUtils::transcode(e.getMessage()));
+        WRITE_ERROR(TLF("Could not load netedit configuration '%':\n %", myNeteditConfigFile, StringUtils::transcode(e.getMessage())));
         return false;
     }
     // relocate files
-    neteditOptions.relocateFiles(myFile);
-    // check if we have loaded a netedit config or a netconvert config
-    if (neteditOptions.getString("configuration-file").find(".netccfg") != std::string::npos) {
-        const auto newConfiguration = StringUtils::replace(neteditOptions.getString("configuration-file"), ".netccfg", ".netecfg");
-        neteditOptions.resetWritable();
-        neteditOptions.set("configuration-file", newConfiguration);
-    }
+    neteditOptions.relocateFiles(myNeteditConfigFile);
+    // configure files in bucket
+    myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::NETEDIT_CONFIG, myNeteditConfigFile);
+    myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::SUMO_CONFIG, neteditOptions.getString("sumocfg-file"));
+    myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::NETWORK, neteditOptions.getString("sumo-net-file"));
+    myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::TLS, neteditOptions.getString("tls-file"));
+    myApplicationWindow->getFileBucketHandler()->setDefaultFilenameFile(FileBucket::Type::EDGETYPE, neteditOptions.getString("edgetypes-file"));
     // restore ignores
     neteditOptions.resetWritable();
-    neteditOptions.set("ignore.additionalelements", toString(ignoreAdditionalElements));
-    neteditOptions.set("ignore.routeelements", toString(ignoreRouteElements));
+    // check if ignore additional or route files
+    if (ignoreAdditionalElements) {
+        neteditOptions.resetDefault("additional-files");
+    }
+    if (ignoreRouteElements) {
+        neteditOptions.resetDefault("route-files");
+    }
     return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// GNEApplicationWindowHelper::FileBucketHandler - methods
+// ---------------------------------------------------------------------------
+
+GNEApplicationWindowHelper::FileBucketHandler::FileBucketHandler(GNEApplicationWindow* applicationWindow,
+        OptionsCont& neteditOptions, OptionsCont& sumoOptions) :
+    myApplicationWindow(applicationWindow),
+    myNeteditOptions(neteditOptions),
+    mySumoOptions(sumoOptions) {
+    // create default buckets
+    for (const auto& type : FileBucket::types) {
+        myBuckets[type].push_back(new FileBucket(type));
+    }
+    for (const auto& type : FileBucket::prefixes) {
+        myBuckets[type].push_back(new FileBucket(type));
+    }
+}
+
+
+GNEApplicationWindowHelper::FileBucketHandler::~FileBucketHandler() {
+    // delete buckets
+    for (auto& bucketMap : myBuckets) {
+        for (auto& bucket : bucketMap.second) {
+            delete bucket;
+        }
+    }
+}
+
+
+void
+GNEApplicationWindowHelper::FileBucketHandler::registerAC(const GNEAttributeCarrier* AC) {
+    // insert element
+    if (AC->getTagProperty()->saveInParentFile() == false) {
+        // add element in bucket
+        AC->getFileBucket()->addElement(false);
+    }
+}
+
+
+void
+GNEApplicationWindowHelper::FileBucketHandler::unregisterAC(const GNEAttributeCarrier* AC) {
+    if (AC->getTagProperty()->saveInParentFile() == false) {
+        // remove element from bucket
+        AC->getFileBucket()->removeElement(false);
+    }
+}
+
+
+FileBucket*
+GNEApplicationWindowHelper::FileBucketHandler::updateAC(const GNEAttributeCarrier* AC, const std::string& filename) {
+    // check file properties
+    if (AC->getTagProperty()->saveInParentFile()) {
+        // elements with parent aren't saved in buckets
+        return nullptr;
+    } else if (AC->getTagProperty()->isNetworkElement()) {
+        // network elements are saved in a single file
+        return myBuckets.at(FileBucket::Type::NETWORK).front();
+    } else {
+        // remove element from bucket
+        AC->getFileBucket()->removeElement(AC->isTemplate());
+        // iterate over all buckets to check if the given filename already exist
+        for (const auto& type : FileBucket::types) {
+            // get default bucket (secure because first bucket always exist)
+            auto defaultBucket = getDefaultBucket(type);
+            // check if this bucket type is compatible
+            if (AC->getTagProperty()->isFileCompatible(defaultBucket->getType())) {
+                // search bucket with this filename
+                for (auto& bucket : myBuckets.at(type)) {
+                    if (bucket->getFilename() == filename) {
+                        // add element in bucket
+                        bucket->addElement(AC->isTemplate());
+                        // return the new bucket
+                        return bucket;
+                    }
+                }
+            }
+        }
+        // if we didn't found a bucket whit the given filename, create new
+        for (const auto& type : FileBucket::types) {
+            // this front() call is secure because every bucket group have always at least one default bucket)
+            const auto bucketType = getDefaultBucket(type)->getType();
+            // check compatibility
+            if (AC->getTagProperty()->isFileCompatible(bucketType)) {
+                // create new bucket with the given filename
+                auto bucket = new FileBucket(bucketType, filename);
+                myBuckets.at(bucketType).push_back(bucket);
+                // add element in bucket
+                bucket->addElement(AC->isTemplate());
+                // update options (because we added a new bucket)
+                updateOptions();
+                // return the new bucket
+                return bucket;
+            }
+        }
+        // the AC was not updated, throw error
+        throw ProcessError(TLF("Element '% cannot be updateAC in bucket '%'", AC->getID(), filename));
+    }
+}
+
+
+bool
+GNEApplicationWindowHelper::FileBucketHandler::checkFilename(const GNEAttributeCarrier* AC, const std::string& filename) const {
+    // check file properties
+    if (AC->getTagProperty()->saveInParentFile()) {
+        // elements with parent aren't saved in buckets
+        return false;
+    } else {
+        // iterate over all buckets to check if exist a bucket with this filename
+        for (const auto& type : FileBucket::types) {
+            for (auto& bucket : myBuckets.at(type)) {
+                if (bucket->getFilename() == filename) {
+                    // check if the bucket is compatible with this file
+                    return AC->getTagProperty()->isFileCompatible(bucket->getType());
+                }
+            }
+        }
+        // the file will be saved in a new bucket
+        return true;
+    }
+}
+
+
+std::string
+GNEApplicationWindowHelper::FileBucketHandler::getConfigDirectory() const {
+    for (const auto& type : FileBucket::prefixes) {
+        if (isFilenameDefined(type)) {
+            return getDefaultFolder(type);
+        }
+    }
+    return "";
+}
+
+
+std::string
+GNEApplicationWindowHelper::FileBucketHandler::getConfigFilePrefix(const std::string& sufix) const {
+    for (const auto& type : FileBucket::prefixes) {
+        if (isFilenameDefined(type)) {
+            return getDefaultFilename(type) + sufix;
+        }
+    }
+    return "";
+}
+
+
+FileBucket*
+GNEApplicationWindowHelper::FileBucketHandler::getDefaultBucket(const FileBucket::Type type) const {
+    return myBuckets.at(type).front();
+}
+
+
+FileBucket*
+GNEApplicationWindowHelper::FileBucketHandler::getBucket(const FileBucket::Type type, const std::string& filename, const bool create) {
+    // iterate over all buckets to check if the given filename already exist
+    for (auto& bucketMap : myBuckets) {
+        for (auto& bucket : bucketMap.second) {
+            if ((bucket->getFilename() == filename) && (bucket->getType() == type)) {
+                return bucket;
+            }
+        }
+    }
+    // on this point, we need to check if create a new bucket
+    if (create) {
+        // if the default bucket is empty, but not the filename, update the default bucket
+        if (getDefaultFilename(type).empty() && (filename.size() > 0)) {
+            setDefaultFilenameFile(type, filename);
+            return getDefaultBucket(type);
+        } else {
+            // create new bucket
+            auto bucket = new FileBucket(type, filename);
+            myBuckets.at(type).push_back(bucket);
+            return bucket;
+        }
+    } else {
+        return nullptr;
+    }
+}
+
+
+const std::vector<FileBucket*>&
+GNEApplicationWindowHelper::FileBucketHandler::getFileBuckets(const FileBucket::Type type) const {
+    return myBuckets.at(type);
+}
+
+
+std::string
+GNEApplicationWindowHelper::FileBucketHandler::getDefaultFilename(const FileBucket::Type type) const {
+    return myBuckets.at(type).front()->getFilename();
+}
+
+
+std::string
+GNEApplicationWindowHelper::FileBucketHandler::getDefaultFolder(const FileBucket::Type type) const {
+    std::string prefix = getDefaultFilename(type);
+    // remove until empty or trailing slash
+    while (true) {
+        if (prefix.empty()) {
+            return prefix;
+        } else if ((prefix.back() == '\'') ||
+                   (prefix.back() == '\\') ||
+                   (prefix.back() == '/')) {
+            // remove last trailing slash
+            prefix.pop_back();
+            return prefix;
+        } else {
+            prefix.pop_back();
+        }
+    }
+}
+
+
+void
+GNEApplicationWindowHelper::FileBucketHandler::setDefaultFilenameFile(const FileBucket::Type type, const std::string& filename) {
+    myBuckets.at(type).front()->setFilename(filename);
+    // update filename in options
+    updateOptions();
+}
+
+
+bool
+GNEApplicationWindowHelper::FileBucketHandler::isFilenameDefined(const FileBucket::Type type) const {
+    return (myBuckets.at(type).front()->getFilename().size() > 0);
+}
+
+
+void
+GNEApplicationWindowHelper::FileBucketHandler::resetDefaultFilenames() {
+    for (const auto& bucketPair : myBuckets) {
+        bucketPair.second.front()->setFilename("");
+    }
+    // update filename in options
+    updateOptions();
+}
+
+
+void
+GNEApplicationWindowHelper::FileBucketHandler::updateOptions() {
+    // get filenames
+    const auto sumoconfig = parseFilenames({FileBucket::Type::SUMO_CONFIG});
+    const auto neteditconfig = parseFilenames({FileBucket::Type::NETEDIT_CONFIG});
+    const auto networkFile = parseFilenames({FileBucket::Type::NETWORK});
+    const auto additional = parseFilenames({FileBucket::Type::ADDITIONAL});
+    const auto demandFile = parseFilenames({FileBucket::Type::DEMAND});
+    const auto data = parseFilenames({FileBucket::Type::DATA});
+    const auto meanData = parseFilenames({FileBucket::Type::MEANDATA});
+    const auto additionalMeanData = parseFilenames({FileBucket::Type::ADDITIONAL, FileBucket::Type::MEANDATA});
+    const auto edgeType = parseFilenames({FileBucket::Type::EDGETYPE});
+    const auto tls = parseFilenames({FileBucket::Type::TLS});
+    // set default filename depending of type
+    myNeteditOptions.resetWritable();
+    mySumoOptions.resetWritable();
+    // check if save sumo additionals
+    const bool sumoAdditionals = (myApplicationWindow->getEditMenuCommands().loadAdditionalsInSUMOGUI->getCheck() == TRUE);
+    const bool sumoDemandElements = (myApplicationWindow->getEditMenuCommands().loadDemandInSUMOGUI->getCheck() == TRUE);
+    // sumo config (only netedit)
+    if (sumoconfig.size() > 0) {
+        myNeteditOptions.set("sumocfg-file", sumoconfig);
+    } else {
+        myNeteditOptions.resetDefault("sumocfg-file");
+    }
+    // netedit config (only netedit)
+    if (neteditconfig.size() > 0) {
+        myNeteditOptions.set("configuration-file", neteditconfig);
+    } else {
+        myNeteditOptions.resetDefault("configuration-file");
+    }
+    // network file (common)
+    if (networkFile.size() > 0) {
+        myNeteditOptions.set("sumo-net-file", networkFile);
+        mySumoOptions.set("net-file", networkFile);
+    } else {
+        myNeteditOptions.resetDefault("sumo-net-file");
+        mySumoOptions.resetDefault("net-file");
+    }
+    // additional file (only netedit)
+    if (additional.size() > 0) {
+        myNeteditOptions.set("additional-files", additional);
+    } else {
+        myNeteditOptions.resetDefault("additional-files");
+    }
+    // demand file (netedit)
+    if (demandFile.size() > 0) {
+        myNeteditOptions.set("route-files", demandFile);
+    } else {
+        myNeteditOptions.resetDefault("route-files");
+    }
+    // demand file (sumo)
+    if (sumoDemandElements && (demandFile.size() > 0)) {
+        mySumoOptions.set("route-files", demandFile);
+    } else {
+        mySumoOptions.resetDefault("route-files");
+    }
+    // data file (only netedit)
+    if (data.size() > 0) {
+        myNeteditOptions.set("data-files", data);
+    } else {
+        myNeteditOptions.resetDefault("data-files");
+    }
+    // meanData file (only netedit)
+    if (meanData.size() > 0) {
+        myNeteditOptions.set("meandata-files", meanData);
+    } else {
+        myNeteditOptions.resetDefault("meandata-files");
+    }
+    // additional + meanData files (only sumo)
+    if (sumoAdditionals && (additionalMeanData.size() > 0)) {
+        mySumoOptions.set("additional-files", additionalMeanData);
+    } else {
+        mySumoOptions.resetDefault("additional-files");
+    }
+    // edgeType (only netedit)
+    if (edgeType.size() > 0) {
+        myNeteditOptions.set("edgetypes-file", edgeType);
+    } else {
+        myNeteditOptions.resetDefault("edgetypes-file");
+    }
+    // TLS (only netedit)
+    if (tls.size() > 0) {
+        myNeteditOptions.set("tls-file", tls);
+    } else {
+        myNeteditOptions.resetDefault("tls-file");
+    }
+    // update prefixes
+    myBuckets.at(FileBucket::Type::SUMO_PREFIX).front()->setFilename(getPrefix(FileBucket::Type::SUMO_CONFIG, {".sumocfg", ".xml"}));
+    myBuckets.at(FileBucket::Type::NETEDIT_PREFIX).front()->setFilename(getPrefix(FileBucket::Type::NETEDIT_CONFIG, {".netecfg", ".xml"}));
+    myBuckets.at(FileBucket::Type::NETCONVERT_PREFIX).front()->setFilename(getPrefix(FileBucket::Type::NETCONVERT_CONFIG, {".netccfg", ".edg.xml", ".nod.xml", ".con.xml", ".typ.xml", ".tll.xml", ".xml"}));
+}
+
+
+std::string
+GNEApplicationWindowHelper::FileBucketHandler::parseFilenames(const std::vector<FileBucket::Type> types) const {
+    std::string result;
+    // group all saving files in a single string separated with comma
+    for (const auto& type : types) {
+        for (const auto& bucket : myBuckets.at(type)) {
+            if ((bucket->getFilename().size() > 0) && (bucket->isDefaultBucket() || (bucket->getNumElements() > 0))) {
+                result.append(bucket->getFilename() + ",");
+            }
+        }
+    }
+    // remove last ','
+    if (result.size() > 0) {
+        result.pop_back();
+    }
+    return result;
+}
+
+
+void
+GNEApplicationWindowHelper::FileBucketHandler::removeEmptyBuckets() {
+    // iterate over all buckets and remove empty buckets (except default buckets)
+    for (auto type : FileBucket::types) {
+        size_t bucketIndex = 0;
+        while (bucketIndex < myBuckets.at(type).size()) {
+            auto bucket = myBuckets.at(type).at(bucketIndex);
+            if (bucket->isEmpty() && (bucket->isDefaultBucket() == false)) {
+                delete bucket;
+                myBuckets.at(type).erase(myBuckets.at(type).begin() + bucketIndex);
+            } else {
+                bucketIndex++;
+            }
+        }
+    }
+}
+
+
+std::string
+GNEApplicationWindowHelper::FileBucketHandler::getPrefix(FileBucket::Type type, const std::vector<std::string> invalidExtensions) const {
+    std::string filename = getDefaultFilename(type);
+    if (filename.size() > 0) {
+        if (filename.back() == '.') {
+            filename.pop_back();
+        } else {
+            for (const auto& invalidExtension : invalidExtensions) {
+                filename = StringUtils::replace(filename, invalidExtension, "");
+            }
+        }
+    }
+    return filename;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -63,8 +63,8 @@ GNEEdgeData::setColor(const GUIVisualizationSettings& s) const {
         col = s.dataColorer.getScheme().getColor(val);
     } else if (myNet->getViewNet()->getEditModes().dataEditMode == DataEditMode::DATA_EDGEDATA) {
         // get selected data interval and filtered attribute
-        const GNEDataInterval* dataInterval = myNet->getViewNet()->getViewParent()->getEdgeDataFrame()->getIntervalSelector()->getDataInterval();
-        const std::string filteredAttribute = myNet->getViewNet()->getViewParent()->getEdgeDataFrame()->getAttributeSelector()->getFilteredAttribute();
+        const GNEDataInterval* dataInterval = myNet->getViewParent()->getEdgeDataFrame()->getIntervalSelector()->getDataInterval();
+        const std::string filteredAttribute = myNet->getViewParent()->getEdgeDataFrame()->getAttributeSelector()->getFilteredAttribute();
         // continue if there is a selected data interval and filtered attribute
         if (dataInterval && (filteredAttribute.size() > 0)) {
             if (dataInterval->getSpecificAttributeColors().at(myTagProperty->getTag()).exist(filteredAttribute)) {
@@ -117,10 +117,10 @@ GNEEdgeData::isGenericDataVisible() const {
     // check if we have to filter generic data
     if ((dataMode == DataEditMode::DATA_INSPECT) || (dataMode == DataEditMode::DATA_DELETE) || (dataMode == DataEditMode::DATA_SELECT)) {
         return isVisibleInspectDeleteSelect();
-    } else if (myDataIntervalParent->getNet()->getViewNet()->getViewParent()->getEdgeDataFrame()->shown()) {
+    } else if (myDataIntervalParent->getNet()->getViewParent()->getEdgeDataFrame()->shown()) {
         // get selected data interval and filtered attribute
-        const GNEDataInterval* dataInterval = myNet->getViewNet()->getViewParent()->getEdgeDataFrame()->getIntervalSelector()->getDataInterval();
-        const std::string filteredAttribute = myNet->getViewNet()->getViewParent()->getEdgeDataFrame()->getAttributeSelector()->getFilteredAttribute();
+        const GNEDataInterval* dataInterval = myNet->getViewParent()->getEdgeDataFrame()->getIntervalSelector()->getDataInterval();
+        const std::string filteredAttribute = myNet->getViewParent()->getEdgeDataFrame()->getAttributeSelector()->getFilteredAttribute();
         // check interval
         if ((dataInterval != nullptr) && (dataInterval != myDataIntervalParent)) {
             return false;
@@ -227,8 +227,8 @@ GNEEdgeData::drawLanePartialGL(const GUIVisualizationSettings& s, const GNESegme
                 // draw filtered attribute
                 if (getParentEdges().front()->getChildLanes().front() == laneEdge) {
                     drawFilteredAttribute(s, laneEdge->getLaneShape(),
-                                          myNet->getViewNet()->getViewParent()->getEdgeDataFrame()->getAttributeSelector()->getFilteredAttribute(),
-                                          myNet->getViewNet()->getViewParent()->getEdgeDataFrame()->getIntervalSelector()->getDataInterval());
+                                          myNet->getViewParent()->getEdgeDataFrame()->getAttributeSelector()->getFilteredAttribute(),
+                                          myNet->getViewParent()->getEdgeDataFrame()->getIntervalSelector()->getDataInterval());
                 }
             }
             // draw dotted contour
@@ -333,7 +333,9 @@ GNEEdgeData::setAttribute(SumoXMLAttr key, const std::string& value) {
         myDataIntervalParent->getDataSetParent()->updateAttributeColors();
     }
     // mark interval toolbar for update
-    myNet->getViewNet()->getIntervalBar().markForUpdate();
+    if (!isTemplate()) {
+        myNet->getViewNet()->getIntervalBar().markForUpdate();
+    }
 }
 
 /****************************************************************************/

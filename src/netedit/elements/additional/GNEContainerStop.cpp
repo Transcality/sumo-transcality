@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -36,10 +36,10 @@ GNEContainerStop::GNEContainerStop(GNENet* net) :
 }
 
 
-GNEContainerStop::GNEContainerStop(const std::string& id, GNENet* net, const std::string& filename, GNELane* lane, const double startPos, const double endPos,
+GNEContainerStop::GNEContainerStop(const std::string& id, GNENet* net, FileBucket* fileBucket, GNELane* lane, const double startPos, const double endPos,
                                    const std::string& name, const std::vector<std::string>& lines, const int containerCapacity, const double parkingLength,
                                    const RGBColor& color, const bool friendlyPosition, const double angle, const Parameterised::Map& parameters) :
-    GNEStoppingPlace(id, net, filename, SUMO_TAG_CONTAINER_STOP, lane, startPos, endPos, name, friendlyPosition, color, angle, parameters),
+    GNEStoppingPlace(id, net, fileBucket, SUMO_TAG_CONTAINER_STOP, lane, startPos, endPos, name, friendlyPosition, color, angle, parameters),
     myLines(lines),
     myContainerCapacity(containerCapacity),
     myParkingLength(parkingLength) {

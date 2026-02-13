@@ -5,104 +5,152 @@ import_config_file:../config_all
 binary:$NETEDIT_BINARY
 use_case_record_mode:GUI
 
-# Copy files to sandbox folder
+# CONFIGS
+copy_test_path:netedit_A.netecfg
+copy_test_path:netedit_B.netecfg
+copy_test_path:netedit_B.xml
+copy_test_path:netedit_B.txt
+
+copy_test_path:sumo_A.sumocfg
+copy_test_path:sumo_B.sumocfg
+copy_test_path:sumo_B.xml
+copy_test_path:sumo_B.txt
+
+copy_test_path:netconvert_A.netccfg
+copy_test_path:netconvert_B.netccfg
+copy_test_path:netconvert_B.xml
+copy_test_path:netconvert_B.txt
+
+# NETCONVERT FILES
+copy_test_path:input_netconvert_A.con.xml
+copy_test_path:input_netconvert_A.edg.xml
+copy_test_path:input_netconvert_A.nod.xml
+copy_test_path:input_netconvert_A.tll.xml
+
+copy_test_path:input_netconvert_B.con.xml
+copy_test_path:input_netconvert_B.edg.xml
+copy_test_path:input_netconvert_B.nod.xml
+copy_test_path:input_netconvert_B.tll.xml
+
+# NETWORKS
+copy_test_path:input_net_A.net.xml
+copy_test_path:input_net_A.net.xml.gz
+copy_test_path:input_net_A.xml
+copy_test_path:input_net_A.xml.gz
+copy_test_path:input_net_A.txt
+
+copy_test_path:input_net_B.net.xml
+copy_test_path:input_net_B.net.xml.gz
+copy_test_path:input_net_B.xml
+copy_test_path:input_net_B.xml.gz
+copy_test_path:input_net_B.txt
+
+# ADDITIONALS
+copy_test_path:input_additionals_A.add.xml
+copy_test_path:input_additionals_A.add.xml.gz
+copy_test_path:input_additionals_A.xml
+copy_test_path:input_additionals_A.xml.gz
+copy_test_path:input_additionals_A.txt
+
+copy_test_path:input_additionals_B.add.xml
+copy_test_path:input_additionals_B.add.xml.gz
+copy_test_path:input_additionals_B.xml
+copy_test_path:input_additionals_B.xml.gz
+copy_test_path:input_additionals_B.txt
+
+copy_test_path:jupedsims_A.add.xml
+copy_test_path:jupedsims_A.add.xml.gz
+copy_test_path:jupedsims_A.xml
+copy_test_path:jupedsims_A.xml.gz
+copy_test_path:jupedsims_A.txt
+
+copy_test_path:jupedsims_B.add.xml
+copy_test_path:jupedsims_B.add.xml.gz
+copy_test_path:jupedsims_B.xml
+copy_test_path:jupedsims_B.xml.gz
+copy_test_path:jupedsims_B.txt
+
+# ROUTES
+copy_test_path:input_routes_A.rou.xml
+copy_test_path:input_routes_A.rou.xml.gz
+copy_test_path:input_routes_A.xml
+copy_test_path:input_routes_A.xml.gz
+copy_test_path:input_routes_A.txt
+
+copy_test_path:input_routes_B.rou.xml
+copy_test_path:input_routes_B.rou.xml.gz
+copy_test_path:input_routes_B.xml
+copy_test_path:input_routes_B.xml.gz
+copy_test_path:input_routes_B.txt
+
+# DATAS
+copy_test_path:input_datas_A.dat.xml
+copy_test_path:input_datas_A.dat.xml.gz
+copy_test_path:input_datas_A.xml
+copy_test_path:input_datas_A.xml.gz
+copy_test_path:input_datas_A.txt
+
+copy_test_path:input_datas_B.dat.xml
+copy_test_path:input_datas_B.dat.xml.gz
+copy_test_path:input_datas_B.xml
+copy_test_path:input_datas_B.xml.gz
+copy_test_path:input_datas_B.txt
+
+# MEANDATAS
+copy_test_path:input_meandatas_A.add.xml
+copy_test_path:input_meandatas_A.add.xml.gz
+copy_test_path:input_meandatas_A.xml
+copy_test_path:input_meandatas_A.xml.gz
+copy_test_path:input_meandatas_A.txt
+
+copy_test_path:input_meandatas_B.add.xml
+copy_test_path:input_meandatas_B.add.xml.gz
+copy_test_path:input_meandatas_B.xml
+copy_test_path:input_meandatas_B.xml.gz
+copy_test_path:input_meandatas_B.txt
+
+# TRAFFIC LIGHTS
+copy_test_path:trafficlights_A.tll.xml
+copy_test_path:trafficlights_A.tll.xml.gz
+copy_test_path:trafficlights_A.xml
+copy_test_path:trafficlights_A.xml.gz
+copy_test_path:trafficlights_A.txt
+
+copy_test_path:trafficlights_B.tll.xml
+copy_test_path:trafficlights_B.tll.xml.gz
+copy_test_path:trafficlights_B.xml
+copy_test_path:trafficlights_B.xml.gz
+copy_test_path:trafficlights_B.txt
+
+# EDGETYPES
+copy_test_path:edgetypes_A.typ.xml
+copy_test_path:edgetypes_A.typ.xml.gz
+copy_test_path:edgetypes_A.xml
+copy_test_path:edgetypes_A.xml.gz
+copy_test_path:edgetypes_A.txt
+
+copy_test_path:edgetypes_B.typ.xml
+copy_test_path:edgetypes_B.typ.xml.gz
+copy_test_path:edgetypes_B.xml
+copy_test_path:edgetypes_B.xml.gz
+copy_test_path:edgetypes_B.txt
+
+# JOINED JUNCTIONS
+copy_test_path:joinedjunctions_A.nod.xml
+copy_test_path:joinedjunctions_A.nod.xml.gz
+copy_test_path:joinedjunctions_A.xml
+copy_test_path:joinedjunctions_A.xml.gz
+copy_test_path:joinedjunctions_A.txt
+
+copy_test_path:joinedjunctions_B.nod.xml
+copy_test_path:joinedjunctions_B.nod.xml.gz
+copy_test_path:joinedjunctions_B.xml
+copy_test_path:joinedjunctions_B.xml.gz
+copy_test_path:joinedjunctions_B.txt
+
+# OTHER
 copy_test_path:test.py
-copy_test_path:gui-settings.xml
-
-copy_test_path:netedit.netecfg
-copy_test_path:netedit2.netecfg
-copy_test_path:netedit2.xml
-copy_test_path:netedit2.xml.gz
-copy_test_path:netedit2.txt
-
-copy_test_path:sumo.sumocfg
-copy_test_path:sumo2.sumocfg
-copy_test_path:sumo2.xml
-copy_test_path:sumo2.xml.gz
-copy_test_path:sumo2.txt
-
-copy_test_path:netccfg.netecfg
-copy_test_path:netccfg2.netecfg
-
-copy_test_path:sumo.con.xml
-copy_test_path:sumo.edg.xml
-copy_test_path:sumo.nod.xml
-copy_test_path:sumo.tll.xml
-copy_test_path:sumo.net.xml
-
-copy_test_path:netccfg.con.xml
-copy_test_path:netccfg.edg.xml
-copy_test_path:netccfg.nod.xml
-copy_test_path:netccfg.tll.xml
-copy_test_path:netccfg.net.xml
-
-copy_test_path:net.con.xml
-copy_test_path:net.edg.xml
-copy_test_path:net.nod.xml
-copy_test_path:net.tll.xml
-copy_test_path:net.net.xml
-
-copy_test_path:net2.con.xml
-copy_test_path:net2.edg.xml
-copy_test_path:net2.nod.xml
-copy_test_path:net2.tll.xml
-copy_test_path:net2.net.xml
-
-copy_test_path:net.net.xml.gz
-copy_test_path:net.xml
-copy_test_path:net.xml.gz
-copy_test_path:net.txt
-
-copy_test_path:trafficlights.tll.xml
-copy_test_path:trafficlights2.tll.xml
-copy_test_path:trafficlights2.tll.xml.gz
-copy_test_path:trafficlights2.xml
-copy_test_path:trafficlights2.xml.gz
-copy_test_path:trafficlights2.txt
-copy_test_path:trafficlights3.tll.xml
-
-copy_test_path:edgetypes.typ.xml
-copy_test_path:edgetypes2.typ.xml
-copy_test_path:edgetypes2.typ.xml.gz
-copy_test_path:edgetypes2.xml
-copy_test_path:edgetypes2.xml.gz
-copy_test_path:edgetypes2.txt
-copy_test_path:edgetypes3.typ.xml
-
-copy_test_path:additionals.add.xml
-copy_test_path:additionals2.add.xml
-copy_test_path:additionals2.add.xml.gz
-copy_test_path:additionals2.xml
-copy_test_path:additionals2.xml.gz
-copy_test_path:additionals2.txt
-copy_test_path:additionals3.add.xml
-
-copy_test_path:routes.rou.xml
-copy_test_path:routes2.rou.xml
-copy_test_path:routes2.rou.xml.gz
-copy_test_path:routes2.xml
-copy_test_path:routes2.xml.gz
-copy_test_path:routes2.txt
-copy_test_path:routes3.rou.xml
-
-copy_test_path:datas.dat.xml
-copy_test_path:datas2.dat.xml
-copy_test_path:datas2.dat.xml.gz
-copy_test_path:datas2.xml
-copy_test_path:datas2.xml.gz
-copy_test_path:datas2.txt
-copy_test_path:datas3.dat.xml
-
-copy_test_path:meandatas.dat.add.xml
-copy_test_path:meandatas2.dat.add.xml
-copy_test_path:meandatas2.dat.add.xml.gz
-copy_test_path:meandatas2.dat.xml
-copy_test_path:meandatas2.dat.xml.gz
-copy_test_path:meandatas2.dat.txt
-copy_test_path:meandatas3.dat.add.xml
-
-copy_test_path:vtypes.rou.xml
-
+copy_test_path:input_guisettings.xml
 copy_test_path:berlin_icon.ico
 copy_test_path:fileA.txt
 copy_test_path:fileB.txt
@@ -112,135 +160,182 @@ copy_test_path:loadViewport.xml
 
 [collate_file]
 
-netedit2:netedit2.netecfg
-netedit2_xml:netedit2.xml
-netedit2_xml_gz:netedit2.xml.gz
-netedit2_txt:netedit2.txt
-netedit3:netedit3.netecfg
+# CONFIGS
+netedit_A:netedit_A.netecfg
+netedit_B:netedit_B.netecfg
+netedit_B_xml:netedit_B.xml
+netedit_B_txt:netedit_B.txt
 
-sumo2:sumo2.sumocfg
-sumo2_xml:sumo2.xml
-sumo2_xml_gz:sumo2.xml.gz
-sumo2_txt:sumo2.txt
-sumo3:sumo3.sumocfg
+sumo:sumo.sumocfg
+sumo_A:sumo_A.sumocfg
+sumo_B:sumo_B.sumocfg
+sumo_B_xml:sumo_B.xml
+sumo_B_txt:sumo_B.txt
 
-config2:config2.netecfg
-config3:config3.netecfg
+netconvert_A:netconvert_A.netccfg
+netconvert_B:netconvert_B.netccfg
+netconvert_B_xml:netconvert_B.xml
+netconvert_B_txt:netconvert_B.txt
 
-netcon:net.con.xml
-netedg:net.edg.xml
-netnod:net.nod.xml
-nettll:net.tll.xml
-nettyp:net.typ.xml
+# NETWORKS
+netedit_A_net_xml:netedit_A.net.xml
+netedit_B_net_xml:netedit_B.net.xml
 
-netcon2:net2.con.xml
-netedg2:net2.edg.xml
-netnod2:net2.nod.xml
-nettll2:net2.tll.xml
-nettyp2:net2.typ.xml
+input_net_A_net_xml:input_net_A.net.xml
+input_net_A_xml_gz:input_net_A.net.xml.gz
+input_net_A_xml:input_net_A.xml
+input_net_A_txt:input_net_A.txt
 
-netcon3:net3.con.xml
-netedg3:net3.edg.xml
-netnod3:net3.nod.xml
-nettll3:net3.tll.xml
-nettyp3:net3.typ.xml
+input_net_B_net_xml:input_net_B.net.xml
+input_net_B_xml_gz:input_net_B.net.xml.gz
+input_net_B_xml:input_net_B.xml
+input_net_B_txt:input_net_B.txt
 
-net:net.net.xml
-net_net_xml:net2.net.xml
-net_net_xml_gz:net2.net.xml.gz
-net_xml:net2.xml
-net_xml_gz:net2.xml.gz
-net_txt:net2.txt
+# NETCONVERT FILES
+netconvert_A_con_xml:netconvert_A.con.xml
+netconvert_A_edg_xml:netconvert_A.edg.xml
+netconvert_A_nod_xml:netconvert_A.nod.xml
+netconvert_A_tll_xml:netconvert_A.tll.xml
 
-net3:net3.net.xml
+input_netconvert_A_con_xml:input_netconvert_A.con.xml
+input_netconvert_A_edg_xml:input_netconvert_A.edg.xml
+input_netconvert_A_nod_xml:input_netconvert_A.nod.xml
+input_netconvert_A_tll_xml:input_netconvert_A.tll.xml
 
-trafficlights:trafficlights.tll.xml
+input_netconvert_B_con_xml:input_netconvert_B.con.xml
+input_netconvert_B_edg_xml:input_netconvert_B.edg.xml
+input_netconvert_B_nod_xml:input_netconvert_B.nod.xml
+input_netconvert_B_tll_xml:input_netconvert_B.tll.xml
 
-trafficlights_ttl_xml:trafficlights2.tll.xml
-trafficlights_ttl_xml_gz:trafficlights2.tll.xml.gz
-trafficlights_xml:trafficlights2.xml
-trafficlights_xml_gz:trafficlights2.xml.gz
-trafficlights_txt:trafficlights2.txt
+# ADDITIONALS
+netedit_A_add_xml:netedit_A.add.xml
+netedit_B_add_xml:netedit_B.add.xml
 
-trafficlights3:trafficlights3.tll.xml
+sumo_A_add_xml:sumo_A.add.xml
+sumo_B_add_xml:sumo_B.add.xml
 
-edgetypes:edgetypes.typ.xml
+input_additionals_A_add_xml:input_additionals_A.add.xml
+input_additionals_A_add_xml_gz:input_additionals_A.add.xml.gz
+input_additionals_A_xml:input_additionals_A.xml
+input_additionals_A_xml_gz:input_additionals_A.xml.gz
+input_additionals_A_txt:input_additionals_A.txt
 
-edgetypes_typ_xml:edgetypes2.typ.xml
-edgetypes_typ_xml_gz:edgetypes2.typ.xml.gz
-edgetypes_xml:edgetypes2.xml
-edgetypes_xml_gz:edgetypes2.xml.gz
-edgetypes_txt:edgetypes2.txt
+input_additionals_B_add_xml:input_additionals_B.add.xml
+input_additionals_B_add_xml_gz:input_additionals_B.add.xml.gz
+input_additionals_B_xml:input_additionals_B.xml
+input_additionals_B_xml_gz:input_additionals_B.xml.gz
+input_additionals_B_txt:input_additionals_B.txt
 
-edgetypes3:edgetypes3.typ.xml
+jupedsims_A_add_xml:jupedsims_A.add.xml
+jupedsims_A_add_xml_gz:jupedsims_A.add.xml.gz
+jupedsims_A_xml:jupedsims_A.xml
+jupedsims_A_xml_gz:jupedsims_A.xml.gz
+jupedsims_A_txt:jupedsims_A.txt
 
-additionals:additionals.add.xml
+jupedsims_B_add_xml:jupedsims_B.add.xml
+jupedsims_B_add_xml_gz:jupedsims_B.add.xml.gz
+jupedsims_B_xml:jupedsims_B.xml
+jupedsims_B_xml_gz:jupedsims_B.xml.gz
+jupedsims_B_txt:jupedsims_B.txt
 
-additionals_add_xml:additionals2.add.xml
-additionals_add_xml_gz:additionals2.add.xml.gz
-additionals_xml:additionals2.xml
-additionals_xml_gz:additionals2.xml.gz
-additionals_txt:additionals2.txt
+# ROUTES
+netedit_A_rou_xml:netedit_A.rou.xml
+netedit_B_rou_xml:netedit_B.rou.xml
 
-additionals3:additionals3.add.xml
-additionalsconfig2:sumo2.add.xml
-additionalsconfig3:sumo3.add.xml
-additionalsconfig2:netedit2.add.xml
-additionalsconfig3:netedit3.add.xml
+sumo_A_rou_xml:sumo_A.rou.xml
+sumo_B_rou_xml:sumo_B.rou.xml
 
-routes:routes.rou.xml
+input_routes_A_rou_xml:input_routes_A.rou.xml
+input_routes_A_rou_xml_gz:input_routes_A.rou.xml.gz
+input_routes_A_xml:input_routes_A.xml
+input_routes_A_xml_gz:input_routes_A.xml.gz
+input_routes_A_txt:input_routes_A.txt
 
-routes_rou_xml:routes2.rou.xml
-routes_rou_xml_gz:routes2.rou.xml.gz
-routes_xml:routes2.xml
-routes_xml_gz:routes2.xml.gz
-routes_txt:routes2.txt
+input_routes_B_rou_xml:input_routes_B.rou.xml
+input_routes_B_rou_xml_gz:input_routes_B.rou.xml.gz
+input_routes_B_xml:input_routes_B.xml
+input_routes_B_xml_gz:input_routes_B.xml.gz
+input_routes_B_txt:input_routes_B.txt
 
-routes3:routes3.rou.xml
+# DATAS
+netedit_A_dat_xml:netedit_A.dat.xml
+netedit_B_dat_xml:netedit_B.dat.xml
 
-routesconfig2:sumo2.rou.xml
-routesconfig3:sumo3.rou.xml
-routesconfig2:netedit2.rou.xml
-routesconfig2:netedit3.rou.xml
+sumo_A_dat_xml:sumo_A.dat.xml
+sumo_B_dat_xml:sumo_B.dat.xml
 
-datas:datas.dat.xml
+input_datas_A_dat_xml:input_datas_A.dat.xml
+input_datas_A_dat_xml_gz:input_datas_A.dat.xml.gz
+input_datas_A_xml:input_datas_A.xml
+input_datas_A_xml_gz:input_datas_A.xml.gz
+input_datas_A_txt:input_datas_A.txt
 
-datas_dat_xml:datas2.dat.xml
-datas_dat_xml_gz:datas2.dat.xml.gz
-datas_xml:datas2.xml
-datas_xml_gz:datas2.xml.gz
-datas_txt:datas2.txt
+input_datas_B_dat_xml:input_datas_B.dat.xml
+input_datas_B_dat_xml_gz:input_datas_B.dat.xml.gz
+input_datas_B_xml:input_datas_B.xml
+input_datas_B_xml_gz:input_datas_B.xml.gz
+input_datas_B_txt:input_datas_B.txt
 
-datas3:datas3.dat.xml
+# MEANDATAS
+netedit_A_dat_add_xml:netedit_A.dat.add.xml
+netedit_B_dat_add_xml:netedit_B.dat.add.xml
 
-datasconfig2:sumo2.dat.xml
-datasconfig3:sumo3.dat.xml
-datasconfig2:netedit2.dat.xml
-datasconfig3:netedit3.dat.xml
+sumo_A_dat_add_xml:sumo_A.dat.add.xml
+sumo_B_dat_add_xml:sumo_B.dat.add.xml
 
-meandatas:meandatas.dat.add.xml
+input_meandatas_A_add_xml:input_meandatas_A.add.xml
+input_meandatas_A_add_xml_gz:input_meandatas_A.add.xml.gz
+input_meandatas_A_xml:input_meandatas_A.xml
+input_meandatas_A_xml_gz:input_meandatas_A.xml.gz
+input_meandatas_A_txt:input_meandatas_A.txt
 
-meandatas_add_xml:meandatas2.dat.add.xml
-meandatas_add_xml_gz:meandatas2.dat.add.xml.gz
-meandatas_xml:meandatas2.dat.xml
-meandatas_xml_gz:meandatas2.dat.xml.gz
-meandatas_txt:meandatas2.dat.txt
+input_meandatas_B_add_xml:input_meandatas_B.add.xml
+input_meandatas_B_add_xml_gz:input_meandatas_B.add.xml.gz
+input_meandatas_B_xml:input_meandatas_B.xml
+input_meandatas_B_xml_gz:input_meandatas_B.xml.gz
+input_meandatas_B_txt:input_meandatas_B.txt
 
-meandatas3:meandatas3.dat.add.xml
+# TRAFFIC LIGHTS
+trafficlights_A_ttl_xml:trafficlights_A.tll.xml
+trafficlights_A_ttl_xml_gz:trafficlights_A.tll.xml.gz
+trafficlights_A_xml:trafficlights_A.xml
+trafficlights_A_xml_gz:trafficlights_A.xml.gz
+trafficlights_A_txt:trafficlights_A.txt
 
-meandatasconfig2:sumo2.dat.add.xml
-meandatasconfig3:sumo3.dat.add.xml
-meandatasconfig2:netedit2.dat.add.xml
-meandatasconfig3:netedit3.dat.add.xml
+trafficlights_B_ttl_xml:trafficlights_B.tll.xml
+trafficlights_B_ttl_xml_gz:trafficlights_B.tll.xml.gz
+trafficlights_B_xml:trafficlights_B.xml
+trafficlights_B_xml_gz:trafficlights_B.xml.gz
+trafficlights_B_txt:trafficlights_B.txt
 
-joinedjunctions_nod_xml:joinedjunctions2.nod.xml
-joinedjunctions_nod_xml_gz:joinedjunctions2.nod.xml.gz
-joinedjunctions_xml:joinedjunctions2.xml
-joinedjunctions_xml_gz:joinedjunctions2.xml.gz
-joinedjunctions_txt:joinedjunctions2.txt
+# EDGETYPES
+edgetypes_A_typ_xml:edgetypes_A.typ.xml
+edgetypes_A_typ_xml_gz:edgetypes_A.typ.xml.gz
+edgetypes_A_xml:edgetypes_A.xml
+edgetypes_A_xml_gz:edgetypes_A.xml.gz
+edgetypes_A_txt:edgetypes_A.txt
 
-guisettingsoutput:guisettingsoutput.xml
-cfg:config.cfg
+edgetypes_B_typ_xml:edgetypes_B.typ.xml
+edgetypes_B_typ_xml_gz:edgetypes_B.typ.xml.gz
+edgetypes_B_xml:edgetypes_B.xml
+edgetypes_B_xml_gz:edgetypes_B.xml.gz
+edgetypes_B_txt:edgetypes_B.txt
+
+# JOINED JUNCTIONS
+joinedjunctions_A_nod_xml:joinedjunctions_A.nod.xml
+joinedjunctions_A_nod_xml_gz:joinedjunctions_A.nod.xml.gz
+joinedjunctions_A_xml:joinedjunctions_A.xml
+joinedjunctions_A_xml_gz:joinedjunctions_A.xml.gz
+joinedjunctions_A_txt:joinedjunctions_A.txt
+
+joinedjunctions_B_nod_xml:joinedjunctions_B.nod.xml
+joinedjunctions_B_nod_xml_gz:joinedjunctions_B.nod.xml.gz
+joinedjunctions_B_xml:joinedjunctions_B.xml
+joinedjunctions_B_xml_gz:joinedjunctions_B.xml.gz
+joinedjunctions_B_txt:joinedjunctions_B.txt
+
+# OTHER
+guisettings:guisettings.xml
 log:log.txt
 selection:selection.txt
 errorScreenshot:errorScreenshot.png
@@ -248,154 +343,256 @@ viewport:viewport.xml
 
 [run_dependent_text]
 
-net:<!--{[->]}-->
-net:\\{REPLACE /}
+# CONFIGS
+netedit_A:<!-- generated{[->]}-->
+netedit_A:\\{REPLACE /}
+netedit_B:<!-- generated{[->]}-->
+netedit_B:\\{REPLACE /}
+netedit_B_xml:<!-- generated{[->]}-->
+netedit_B_xml:\\{REPLACE /}
+netedit_B_txt:<!-- generated{[->]}-->
+netedit_B_txt:\\{REPLACE /}
 
-net_net_xml:<!--{[->]}-->
-net_net_xml:\\{REPLACE /}
-net_net_xml_gz:
-net_xml:<!--{[->]}-->
-net_xml:\\{REPLACE /}
-net_xml_gz:
-net_txt:<!--{[->]}-->
-net_txt:\\{REPLACE /}
+sumo_A:<!-- generated{[->]}-->
+sumo_A:\\{REPLACE /}
+sumo_B:<!-- generated{[->]}-->
+sumo_B:\\{REPLACE /}
+sumo_B_xml:<!-- generated{[->]}-->
+sumo_B_xml:\\{REPLACE /}
+sumo_B_txt:<!-- generated{[->]}-->
+sumo_B_txt:\\{REPLACE /}
 
-net3:<!--{[->]}-->
-net3:\\{REPLACE /}
+sumo:<!-- generated{[->]}-->
+sumo:\\{REPLACE /}
 
-trafficlights_ttl_xml:<!--{[->]}-->
-trafficlights_ttl_xml:\\{REPLACE /}
-trafficlights_ttl_xml_gz:
-trafficlights_xml:<!--{[->]}-->
-trafficlights_xml:\\{REPLACE /}
-trafficlights_xml_gz:
-trafficlights_txt:<!--{[->]}-->
-trafficlights_txt:\\{REPLACE /}
+netconvert_A:<!-- generated{[->]}-->
+netconvert_A:\\{REPLACE /}
+netconvert_B:<!-- generated{[->]}-->
+netconvert_B:\\{REPLACE /}
 
-edgetypes_typ_xml:<!--{[->]}-->
-edgetypes_typ_xml:\\{REPLACE /}
-edgetypes_typ_xml_gz:
-edgetypes_xml:<!--{[->]}-->
-edgetypes_xml:\\{REPLACE /}
-edgetypes_xml_gz:
-edgetypes_txt:<!--{[->]}-->
-edgetypes_txt:\\{REPLACE /}
+# NETWORKS
 
-additionals:<!-- generated{[->]}-->
-additionals:\\{REPLACE /}
+netedit_A_net_xml:<!-- generated{[->]}-->
+netedit_A_net_xml:\{REPLACE /}
+netedit_B_net_xml:<!-- generated{[->]}-->
+netedit_B_net_xml:\{REPLACE /}
 
-additionals_add_xml:<!-- generated{[->]}-->
-additionals_add_xml:\\{REPLACE /}
-additionals_add_xml_gz:
-additionals_xml:<!-- generated{[->]}-->
-additionals_xml:\\{REPLACE /}
-additionals_xml_gz:
-additionals_txt:<!-- generated{[->]}-->
-additionals_txt:\\{REPLACE /}
+sumo_A_net_xml:<!-- generated{[->]}-->
+sumo_A_net_xml:\{REPLACE /}
+sumo_B_net_xml:<!-- generated{[->]}-->
+sumo_B_net_xml:\{REPLACE /}
 
-additionals3:<!-- generated{[->]}-->
-additionals3:\\{REPLACE /}
+input_net_A_net_xml:<!-- generated{[->]}-->
+input_net_A_net_xml:\\{REPLACE /}
+input_net_A_xml_gz:
+input_net_A_xml:<!-- generated{[->]}-->
+input_net_A_xml:\\{REPLACE /}
+input_net_A_txt:<!-- generated{[->]}-->
+input_net_A_txt:\\{REPLACE /}
 
-additionalsconfig2:<!-- generated{[->]}-->
-additionalsconfig2:\\{REPLACE /}
+input_net_B_net_xml:<!-- generated{[->]}-->
+input_net_B_net_xml:\\{REPLACE /}
+input_net_B_xml_gz:
+input_net_B_xml:<!-- generated{[->]}-->
+input_net_B_xml:\\{REPLACE /}
+input_net_B_txt:<!-- generated{[->]}-->
+input_net_B_txt:\\{REPLACE /}
 
-additionalsconfig3:<!-- generated{[->]}-->
-additionalsconfig3:\\{REPLACE /}
+# ADDITIONALS
+netedit_A_add_xml:<!-- generated{[->]}-->
+netedit_A_add_xml:\{REPLACE /}
+netedit_B_add_xml:<!-- generated{[->]}-->
+netedit_B_add_xml:\{REPLACE /}
 
-routes:<!-- generated{[->]}-->
-routes:\\{REPLACE /}
+sumo_A_add_xml:<!-- generated{[->]}-->
+sumo_A_add_xml:\{REPLACE /}
+sumo_B_add_xml:<!-- generated{[->]}-->
+sumo_B_add_xml:\{REPLACE /}
 
-routes_rou_xml:<!-- generated{[->]}-->
-routes_rou_xml:\\{REPLACE /}
-routes_rou_xml_gz:
-routes_xml:<!-- generated{[->]}-->
-routes_xml:\\{REPLACE /}
-routes_xml_gz:
-routes_txt:<!-- generated{[->]}-->
-routes_txt:\\{REPLACE /}
+input_additionals_A_add_xml:<!-- generated{[->]}-->
+input_additionals_A_add_xml:\\{REPLACE /}
+input_additionals_A_add_xml_gz:
+input_additionals_A_xml:<!-- generated{[->]}-->
+input_additionals_A_xml:\\{REPLACE /}
+input_additionals_A_xml_gz:
+input_additionals_A_txt:<!-- generated{[->]}-->
+input_additionals_A_txt:\\{REPLACE /}
 
-routes3:<!-- generated{[->]}-->
-routes3:\\{REPLACE /}
+input_additionals_B_add_xml:<!-- generated{[->]}-->
+input_additionals_B_add_xml:\\{REPLACE /}
+input_additionals_B_add_xml_gz:
+input_additionals_B_xml:<!-- generated{[->]}-->
+input_additionals_B_xml:\\{REPLACE /}
+input_additionals_B_xml_gz:
+input_additionals_B_txt:<!-- generated{[->]}-->
+input_additionals_B_txt:\\{REPLACE /}
 
-routesconfig2:<!-- generated{[->]}-->
-routesconfig2:\\{REPLACE /}
+jupedsims_A_add_xml:<!-- generated{[->]}-->
+jupedsims_A_add_xml:\\{REPLACE /}
+jupedsims_A_add_xml_gz:
+jupedsims_A_xml:<!-- generated{[->]}-->
+jupedsims_A_xml:\\{REPLACE /}
+jupedsims_A_xml_gz:
+jupedsims_A_txt:<!-- generated{[->]}-->
+jupedsims_A_txt:\\{REPLACE /}
 
-routesconfig3:<!-- generated{[->]}-->
-routesconfig3:\\{REPLACE /}
+jupedsims_B_add_xml:<!-- generated{[->]}-->
+jupedsims_B_add_xml:\\{REPLACE /}
+jupedsims_B_add_xml_gz:
+jupedsims_B_xml:<!-- generated{[->]}-->
+jupedsims_B_xml:\\{REPLACE /}
+jupedsims_B_xml_gz:
+jupedsims_B_txt:<!-- generated{[->]}-->
+jupedsims_B_txt:\\{REPLACE /}
 
-datas:<!-- generated{[->]}-->
-datas:\\{REPLACE /}
+# ROUTES
+netedit_A_rou_xml:<!-- generated{[->]}-->
+netedit_A_rou_xml:\{REPLACE /}
+netedit_B_rou_xml:<!-- generated{[->]}-->
+netedit_B_rou_xml:\{REPLACE /}
 
-datas_dat_xml:<!-- generated{[->]}-->
-datas_dat_xml:\\{REPLACE /}
-datas_dat_xml_gz:
-datas_xml:<!-- generated{[->]}-->
-datas_xml:\\{REPLACE /}
-datas_xml_gz:
-datas_txt:<!-- generated{[->]}-->
-datas_txt:\\{REPLACE /}
+sumo_A_rou_xml:<!-- generated{[->]}-->
+sumo_A_rou_xml:\{REPLACE /}
+sumo_B_rou_xml:<!-- generated{[->]}-->
+sumo_B_rou_xml:\{REPLACE /}
 
-datas3:<!-- generated{[->]}-->
-datas3:\\{REPLACE /}
+input_routes_A_rou_xml:<!-- generated{[->]}-->
+input_routes_A_rou_xml:\\{REPLACE /}
+input_routes_A_rou_xml_gz:
+input_routes_A_xml:<!-- generated{[->]}-->
+input_routes_A_xml:\\{REPLACE /}
+input_routes_A_xml_gz:
+input_routes_A_txt:<!-- generated{[->]}-->
+input_routes_A_txt:\\{REPLACE /}
 
-datasconfig2:<!-- generated{[->]}-->
-datasconfig2:\\{REPLACE /}
+input_routes_B_rou_xml:<!-- generated{[->]}-->
+input_routes_B_rou_xml:\\{REPLACE /}
+input_routes_B_rou_xml_gz:
+input_routes_B_xml:<!-- generated{[->]}-->
+input_routes_B_xml:\\{REPLACE /}
+input_routes_B_xml_gz:
+input_routes_B_txt:<!-- generated{[->]}-->
+input_routes_B_txt:\\{REPLACE /}
 
-datasconfig3:<!-- generated{[->]}-->
-datasconfig3:\\{REPLACE /}
+# DATAS
+netedit_A_dat_xml:<!-- generated{[->]}-->
+netedit_A_dat_xml:\{REPLACE /}
+netedit_B_dat_xml:<!-- generated{[->]}-->
+netedit_B_dat_xml:\{REPLACE /}
 
-meandatas:<!-- generated{[->]}-->
-meandatas:\\{REPLACE /}
+sumo_A_dat_xml:<!-- generated{[->]}-->
+sumo_A_dat_xml:\{REPLACE /}
+sumo_B_dat_xml:<!-- generated{[->]}-->
+sumo_B_dat_xml:\{REPLACE /}
 
-meandatas_add_xml:<!-- generated{[->]}-->
-meandatas_add_xml:\\{REPLACE /}
-meandatas_add_xml_gz:
-meandatas_xml:<!-- generated{[->]}-->
-meandatas_xml:\\{REPLACE /}
-meandatas_xml_gz:
-meandatas_txt:<!-- generated{[->]}-->
-meandatas_txt:\\{REPLACE /}
+input_datas_A_dat_xml:<!-- generated{[->]}-->
+input_datas_A_dat_xml:\\{REPLACE /}
+input_datas_A_dat_xml_gz:
+input_datas_A_xml:<!-- generated{[->]}-->
+input_datas_A_xml:\\{REPLACE /}
+input_datas_A_xml_gz:
+input_datas_A_txt:<!-- generated{[->]}-->
+input_datas_A_txt:\\{REPLACE /}
 
-meandatas3:<!-- generated{[->]}-->
-meandatas3:\\{REPLACE /}
+input_datas_B_dat_xml:<!-- generated{[->]}-->
+input_datas_B_dat_xml:\\{REPLACE /}
+input_datas_B_dat_xml_gz:
+input_datas_B_xml:<!-- generated{[->]}-->
+input_datas_B_xml:\\{REPLACE /}
+input_datas_B_xml_gz:
+input_datas_B_txt:<!-- generated{[->]}-->
+input_datas_B_txt:\\{REPLACE /}
 
-meandatasconfig2:<!-- generated{[->]}-->
-meandatasconfig2:\\{REPLACE /}
+# MEANDATAS
+netedit_A_dat_add_xml:<!-- generated{[->]}-->
+netedit_A_dat_add_xml:\{REPLACE /}
+netedit_B_dat_add_xml:<!-- generated{[->]}-->
+netedit_B_dat_add_xml:\{REPLACE /}
 
-meandatasconfig3:<!-- generated{[->]}-->
-meandatasconfig3:\\{REPLACE /}
+sumo_A_dat_add_xml:<!-- generated{[->]}-->
+sumo_A_dat_add_xml:\{REPLACE /}
+sumo_B_dat_add_xml:<!-- generated{[->]}-->
+sumo_B_dat_add_xml:\{REPLACE /}
 
-netcon:<!--{[->]}-->
-netedg:<!--{[->]}-->
-netnod:<!--{[->]}-->
-nettll:<!--{[->]}-->
-nettyp:<!--{[->]}-->
+input_meandatas_A_add_xml:<!-- generated{[->]}-->
+input_meandatas_A_add_xml:\\{REPLACE /}
+input_meandatas_A_add_xml_gz:
+input_meandatas_A_xml:<!-- generated{[->]}-->
+input_meandatas_A_xml:\\{REPLACE /}
+input_meandatas_A_xml_gz:
+input_meandatas_A_txt:<!-- generated{[->]}-->
+input_meandatas_A_txt:\\{REPLACE /}
 
-netcon2:<!--{[->]}-->
-netedg2:<!--{[->]}-->
-netnod2:<!--{[->]}-->
-nettll2:<!--{[->]}-->
-nettyp2:<!--{[->]}-->
+input_meandatas_B_add_xml:<!-- generated{[->]}-->
+input_meandatas_B_add_xml:\\{REPLACE /}
+input_meandatas_B_add_xml_gz:
+input_meandatas_B_xml:<!-- generated{[->]}-->
+input_meandatas_B_xml:\\{REPLACE /}
+input_meandatas_B_xml_gz:
+input_meandatas_B_txt:<!-- generated{[->]}-->
+input_meandatas_B_txt:\\{REPLACE /}
 
-netedit2:<!--{[->]}-->
-netedit2_xml:<!--{[->]}-->
-netedit2_txt:<!--{[->]}-->
-netedit3:<!--{[->]}-->
+# TRAFFIC LIGHTS
+trafficlights_A_ttl_xml:<!--{[->]}-->
+trafficlights_A_ttl_xml:\\{REPLACE /}
+trafficlights_A_ttl_xml_gz:
+trafficlights_A_xml:<!--{[->]}-->
+trafficlights_A_xml:\\{REPLACE /}
+trafficlights_A_xml_gz:
+trafficlights_A_txt:<!--{[->]}-->
+trafficlights_A_txt:\\{REPLACE /}
 
-sumo2:<!--{[->]}-->
-sumo2_xml:<!--{[->]}-->
-sumo2_txt:<!--{[->]}-->
-sumo3:<!--{[->]}-->
+trafficlights_B_ttl_xml:<!--{[->]}-->
+trafficlights_B_ttl_xml:\\{REPLACE /}
+trafficlights_B_ttl_xml_gz:
+trafficlights_B_xml:<!--{[->]}-->
+trafficlights_B_xml:\\{REPLACE /}
+trafficlights_B_xml_gz:
+trafficlights_B_txt:<!--{[->]}-->
+trafficlights_B_txt:\\{REPLACE /}
 
-config2:<!--{[->]}-->
-config3:<!--{[->]}-->
+# EDGE TYPES
+edgetypes_A_typ_xml:<!--{[->]}-->
+edgetypes_A_typ_xml:\\{REPLACE /}
+edgetypes_A_typ_xml_gz:
+edgetypes_A_xml:<!--{[->]}-->
+edgetypes_A_xml:\\{REPLACE /}
+edgetypes_A_xml_gz:
+edgetypes_A_txt:<!--{[->]}-->
+edgetypes_A_txt:\\{REPLACE /}
 
-joinedjunctions_nod_xml:<!--{[->]}-->
-joinedjunctions_nod_xml_gz:
-joinedjunctions_xml:<!--{[->]}-->
-joinedjunctions_xml_gz:
-joinedjunctions_txt:<!--{[->]}-->
+edgetypes_B_typ_xml:<!--{[->]}-->
+edgetypes_B_typ_xml:\\{REPLACE /}
+edgetypes_B_typ_xml_gz:
+edgetypes_B_xml:<!--{[->]}-->
+edgetypes_B_xml:\\{REPLACE /}
+edgetypes_B_xml_gz:
+edgetypes_B_txt:<!--{[->]}-->
+edgetypes_B_txt:\\{REPLACE /}
 
+# JOINED JUNCTIONS
+joinedjunctions_A_nod_xml:<!--{[->]}-->
+joinedjunctions_A_nod_xml:\\{REPLACE /}
+joinedjunctions_A_nod_xml_gz:
+joinedjunctions_A_xml:<!--{[->]}-->
+joinedjunctions_A_xml:\\{REPLACE /}
+joinedjunctions_A_xml_gz:
+joinedjunctions_A_txt:<!--{[->]}-->
+joinedjunctions_A_txt:\\{REPLACE /}
+
+joinedjunctions_B_nod_xml:<!--{[->]}-->
+joinedjunctions_B_nod_xml:\\{REPLACE /}
+joinedjunctions_B_nod_xml_gz:
+joinedjunctions_B_xml:<!--{[->]}-->
+joinedjunctions_B_xml:\\{REPLACE /}
+joinedjunctions_B_xml_gz:
+joinedjunctions_B_txt:<!--{[->]}-->
+joinedjunctions_B_txt:\\{REPLACE /}
+
+# OTHER
+guisettings:<scheme{[->]}</scheme>
+
+# OUTPUT
 output:\[log\]
 output:\[info\]
 output:+++
@@ -407,8 +604,7 @@ output:vm3dgl: Unable to acquire VMware SVGA 3D display device.
 output:vm3dgl: Failed to initialize svga driver.
 output:vm3dgl: Falling back to LLVMPipe.
 
-guisettingsoutput:<scheme{[->]}</scheme>
-
+# ERROR
 errors:Leaked object at
 errors:*** 9 leaks found
 errors:delete: freed
@@ -423,14 +619,14 @@ errors:\\{REPLACE /}
 errors:avx512er{LINES 1}
 errors:avx512pf{LINES 1}
 
+# LOG
 log:\\{REPLACE /}
 log:Discarding invalid crossing{LINES 1}
 log:Invalid pedestrian topology{LINES 1}
 
-
 [floating_point_tolerance]
-net:0.0101
+input_net_A_net_xml:0.0101
 output:0.0101
 errors:0.0101
-additionals:0.0101
+meandatas:0.0101
 routes:0.0101

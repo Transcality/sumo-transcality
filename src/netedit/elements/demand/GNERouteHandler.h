@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -47,13 +47,10 @@ class GNERouteHandler : public RouteHandler {
 
 public:
     /// @brief Constructor
-    GNERouteHandler(GNENet* net, const std::string& file, const bool allowUndoRedo);
+    GNERouteHandler(GNENet* net, FileBucket* bucket, const bool allowUndoRedo, const bool removeEmptyPersons);
 
     /// @brief Destructor
     virtual ~GNERouteHandler();
-
-    /// @brief run post parser tasks
-    bool postParserTasks();
 
     /// @name build functions
     /// @{
@@ -310,7 +307,10 @@ private:
     std::set<GNEDemandElement*> myParentPlanElements;
 
     /// @brief allow undo/redo
-    const bool myAllowUndoRedo;
+    const bool myAllowUndoRedo = false;
+
+    /// @brief check if remove empty persons
+    const bool myRemoveEmptyPersons = false;
 
     /// @brief invalidate default onstructor
     GNERouteHandler() = delete;

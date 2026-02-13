@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -40,13 +40,10 @@ class GNEAdditionalHandler : public AdditionalHandler {
 
 public:
     /// @brief Constructor
-    GNEAdditionalHandler(GNENet* net, const std::string& filename, const bool allowUndoRedo);
+    GNEAdditionalHandler(GNENet* net, FileBucket* fileBucket, const bool allowUndoRedo);
 
     /// @brief Destructor
     ~GNEAdditionalHandler();
-
-    /// @brief run post parser tasks
-    bool postParserTasks();
 
     /// @name build functions
     /// @{

@@ -1,5 +1,5 @@
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -48,6 +48,7 @@ except ImportError:
 import sumolib
 from . import lane, edge, netshiftadaptor, node, connection, roundabout  # noqa
 from .connection import Connection
+from sumolib.miscutils import intIfPossible
 
 
 class TLS:
@@ -709,7 +710,7 @@ class Net:
         return self.getOptimalPath(fromEdge, toEdge, True, maxCost, vClass, reversalPenalty,
                                    includeFromToCost, withInternal, ignoreDirection, fromPos, toPos)
 
-    def getReachable(self, source, vclass=None, useIncoming=False):
+    def getReachable(self, source, vclass=None, useIncoming=False, cache=None):
         if vclass is not None and not source.allows(vclass):
             raise RuntimeError("'{}' does not allow {}".format(source.getID(), vclass))
         fringe = [source]
@@ -730,9 +731,14 @@ class Net:
                         for reachable in [conn.getTo(), conn.getFrom()]:
                             if reachable not in found:
                                 # print("added %s via %s" % (reachable, conn))
-                                found.add(reachable)
-                                new_fringe.append(reachable)
+                                if cache and reachable in cache:
+                                    found.update(cache[reachable])
+                                else:
+                                    found.add(reachable)
+                                    new_fringe.append(reachable)
             fringe = new_fringe
+        if cache is not None:
+            cache[source] = tuple(found)
         return found
 
 
@@ -909,12 +915,14 @@ class NetReader(handler.ContentHandler):
         # netconvert... (Leo)
         elif self._withPhases and name == 'tlLogic':
             self._currentProgram = self._net.addTLSProgram(
-                attrs['id'], attrs['programID'], float(attrs['offset']), attrs['type'], self._latestProgram)
+                attrs['id'], attrs['programID'],
+                intIfPossible(float(attrs['offset'])), attrs['type'], self._latestProgram)
         elif self._withPhases and name == 'phase':
             self._currentProgram.addPhase(
-                attrs['state'], int(attrs['duration']),
-                int(attrs['minDur']) if 'minDur' in attrs else -1,
-                int(attrs['maxDur']) if 'maxDur' in attrs else -1,
+                attrs['state'],
+                intIfPossible(float(attrs['duration'])),
+                intIfPossible(float(attrs['minDur'])) if 'minDur' in attrs else -1,
+                intIfPossible(float(attrs['maxDur'])) if 'maxDur' in attrs else -1,
                 list(map(int, attrs['next'].split())) if 'next' in attrs else [],
                 attrs['name'] if 'name' in attrs else ""
             )

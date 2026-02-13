@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -64,7 +64,7 @@ OptionsCont::getOptions() {
 
 
 OptionsCont::OptionsCont() {
-    myCopyrightNotices.push_back(TL("Copyright (C) 2001-2025 German Aerospace Center (DLR) and others; https://sumo.dlr.de"));
+    myCopyrightNotices.push_back(TL("Copyright (C) 2001-2026 German Aerospace Center (DLR) and others; https://sumo.dlr.de"));
 }
 
 
@@ -486,8 +486,14 @@ OptionsCont::resetDefault(const std::string& name) {
 
 bool
 OptionsCont::isWriteable(const std::string& name) {
-    Option* o = getSecure(name);
-    return o->isWriteable();
+    return getSecure(name)->isWriteable();
+}
+
+
+bool
+OptionsCont::isEditable(const std::string& name) {
+    return getSecure(name)->isEditable();
+
 }
 
 
@@ -540,8 +546,13 @@ OptionsCont::setFurtherAttributes(const std::string& name, const std::string& su
 
 
 void
-OptionsCont::setApplicationName(const std::string& appName,
-                                const std::string& fullName) {
+OptionsCont::setOptionEditable(const std::string& name, const bool value) {
+    getSecure(name)->setEditable(value);
+}
+
+
+void
+OptionsCont::setApplicationName(const std::string& appName, const std::string& fullName) {
     myAppName = appName;
     myFullName = fullName;
 }
@@ -720,7 +731,7 @@ OptionsCont::processMetaOptions(bool missingOptions) {
 }
 
 
-void 
+void
 OptionsCont::localizeDescriptions() {
     if (!myAmLocalized && gLocaleInitialized) {
         // options

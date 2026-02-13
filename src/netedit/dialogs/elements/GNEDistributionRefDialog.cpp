@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -56,11 +56,11 @@ FXIMPLEMENT(GNEDistributionRefDialog, GNEDialog, GNEDistributionRefDialogMap, AR
 // ===========================================================================
 
 GNEDistributionRefDialog::GNEDistributionRefDialog(GNEAttributeCarrier* distributionParent) :
-    GNEDialog(distributionParent->getNet()->getViewNet()->getViewParent()->getGNEAppWindows(),
-              TLF("Add % reference", distributionParent->getTagStr()), distributionParent->getTagProperty()->getGUIIcon(),
-              DialogType::DISTRIBUTION_REF, GNEDialog::Buttons::ACCEPT_CANCEL, OpenType::MODAL, ResizeMode::STATIC),
+    GNEDialog(distributionParent->getNet()->getGNEApplicationWindow(), TLF("Add % reference", distributionParent->getTagStr()),
+              distributionParent->getTagProperty()->getGUIIcon(), DialogType::DISTRIBUTION_REF, GNEDialog::Buttons::ACCEPT_CANCEL,
+              OpenType::MODAL, ResizeMode::STATIC),
     myDistributionParent(distributionParent) {
-    auto tooltipMenu = distributionParent->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->getStaticTooltipMenu();
+    auto tooltipMenu = distributionParent->getNet()->getGNEApplicationWindow()->getStaticTooltipMenu();
     // create reference elements
     FXHorizontalFrame* referenceFrames = new FXHorizontalFrame(myContentFrame, GUIDesignAuxiliarHorizontalFrame);
     auto referenceLabel = new FXLabel(referenceFrames, "reference", nullptr, GUIDesignLabelThickedFixed(100));
@@ -130,7 +130,7 @@ GNEDistributionRefDialog::onCmdAccept(FXObject*, FXSelector, void*) {
         GNEDemandElement* reference = nullptr;
         const double probability = GNEAttributeCarrier::parse<double>(myProbabilityTextField->getText().text());
         GNEDemandElement* distribution = myDistributionParent->getNet()->getAttributeCarriers()->retrieveDemandElement(myDistributionParent->getGUIGlObject());
-        auto undoList = myDistributionParent->getNet()->getViewNet()->getUndoList();
+        auto undoList = myDistributionParent->getNet()->getUndoList();
         // create a routeRef o a vTypeRef
         if (distribution->getTagProperty()->getTag() == SUMO_TAG_VTYPE_DISTRIBUTION) {
             if (myProbabilityTextField->getTextColor() == BLUE_COLOR) {
@@ -146,7 +146,7 @@ GNEDistributionRefDialog::onCmdAccept(FXObject*, FXSelector, void*) {
             }
         }
         // continue depending if allow/disallow is enabled
-        if (myDistributionParent->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
+        if (myDistributionParent->getNet()->getGNEApplicationWindow()->isUndoRedoAllowed()) {
             undoList->begin(myReferencedElement, TLF("add % in '%'", myReferencedElement->getTagStr(), distribution->getID()));
             undoList->add(new GNEChange_DemandElement(reference, true), true);
             undoList->end();

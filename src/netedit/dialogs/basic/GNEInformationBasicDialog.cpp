@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2006-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2006-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,8 +32,22 @@ GNEInformationBasicDialog::GNEInformationBasicDialog(GNEApplicationWindow* appli
 }
 
 
-GNEInformationBasicDialog::GNEInformationBasicDialog(GNEApplicationWindow* applicationWindow, const std::string& name,
-        const std::string& infoLineA, const std::string& infoLineB) :
+GNEInformationBasicDialog::GNEInformationBasicDialog(GNEApplicationWindow* applicationWindow,
+        GNEDialog* parentDialog, const std::string& name, const std::string& info) :
+    GNEBasicDialog(applicationWindow, parentDialog, name, info, GUIIcon::INFORMATION_SMALL, DialogType::BASIC_INFORMATION,
+                   GNEDialog::Buttons::OK, GUIIcon::INFORMATION_LARGE) {
+}
+
+
+GNEInformationBasicDialog::GNEInformationBasicDialog(GNEApplicationWindow* applicationWindow,
+        const std::string& name, const std::string& infoLineA, const std::string& infoLineB) :
     GNEBasicDialog(applicationWindow, name, infoLineA + "\n" + infoLineB, GUIIcon::INFORMATION_SMALL,
+                   DialogType::BASIC_INFORMATION, GNEDialog::Buttons::OK, GUIIcon::INFORMATION_LARGE) {
+}
+
+
+GNEInformationBasicDialog::GNEInformationBasicDialog(GNEApplicationWindow* applicationWindow,
+        GNEDialog* parentDialog, const std::string& name, const std::string& infoLineA, const std::string& infoLineB) :
+    GNEBasicDialog(applicationWindow, parentDialog, name, infoLineA + "\n" + infoLineB, GUIIcon::INFORMATION_SMALL,
                    DialogType::BASIC_INFORMATION, GNEDialog::Buttons::OK, GUIIcon::INFORMATION_LARGE) {
 }

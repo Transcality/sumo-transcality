@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -33,14 +33,26 @@ class GNETemplateElementDialog : public GNEDialog {
 public:
     /// @brief constructor
     GNETemplateElementDialog(T* element, DialogType type) :
-        GNEDialog(element->getNet()->getViewNet()->getViewParent()->getGNEAppWindows(),
+        GNEDialog(element->getNet()->getGNEApplicationWindow(),
                   TLF("Edit % '%'", element->getTagStr(), element->getID()).c_str(),
                   element->getTagProperty()->getGUIIcon(), type, Buttons::ACCEPT_CANCEL_RESET,
                   OpenType::MODAL, ResizeMode::STATIC),
         myElement(element),
         myChangesDescription(TLF("change % values", element->getTagStr())) {
         // init commandGroup
-        myElement->getNet()->getViewNet()->getUndoList()->begin(myElement, myChangesDescription);
+        myElement->getNet()->getUndoList()->begin(myElement, myChangesDescription);
+    }
+
+    /// @brief constructor with parent dialog
+    GNETemplateElementDialog(T* element, GNEDialog* parentDialog, DialogType type) :
+        GNEDialog(element->getNet()->getGNEApplicationWindow(), parentDialog,
+                  TLF("Edit % '%'", element->getTagStr(), element->getID()).c_str(),
+                  element->getTagProperty()->getGUIIcon(), type, Buttons::ACCEPT_CANCEL_RESET,
+                  OpenType::MODAL, ResizeMode::STATIC),
+        myElement(element),
+        myChangesDescription(TLF("change % values", element->getTagStr())) {
+        // init commandGroup
+        myElement->getNet()->getUndoList()->begin(myElement, myChangesDescription);
     }
 
     /// @brief destructor
@@ -64,13 +76,13 @@ public:
 
     /// @brief called when cancel or no button is pressed
     long onCmdCancel(FXObject*, FXSelector, void*) {
-        myElement->getNet()->getViewNet()->getUndoList()->abortLastChangeGroup();
+        myElement->getNet()->getUndoList()->abortLastChangeGroup();
         return closeDialogCanceling();
     }
 
     /// @brief called when abort is called either closing dialog or pressing abort button
     long onCmdAbort(FXObject*, FXSelector, void*) {
-        myElement->getNet()->getViewNet()->getUndoList()->abortLastChangeGroup();
+        myElement->getNet()->getUndoList()->abortLastChangeGroup();
         return closeDialogAborting();
     }
 
@@ -86,15 +98,15 @@ protected:
 
     /// @brief close dialog commiting changes
     long acceptElementDialog() {
-        myElement->getNet()->getViewNet()->getUndoList()->end();
+        myElement->getNet()->getUndoList()->end();
         return closeDialogAccepting();
     }
 
     /// @brief reset changes did in this dialog.
     void resetChanges() {
         // abort last command group an start editing again
-        myElement->getNet()->getViewNet()->getUndoList()->abortLastChangeGroup();
-        myElement->getNet()->getViewNet()->getUndoList()->begin(myElement, myChangesDescription);
+        myElement->getNet()->getUndoList()->abortLastChangeGroup();
+        myElement->getNet()->getUndoList()->begin(myElement, myChangesDescription);
     }
 
 private:

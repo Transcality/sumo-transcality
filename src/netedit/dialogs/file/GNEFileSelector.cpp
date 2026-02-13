@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -221,6 +221,7 @@ GNEFileSelector::getSelectedFilesOnly() const {
 
 long
 GNEFileSelector::onCmdCopy(FXObject*, FXSelector, void*) {
+    auto GNEApp = myFileDialog->getApplicationWindow();
     const auto filenameList = getSelectedFiles();
     // first check if we have files to copy
     if (filenameList.size() > 0) {
@@ -229,7 +230,7 @@ GNEFileSelector::onCmdCopy(FXObject*, FXSelector, void*) {
         // create default destiny filename
         std::string destinyFilename = FXPath::absolute(FXPath::directory(originFilePath.c_str()), "CopyOf" + FXPath::name(originFilePath.c_str())).text();
         // create file path dialog
-        const auto filePathDialog = new GNEFilePathDialog(myFileDialog->getApplicationWindow(), TL("Copy File"), TL("Select destination file"), destinyFilename);
+        const auto filePathDialog = new GNEFilePathDialog(GNEApp, myFileDialog, TL("Copy File"), TL("Select destination file"), destinyFilename);
         // continue depending of filePathDialog results
         if (filePathDialog->getResult() == GNEDialog::Result::ACCEPT) {
             // get destiny filename from dialog
@@ -237,16 +238,16 @@ GNEFileSelector::onCmdCopy(FXObject*, FXSelector, void*) {
             // check if we selected the same file
             if (FXFile::identical(originFilePath.c_str(), destinyFilename.c_str())) {
                 // open error dialog
-                GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Error copying file"),
+                GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Error copying file"),
                                     TLF("Unable to copy file: %", destinyFilename),
                                     TL("The source and destination files are the same"));
             } else {
                 // check if file exist
                 if (FXStat::exists(destinyFilename.c_str())) {
                     // open question dialog
-                    const auto overwriteDialog = GNEQuestionBasicDialog(myFileDialog->getApplicationWindow(), GNEDialog::Buttons::YES_NO,
-                                                 TL("Overwrite file"), TLF("The destination file: %", destinyFilename),
-                                                 TL("already exist. Overwrite?"));
+                    const GNEQuestionBasicDialog overwriteDialog(GNEApp, myFileDialog, GNEDialog::Buttons::YES_NO,
+                            TL("Overwrite file"), TLF("The destination file: %", destinyFilename),
+                            TL("already exist. Overwrite?"));
                     // check if abort
                     if (overwriteDialog.getResult() != GNEDialog::Result::ACCEPT) {
                         return 1;
@@ -255,7 +256,7 @@ GNEFileSelector::onCmdCopy(FXObject*, FXSelector, void*) {
                 // try to copy overwritten
                 if (!FXFile::copyFiles(originFilePath.c_str(), destinyFilename.c_str(), TRUE)) {
                     // open error dialog
-                    GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Error copying file"),
+                    GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Error copying file"),
                                         TLF("Unable to copy file: %", destinyFilename),
                                         TL("Check destination file permissions"));
                 }
@@ -268,13 +269,14 @@ GNEFileSelector::onCmdCopy(FXObject*, FXSelector, void*) {
 
 long
 GNEFileSelector::onCmdMove(FXObject*, FXSelector, void*) {
+    auto GNEApp = myFileDialog->getApplicationWindow();
     const auto filenameList = getSelectedFiles();
     // first check if we have files to move
     if (filenameList.size() > 0) {
         // get only first filename
         const std::string originFilePath = filenameList.front();
         // create file path dialog
-        const auto filePathDialog = new GNEFilePathDialog(myFileDialog->getApplicationWindow(), TL("Move File"), TL("Select destination file"), originFilePath);
+        const auto filePathDialog = new GNEFilePathDialog(GNEApp, myFileDialog, TL("Move File"), TL("Select destination file"), originFilePath);
         // continue depending of filePathDialog results
         if (filePathDialog->getResult() == GNEDialog::Result::ACCEPT) {
             // get destiny filename from dialog
@@ -282,16 +284,16 @@ GNEFileSelector::onCmdMove(FXObject*, FXSelector, void*) {
             // check if we selected the same file
             if (FXFile::identical(originFilePath.c_str(), destinyFilename.c_str())) {
                 // open error dialog
-                GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Error moving file"),
+                GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Error moving file"),
                                     TLF("Unable to move file:\n%\n", destinyFilename),
                                     TL("The source and destination files are the same"));
             } else {
                 // check if file exist
                 if (FXStat::exists(destinyFilename.c_str())) {
                     // open question dialog
-                    const auto overwriteDialog = GNEQuestionBasicDialog(myFileDialog->getApplicationWindow(), GNEDialog::Buttons::YES_NO,
-                                                 TL("Overwrite file"), TLF("The destination file: %", destinyFilename),
-                                                 TL("already exist. Overwrite?"));
+                    const GNEQuestionBasicDialog overwriteDialog(GNEApp, myFileDialog, GNEDialog::Buttons::YES_NO,
+                            TL("Overwrite file"), TLF("The destination file: %", destinyFilename),
+                            TL("already exist. Overwrite?"));
                     // check if abort
                     if (overwriteDialog.getResult() != GNEDialog::Result::ACCEPT) {
                         return 1;
@@ -300,7 +302,7 @@ GNEFileSelector::onCmdMove(FXObject*, FXSelector, void*) {
                 // try to move overwritten
                 if (!FXFile::moveFiles(originFilePath.c_str(), destinyFilename.c_str(), TRUE)) {
                     // open error dialog
-                    GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Error moving file"),
+                    GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Error moving file"),
                                         TLF("Unable to move file:\n%\n", destinyFilename),
                                         TL("Check destination file permissions"));
                 }
@@ -313,21 +315,22 @@ GNEFileSelector::onCmdMove(FXObject*, FXSelector, void*) {
 
 long
 GNEFileSelector::onCmdDelete(FXObject*, FXSelector, void*) {
+    auto GNEApp = myFileDialog->getApplicationWindow();
     const auto filenameList = getSelectedFiles();
     // first check if we have files to link
     if (filenameList.size() > 0) {
         // get only first filename
         const std::string fileToDelete = filenameList.front();
         // open question dialog
-        const auto askDialog = GNEQuestionBasicDialog(myFileDialog->getApplicationWindow(), GNEDialog::Buttons::YES_NO,
-                               TL("Deleting file"), TL("Are you sure you want to delete the file:"),
-                               fileToDelete);
+        const GNEQuestionBasicDialog askDialog(GNEApp, myFileDialog, GNEDialog::Buttons::YES_NO,
+                                               TL("Deleting file"), TL("Are you sure you want to delete the file:"),
+                                               fileToDelete);
         // check if continue
         if (askDialog.getResult() == GNEDialog::Result::ACCEPT) {
             // try to remove it
             if (!FXFile::removeFiles(fileToDelete.c_str(), TRUE)) {
                 // open error dialog
-                GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Error deleting file"),
+                GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Error deleting file"),
                                     TLF("Unable to delete file: %", fileToDelete),
                                     TL("Check file permissions"));
             }
@@ -556,6 +559,8 @@ GNEFileSelector::getDirectory() const {
                 return FXPath::absolute(myFileSelector->getDirectory(), myFileSelector->getItemFilename(i)).text();
             }
         }
+    } else if (FXStat::isDirectory(myFilenameTextField->getText())) {
+        return myFilenameTextField->getText().text();
     } else {
         for (FXint i = 0; i < myFileSelector->getNumItems(); i++) {
             if (myFileSelector->isItemDirectory(i) &&
@@ -731,6 +736,7 @@ GNEFileSelector::onCmdItemDoubleClicked(FXObject* obj, FXSelector sel, void* ptr
 
 long
 GNEFileSelector::onCmdAccept(FXObject* obj, FXSelector sel, void* ptr) {
+    auto GNEApp = myFileDialog->getApplicationWindow();
     // get directory
     const std::string directory = getDirectory();
     // continue if we selected a directory
@@ -753,6 +759,8 @@ GNEFileSelector::onCmdAccept(FXObject* obj, FXSelector sel, void* ptr) {
         FXString dir = FXPath::directory(filename.c_str());
         // In file mode, directory part of path should exist
         if (FXStat::isDirectory(dir)) {
+            // set directory
+            setDirectory(dir);
             // ensure that filename has extension
             const std::string filenameExtension = myFileDialog->assureExtension(filename);
             const std::string file = FXPath::name(filenameExtension.c_str()).text();
@@ -761,14 +769,17 @@ GNEFileSelector::onCmdAccept(FXObject* obj, FXSelector sel, void* ptr) {
                 // ask if file exist
                 if (FXStat::exists(filenameExtension.c_str())) {
                     // open question dialog
-                    const auto overwriteDialog = GNEQuestionBasicDialog(myFileDialog->getApplicationWindow(), GNEDialog::Buttons::YES_NO,
-                                                 TL("Overwrite file"), TLF("The selected file: %", file),
-                                                 TL("already exist. Overwrite?"));
+                    const GNEQuestionBasicDialog overwriteDialog(GNEApp, myFileDialog, GNEDialog::Buttons::YES_NO,
+                            TL("Overwrite file"), TLF("The selected file: %", file),
+                            TL("already exist. Overwrite?"));
                     // check if abort
                     if (overwriteDialog.getResult() != GNEDialog::Result::ACCEPT) {
                         return 1;
                     }
                 }
+                return myFileDialog->onCmdAccept(obj, sel, ptr);
+            } else if (myOpenMode == GNEFileDialog::OpenMode::LOAD_MULTIPLE) {
+                // quick hack: don't check
                 return myFileDialog->onCmdAccept(obj, sel, ptr);
             } else {
                 // check that file exist
@@ -776,7 +787,7 @@ GNEFileSelector::onCmdAccept(FXObject* obj, FXSelector sel, void* ptr) {
                     return myFileDialog->onCmdAccept(obj, sel, ptr);
                 } else {
                     // open error dialog
-                    GNEErrorBasicDialog(myFileDialog->getApplicationWindow(),
+                    GNEErrorBasicDialog(GNEApp, myFileDialog,
                                         TL("File doesn't exist"),
                                         TLF("The selected file '%'", file),
                                         TL("doesn't exist"));
@@ -855,15 +866,17 @@ GNEFileSelector::onCmdDirTree(FXObject*, FXSelector, void* ptr) {
 
 long
 GNEFileSelector::onCmdNewFolder(FXObject*, FXSelector, void*) {
+    auto GNEApp = myFileDialog->getApplicationWindow();
     // create file path dialog
-    const auto filePathDialog = new GNEFilePathDialog(myFileDialog->getApplicationWindow(), TL("Create New Directory"), TL("Create new directory with name:"), "DirectoryName");
+    const auto filePathDialog = new GNEFilePathDialog(GNEApp, myFileDialog, TL("Create New Directory"),
+            TL("Create new directory with name:"), "DirectoryName");
     // continue depending of filePathDialog results
     if (filePathDialog->getResult() == GNEDialog::Result::ACCEPT) {
         const FXString dirname = FXPath::absolute(myFileSelector->getDirectory(), filePathDialog->getFilePath().c_str());
         // check if exist
         if (FXStat::exists(dirname)) {
             // open error dialog
-            GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Directory already Exists"),
+            GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Directory already Exists"),
                                 TLF("The new directory:\n%", dirname.text()),
                                 TL("already exists"));
             return 1;
@@ -871,7 +884,7 @@ GNEFileSelector::onCmdNewFolder(FXObject*, FXSelector, void*) {
         // try to create it
         if (!FXDir::create(dirname)) {
             // open error dialog
-            GNEErrorBasicDialog(myFileDialog->getApplicationWindow(), TL("Cannot create directory"),
+            GNEErrorBasicDialog(GNEApp, myFileDialog, TL("Cannot create directory"),
                                 TLF("Cannot create directory:\n%", dirname.text()),
                                 TL("Check folder permissions"));
             return 1;

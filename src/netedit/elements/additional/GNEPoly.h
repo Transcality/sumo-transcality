@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -50,7 +50,7 @@ public:
     /** @brief Constructor for polygons
      * @param[in] id The name of the polygon
      * @param[in] net net in which this polygon is placed
-     * @param[in] filename file in which this element is stored
+     * @param[in] fileBucket file in which this element is stored
      * @param[in] type The (abstract) type of the polygon
      * @param[in] shape The shape of the polygon
      * @param[in] geo specify if shape was loaded as GEO
@@ -63,20 +63,20 @@ public:
      * @param[in] name Poly's name
      * @param[in] parameters generic parameters
      */
-    GNEPoly(const std::string& id, GNENet* net, const std::string& filename, const std::string& type, const PositionVector& shape,
+    GNEPoly(const std::string& id, GNENet* net, FileBucket* fileBucket, const std::string& type, const PositionVector& shape,
             bool geo, bool fill, double lineWidth, const RGBColor& color, double layer, double angle, const std::string& imgFile,
             const std::string& name, const Parameterised::Map& parameters);
 
     /** @brief Constructor for JuPedSim elements
      * @param[in] id The name of the polygon
      * @param[in] net net in which this polygon is placed
-     * @param[in] filename file in which this element is stored
+     * @param[in] fileBucket file in which this element is stored
      * @param[in] shape The shape of the polygon
      * @param[in] geo specify if shape was loaded as GEO
      * @param[in] name Poly's name
      * @param[in] parameters generic parameters
      */
-    GNEPoly(SumoXMLTag tag, const std::string& id, GNENet* net, const std::string& filename, const PositionVector& shape,
+    GNEPoly(SumoXMLTag tag, const std::string& id, GNENet* net, FileBucket* fileBucket, const PositionVector& shape,
             bool geo, const std::string& name, const Parameterised::Map& parameters);
 
     /// @brief Destructor

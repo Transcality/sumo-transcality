@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,14 +30,14 @@
 // ===========================================================================
 
 GNERouteProbe::GNERouteProbe(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_ROUTEPROBE, "") {
+    GNEAdditional(net, SUMO_TAG_ROUTEPROBE) {
 }
 
 
-GNERouteProbe::GNERouteProbe(const std::string& id, GNENet* net, const std::string& filename, GNEEdge* edge, const SUMOTime period, const std::string& name,
+GNERouteProbe::GNERouteProbe(const std::string& id, GNENet* net, FileBucket* fileBucket, GNEEdge* edge, const SUMOTime period, const std::string& name,
                              const std::string& outputFilename, SUMOTime begin, const std::vector<std::string>& vehicleTypes,
                              const Parameterised::Map& parameters) :
-    GNEAdditional(id, net, filename, SUMO_TAG_ROUTEPROBE, name),
+    GNEAdditional(id, net, SUMO_TAG_ROUTEPROBE, fileBucket, name),
     Parameterised(parameters),
     myPeriod(period),
     myOutputFilename(outputFilename),

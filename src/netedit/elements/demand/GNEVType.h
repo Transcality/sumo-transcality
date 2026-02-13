@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -35,16 +35,16 @@ public:
     GNEVType(SumoXMLTag tag, GNENet* net);
 
     /// @brief constructor for default VTypes
-    GNEVType(const std::string& vTypeID, GNENet* net, const SUMOVehicleClass& defaultVClass);
+    GNEVType(const std::string& vTypeID, GNENet* net, FileBucket* fileBucket, const SUMOVehicleClass& defaultVClass);
 
     /// @brief constructor for standard vTypes
-    GNEVType(const std::string& vTypeID, GNENet* net, const std::string& filename);
+    GNEVType(const std::string& vTypeID, GNENet* net, FileBucket* fileBucket);
 
     /// @brief constructor called in calibrator dialogs
     GNEVType(const GNEAdditional* calibrator);
 
     /// @brief parameter constructor for standard vTypes
-    GNEVType(GNENet* net, const std::string& filename, const SUMOVTypeParameter& vTypeParameter);
+    GNEVType(GNENet* net, FileBucket* fileBucket, const SUMOVTypeParameter& vTypeParameter);
 
     /// @brief copy constructor
     GNEVType(const std::string& newVTypeID, GNENet* net, GNEVType* vTypeOriginal);

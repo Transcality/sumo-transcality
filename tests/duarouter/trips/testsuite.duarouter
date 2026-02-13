@@ -143,3 +143,7 @@ scale_0.5
 
 # test option scale
 scale_2.5
+max-traveltime
+
+# loop back to departEdge to reach arrivalPos before departPos
+singleEdge_loop

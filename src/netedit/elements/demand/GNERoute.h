@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2016-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2016-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -77,7 +77,7 @@ public:
     /**@brief parameter constructor for routes
      * @param[in] id route ID
      * @param[in] net net in which this Route is placed
-     * @param[in] filename file in which this element is stored
+     * @param[in] fileBucket file in which this element is stored
      * @param[in] vClass vehicle class
      * @param[in] edges route edges
      * @param[in] color route color
@@ -86,7 +86,7 @@ public:
      * @param[in] probability default probability for vType distributions
      * @param[in] parameters generic parameters
      */
-    GNERoute(const std::string& id, GNENet* net, const std::string& filename, SUMOVehicleClass vClass, const std::vector<GNEEdge*>& edges,
+    GNERoute(const std::string& id, GNENet* net, FileBucket* fileBucket, SUMOVehicleClass vClass, const std::vector<GNEEdge*>& edges,
              const RGBColor& color, const int repeat, const SUMOTime cycleTime, const double probability, const Parameterised::Map& parameters);
 
     /**@brief parameter constructor for embedded routes

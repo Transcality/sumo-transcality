@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -24,10 +24,11 @@
 // method definitions
 // ===========================================================================
 
-GNETagProperties::GNETagProperties(const SumoXMLTag tag, GNETagProperties* parent, const Type type,
-                                   const Property property, const Over over, const File file,
-                                   const Conflicts conflicts, const GUIIcon icon, const GUIGlObjectType GLType,
-                                   const SumoXMLTag XMLTag, const std::string tooltipText, const std::vector<SumoXMLTag> XMLParentTags,
+GNETagProperties::GNETagProperties(const SumoXMLTag tag, GNETagProperties* parent, const GNETagProperties::Type type,
+                                   const GNETagProperties::Property property, const GNETagProperties::Over over,
+                                   const FileBucket::Type bucketType, const GNETagProperties::Conflicts conflicts,
+                                   const GUIIcon icon, const GUIGlObjectType GLType, const SumoXMLTag XMLTag,
+                                   const std::string tooltipText, const std::vector<SumoXMLTag> XMLParentTags,
                                    const unsigned int backgroundColor, const std::string selectorText) :
     myTag(tag),
     myTagStr(toString(tag)),
@@ -35,7 +36,7 @@ GNETagProperties::GNETagProperties(const SumoXMLTag tag, GNETagProperties* paren
     myType(type),
     myProperty(property),
     myOver(over),
-    myFile(file),
+    myBucketType(bucketType),
     myConflicts(conflicts),
     myIcon(icon),
     myGLType(GLType),
@@ -1036,52 +1037,45 @@ GNETagProperties::vClassIcon() const {
 
 
 bool
+GNETagProperties::isFileCompatible(FileBucket::Type file) const {
+    return (myBucketType & file);
+}
+
+
+bool
 GNETagProperties::saveInNetworkFile() const {
-    return (myFile & File::NETWORK);
+    return (myBucketType & FileBucket::Type::NETWORK);
 }
 
 
 bool
 GNETagProperties::saveInAdditionalFile() const {
-    return (myFile & File::ADDITIONAL);
+    return (myBucketType & FileBucket::Type::ADDITIONAL);
 }
 
 
 bool
 GNETagProperties::saveInDemandFile() const {
-    return (myFile & File::DEMAND);
+    return (myBucketType & FileBucket::Type::DEMAND);
 }
 
 
 bool
 GNETagProperties::saveInDataFile() const {
-    return (myFile & File::DATA);
+    return (myBucketType & FileBucket::Type::DATA);
 }
 
 
 bool
 GNETagProperties::saveInMeanDataFile() const {
-    return (myFile & File::MEANDATA);
+    return (myBucketType & FileBucket::Type::MEANDATA);
 }
 
 
 bool
-GNETagProperties::saveInJunctionFile() const {
-    return (myFile & File::JUNCTION);
+GNETagProperties::saveInParentFile() const {
+    return (myBucketType & FileBucket::Type::NOTHING);
 }
-
-
-bool
-GNETagProperties::saveInEdgeTypeFile() const {
-    return (myFile & File::TYPE);
-}
-
-
-bool
-GNETagProperties::saveInTLSFile() const {
-    return (myFile & File::TLS);
-}
-
 
 void
 GNETagProperties::addChild(const GNETagProperties* child) {

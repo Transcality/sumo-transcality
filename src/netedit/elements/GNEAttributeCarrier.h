@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,12 +21,14 @@
 #include <config.h>
 
 #include <netedit/GNEReferenceCounter.h>
+#include <utils/common/FileBucket.h>
 #include <utils/foxtools/fxheader.h>
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 
+class FileBucket;
 class GNEHierarchicalElement;
 class GNELane;
 class GNEMoveElement;
@@ -48,13 +50,18 @@ class GNEAttributeCarrier : public GNEReferenceCounter {
     friend class GNEAttributesEditorType;
 
 public:
+    /**@brief Constructor for templates
+     * @param[in] tag SUMO Tag assigned to this type of object
+     * @param[in] net GNENet in which this AttributeCarrier is stored
+     */
+    GNEAttributeCarrier(const SumoXMLTag tag, GNENet* net);
+
     /**@brief Constructor
      * @param[in] tag SUMO Tag assigned to this type of object
      * @param[in] net GNENet in which this AttributeCarrier is stored
-     * @param[in] filename file in which this AttributeCarrier is stored
-     * @param[in] isTemplate flag to mark this AttributeCarrier as template
+     * @param[in] fileBucket bucket in which this AttributeCarrier is stored
      */
-    GNEAttributeCarrier(const SumoXMLTag tag, GNENet* net, const std::string& filename, const bool isTemplate);
+    GNEAttributeCarrier(const SumoXMLTag tag, GNENet* net, FileBucket* fileBucket);
 
     /// @brief Destructor
     virtual ~GNEAttributeCarrier();
@@ -88,12 +95,14 @@ public:
     /// @brief get pointer to net
     GNENet* getNet() const;
 
-    /// @brief get filename in which save this AC
-    const std::string& getFilename() const;
+    /// @brief get reference to fileBucket in which save this AC
+    virtual FileBucket* getFileBucket() const = 0;
 
-    /// @brief change defaultFilename (only used in SavingFilesHandler)
-    void changeDefaultFilename(const std::string& file);
+    /// @brief update pre-computed geometry information
+    virtual void updateGeometry() = 0;
 
+    /// @name Function related with selection
+    /// @{
     /// @brief select attribute carrier using GUIGlobalSelection
     void selectAttributeCarrier();
 
@@ -103,8 +112,7 @@ public:
     /// @brief check if attribute carrier is selected
     bool isAttributeCarrierSelected() const;
 
-    /// @brief update pre-computed geometry information
-    virtual void updateGeometry() = 0;
+    /// @}
 
     /// @name Function related with drawing
     /// @{
@@ -404,8 +412,8 @@ protected:
     /// @brief boolean to check if this AC is in grid
     bool myInGrid = false;
 
-    /// @brief filename in which save this AC
-    std::string myFilename;
+    /// @brief filebucket vinculated whith this AC
+    FileBucket* myFileBucket = nullptr;
 
     /// @brief boolean to check if center this element after creation
     bool myCenterAfterCreation = true;

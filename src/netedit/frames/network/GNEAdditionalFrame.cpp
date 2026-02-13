@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -40,7 +40,7 @@
 // ---------------------------------------------------------------------------
 
 GNEAdditionalFrame::E2MultilaneLegendModule::E2MultilaneLegendModule(GNEFrame* frameParent) :
-    MFXGroupBoxModule(frameParent, TL("Legend")) {
+    GNEGroupBoxModule(frameParent, TL("Legend")) {
     // declare label
     FXLabel* legendLabel = nullptr;
     // edge candidate
@@ -78,7 +78,7 @@ GNEAdditionalFrame::E2MultilaneLegendModule::hideE2MultilaneLegend() {
 // ---------------------------------------------------------------------------
 
 GNEAdditionalFrame::HelpCreationModule::HelpCreationModule(GNEFrame* frameParent) :
-    MFXGroupBoxModule(frameParent, TL("Help")) {
+    GNEGroupBoxModule(frameParent, TL("Help")) {
     // edge candidate
     myHelpLabel = new FXLabel(getCollapsableFrame(), "", 0, GUIDesignLabelFrameInformation);
     // fill map
@@ -238,8 +238,7 @@ GNEAdditionalFrame::addAdditional(const GNEViewNetHelper::ViewObjectsSelector& v
     // add basic attributes and values
     myAdditionalAttributesEditor->fillSumoBaseObject(myBaseAdditional);
     // declare additional handler
-    GNEAdditionalHandler additionalHandler(myViewNet->getNet(), myBaseAdditional->hasStringAttribute(GNE_ATTR_ADDITIONAL_FILE) ?
-                                           myBaseAdditional->getStringAttribute(GNE_ATTR_ADDITIONAL_FILE) : "",
+    GNEAdditionalHandler additionalHandler(myViewNet->getNet(), myViewNet->getNet()->getACTemplates()->getTemplateAC(tagProperties->getTag())->getFileBucket(),
                                            myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed());
     // build additional
     additionalHandler.parseSumoBaseObject(myBaseAdditional);
@@ -302,8 +301,7 @@ GNEAdditionalFrame::createPath(const bool /* useLastRoute */) {
                 // show warning dialogbox and stop check if input parameters are valid
                 if (myAdditionalAttributesEditor->checkAttributes(true)) {
                     // declare additional handler
-                    GNEAdditionalHandler additionalHandler(myViewNet->getNet(), myBaseAdditional->hasStringAttribute(GNE_ATTR_ADDITIONAL_FILE) ?
-                                                           myBaseAdditional->getStringAttribute(GNE_ATTR_ADDITIONAL_FILE) : "",
+                    GNEAdditionalHandler additionalHandler(myViewNet->getNet(), myViewNet->getNet()->getACTemplates()->getTemplateAC(SUMO_TAG_LANE_AREA_DETECTOR)->getFileBucket(),
                                                            myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed());
                     // build additional
                     additionalHandler.parseSumoBaseObject(myBaseAdditional);

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -76,7 +76,8 @@ public:
          * @param[in] app The main window for instantiation of other windows
          * @param[in] parent The parent view for changing it
          */
-        GNESelectedVehiclesPopupMenu(GNEVehicle* vehicle, const std::vector<GNEVehicle*>& selectedVehicle, GUIMainWindow& app, GUISUMOAbstractView& parent);
+        GNESelectedVehiclesPopupMenu(GNEVehicle* vehicle, const std::vector<GNEVehicle*>& selectedVehicle,
+                                     GUIMainWindow& app, GUISUMOAbstractView& parent);
 
         /// @brief Destructor
         ~GNESelectedVehiclesPopupMenu();
@@ -103,28 +104,36 @@ public:
     GNEVehicle(SumoXMLTag tag, GNENet* net);
 
     /// @brief default constructor for vehicles and routeFlows without embedded routes
-    GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEDemandElement* route);
+    GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, FileBucket* fileBucket,
+               GNEDemandElement* vehicleType, GNEDemandElement* route);
 
     /// @brief parameter constructor for vehicles and routeFlows without embedded routes
-    GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEDemandElement* route, const SUMOVehicleParameter& vehicleParameters);
+    GNEVehicle(SumoXMLTag tag, GNENet* net, FileBucket* fileBucket, GNEDemandElement* vehicleType,
+               GNEDemandElement* route, const SUMOVehicleParameter& vehicleParameters);
 
     /// @brief parameter constructor for vehicles and routeFlows with embedded routes (note: After creation create immediately a embedded route referencing this vehicle)
-    GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, const SUMOVehicleParameter& vehicleParameters);
+    GNEVehicle(SumoXMLTag tag, GNENet* net, FileBucket* fileBucket, GNEDemandElement* vehicleType,
+               const SUMOVehicleParameter& vehicleParameters);
 
     /// @brief default constructor for trips and Flows over edges
-    GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEEdge* fromEdge, GNEEdge* toEdge);
+    GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, FileBucket* fileBucket,
+               GNEDemandElement* vehicleType, GNEEdge* fromEdge, GNEEdge* toEdge);
 
     /// @brief parameter constructor for trips and Flows over junctions
-    GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEEdge* fromEdge, GNEEdge* toEdge, const SUMOVehicleParameter& vehicleParameters);
+    GNEVehicle(SumoXMLTag tag, GNENet* net, FileBucket* fileBucket, GNEDemandElement* vehicleType,
+               GNEEdge* fromEdge, GNEEdge* toEdge, const SUMOVehicleParameter& vehicleParameters);
 
     /// @brief default constructor for trips and Flows over junctions
-    GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEJunction* fromJunction, GNEJunction* toJunction);
+    GNEVehicle(SumoXMLTag tag, const std::string& vehicleID, GNENet* net, FileBucket* fileBucket,
+               GNEDemandElement* vehicleType, GNEJunction* fromJunction, GNEJunction* toJunction);
 
     /// @brief parameter constructor for trips and Flows over junctions
-    GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEJunction* fromJunction, GNEJunction* toJunction, const SUMOVehicleParameter& vehicleParameters);
+    GNEVehicle(SumoXMLTag tag, GNENet* net, FileBucket* fileBucket, GNEDemandElement* vehicleType,
+               GNEJunction* fromJunction, GNEJunction* toJunction, const SUMOVehicleParameter& vehicleParameters);
 
     /// @brief parameter constructor for trips and Flows over TAZs
-    GNEVehicle(SumoXMLTag tag, GNENet* net, const std::string& filename, GNEDemandElement* vehicleType, GNEAdditional* fromTAZ, GNEAdditional* toTAZ, const SUMOVehicleParameter& vehicleParameters);
+    GNEVehicle(SumoXMLTag tag, GNENet* net, FileBucket* fileBucket, GNEDemandElement* vehicleType,
+               GNEAdditional* fromTAZ, GNEAdditional* toTAZ, const SUMOVehicleParameter& vehicleParameters);
 
     /// @brief destructor
     ~GNEVehicle();

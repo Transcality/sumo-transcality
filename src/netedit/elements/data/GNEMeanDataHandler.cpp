@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,6 +21,7 @@
 #include <netedit/changes/GNEChange_MeanData.h>
 #include <netedit/dialogs/basic/GNEOverwriteElement.h>
 #include <netedit/elements/data/GNEMeanData.h>
+#include <netedit/GNEApplicationWindow.h>
 #include <netedit/GNENet.h>
 #include <netedit/GNETagProperties.h>
 #include <netedit/GNEUndoList.h>
@@ -33,20 +34,16 @@
 // member method definitions
 // ===========================================================================
 
-GNEMeanDataHandler::GNEMeanDataHandler(GNENet* net, const std::string& filename, const bool allowUndoRedo) :
-    MeanDataHandler(filename),
+GNEMeanDataHandler::GNEMeanDataHandler(GNENet* net, FileBucket* fileBucket, const bool allowUndoRedo) :
+    MeanDataHandler(fileBucket),
     myNet(net),
     myAllowUndoRedo(allowUndoRedo) {
 }
 
 
-GNEMeanDataHandler::~GNEMeanDataHandler() {}
-
-
-bool
-GNEMeanDataHandler::postParserTasks() {
-    // nothing to do
-    return true;
+GNEMeanDataHandler::~GNEMeanDataHandler() {
+    // update options based in current buckets
+    myNet->getGNEApplicationWindow()->getFileBucketHandler()->updateOptions();
 }
 
 
@@ -81,14 +78,16 @@ GNEMeanDataHandler::buildEdgeMeanData(const CommonXMLStructure::SumoBaseObject* 
         return false;
     } else if (!checkExcludeEmpty(SUMO_TAG_MEANDATA_EDGE, id, excludeEmpty)) {
         return false;
+    } else if (!checkDetectPersons(SUMO_TAG_MEANDATA_EDGE, id, detectPersons)) {
+        return false;
     } else if ((edges.size() == edgeIDs.size()) && (attributes.size() == writtenAttributes.size())) {
-        GNEMeanData* edgeMeanData = new GNEMeanData(SUMO_TAG_MEANDATA_EDGE, id, myNet, myFilename, file, type, period, begin, end,
+        GNEMeanData* edgeMeanData = new GNEMeanData(SUMO_TAG_MEANDATA_EDGE, id, myNet, myFileBucket, file, type, period, begin, end,
                 trackVehicles, attributes,  aggregate, edgeIDs, edgeFile, excludeEmpty,  withInternal,
                 detectPersons, minSamples, maxTravelTime, vTypes, speedThreshold);
         if (myAllowUndoRedo) {
-            myNet->getViewNet()->getUndoList()->begin(edgeMeanData, TL("add meanDataEdge"));
-            myNet->getViewNet()->getUndoList()->add(new GNEChange_MeanData(edgeMeanData, true), true);
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->begin(edgeMeanData, TL("add meanDataEdge"));
+            myNet->getUndoList()->add(new GNEChange_MeanData(edgeMeanData, true), true);
+            myNet->getUndoList()->end();
         } else {
             myNet->getAttributeCarriers()->insertMeanData(edgeMeanData);
             edgeMeanData->incRef("buildEdgeMeanData");
@@ -117,28 +116,30 @@ GNEMeanDataHandler::buildLaneMeanData(const CommonXMLStructure::SumoBaseObject* 
         return false;
     } else if (!checkDuplicatedMeanDataElement(SUMO_TAG_MEANDATA_LANE, id)) {
         return false;
-    } else if ((period != TIME2STEPS(-1)) && !checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_PERIOD, period, true)) {
+    } else if ((period != TIME2STEPS(-1)) && !checkNegative(SUMO_TAG_MEANDATA_LANE, id, SUMO_ATTR_PERIOD, period, true)) {
         return false;
-    } else if ((begin != TIME2STEPS(-1)) && !checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_BEGIN, begin, true)) {
+    } else if ((begin != TIME2STEPS(-1)) && !checkNegative(SUMO_TAG_MEANDATA_LANE, id, SUMO_ATTR_BEGIN, begin, true)) {
         return false;
-    } else if ((end != TIME2STEPS(-1)) && !checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_END, end, true)) {
+    } else if ((end != TIME2STEPS(-1)) && !checkNegative(SUMO_TAG_MEANDATA_LANE, id, SUMO_ATTR_END, end, true)) {
         return false;
-    } else if (!checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_MAX_TRAVELTIME, maxTravelTime, true)) {
+    } else if (!checkNegative(SUMO_TAG_MEANDATA_LANE, id, SUMO_ATTR_MAX_TRAVELTIME, maxTravelTime, true)) {
         return false;
-    } else if (!checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_MIN_SAMPLES, minSamples, true)) {
+    } else if (!checkNegative(SUMO_TAG_MEANDATA_LANE, id, SUMO_ATTR_MIN_SAMPLES, minSamples, true)) {
         return false;
-    } else if (!checkNegative(SUMO_TAG_MEANDATA_EDGE, id, SUMO_ATTR_HALTING_SPEED_THRESHOLD, speedThreshold, true)) {
+    } else if (!checkNegative(SUMO_TAG_MEANDATA_LANE, id, SUMO_ATTR_HALTING_SPEED_THRESHOLD, speedThreshold, true)) {
         return false;
-    } else if (!checkExcludeEmpty(SUMO_TAG_MEANDATA_EDGE, id, excludeEmpty)) {
+    } else if (!checkExcludeEmpty(SUMO_TAG_MEANDATA_LANE, id, excludeEmpty)) {
+        return false;
+    } else if (!checkDetectPersons(SUMO_TAG_MEANDATA_LANE, id, detectPersons)) {
         return false;
     } else if ((edges.size() == edgeIDs.size()) && (attributes.size() == writtenAttributes.size())) {
-        GNEMeanData* edgeMeanData = new GNEMeanData(SUMO_TAG_MEANDATA_LANE, id, myNet, myFilename, file, type, period, begin, end,
+        GNEMeanData* edgeMeanData = new GNEMeanData(SUMO_TAG_MEANDATA_LANE, id, myNet, myFileBucket, file, type, period, begin, end,
                 trackVehicles, attributes,  aggregate, edgeIDs, edgeFile, excludeEmpty,  withInternal,
                 detectPersons, minSamples, maxTravelTime, vTypes, speedThreshold);
         if (myAllowUndoRedo) {
-            myNet->getViewNet()->getUndoList()->begin(edgeMeanData, TL("add meanDataLane"));
-            myNet->getViewNet()->getUndoList()->add(new GNEChange_MeanData(edgeMeanData, true), true);
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->begin(edgeMeanData, TL("add meanDataLane"));
+            myNet->getUndoList()->add(new GNEChange_MeanData(edgeMeanData, true), true);
+            myNet->getUndoList()->end();
         } else {
             myNet->getAttributeCarriers()->insertMeanData(edgeMeanData);
             edgeMeanData->incRef("buildEdgeMeanData");
@@ -192,7 +193,7 @@ GNEMeanDataHandler::checkDuplicatedMeanDataElement(const SumoXMLTag tag, const s
     if (meanDataElement) {
         if (myOverwriteElements) {
             // delete meanData element (and all of their childrens)
-            myNet->deleteMeanData(meanDataElement, myNet->getViewNet()->getUndoList());
+            myNet->deleteMeanData(meanDataElement, myNet->getUndoList());
         } else if (myRemainElements) {
             // duplicated dataset
             return writeWarningDuplicated(tag, meanDataElement->getID(), meanDataElement->getTagProperty()->getTag());
@@ -202,7 +203,7 @@ GNEMeanDataHandler::checkDuplicatedMeanDataElement(const SumoXMLTag tag, const s
             // continue depending of result
             if (overwriteElementDialog.getResult() == GNEOverwriteElement::Result::ACCEPT) {
                 // delete meanData element (and all of their childrens)
-                myNet->deleteMeanData(meanDataElement, myNet->getViewNet()->getUndoList());
+                myNet->deleteMeanData(meanDataElement, myNet->getUndoList());
             } else if (overwriteElementDialog.getResult() == GNEOverwriteElement::Result::CANCEL) {
                 // duplicated demand
                 return writeWarningDuplicated(tag, meanDataElement->getID(), meanDataElement->getTagProperty()->getTag());
@@ -224,6 +225,18 @@ GNEMeanDataHandler::checkExcludeEmpty(const SumoXMLTag tag, const std::string& i
     } else {
         return writeError(TLF("Could not build % with ID '%' in netedit; Invalid value '%' for %.", toString(tag), id, excludeEmpty, toString(SUMO_ATTR_EXCLUDE_EMPTY)));
     }
+}
+
+
+bool
+GNEMeanDataHandler::checkDetectPersons(const SumoXMLTag tag, const std::string& id, const std::vector<std::string>& detectPersons) {
+    // check all values
+    for (const auto& detectPerson : detectPersons) {
+        if (!SUMOXMLDefinitions::PersonModeValues.hasString(detectPerson)) {
+            return writeError(TLF("Could not build % with ID '%' in netedit; Invalid value '%' for %.", toString(tag), id, detectPerson, toString(SUMO_ATTR_DETECT_PERSONS)));
+        }
+    }
+    return true;
 }
 
 /****************************************************************************/

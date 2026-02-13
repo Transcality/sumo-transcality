@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,15 +32,15 @@
 // ===========================================================================
 
 GNERerouter::GNERerouter(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_REROUTER, ""),
+    GNEAdditional(net, SUMO_TAG_REROUTER),
     GNEAdditionalSquared(this) {
 }
 
 
-GNERerouter::GNERerouter(const std::string& id, GNENet* net, const std::string& filename, const Position& pos, const std::string& name,
+GNERerouter::GNERerouter(const std::string& id, GNENet* net, FileBucket* fileBucket, const Position& pos, const std::string& name,
                          double probability, bool off, bool optional, SUMOTime timeThreshold, const std::vector<std::string>& vTypes,
                          const Parameterised::Map& parameters) :
-    GNEAdditional(id, net, filename, SUMO_TAG_REROUTER, name),
+    GNEAdditional(id, net, SUMO_TAG_REROUTER, fileBucket, name),
     GNEAdditionalSquared(this, pos),
     Parameterised(parameters),
     myProbability(probability),
@@ -174,8 +174,9 @@ GNERerouter::splitEdgeGeometry(const double /*splitPosition*/, const GNENetworkE
 
 
 void
-GNERerouter::openAdditionalDialog() {
+GNERerouter::openAdditionalDialog(FXWindow* restoringFocusWindow) {
     // Open rerouter dialog
+    UNUSED_PARAMETER(restoringFocusWindow);
     GNERerouterDialog(this);
 }
 
@@ -395,7 +396,7 @@ GNERerouter::rebuildRerouterSymbols(const std::string& value, GNEUndoList* undoL
         // create VSS Symbol
         GNEAdditional* VSSSymbol = new GNERerouterSymbol(this, edge);
         // add it using GNEChange_Additional
-        myNet->getViewNet()->getUndoList()->add(new GNEChange_Additional(VSSSymbol, true), true);
+        myNet->getUndoList()->add(new GNEChange_Additional(VSSSymbol, true), true);
     }
     undoList->end();
 }

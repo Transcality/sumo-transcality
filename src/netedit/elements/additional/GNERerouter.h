@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -42,14 +42,14 @@ public:
     /**@brief Constructor
      * @param[in] id The storage of gl-ids to get the one for this lane representation from
      * @param[in] net pointer to GNENet of this additional element belongs
-     * @param[in] filename file in which this element is stored
+     * @param[in] fileBucket file in which this element is stored
      * @param[in] pos position (center) of the rerouter in the map
      * @param[in] name Rerouter name
      * @param[in] probability The probability for vehicle rerouting
      * @param[in] off Whether the router should be inactive initially
      * @param[in] parameters generic parameters
      */
-    GNERerouter(const std::string& id, GNENet* net, const std::string& filename, const Position& pos, const std::string& name,
+    GNERerouter(const std::string& id, GNENet* net, FileBucket* fileBucket, const Position& pos, const std::string& name,
                 double probability, bool off, bool optional, SUMOTime timeThreshold, const std::vector<std::string>& vTypes,
                 const Parameterised::Map& parameters);
 
@@ -71,7 +71,7 @@ public:
     /// @}
 
     /// @brief open GNERerouterDialog
-    void openAdditionalDialog() override;
+    void openAdditionalDialog(FXWindow* restoringFocusWindow) override;
 
     /// @name members and functions relative to write additionals into XML
     /// @{

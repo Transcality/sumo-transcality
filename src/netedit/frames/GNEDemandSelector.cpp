@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -38,7 +38,7 @@ FXDEFMAP(GNEDemandElementSelector) DemandElementSelectorMap[] = {
 };
 
 // Object implementation
-FXIMPLEMENT(GNEDemandElementSelector,      MFXGroupBoxModule,     DemandElementSelectorMap,       ARRAYNUMBER(DemandElementSelectorMap))
+FXIMPLEMENT(GNEDemandElementSelector,      GNEGroupBoxModule,     DemandElementSelectorMap,       ARRAYNUMBER(DemandElementSelectorMap))
 
 
 // ===========================================================================
@@ -46,7 +46,7 @@ FXIMPLEMENT(GNEDemandElementSelector,      MFXGroupBoxModule,     DemandElementS
 // ===========================================================================
 
 GNEDemandElementSelector::GNEDemandElementSelector(GNEFrame* frameParent, SumoXMLTag demandElementTag, const GNETagProperties::Type tagType) :
-    MFXGroupBoxModule(frameParent, TLF("Parent %", toString(demandElementTag)).c_str()),
+    GNEGroupBoxModule(frameParent, TLF("Parent %", toString(demandElementTag)).c_str()),
     myFrameParent(frameParent),
     myCurrentDemandElement(nullptr),
     myDemandElementTags({demandElementTag}),
@@ -64,7 +64,7 @@ mySelectingMultipleElements(false) {
 
 GNEDemandElementSelector::GNEDemandElementSelector(GNEFrame* frameParent, const std::vector<GNETagProperties::Type> tagTypes,
         const std::vector<SumoXMLTag> exceptions) :
-    MFXGroupBoxModule(frameParent, TL("Parent element")),
+    GNEGroupBoxModule(frameParent, TL("Parent element")),
     myFrameParent(frameParent),
     myCurrentDemandElement(nullptr),
     myTagType(GNETagProperties::Type::OTHER),

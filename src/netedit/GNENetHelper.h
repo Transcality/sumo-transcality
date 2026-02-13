@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -53,6 +53,7 @@ class GNEDataSet;
 class GNEDemandElement;
 class GNEEdge;
 class GNEEdgeType;
+class FileBucket;
 class GNEJunction;
 class GNELane;
 class GNELaneType;
@@ -500,6 +501,9 @@ struct GNENetHelper {
         /// @brief add default VTypes
         void addDefaultVTypes();
 
+        /// @brief check if we have elements that requires the option junction-taz
+        bool requireJunctionTazOption() const;
+
         /// @brief get (and update) stop index
         int getStopIndex();
 
@@ -905,12 +909,28 @@ struct GNENetHelper {
         /// @brief get template AC by text (using selector text
         GNEAttributeCarrier* getTemplateAC(const std::string& selectorText) const;
 
+        /// @brief get default edge type
+        GNEEdgeType* getDefaultEdgeType() const;
+
+        /// @brief get plan templates
+        const std::vector<std::pair<GNETagProperties*, GNEDemandElement*> >& getPlanTemplates(SumoXMLTag tag) const;
+
+    protected:
+        /// @brief fill plan templates
+        void fillPlanTemplates();
+
     private:
         /// @brief pointer to net
         GNENet* myNet = nullptr;
 
         /// @brief map with templates
         std::map<SumoXMLTag, GNEAttributeCarrier*> myTemplates;
+
+        /// @brief list with demand templates
+        std::map<SumoXMLTag, std::vector<std::pair<GNETagProperties*, GNEDemandElement*> > > myPlanTemplates;
+
+        /// @brief edge type
+        GNEEdgeType* myEdgeType = nullptr;
 
         /// @brief Invalidated default constructor.
         ACTemplate() = delete;
@@ -920,130 +940,6 @@ struct GNENetHelper {
 
         /// @brief Invalidated assignment operator
         ACTemplate& operator=(const ACTemplate& src) = delete;
-    };
-
-    /// @brief modul for handling saving files
-    class SavingFilesHandler {
-
-    public:
-        //struct FilenameReference
-
-        /// @brief typedef used for group ACs by filename
-        typedef std::map<std::string, std::unordered_set<const GNEAttributeCarrier*> > ACsbyFilename;
-
-        /// @brief constructor
-        SavingFilesHandler(GNENet* net);
-
-        /// @brief update netedit config
-        void updateNeteditConfig();
-
-        /// @brief additional elements
-        /// @{
-
-        /// @brief add additional filename
-        void addAdditionalFilename(const GNEAttributeCarrier* additionalElement);
-
-        /// @brief update additional elements with empty filenames with the given file
-        void updateAdditionalEmptyFilenames(const std::string& file);
-
-        /// @brief get vector with additional elements saving files (starting with default)
-        const std::vector<std::string>& getAdditionalFilenames() const;
-
-        /// @brief get additionals sorted by filenames (and also clear unused filenames)
-        ACsbyFilename getAdditionalsByFilename();
-
-        /// @brief check if the given additional file was already registered
-        bool existAdditionalFilename(const std::string& file) const;
-
-        /// @}
-
-        /// @brief demand elements
-        /// @{
-
-        /// @brief add demand filename
-        void addDemandFilename(const GNEAttributeCarrier* demandElement);
-
-        /// @brief update demand elements with empty filenames with the given file
-        void updateDemandEmptyFilenames(const std::string& file);
-
-        /// @brief get vector with demand elements saving files (starting with default)
-        const std::vector<std::string>& getDemandFilenames() const;
-
-        /// @brief get demands sorted by filenames (and also clear unused filenames)
-        ACsbyFilename getDemandsByFilename();
-
-        /// @brief check if the given demand file was already registered
-        bool existDemandFilename(const std::string& file) const;
-
-        /// @}
-
-        /// @brief data elements
-        /// @{
-
-        /// @brief add data filename
-        void addDataFilename(const GNEAttributeCarrier* dataElement);
-
-        /// @brief update data elements with empty filenames with the given file
-        void updateDataEmptyFilenames(const std::string& file);
-
-        /// @brief get vector with data elements saving files (starting with default)
-        const std::vector<std::string>& getDataFilenames() const;
-
-        /// @brief get datas sorted by filenames (and also clear unused filenames)
-        ACsbyFilename getDatasByFilename();
-
-        /// @brief check if the given data file was already registered
-        bool existDataFilename(const std::string& file) const;
-
-        /// @}
-
-        /// @brief meanData elements
-        /// @{
-
-        /// @brief add meanData filename
-        void addMeanDataFilename(const GNEAttributeCarrier* meanDataElement);
-
-        /// @brief update meanData elements with empty filenames with the given file
-        void updateMeanDataEmptyFilenames(const std::string& file);
-
-        /// @brief get vector with meanData elements saving files (starting with default)
-        const std::vector<std::string>& getMeanDataFilenames() const;
-
-        /// @brief get meanDatas sorted by filenames (and also clear unused filenames)
-        ACsbyFilename getMeanDatasByFilename();
-
-        /// @brief check if the given meanData file was already registered
-        bool existMeanDataFilename(const std::string& file) const;
-
-        /// @}
-
-    private:
-        /// @brief pointer to net
-        GNENet* myNet;
-
-        /// @brief vector with additional elements saving files
-        std::vector<std::string> myAdditionalElementsSavingFiles;
-
-        /// @brief vector with demand elements saving files
-        std::vector<std::string> myDemandElementsSavingFiles;
-
-        /// @brief vector with data elements saving files
-        std::vector<std::string> myDataElementsSavingFiles;
-
-        /// @brief vector with mean data elements saving files
-        std::vector<std::string> myMeanDataElementsSavingFiles;
-
-        /// @brief parsing saving files
-        std::string parsingSavingFiles(const std::vector<std::string>& savingFiles) const;
-
-        /// @brief Invalidated default constructor.
-        SavingFilesHandler() = delete;
-
-        /// @brief Invalidated copy constructor.
-        SavingFilesHandler(const SavingFilesHandler&) = delete;
-
-        /// @brief Invalidated assignment operator.
-        SavingFilesHandler& operator=(const SavingFilesHandler&) = delete;
     };
 
     /// @brief modul for Saving status

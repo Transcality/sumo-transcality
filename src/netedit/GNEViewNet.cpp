@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -300,8 +300,11 @@ GNEViewNet::GNEViewNet(FXComposite* tmpParent, FXComposite* actualParent, GUIMai
     reparent(actualParent);
     // Build edit modes
     buildEditModeControls();
-    // set this net in Net
-    myNet->setViewNet(this);
+    // update all edge and ngeometries
+    for (const auto& edge : net->getAttributeCarriers()->getEdges()) {
+        edge.second->updateCenteringBoundary(true);
+        edge.second->updateGeometry();
+    }
     // set drag delay
     ((GUIDanielPerspectiveChanger*)myChanger)->setDragDelay(100000000); // 100 milliseconds
     // Reset textures
@@ -316,6 +319,7 @@ GNEViewNet::GNEViewNet(FXComposite* tmpParent, FXComposite* actualParent, GUIMai
     myNetworkViewOptions.menuCheckToggleDrawJunctionShape->setChecked(hide);
     myDemandViewOptions.menuCheckToggleDrawJunctionShape->setChecked(hide);
     myDataViewOptions.menuCheckToggleDrawJunctionShape->setChecked(hide);
+    update();
 }
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -938,7 +942,8 @@ GNEViewNet::askMergeJunctions(const GNEJunction* movedJunction, const GNEJunctio
                                      targetJunction->getMicrosimID(),
                                      movedJunction->getMicrosimID(),
                                      targetJunction->getMicrosimID());
-        const auto questionDialog = GNEQuestionBasicDialog(myViewParent->getGNEAppWindows(), GNEDialog::Buttons::YES_NO, header, body);
+        const GNEQuestionBasicDialog questionDialog(myViewParent->getGNEAppWindows(),
+                GNEDialog::Buttons::YES_NO, header, body);
         // continue depending of result
         if (questionDialog.getResult() == GNEDialog::Result::ACCEPT) {
             return true;
@@ -966,8 +971,8 @@ GNEViewNet::aksChangeSupermode(const std::string& operation, Supermode expectedS
         throw ProcessError("invalid expected supermode");
     }
     // open question dialog
-    const auto questionDialog = GNEQuestionBasicDialog(myViewParent->getGNEAppWindows(), GNEDialog::Buttons::YES_NO,
-                                TL("Confirm switch mode"), body);
+    const GNEQuestionBasicDialog questionDialog(myViewParent->getGNEAppWindows(),
+            GNEDialog::Buttons::YES_NO, TL("Confirm switch mode"), body);
     // continue depending of result
     if (questionDialog.getResult() == GNEDialog::Result::ACCEPT) {
         myEditModes.setSupermode(expectedSupermode, true);
@@ -1010,6 +1015,7 @@ GNEViewNet::getTimeFormat() {
 
 bool
 GNEViewNet::restrictLane(GNELane* lane, SUMOVehicleClass vclass) {
+    auto GNEApp = myViewParent->getGNEAppWindows();
     // Get selected lanes
     const auto selectedLanes = myNet->getAttributeCarriers()->getSelectedLanes();
     // Declare map of edges and lanes
@@ -1024,7 +1030,7 @@ GNEViewNet::restrictLane(GNELane* lane, SUMOVehicleClass vclass) {
         const std::string bodyA = TL("There are selected lanes that belong to the same edge.");
         const std::string bodyB = TLF("Only one lane per edge will be restricted to %.", toString(vclass));
         // Show warning dialog
-        GNEWarningBasicDialog(myViewParent->getGNEAppWindows(), header, bodyA, bodyB);
+        GNEWarningBasicDialog(GNEApp, header, bodyA, bodyB);
     }
     // If we handeln a set of lanes
     if (mapOfEdgesAndLanes.size() > 0) {
@@ -1041,14 +1047,14 @@ GNEViewNet::restrictLane(GNELane* lane, SUMOVehicleClass vclass) {
             const std::string header = TLF("Set vclass to % for selected lanes", toString(vclass));
             const std::string body = TLF("All lanes own already another lane in the same edge with a restriction for %", toString(vclass));
             // show information dialog
-            GNEInformationBasicDialog(myViewParent->getGNEAppWindows(), header, body);
+            GNEInformationBasicDialog(GNEApp, header, body);
             return 0;
         } else {
             // Ask confirmation to user
             const std::string header = TLF("Set vclass to % for selected lanes", toString(vclass));
             const std::string body = TLF("% lanes will be restricted to %. Continue?", toString(mapOfEdgesAndLanes.size() - counter), toString(vclass));
             // show question dialog
-            const auto questionDialog = GNEQuestionBasicDialog(myViewParent->getGNEAppWindows(), GNEDialog::Buttons::YES_NO, header, body);
+            const GNEQuestionBasicDialog questionDialog(GNEApp, GNEDialog::Buttons::YES_NO, header, body);
             // continue depending of result
             if (questionDialog.getResult() != GNEDialog::Result::ACCEPT) { //1:yes, 2:no, 4:esc
                 return 0;
@@ -1077,6 +1083,7 @@ GNEViewNet::restrictLane(GNELane* lane, SUMOVehicleClass vclass) {
 
 bool
 GNEViewNet::addRestrictedLane(GNELane* lane, SUMOVehicleClass vclass, const bool insertAtFront) {
+    auto GNEApp = myViewParent->getGNEAppWindows();
     // Get selected edges
     const auto selectedEdges = myNet->getAttributeCarriers()->getSelectedEdges();
     // get selected lanes
@@ -1108,14 +1115,14 @@ GNEViewNet::addRestrictedLane(GNELane* lane, SUMOVehicleClass vclass, const bool
             const std::string header = TLF("Add vclass % to selected lanes", toString(vclass));
             const std::string body = TLF("All lanes own already another lane in the same edge with a restriction to %.", toString(vclass));
             // show information dialog
-            GNEInformationBasicDialog(myViewParent->getGNEAppWindows(), header, body);
+            GNEInformationBasicDialog(GNEApp, header, body);
             return 0;
         } else {
             // Ask confirmation to user
             const std::string header = TLF("Add vclass % to selected lanes", toString(vclass));
             const std::string body = TLF("% restrictions to % will be added. Continue?", toString(setOfEdges.size() - counter), toString(vclass));
             // show question dialog
-            const auto questionDialog = GNEQuestionBasicDialog(myViewParent->getGNEAppWindows(), GNEDialog::Buttons::YES_NO, header, body);
+            const GNEQuestionBasicDialog questionDialog(GNEApp, GNEDialog::Buttons::YES_NO, header, body);
             // continue depending of result
             if (questionDialog.getResult() != GNEDialog::Result::ACCEPT) { //1:yes, 2:no, 4:esc
                 return 0;
@@ -1158,6 +1165,7 @@ GNEViewNet::addRestrictedLane(GNELane* lane, SUMOVehicleClass vclass, const bool
 
 bool
 GNEViewNet::removeRestrictedLane(GNELane* lane, SUMOVehicleClass vclass) {
+    auto GNEApp = myViewParent->getGNEAppWindows();
     // Get selected edges
     const auto selectedEdges = myNet->getAttributeCarriers()->getSelectedEdges();
     // get selected lanes
@@ -1189,14 +1197,14 @@ GNEViewNet::removeRestrictedLane(GNELane* lane, SUMOVehicleClass vclass) {
             const std::string header = TLF("Remove vclass % from selected lanes", toString(vclass));
             const std::string body = TLF("The selected lanes and edges don't have a restriction to %.", toString(vclass));
             // show information dialog
-            GNEInformationBasicDialog(myViewParent->getGNEAppWindows(), header, body);
+            GNEInformationBasicDialog(GNEApp, header, body);
             return 0;
         } else {
             // Ask confirmation to user
             const std::string header = TLF("Remove vclass % from selected lanes", toString(vclass));
             const std::string body = TLF("% restrictions to % will be removed. Continue?", toString(setOfEdges.size() - counter), toString(vclass));
             // show question dialog
-            const auto questionDialog = GNEQuestionBasicDialog(myViewParent->getGNEAppWindows(), GNEDialog::Buttons::YES_NO, header, body);
+            const GNEQuestionBasicDialog questionDialog(GNEApp, GNEDialog::Buttons::YES_NO, header, body);
             // continue depending of result
             if (questionDialog.getResult() != GNEDialog::Result::ACCEPT) { //1:yes, 2:no, 4:esc
                 return 0;
@@ -2693,7 +2701,7 @@ GNEViewNet::onCmdSimplifyShape(FXObject*, FXSelector, void*) {
         // check if shape is selected
         if (polygonUnderMouse->isAttributeCarrierSelected()) {
             // begin undo-list
-            myNet->getViewNet()->getUndoList()->begin(polygonUnderMouse, TL("simplify shapes"));
+            myNet->getUndoList()->begin(polygonUnderMouse, TL("simplify shapes"));
             // get shapes
             const auto selectedShapes = myNet->getAttributeCarriers()->getSelectedShapes();
             // iterate over shapes
@@ -2707,7 +2715,7 @@ GNEViewNet::onCmdSimplifyShape(FXObject*, FXSelector, void*) {
                 }
             }
             // end undo-list
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->end();
         } else {
             polygonUnderMouse->simplifyShape();
         }
@@ -2735,7 +2743,7 @@ GNEViewNet::onCmdClosePolygon(FXObject*, FXSelector, void*) {
         // check if shape is selected
         if (polygonUnderMouse->isAttributeCarrierSelected()) {
             // begin undo-list
-            myNet->getViewNet()->getUndoList()->begin(polygonUnderMouse, TL("close polygon shapes"));
+            myNet->getUndoList()->begin(polygonUnderMouse, TL("close polygon shapes"));
             // get selectedshapes
             const auto selectedShapes = myNet->getAttributeCarriers()->getSelectedShapes();
             // iterate over shapes
@@ -2749,7 +2757,7 @@ GNEViewNet::onCmdClosePolygon(FXObject*, FXSelector, void*) {
                 }
             }
             // end undo-list
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->end();
         } else {
             polygonUnderMouse->closePolygon();
         }
@@ -2767,7 +2775,7 @@ GNEViewNet::onCmdOpenPolygon(FXObject*, FXSelector, void*) {
         // check if shape is selected
         if (polygonUnderMouse->isAttributeCarrierSelected()) {
             // begin undo-list
-            myNet->getViewNet()->getUndoList()->begin(polygonUnderMouse, TL("open polygon shapes"));
+            myNet->getUndoList()->begin(polygonUnderMouse, TL("open polygon shapes"));
             // get shapes
             const auto selectedShapes = myNet->getAttributeCarriers()->getSelectedShapes();
             // iterate over shapes
@@ -2781,7 +2789,7 @@ GNEViewNet::onCmdOpenPolygon(FXObject*, FXSelector, void*) {
                 }
             }
             // end undo-list
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->end();
         } else {
             polygonUnderMouse->openPolygon();
         }
@@ -2814,13 +2822,13 @@ GNEViewNet::onCmdSelectPolygonElements(FXObject*, FXSelector, void*) {
         // continue if there are ACs
         if (ACsUnderPolygon.size() > 0) {
             // begin undo-list
-            myNet->getViewNet()->getUndoList()->begin(GUIIcon::MODESELECT, TL("select within polygon boundary"));
+            myNet->getUndoList()->begin(GUIIcon::MODESELECT, TL("select within polygon boundary"));
             // iterate over shapes
             for (const auto& AC : ACsUnderPolygon) {
                 AC->setAttribute(GNE_ATTR_SELECTED, "true", myUndoList);
             }
             // end undo-list
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->end();
         }
     }
     return 1;
@@ -2834,11 +2842,11 @@ GNEViewNet::onCmdTriangulatePolygon(FXObject*, FXSelector, void*) {
     // check polygon
     if (polygonUnderMouse) {
         // declare additional handler
-        GNEAdditionalHandler additionalHandler(myNet, polygonUnderMouse->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        GNEAdditionalHandler additionalHandler(myNet, polygonUnderMouse->getFileBucket(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
         // triangulate shape
         const auto triangulation = Triangle::triangulate(polygonUnderMouse->getShape());
         // begin undo-list
-        myNet->getViewNet()->getUndoList()->begin(GUIIcon::POLY, TL("triangulate polygon"));
+        myNet->getUndoList()->begin(GUIIcon::POLY, TL("triangulate polygon"));
         // create every individual triangle
         for (const auto& triangle : triangulation) {
             auto basePolygon = polygonUnderMouse->getSumoBaseObject();
@@ -2848,9 +2856,9 @@ GNEViewNet::onCmdTriangulatePolygon(FXObject*, FXSelector, void*) {
             additionalHandler.parseSumoBaseObject(basePolygon);
         }
         // delete original polygon
-        myNet->deleteAdditional(polygonUnderMouse, myNet->getViewNet()->getUndoList());
+        myNet->deleteAdditional(polygonUnderMouse, myNet->getUndoList());
         // end undo-list
-        myNet->getViewNet()->getUndoList()->end();
+        myNet->getUndoList()->end();
     }
     return 1;
 }
@@ -2869,7 +2877,7 @@ GNEViewNet::onCmdSetFirstGeometryPoint(FXObject*, FXSelector, void*) {
 
 long
 GNEViewNet::onCmdSimplifyShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2884,7 +2892,7 @@ GNEViewNet::onCmdSimplifyShapeEdited(FXObject*, FXSelector, void*) {
 
 long
 GNEViewNet::onCmdStraightenShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2899,7 +2907,7 @@ GNEViewNet::onCmdStraightenShapeEdited(FXObject*, FXSelector, void*) {
 
 long
 GNEViewNet::onCmdCloseShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2914,7 +2922,7 @@ GNEViewNet::onCmdCloseShapeEdited(FXObject*, FXSelector, void*) {
 
 long
 GNEViewNet::onCmdOpenShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2929,7 +2937,7 @@ GNEViewNet::onCmdOpenShapeEdited(FXObject*, FXSelector, void*) {
 
 long
 GNEViewNet::onCmdSetFirstGeometryPointShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2946,7 +2954,7 @@ GNEViewNet::onCmdSetFirstGeometryPointShapeEdited(FXObject*, FXSelector, void*) 
 
 long
 GNEViewNet::onCmdDeleteGeometryPointShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2963,7 +2971,7 @@ GNEViewNet::onCmdDeleteGeometryPointShapeEdited(FXObject*, FXSelector, void*) {
 
 long
 GNEViewNet::onCmdResetShapeEdited(FXObject*, FXSelector, void*) {
-    auto undoList = myNet->getViewNet()->getUndoList();
+    auto undoList = myNet->getUndoList();
     // get shape edited under mouse
     GNENetworkElement* shapeEdited = getShapeEditedAtPopupPosition();
     if (shapeEdited) {
@@ -2989,8 +2997,8 @@ GNEViewNet::onCmdAttachPOI(FXObject*, FXSelector, void*) {
     // obtain POI at popup position
     GNEPOI* POI = getPOIAtPopupPosition();
     if (POI && (POI->getTagProperty()->getTag() != GNE_TAG_POILANE)) {
-        // declare additional handler
-        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        // declare additional handle
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFileBucket(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
         // obtain lanes around POI boundary
         getObjectsInBoundary(POI->getCenteringBoundary());
         if (myViewObjectsSelector.getLaneFront() == nullptr) {
@@ -3034,7 +3042,7 @@ GNEViewNet::onCmdReleasePOI(FXObject*, FXSelector, void*) {
     GNEPOI* POI = getPOIAtPopupPosition();
     if (POI && (POI->getTagProperty()->getTag() == GNE_TAG_POILANE)) {
         // declare additional handler
-        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFileBucket(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
         // get sumo base object of POI (And all common attributes)
         CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
         // add specific attributes
@@ -3057,7 +3065,7 @@ GNEViewNet::onCmdTransformPOI(FXObject*, FXSelector, void*) {
     GNEPOI* POI = getPOIAtPopupPosition();
     if (POI && (POI->getTagProperty()->getTag() != SUMO_TAG_POI)) {
         // declare additional handler
-        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFileBucket(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
         // get sumo base object of POI (And all common attributes)
         CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
         // add specific attributes
@@ -3080,7 +3088,7 @@ GNEViewNet::onCmdTransformPOIGEO(FXObject*, FXSelector, void*) {
     GNEPOI* POI = getPOIAtPopupPosition();
     if (POI && (POI->getTagProperty()->getTag() != GNE_TAG_POIGEO)) {
         // declare additional handler
-        GNEAdditionalHandler additionalHandler(myNet, POI->getFilename(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
+        GNEAdditionalHandler additionalHandler(myNet, POI->getFileBucket(), myViewParent->getGNEAppWindows()->isUndoRedoAllowed());
         // get sumo base object of POI (And all common attributes)
         CommonXMLStructure::SumoBaseObject* POIBaseObject = POI->getSumoBaseObject();
         // calculate cartesian position
@@ -3140,7 +3148,7 @@ GNEViewNet::onCmdSetCustomGeometryPoint(FXObject*, FXSelector, void*) {
         // get index position
         const int index = edgeGeometry.indexOfClosest(getPositionInformation(), true);
         // edit position using GNEGeometryPointDialog
-        const auto geometryPointDialog = GNEGeometryPointDialog(myViewParent->getGNEAppWindows(), edgeGeometry[index]);
+        const GNEGeometryPointDialog geometryPointDialog(myViewParent->getGNEAppWindows(), edgeGeometry[index]);
         // now check position
         if ((geometryPointDialog.getResult() == GNEDialog::Result::ACCEPT) && (geometryPointDialog.getEditedPosition() != edgeGeometry[index])) {
             // update new position
@@ -3170,7 +3178,7 @@ GNEViewNet::onCmdSetCustomGeometryPoint(FXObject*, FXSelector, void*) {
         // get index position
         const int index = polygonGeometry.indexOfClosest(getPositionInformation(), true);
         // edit position using GNEGeometryPointDialog
-        const auto geometryPointDialog = GNEGeometryPointDialog(myViewParent->getGNEAppWindows(), polygonGeometry[index]);
+        const GNEGeometryPointDialog geometryPointDialog(myViewParent->getGNEAppWindows(), polygonGeometry[index]);
         // now check position
         if ((geometryPointDialog.getResult() == GNEDialog::Result::ACCEPT) && (geometryPointDialog.getEditedPosition() != polygonGeometry[index])) {
             // update new position
@@ -3188,7 +3196,7 @@ GNEViewNet::onCmdSetCustomGeometryPoint(FXObject*, FXSelector, void*) {
         // get index position
         const int index = TAZGeometry.indexOfClosest(getPositionInformation(), true);
         // edit position using GNEGeometryPointDialog
-        const auto geometryPointDialog = GNEGeometryPointDialog(myViewParent->getGNEAppWindows(), TAZGeometry[index]);
+        const GNEGeometryPointDialog geometryPointDialog(myViewParent->getGNEAppWindows(), TAZGeometry[index]);
         // now check position
         if ((geometryPointDialog.getResult() == GNEDialog::Result::ACCEPT) && (geometryPointDialog.getEditedPosition() != TAZGeometry[index])) {
             // update new position
@@ -3394,7 +3402,7 @@ GNEViewNet::onCmdOpenAdditionalDialog(FXObject*, FXSelector, void*) {
     GNEAdditional* addtional = getAdditionalAtPopupPosition();
     // check if additional can open dialog
     if (addtional && addtional->getTagProperty()->hasDialog()) {
-        addtional->openAdditionalDialog();
+        addtional->openAdditionalDialog(this);
     }
     return 1;
 }
@@ -3823,11 +3831,11 @@ GNEViewNet::onCmdAddTLS(FXObject*, FXSelector, void*) {
         // check if we're adding TLS in multiple junctions
         if (junction->isAttributeCarrierSelected()) {
             const auto selectedJunctions = myNet->getAttributeCarriers()->getSelectedJunctions();
-            myNet->getViewNet()->getUndoList()->begin(GUIIcon::MODETLS, TL("add TLS in multiple junctions"));
+            myNet->getUndoList()->begin(GUIIcon::MODETLS, TL("add TLS in multiple junctions"));
             for (const auto& selectedJunction : selectedJunctions) {
                 selectedJunction->setAttribute(SUMO_ATTR_TYPE, "traffic_light", myUndoList);
             }
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->end();
         } else {
             // change junction type
             junction->setAttribute(SUMO_ATTR_TYPE, "traffic_light", myUndoList);
@@ -3850,7 +3858,7 @@ GNEViewNet::onCmdAddJoinTLS(FXObject*, FXSelector, void*) {
     if (junction != nullptr) {
         // check if we're adding TLS in multiple junctions
         if (junction->isAttributeCarrierSelected()) {
-            myNet->getViewNet()->getUndoList()->begin(GUIIcon::MODETLS, TL("add TLS in multiple junctions"));
+            myNet->getUndoList()->begin(GUIIcon::MODETLS, TL("add TLS in multiple junctions"));
         }
         // change junction type
         junction->setAttribute(SUMO_ATTR_TYPE, "traffic_light", myUndoList);
@@ -3875,7 +3883,7 @@ GNEViewNet::onCmdAddJoinTLS(FXObject*, FXSelector, void*) {
         }
         // end undoList
         if (junction->isAttributeCarrierSelected()) {
-            myNet->getViewNet()->getUndoList()->end();
+            myNet->getUndoList()->end();
         }
         // change to TLS Mode
         myEditModes.setNetworkEditMode(NetworkEditMode::NETWORK_TLS, true);
@@ -6106,6 +6114,7 @@ GNEViewNet::processLeftButtonReleaseNetwork() {
                 } else {
                     myViewObjectsSelector.getLaneFront()->selectAttributeCarrier();
                 }
+                myViewParent->getSelectorFrame()->getSelectionInformation()->updateInformationLabel();
             }
         }
         // finish selection

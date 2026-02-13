@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,15 +32,15 @@
 // ===========================================================================
 
 GNEVariableSpeedSign::GNEVariableSpeedSign(GNENet* net) :
-    GNEAdditional("", net, "", SUMO_TAG_VSS, ""),
+    GNEAdditional(net, SUMO_TAG_VSS),
     GNEAdditionalSquared(this) {
 }
 
 
-GNEVariableSpeedSign::GNEVariableSpeedSign(const std::string& id, GNENet* net, const std::string& filename,
+GNEVariableSpeedSign::GNEVariableSpeedSign(const std::string& id, GNENet* net, FileBucket* fileBucket,
         const Position& pos, const std::string& name, const std::vector<std::string>& vTypes,
         const Parameterised::Map& parameters) :
-    GNEAdditional(id, net, filename, SUMO_TAG_VSS, name),
+    GNEAdditional(id, net, SUMO_TAG_VSS, fileBucket, name),
     GNEAdditionalSquared(this, pos),
     Parameterised(parameters),
     myVehicleTypes(vTypes) {
@@ -159,8 +159,9 @@ GNEVariableSpeedSign::checkDrawMoveContour() const {
 
 
 void
-GNEVariableSpeedSign::openAdditionalDialog() {
+GNEVariableSpeedSign::openAdditionalDialog(FXWindow* restoringFocusWindow) {
     // Open VSS dialog
+    UNUSED_PARAMETER(restoringFocusWindow);
     GNEVariableSpeedSignDialog(this);
 }
 
@@ -335,7 +336,7 @@ GNEVariableSpeedSign::rebuildVSSSymbols(const std::string& value, GNEUndoList* u
         // create VSS Symbol
         GNEAdditional* VSSSymbol = new GNEVariableSpeedSignSymbol(this, lane);
         // add it using GNEChange_Additional
-        myNet->getViewNet()->getUndoList()->add(new GNEChange_Additional(VSSSymbol, true), true);
+        myNet->getUndoList()->add(new GNEChange_Additional(VSSSymbol, true), true);
     }
     undoList->end();
 }

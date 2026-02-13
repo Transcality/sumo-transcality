@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,12 +30,12 @@
 // ===========================================================================
 
 GNERouteDistribution::GNERouteDistribution(GNENet* net) :
-    GNEDemandElement("", net, "", SUMO_TAG_ROUTE_DISTRIBUTION, GNEPathElement::Options::DEMAND_ELEMENT) {
+    GNEDemandElement(net, SUMO_TAG_ROUTE_DISTRIBUTION) {
 }
 
 
-GNERouteDistribution::GNERouteDistribution(const std::string& ID, GNENet* net, const std::string& filename) :
-    GNEDemandElement(ID, net, filename, SUMO_TAG_ROUTE_DISTRIBUTION, GNEPathElement::Options::DEMAND_ELEMENT) {
+GNERouteDistribution::GNERouteDistribution(const std::string& ID, GNENet* net, FileBucket* fileBucket) :
+    GNEDemandElement(ID, net, SUMO_TAG_ROUTE_DISTRIBUTION, fileBucket) {
 }
 
 
