@@ -136,6 +136,9 @@ public:
     /// @brief whether vehicles park on the road
     bool parkOnRoad() const;
 
+    /// @brief whether parked vehicles must advance in a queue
+    bool mustAdvance(SUMOVehicleClass svc) const;
+
     /// @brief whether vehicles may reserve a slot for this parkingArea
     inline bool isReservable() const {
         return myReservable;
@@ -186,7 +189,7 @@ public:
      * @param[in] parking whether this is offroad parking
      * @see computeLastFreePos
      */
-    void enter(SUMOVehicle* veh, const bool parking);
+    void enter(SUMOVehicle* veh, const bool parking) override;
 
     /** @brief Called if a vehicle leaves this stop
      *
@@ -203,6 +206,10 @@ public:
     /// @{
     void addSpaceReservation(const SUMOVehicle* veh);
     void removeSpaceReservation(const SUMOVehicle* veh);
+
+    const std::set<const SUMOVehicle*>& getRemoteReservedVehicles() const {
+        return myRemoteReservedVehicles;
+    }
     /// @}
 
     /** @brief Called at the end of the time step
@@ -305,6 +312,9 @@ public:
 protected:
     /// @brief overwrite the capacity (caution: will delete ANY previous parking space definitions)
     void setRoadsideCapacity(int capactity);
+
+    /// @brief whether overtaking on this lane is impossible for the given vehicle class
+    bool cannotChange(SUMOVehicleClass svc) const; 
 
 protected:
 

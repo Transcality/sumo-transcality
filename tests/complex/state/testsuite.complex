@@ -4,6 +4,9 @@ persons
 # railway specific tests
 rail
 
+# save state in taxi simulation at different times
+taxi
+
 # two vehicles saved and reloaded
 plain
 
@@ -12,6 +15,9 @@ precision
 
 # include route and vtype dists
 dists
+
+# have vehicles sample from the vTypeDistribution before and after state loading
+dists2
 
 # include route and vtype dists
 dists_gz
@@ -44,6 +50,9 @@ rerouting2
 # See ticket 16776
 rerouting3
 
+# see #17902
+rerouting_weights
+
 # vehicles skip stop edges along looped routes (require stop attribute index) and reroute after finishing the stop (which affects the index value).
 rerouting_looped_stops
 
@@ -73,6 +82,9 @@ save_flow50
 load_flow_state_only
 save_parking
 save_parking_busStop
+
+# parking vehicle is blocked from re-entering the road
+save_parking_blocked
 save_rng
 
 # save extended rng state
@@ -155,3 +167,6 @@ waut
 # 
 # save at waut switch time
 waut2
+
+# see #17897
+routeLoader

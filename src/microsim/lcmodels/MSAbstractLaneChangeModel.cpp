@@ -388,18 +388,18 @@ MSAbstractLaneChangeModel::laneChangeOutput(const std::string& tag, MSLane* sour
                                             | LCA_AMBLOCKINGLEADER | LCA_AMBLOCKINGFOLLOWER
                                             | LCA_MRIGHT | LCA_MLEFT
                                             | LCA_AMBACKBLOCKER | LCA_AMBACKBLOCKER_STANDING))) + myVehicle.getParameter().getParameter("lcReason"));
-        of.writeAttr("leaderGap", myLastLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderGap));
-        of.writeAttr("leaderSecureGap", myLastLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderSecureGap));
-        of.writeAttr("leaderSpeed", myLastLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastLeaderSpeed));
-        of.writeAttr("followerGap", myLastFollowerGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerGap));
-        of.writeAttr("followerSecureGap", myLastFollowerSecureGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerSecureGap));
-        of.writeAttr("followerSpeed", myLastFollowerSpeed == NO_NEIGHBOR ? "None" : toString(myLastFollowerSpeed));
-        of.writeAttr("origLeaderGap", myLastOrigLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderGap));
-        of.writeAttr("origLeaderSecureGap", myLastOrigLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSecureGap));
-        of.writeAttr("origLeaderSpeed", myLastOrigLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSpeed));
+        of.writeAttr("leaderGap", myLastLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderGap), myLastLeaderGap == NO_NEIGHBOR);
+        of.writeAttr("leaderSecureGap", myLastLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderSecureGap), myLastLeaderSecureGap == NO_NEIGHBOR);
+        of.writeAttr("leaderSpeed", myLastLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastLeaderSpeed), myLastLeaderSpeed == NO_NEIGHBOR);
+        of.writeAttr("followerGap", myLastFollowerGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerGap), myLastFollowerGap == NO_NEIGHBOR);
+        of.writeAttr("followerSecureGap", myLastFollowerSecureGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerSecureGap), myLastFollowerSecureGap == NO_NEIGHBOR);
+        of.writeAttr("followerSpeed", myLastFollowerSpeed == NO_NEIGHBOR ? "None" : toString(myLastFollowerSpeed), myLastFollowerSpeed == NO_NEIGHBOR);
+        of.writeAttr("origLeaderGap", myLastOrigLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderGap), myLastOrigLeaderGap == NO_NEIGHBOR);
+        of.writeAttr("origLeaderSecureGap", myLastOrigLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSecureGap), myLastOrigLeaderSecureGap == NO_NEIGHBOR);
+        of.writeAttr("origLeaderSpeed", myLastOrigLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSpeed), myLastOrigLeaderSpeed == NO_NEIGHBOR);
         if (MSGlobals::gLateralResolution > 0) {
             const double latGap = direction < 0 ? myLastLateralGapRight : myLastLateralGapLeft;
-            of.writeAttr("latGap", latGap == NO_NEIGHBOR ? "None" : toString(latGap));
+            of.writeAttr("latGap", latGap == NO_NEIGHBOR ? "None" : toString(latGap), latGap == NO_NEIGHBOR);
             if (maneuverDist != 0) {
                 of.writeAttr("maneuverDistance", toString(maneuverDist));
             }
@@ -1110,19 +1110,39 @@ MSAbstractLaneChangeModel::addLCSpeedAdvice(const double vSafe, bool ownAdvice) 
 
 void
 MSAbstractLaneChangeModel::saveState(OutputDevice& out) const {
-    std::vector<std::string> lcState;
-    if (MSGlobals::gLaneChangeDuration > 0) {
-        lcState.push_back(toString(mySpeedLat));
-        lcState.push_back(toString(myLaneChangeCompletion));
-        lcState.push_back(toString(myLaneChangeDirection));
+    std::vector<double> lcState;
+    lcState.push_back((double)myOwnState);
+    for (auto item : myLCAccelerationAdvices) {
+        lcState.push_back(item.first);
+        lcState.push_back(item.second);
     }
-    if (lcState.size() > 0) {
+    out.writeAttr(SUMO_ATTR_LCSTATE_BASE, lcState);
+
+    if (MSGlobals::gLaneChangeDuration > 0) {
+        std::vector<double> lcState;
+        lcState.push_back(mySpeedLat);
+        lcState.push_back(myLaneChangeCompletion);
+        lcState.push_back(myLaneChangeDirection);
         out.writeAttr(SUMO_ATTR_LCSTATE, lcState);
     }
 }
 
 void
 MSAbstractLaneChangeModel::loadState(const SUMOSAXAttributes& attrs) {
+    if (attrs.hasAttribute(SUMO_ATTR_LCSTATE_BASE)) {
+        std::istringstream bis(attrs.getString(SUMO_ATTR_LCSTATE_BASE));
+        double token;
+        bis >> token;
+        myOwnState = (int)token; // double is suffciently precise
+        double prev = std::numeric_limits<double>::max();
+        while (bis >> token) {
+            if (prev != std::numeric_limits<double>::max()) {
+                myLCAccelerationAdvices.push_back(std::make_pair(prev, (bool)token));
+                prev = std::numeric_limits<double>::max();
+            }
+            prev = token;
+        }
+    }
     if (attrs.hasAttribute(SUMO_ATTR_LCSTATE)) {
         std::istringstream bis(attrs.getString(SUMO_ATTR_LCSTATE));
         bis >> mySpeedLat;

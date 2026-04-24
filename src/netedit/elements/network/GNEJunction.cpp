@@ -1751,6 +1751,10 @@ GNEJunction::drawJunctionAsBubble(const GUIVisualizationSettings& s, const GUIVi
     const double bubbleRadius = s.neteditSizeSettings.junctionBubbleRadius * exaggeration;
     // set bubble color
     const RGBColor bubbleColor = setColor(s, true);
+    if (bubbleColor.alpha() == 0) {
+      // never draw when at full transparency (make sure no matrices have been pushed before return)
+      return;
+    }
     // push matrix
     GLHelper::pushMatrix();
     // set color
@@ -1770,6 +1774,10 @@ GNEJunction::drawJunctionAsShape(const GUIVisualizationSettings& s, const GUIVis
     if (s.drawJunctionShape && (myNBNode->getShape().size() > 0)) {
         // set shape color
         const RGBColor junctionShapeColor = setColor(s, false);
+        if (junctionShapeColor.alpha() == 0) {
+          // never draw when at full transparency (make sure no matrices have been pushed before return)
+          return;
+        }
         // set color
         GLHelper::setColor(junctionShapeColor);
         // adjust shape to exaggeration (check)
@@ -2152,7 +2160,7 @@ GNEJunction::setColor(const GUIVisualizationSettings& s, bool bubble) const {
     const int scheme = s.junctionColorer.getActive();
     // first check if we're editing shape
     if (myShapeEdited) {
-        return s.colorSettings.editShapeColor;
+        return s.junctionColorer.getScheme().getColor(4);
     }
     // set default color
     RGBColor color = s.junctionColorer.getScheme().getColor(getColorValue(s, scheme));

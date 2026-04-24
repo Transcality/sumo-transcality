@@ -27,6 +27,7 @@
 #include <config.h>
 
 #include <iostream>
+#include <utils/xml/SUMOSAXAttributes.h>
 #include <utils/common/RandHelper.h>
 #include <utils/common/StringUtils.h>
 #include <microsim/transportables/MSPModel.h>
@@ -74,6 +75,8 @@
 #define REACT_TO_STOPPED_DISTANCE 100
 #define BLOCKER_IS_BLOCKED_TIME_THRESHOLD 5 // the time after which a blocking neighbor is treated similar to a stopped vehicle
 
+#define HYST_PRECISION 10000000
+
 // ===========================================================================
 // debug defines
 // ===========================================================================
@@ -86,7 +89,7 @@
 //#define DEBUG_COOPERATE
 //#define DEBUG_SAVE_BLOCKER_LENGTH
 
-//#define DEBUG_COND (myVehicle.getID() == "disabled")
+//#define DEBUG_COND (myVehicle.getID() == "ego")
 #define DEBUG_COND (myVehicle.isSelected())
 //#define DEBUG_COND (true)
 
@@ -101,6 +104,7 @@ MSLCM_LC2013::MSLCM_LC2013(MSVehicle& v) :
     myLeadingBlockerLength(0),
     myLeftSpace(0),
     myLookAheadSpeed(LOOK_AHEAD_MIN_SPEED),
+    myDontBrake(false),
     myStrategicParam(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_STRATEGIC_PARAM, 1)),
     myCooperativeParam(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_PARAM, 1)),
     mySpeedGainParam(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_SPEEDGAIN_PARAM, 1)),
@@ -138,11 +142,11 @@ MSLCM_LC2013::~MSLCM_LC2013() {
 void
 MSLCM_LC2013::initDerivedParameters() {
     if (mySpeedGainParam <= 0) {
-        myChangeProbThresholdRight = std::numeric_limits<double>::max();
-        myChangeProbThresholdLeft = std::numeric_limits<double>::max();
+        myChangeProbThresholdRight = std::numeric_limits<long long int>::max();
+        myChangeProbThresholdLeft = std::numeric_limits<long long int>::max();
     } else {
-        myChangeProbThresholdRight = (0.2 / mySpeedGainRight) / mySpeedGainParam;
-        myChangeProbThresholdLeft = 0.2 / mySpeedGainParam;
+        myChangeProbThresholdRight = (long long int)((0.2 / mySpeedGainRight) / mySpeedGainParam * HYST_PRECISION);
+        myChangeProbThresholdLeft = (long long int)(0.2 / mySpeedGainParam * HYST_PRECISION);
     }
 }
 
@@ -1028,9 +1032,6 @@ MSLCM_LC2013::prepareStep() {
     myLCAccelerationAdvices.clear();
     myDontBrake = false;
     // truncate to work around numerical instability between different builds
-    mySpeedGainProbabilityLeft = ceil(mySpeedGainProbabilityLeft * 100000.0) * 0.00001;
-    mySpeedGainProbabilityRight = ceil(mySpeedGainProbabilityRight * 100000.0) * 0.00001;
-    myKeepRightProbability = ceil(myKeepRightProbability * 100000.0) * 0.00001;
     if (mySigma > 0 && !isChangingLanes()) {
         // disturb lateral position directly
         const double maxDist = SPEED2DIST(myVehicle.getVehicleType().getMaxSpeedLat());
@@ -1361,7 +1362,7 @@ MSLCM_LC2013::_wantsChange(
                 if (vSafeFuture < vSafe) {
                     const double relativeGain = deltaV / MAX2(vMax,
                                                 RELGAIN_NORMALIZATION_MIN_SPEED);
-                    mySpeedGainProbabilityLeft += myVehicle.getActionStepLengthSecs() * relativeGain;
+                    mySpeedGainProbabilityLeft += (long long int)(myVehicle.getActionStepLengthSecs() * relativeGain * HYST_PRECISION);
                     changeLeftToAvoidOvertakeRight = true;
                 }
 #ifdef DEBUG_WANTS_CHANGE
@@ -1370,8 +1371,8 @@ MSLCM_LC2013::_wantsChange(
                               << " avoid overtaking on the right nv=" << nv->getID()
                               << " deltaV=" << deltaV
                               << " nvSpeed=" << nv->getSpeed()
-                              << " speedGainL=" << mySpeedGainProbabilityLeft
-                              << " speedGainR=" << mySpeedGainProbabilityRight
+                              << " speedGainL=" << mySpeedGainProbabilityLeft / HYST_PRECISION
+                              << " speedGainR=" << mySpeedGainProbabilityRight / HYST_PRECISION
                               << " planned acceleration =" << myLCAccelerationAdvices.back().first
                               << "\n";
                 }
@@ -1568,8 +1569,8 @@ MSLCM_LC2013::_wantsChange(
     // - high occupancy on the neighboring lane while in a roundabout
 
     double inconvenience = laneOffset < 0
-                           ? mySpeedGainProbabilityLeft / myChangeProbThresholdRight
-                           : mySpeedGainProbabilityRight / myChangeProbThresholdLeft;
+                           ? (double)mySpeedGainProbabilityLeft / (double)myChangeProbThresholdRight
+                           : (double)mySpeedGainProbabilityRight / (double)myChangeProbThresholdLeft;
 
     const double relSpeedDiff = thisLaneVSafe == 0 ? 0 : (thisLaneVSafe - neighLaneVSafe) / MAX2(thisLaneVSafe, neighLaneVSafe);
     inconvenience = MAX2(relSpeedDiff, inconvenience);
@@ -1581,8 +1582,8 @@ MSLCM_LC2013::_wantsChange(
     if (DEBUG_COND) {
         std::cout << STEPS2TIME(currentTime)
                   << " veh=" << myVehicle.getID()
-                  << " speedGainL=" << mySpeedGainProbabilityLeft
-                  << " speedGainR=" << mySpeedGainProbabilityRight
+                  << " speedGainL=" << mySpeedGainProbabilityLeft / HYST_PRECISION
+                  << " speedGainR=" << mySpeedGainProbabilityRight / HYST_PRECISION
                   << " neighSpeedFactor=" << (thisLaneVSafe / neighLaneVSafe - 1)
                   << " inconvenience=" << inconvenience
                   << " speedInconv=" << speedGainInconvenient
@@ -1667,7 +1668,7 @@ MSLCM_LC2013::_wantsChange(
 #endif
         req = ret | lca | LCA_COOPERATIVE | LCA_URGENT ;//| LCA_CHANGE_TO_HELP;
         if (!cancelRequest(req, laneOffset)) {
-            if ((blocked & LCA_BLOCKED_BY_LEFT_FOLLOWER) && !right && mySpeedGainProbabilityLeft > mySpeedGainUrgency) {
+            if ((blocked & LCA_BLOCKED_BY_LEFT_FOLLOWER) && !right && mySpeedGainProbabilityLeft > (long long int)(mySpeedGainUrgency * HYST_PRECISION)) {
                 MSVehicle* nv = neighFollow.first;
                 const bool hasBidiNeighFollower = neighLane.getBidiLane() != nullptr && MSLCHelper::isBidiFollower(&myVehicle, nv);
                 if (nv != nullptr && !hasBidiNeighFollower) {
@@ -1720,11 +1721,11 @@ MSLCM_LC2013::_wantsChange(
         // ONLY FOR CHANGING TO THE RIGHT
         if (thisLaneVSafe - 5 / 3.6 > neighLaneVSafe) {
             // ok, the current lane is faster than the right one...
-            mySpeedGainProbabilityRight *= pow(0.5, myVehicle.getActionStepLengthSecs());
+            mySpeedGainProbabilityRight = (long long int)((double)mySpeedGainProbabilityRight * pow(0.5, myVehicle.getActionStepLengthSecs()));
             //myKeepRightProbability /= 2.0;
         } else {
             // ok, the current lane is not (much) faster than the right one
-            mySpeedGainProbabilityRight += myVehicle.getActionStepLengthSecs() * relativeGain;
+            mySpeedGainProbabilityRight += (long long int)(myVehicle.getActionStepLengthSecs() * relativeGain * HYST_PRECISION);
 
             // honor the obligation to keep right (Rechtsfahrgebot)
             const double roadSpeedFactor = vMax / myVehicle.getLane()->getSpeedLimit(); // differse from speedFactor if vMax < speedLimit
@@ -1761,8 +1762,9 @@ MSLCM_LC2013::_wantsChange(
                 fullSpeedDrivingSeconds = MIN2(fullSpeedDrivingSeconds, fullSpeedGap / (vMax - leader.first->getSpeed()));
             }
 
-            const double deltaProb = (myChangeProbThresholdRight * (fullSpeedDrivingSeconds / acceptanceTime) / KEEP_RIGHT_TIME);
-            myKeepRightProbability -= myVehicle.getActionStepLengthSecs() * deltaProb;
+            const double deltaProb = (myChangeProbThresholdRight == std::numeric_limits<long long int>::max()) ? 0 :
+                                     ((double)myChangeProbThresholdRight * (fullSpeedDrivingSeconds / acceptanceTime) / KEEP_RIGHT_TIME);
+            myKeepRightProbability -= (long long int)(myVehicle.getActionStepLengthSecs() * deltaProb);
 
             //std::cout << STEPS2TIME(currentTime)
             //          << " veh=" << myVehicle.getID()
@@ -1785,12 +1787,12 @@ MSLCM_LC2013::_wantsChange(
                           << " acceptanceTime=" << acceptanceTime
                           << " fullSpeedGap=" << fullSpeedGap
                           << " fullSpeedDrivingSeconds=" << fullSpeedDrivingSeconds
-                          << " dProb=" << deltaProb
-                          << " myKeepRightProbability=" << myKeepRightProbability
+                          << " dProb=" << deltaProb / HYST_PRECISION
+                          << " myKeepRightProbability=" << myKeepRightProbability / HYST_PRECISION
                           << "\n";
             }
 #endif
-            if (myKeepRightProbability * myKeepRightParam < -myChangeProbThresholdRight) {
+            if ((long long int)((double)myKeepRightProbability * myKeepRightParam) < -myChangeProbThresholdRight) {
                 req = ret | lca | LCA_KEEPRIGHT;
                 if (!cancelRequest(req, laneOffset)) {
                     return ret | req;
@@ -1803,8 +1805,8 @@ MSLCM_LC2013::_wantsChange(
             std::cout << STEPS2TIME(currentTime)
                       << " veh=" << myVehicle.getID()
                       << " speed=" << myVehicle.getSpeed()
-                      << " speedGainL=" << mySpeedGainProbabilityLeft
-                      << " speedGainR=" << mySpeedGainProbabilityRight
+                      << " speedGainL=" << mySpeedGainProbabilityLeft / HYST_PRECISION
+                      << " speedGainR=" << mySpeedGainProbabilityRight / HYST_PRECISION
                       << " thisLaneVSafe=" << thisLaneVSafe
                       << " neighLaneVSafe=" << neighLaneVSafe
                       << " relativeGain=" << relativeGain
@@ -1816,7 +1818,7 @@ MSLCM_LC2013::_wantsChange(
         if (mySpeedGainProbabilityRight > myChangeProbThresholdRight
                 && neighDist / MAX2(.1, myVehicle.getSpeed()) > mySpeedGainRemainTime) { //./MAX2( .1, myVehicle.getSpeed())) { // -.1
             req = ret | lca | LCA_SPEEDGAIN;
-            if (mySpeedGainProbabilityRight > mySpeedGainUrgency) {
+            if (mySpeedGainProbabilityRight > (long long int)(mySpeedGainUrgency * HYST_PRECISION)) {
                 req |= LCA_URGENT;
             }
             if (!cancelRequest(req, laneOffset)) {
@@ -1827,11 +1829,11 @@ MSLCM_LC2013::_wantsChange(
         // ONLY FOR CHANGING TO THE LEFT
         if (thisLaneVSafe > neighLaneVSafe) {
             // this lane is better
-            mySpeedGainProbabilityLeft *= pow(0.5, myVehicle.getActionStepLengthSecs());
+            mySpeedGainProbabilityLeft = (long long int)((double)mySpeedGainProbabilityLeft * pow(0.5, myVehicle.getActionStepLengthSecs()));
         } else if (thisLaneVSafe == neighLaneVSafe) {
-            mySpeedGainProbabilityLeft *= pow(0.8, myVehicle.getActionStepLengthSecs());
+            mySpeedGainProbabilityLeft = (long long int)((double)mySpeedGainProbabilityLeft * pow(0.8, myVehicle.getActionStepLengthSecs()));
         } else {
-            mySpeedGainProbabilityLeft += myVehicle.getActionStepLengthSecs() * relativeGain;
+            mySpeedGainProbabilityLeft += (long long int)(myVehicle.getActionStepLengthSecs() * relativeGain * HYST_PRECISION);
         }
         // VARIANT_19 (stayRight)
         //if (neighFollow.first != 0) {
@@ -1848,8 +1850,8 @@ MSLCM_LC2013::_wantsChange(
             std::cout << STEPS2TIME(currentTime)
                       << " veh=" << myVehicle.getID()
                       << " speed=" << myVehicle.getSpeed()
-                      << " speedGainL=" << mySpeedGainProbabilityLeft
-                      << " speedGainR=" << mySpeedGainProbabilityRight
+                      << " speedGainL=" << mySpeedGainProbabilityLeft / HYST_PRECISION
+                      << " speedGainR=" << mySpeedGainProbabilityRight / HYST_PRECISION
                       << " thisLaneVSafe=" << thisLaneVSafe
                       << " neighLaneVSafe=" << neighLaneVSafe
                       << " relativeGain=" << relativeGain
@@ -1862,7 +1864,7 @@ MSLCM_LC2013::_wantsChange(
                 && (relativeGain > NUMERICAL_EPS || changeLeftToAvoidOvertakeRight)
                 && neighDist / MAX2(.1, myVehicle.getSpeed()) > mySpeedGainRemainTime) { // .1
             req = ret | lca | LCA_SPEEDGAIN;
-            if (mySpeedGainProbabilityLeft > mySpeedGainUrgency) {
+            if (mySpeedGainProbabilityLeft > (long long int)(mySpeedGainUrgency * HYST_PRECISION)) {
                 req |= LCA_URGENT;
             }
             if (!cancelRequest(req, laneOffset)) {
@@ -1893,9 +1895,9 @@ MSLCM_LC2013::_wantsChange(
     if (DEBUG_COND) {
         std::cout << STEPS2TIME(currentTime)
                   << " veh=" << myVehicle.getID()
-                  << " speedGainL=" << mySpeedGainProbabilityLeft
-                  << " speedGainR=" << mySpeedGainProbabilityRight
-                  << " myKeepRightProbability=" << myKeepRightProbability
+                  << " speedGainL=" << mySpeedGainProbabilityLeft / HYST_PRECISION
+                  << " speedGainR=" << mySpeedGainProbabilityRight / HYST_PRECISION
+                  << " myKeepRightProbability=" << myKeepRightProbability / HYST_PRECISION
                   << " thisLaneVSafe=" << thisLaneVSafe
                   << " neighLaneVSafe=" << neighLaneVSafe
                   << "\n";
@@ -2158,11 +2160,11 @@ MSLCM_LC2013::getParameter(const std::string& key) const {
         return toString(myMaxDistLatStanding);
         // access to internal state for debugging in sumo-gui (not documented since it may change at any time)
     } else if (key == "speedGainProbabilityRight") {
-        return toString(mySpeedGainProbabilityRight);
+        return toString(mySpeedGainProbabilityRight / HYST_PRECISION);
     } else if (key == "speedGainProbabilityLeft") {
-        return toString(mySpeedGainProbabilityLeft);
+        return toString(mySpeedGainProbabilityLeft / HYST_PRECISION);
     } else if (key == "keepRightProbability") {
-        return toString(-myKeepRightProbability);
+        return toString(-myKeepRightProbability / HYST_PRECISION);
     } else if (key == "lookAheadSpeed") {
         return toString(myLookAheadSpeed);
         // motivation relative to threshold
@@ -2171,7 +2173,7 @@ MSLCM_LC2013::getParameter(const std::string& key) const {
     } else if (key == "speedGainLP") {
         return toString(mySpeedGainProbabilityLeft / myChangeProbThresholdLeft);
     } else if (key == "keepRightP") {
-        return toString(myKeepRightProbability * myKeepRightParam / -myChangeProbThresholdRight);
+        return toString((double)myKeepRightProbability * myKeepRightParam / -(double)myChangeProbThresholdRight);
     }
     throw InvalidArgument("Parameter '" + key + "' is not supported for laneChangeModel of type '" + toString(myModel) + "'");
 }
@@ -2227,11 +2229,11 @@ MSLCM_LC2013::setParameter(const std::string& key, const std::string& value) {
         myMaxDistLatStanding = doubleValue;
         // access to internal state
     } else if (key == "speedGainProbabilityRight") {
-        mySpeedGainProbabilityRight = doubleValue;
+        mySpeedGainProbabilityRight = (long long int)(doubleValue * HYST_PRECISION);
     } else if (key == "speedGainProbabilityLeft") {
-        mySpeedGainProbabilityLeft = doubleValue;
+        mySpeedGainProbabilityLeft = (long long int)(doubleValue * HYST_PRECISION);
     } else if (key == "keepRightProbability") {
-        myKeepRightProbability = -doubleValue;
+        myKeepRightProbability = (long long int)(-doubleValue * HYST_PRECISION);
     } else if (key == "lookAheadSpeed") {
         myLookAheadSpeed = doubleValue;
     } else {
@@ -2239,6 +2241,35 @@ MSLCM_LC2013::setParameter(const std::string& key, const std::string& value) {
     }
     initDerivedParameters();
 }
+
+
+void
+MSLCM_LC2013::saveState(OutputDevice& out) const {
+    MSAbstractLaneChangeModel::saveState(out);
+    std::vector<long long int> lcState;
+    lcState.push_back(mySpeedGainProbabilityLeft);
+    lcState.push_back(mySpeedGainProbabilityRight);
+    lcState.push_back(myKeepRightProbability);
+    lcState.push_back(myLookAheadSpeed * HYST_PRECISION);
+    lcState.push_back(myDontBrake);
+    out.writeAttr(SUMO_ATTR_LCSTATE2, lcState);
+}
+
+void
+MSLCM_LC2013::loadState(const SUMOSAXAttributes& attrs) {
+    MSAbstractLaneChangeModel::loadState(attrs);
+    if (attrs.hasAttribute(SUMO_ATTR_LCSTATE2)) {
+        std::istringstream bis(attrs.getString(SUMO_ATTR_LCSTATE2));
+        bis >> mySpeedGainProbabilityLeft;
+        bis >> mySpeedGainProbabilityRight;
+        bis >> myKeepRightProbability;
+        long long laSpeed;
+        bis >> laSpeed;
+        myLookAheadSpeed = (double)laSpeed / HYST_PRECISION;
+        bis >> myDontBrake;
+    }
+}
+
 
 
 /****************************************************************************/

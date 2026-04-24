@@ -102,6 +102,10 @@ public:
         return (myMBClasses & svc & SVC_RAIL_CLASSES) == (svc & SVC_RAIL_CLASSES);
     }
 
+    static bool isUsingDriveWays(SVCPermissions svc) {
+        return ((mySignalizedClasses | myMBClasses) & svc) == svc;
+    }
+
     static void initSignalized(SVCPermissions svc, SVCPermissions mbSvc) {
         mySignalizedClasses = svc;
         myMBClasses = mbSvc;

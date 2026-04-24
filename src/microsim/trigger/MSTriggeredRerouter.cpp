@@ -542,7 +542,7 @@ MSTriggeredRerouter::triggerRouting(SUMOTrafficObject& tObject, MSMoveReminder::
                 p->rerouteParkingArea(oldParkingArea, newParkingArea);
             }
 
-            if (newDestination) {
+            if (newDestination && veh.getParameter().arrivalPosProcedure != ArrivalPosDefinition::DEFAULT) {
                 // update arrival parameters
                 SUMOVehicleParameter* newParameter = new SUMOVehicleParameter();
                 *newParameter = veh.getParameter();
@@ -866,17 +866,17 @@ MSTriggeredRerouter::getUserProbability() const {
 
 double
 MSTriggeredRerouter::getStoppingPlaceOccupancy(MSStoppingPlace* sp, const SUMOVehicle* veh) {
-    return (double)(sp->getElement() == SUMO_TAG_PARKING_AREA
-                    ? dynamic_cast<MSParkingArea*>(sp)->getOccupancyIncludingRemoteReservations(veh)
-                    : sp->getStoppedVehicles().size());
+    return (sp->getElement() == SUMO_TAG_PARKING_AREA
+                    ? (double)dynamic_cast<MSParkingArea*>(sp)->getOccupancyIncludingRemoteReservations(veh)
+                    : (double)sp->getStoppedVehicles().size());
 }
 
 
 double
 MSTriggeredRerouter::getLastStepStoppingPlaceOccupancy(MSStoppingPlace* sp, const SUMOVehicle* veh) {
-    return (double)(sp->getElement() == SUMO_TAG_PARKING_AREA
-                    ? dynamic_cast<MSParkingArea*>(sp)->getLastStepOccupancyIncludingRemoteReservations(veh)
-                    : sp->getStoppedVehicles().size());
+    return (sp->getElement() == SUMO_TAG_PARKING_AREA
+                    ? (double)dynamic_cast<MSParkingArea*>(sp)->getLastStepOccupancyIncludingRemoteReservations(veh)
+                    : (double)sp->getStoppedVehicles().size());
 }
 
 
@@ -1166,7 +1166,7 @@ MSTriggeredRerouter::checkStopSwitch(MSBaseVehicle& ego, const MSTriggeredRerout
         //    p->rerouteParkingArea(ego.getNextParkingArea(), newParkingArea);
         //}
 
-        if (newDestination) {
+        if (newDestination && ego.getParameter().arrivalPosProcedure != ArrivalPosDefinition::DEFAULT) {
             // update arrival parameters
             SUMOVehicleParameter* newParameter = new SUMOVehicleParameter();
             *newParameter = ego.getParameter();

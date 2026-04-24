@@ -1116,6 +1116,8 @@ GNEEdge::getAttribute(SumoXMLAttr key) const {
             return toString(myNBEdge->getFinalLength());
         case SUMO_ATTR_TYPE:
             return myNBEdge->getTypeID();
+        case SUMO_ATTR_ROUTINGTYPE:
+            return myNBEdge->getRoutingType();
         case SUMO_ATTR_SHAPE:
             return toString(myNBEdge->getInnerGeometry());
         case SUMO_ATTR_SPREADTYPE:
@@ -1294,6 +1296,7 @@ GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList* un
         case SUMO_ATTR_PRIORITY:
         case SUMO_ATTR_LENGTH:
         case SUMO_ATTR_TYPE:
+        case SUMO_ATTR_ROUTINGTYPE:
         case SUMO_ATTR_SPREADTYPE:
         case SUMO_ATTR_DISTANCE:
         case GNE_ATTR_MODIFICATION_STATUS:
@@ -1404,6 +1407,7 @@ GNEEdge::isValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_DISALLOW:
             return canParseVehicleClasses(value);
         case SUMO_ATTR_TYPE:
+        case SUMO_ATTR_ROUTINGTYPE:
             return true;
         case SUMO_ATTR_SHAPE:
             // empty shapes are allowed
@@ -1872,6 +1876,9 @@ GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value) {
             break;
         case SUMO_ATTR_TYPE:
             myNBEdge->myType = value;
+            break;
+        case SUMO_ATTR_ROUTINGTYPE:
+            myNBEdge->myRoutingType = value;
             break;
         case SUMO_ATTR_SHAPE:
             // set new geometry
@@ -2893,15 +2900,18 @@ GNEEdge::drawEdgeShape(const GUIVisualizationSettings& s, const GUIVisualization
             // override with special colors (unless the color scheme is based on selection)
             geometryPointColor = s.colorSettings.selectedEdgeColor.changedBrightness(-20);
         }
-        // set color
-        GLHelper::setColor(geometryPointColor);
-        // iterate over NBEdge geometry
-        for (int i = 1; i < (int)myNBEdge->getGeometry().size(); i++) {
+        // never draw when at full transparency
+        if (geometryPointColor.alpha() != 0) {
+          // set color
+          GLHelper::setColor(geometryPointColor);
+          // iterate over NBEdge geometry
+          for (int i = 1; i < (int)myNBEdge->getGeometry().size(); i++) {
             // calculate line between previous and current geometry point
             PositionVector line = {myNBEdge->getGeometry()[i - 1], myNBEdge->getGeometry()[i]};
             line.move2side(0.2);
             // draw box line
             GLHelper::drawBoxLine(line[1], RAD2DEG(line[0].angleTo2D(line[1])) - 90, line[0].distanceTo2D(line[1]), .1);
+          }
         }
         // pop draw matrix
         GLHelper::popMatrix();

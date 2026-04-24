@@ -509,6 +509,9 @@ public:
      */
     virtual void addTransportable(MSTransportable* transportable);
 
+    /// @brief init device during state loading
+    void initTransportableDevice(bool isPerson);
+
     /// @brief removes a person or container
     void removeTransportable(MSTransportable* t);
 
@@ -690,6 +693,10 @@ public:
         return !myStops.empty();
     }
 
+
+    /// @brief unregisters from a parking reservation when changing or skipping stops
+    void cleanupParkingReservation();
+
     /** @brief replace the current parking area stop with a new stop with merge duration
      */
     bool replaceParkingArea(MSParkingArea* parkingArea, std::string& errorMsg);
@@ -825,6 +832,11 @@ public:
     /// @brief whether this vehicle is selected in the GUI
     virtual bool isSelected() const {
         return false;
+    }
+
+    virtual void updateBestLanes(bool forceRebuild = false, const MSLane* startLane = 0) {
+        UNUSED_PARAMETER(forceRebuild);
+        UNUSED_PARAMETER(startLane);
     }
 
     /// @brief @return The index of the vehicle's associated RNG

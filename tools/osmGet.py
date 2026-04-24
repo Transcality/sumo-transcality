@@ -169,6 +169,9 @@ def readCompressed(options, urls, context, query, roadTypesJSON, getShapes, file
                     lines = gzip.decompress(response.read())
                 else:
                     lines = response.read()
+                # validate before injecting SUMO header
+                if b"<osm" not in lines[:1000]:
+                    raise ValueError("Server %s returned non-OSM content" % url)
                 declClose = lines.find(b'>') + 1
                 lines = (lines[:declClose]
                          + b"\n"
@@ -182,9 +185,10 @@ def readCompressed(options, urls, context, query, roadTypesJSON, getShapes, file
                 break
         except HTTPError as e:
             if idx < options.retries:
-                if e.code == 504:
+                if e.code in [429, 502, 503, 504]:
                     if options.verbose:
-                        print("Download from %s failed, retrying." % url)
+                        print("Download from %s failed (%s %s), retrying in %ds."
+                              % (url, e.code, e.msg, options.retry_delay))
                     time.sleep(options.retry_delay)
                     continue
                 urls = [u for u in urls if u != url]
@@ -212,7 +216,7 @@ def get_options(args):
     optParser.add_argument("-a", "--area", type=int, help="area id to retrieve")
     optParser.add_argument("-x", "--polygon", category="processing",
                            help="calculate bounding box from polygon data in file")
-    optParser.add_argument("-u", "--url", default="hpi,hpi,oapi",
+    optParser.add_argument("-u", "--url", default="hpi,oapi,pcoffee",
                            help="Download from the given Overpass server(s)")
     optParser.add_argument("-w", "--wikidata", action="store_true",
                            default=False, help="get the corresponding wikidata")
@@ -261,7 +265,9 @@ def get(args=None):
     if options.output_dir:
         options.prefix = os.path.join(options.output_dir, options.prefix)
 
-    shortcut = {"oapi": "https://overpass-api.de/api/interpreter", "hpi": "https://osm.hpi.de/overpass/api/interpreter"}
+    shortcut = {"oapi": "https://overpass-api.de/api/interpreter",
+                "hpi": "https://osm.hpi.de/overpass/api/interpreter",
+                "pcoffee": "https://overpass.private.coffee/api/interpreter"}
     urls = [shortcut.get(u, u) for u in options.url.split(",")]
     context = ssl.create_default_context(cafile=certifi.where() if HAVE_CERTIFI else None)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -276,10 +282,9 @@ def get(args=None):
                        options.area, roadTypesJSON, options.shapes, options.prefix + "_city" + suffix)
     if options.bbox or options.polygon:
         if options.tiles == 1:
-            readCompressed(options, urls, context, '<bbox-query n="%s" s="%s" w="%s" e="%s"/>' %
-                           (north, south, west, east), roadTypesJSON,
-                           options.shapes,
-                           options.prefix + "_bbox" + suffix)
+            readCompressed(options, urls, context,
+                           '<bbox-query n="%s" s="%s" w="%s" e="%s"/>' % (north, south, west, east),
+                           roadTypesJSON, options.shapes, options.prefix + "_bbox" + suffix)
         else:
             num = options.tiles
             b = west
@@ -287,9 +292,9 @@ def get(args=None):
                 if options.verbose:
                     print("Getting tile %d of %d." % (i + 1, num))
                 e = b + (east - west) / float(num)
-                readCompressed(options, urls, context, '<bbox-query n="%s" s="%s" w="%s" e="%s"/>' % (
-                    north, south, b, e), roadTypesJSON, options.shapes,
-                    "%s%s_%s%s" % (options.prefix, i, num, suffix))
+                readCompressed(options, urls, context,
+                               '<bbox-query n="%s" s="%s" w="%s" e="%s"/>' % (north, south, b, e),
+                               roadTypesJSON, options.shapes, "%s%s_%s%s" % (options.prefix, i, num, suffix))
                 b = e
 
     # extract the wiki data according to the wikidata-value in the extracted osm file

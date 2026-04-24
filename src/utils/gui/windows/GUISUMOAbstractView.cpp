@@ -171,10 +171,6 @@ GUISUMOAbstractView::~GUISUMOAbstractView() {
         makeNonCurrent();
     }
 
-    // cleanup decals
-    for (auto& decal : myDecals) {
-        delete decal.image;
-    }
     // remove all elements
     for (auto& additional : myAdditionallyDrawn) {
         additional.first->removeActiveAddVisualisation(this, ~0);
@@ -1769,8 +1765,6 @@ GUISUMOAbstractView::clearDecals() {
             queueTextureDelete(static_cast<unsigned int>(decal.glID));
             decal.glID = -1;
         }
-        delete decal.image;
-        decal.image = nullptr;
         decal.initialised = false;
     }
     myDecals.clear();
@@ -1801,7 +1795,7 @@ GUISUMOAbstractView::checkGDALImage(Decal& d) {
             const double horizontalSize = xSize * adfGeoTransform[1];
             const double verticalSize = ySize * adfGeoTransform[5];
             Position bottomRight(topLeft.x() + horizontalSize, topLeft.y() + verticalSize);
-            if (GeoConvHelper::getFinal().x2cartesian_const(topLeft) && GeoConvHelper::getFinal().x2cartesian_const(bottomRight)) {
+            if (GeoConvHelper::getFinal().usingGeoProjection() && GeoConvHelper::getFinal().x2cartesian_const(topLeft) && GeoConvHelper::getFinal().x2cartesian_const(bottomRight)) {
                 //WRITE_MESSAGE("proj: " + toString(poDataset->GetProjectionRef()) + " dim: " + toString(d.width) + "," + toString(d.height) + " center: " + toString(d.centerX) + "," + toString(d.centerY));
             } else {
                 WRITE_WARNINGF(TL("Could not transform coordinates from WGS84 in decal %, assuming UTM."), d.filename);
@@ -1879,8 +1873,8 @@ GUISUMOAbstractView::drawDecals() {
                 }
                 MFXImageHelper::scalePower2(img, GUITexturesHelper::getMaxTextureSize());
                 decal.glID = GUITexturesHelper::add(img);
+                delete img;
                 decal.initialised = true;
-                decal.image = img;
             } catch (InvalidArgument& e) {
                 WRITE_ERROR("Could not load '" + decal.filename + "'.\n" + e.what());
                 decal.skip2D = true;

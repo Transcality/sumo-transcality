@@ -171,11 +171,14 @@ public:
     virtual SUMOTime getWaitingTime() const;
     virtual SUMOTime getTotalWaitingTime() const;
 
-    /// logs end of the step
+    /// logs beginning of stage
     void setDeparted(SUMOTime now);
 
     /// logs end of the step
     virtual const std::string setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now, const bool vehicleArrived);
+
+    /// @brief sets end of stage
+    void setEnded(SUMOTime t);
 
     /// Whether the transportable waits for the given vehicle
     virtual bool isWaitingFor(const SUMOVehicle* vehicle) const;
@@ -245,8 +248,9 @@ public:
 
     /** @brief Saves the current state into the given stream, standard implementation does nothing
      */
-    virtual void saveState(std::ostringstream& out) {
+    virtual void saveState(std::ostringstream& out, MSTransportable* transportable) {
         UNUSED_PARAMETER(out);
+        UNUSED_PARAMETER(transportable);
     }
 
     /** @brief Reconstructs the current state, standard implementation does nothing

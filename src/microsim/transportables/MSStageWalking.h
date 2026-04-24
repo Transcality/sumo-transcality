@@ -93,7 +93,7 @@ public:
 
     /** @brief Saves the current state into the given stream
      */
-    void saveState(std::ostringstream& out);
+    void saveState(std::ostringstream& out, MSTransportable* transportable);
 
     /** @brief Reconstructs the current state
      */
@@ -148,6 +148,10 @@ public:
         // this is safe because MSStage already checked that the type fits
         const MSStageWalking& sw = static_cast<const MSStageWalking&>(s);
         return myWalkingTime == sw.myWalkingTime;
+    }
+
+    void setExitTimes(std::vector<SUMOTime>* exitTimes) {
+        myExitTimes = exitTimes;
     }
 
 private:

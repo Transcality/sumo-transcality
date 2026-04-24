@@ -780,7 +780,7 @@ MSEdge::validateDepartSpeed(SUMOVehicle& v) const {
                 vMax += SPEED_EPS;
                 if (pars.departSpeed > vMax) {
                     if (type.getSpeedFactor().getParameter(1) > 0.) {
-                        v.setChosenSpeedFactor(type.computeChosenSpeedDeviation(nullptr, pars.departSpeed / MIN2(getSpeedLimit(), type.getDesiredMaxSpeed() - SPEED_EPS)));
+                        v.setChosenSpeedFactor(type.computeChosenSpeedDeviation(pars.speedFactor, nullptr, pars.departSpeed / MIN2(getSpeedLimit(), type.getDesiredMaxSpeed() - SPEED_EPS)));
                         if (v.getChosenSpeedFactor() > type.getSpeedFactor().getParameter(0) + 2 * type.getSpeedFactor().getParameter(1)) {
                             // only warn for significant deviation
                             WRITE_WARNINGF(TL("Choosing new speed factor % for vehicle '%' to match departure speed % (max %)."),
@@ -862,7 +862,11 @@ MSEdge::insertVehicle(SUMOVehicle& v, SUMOTime time, const bool checkOnly, const
         return result;
     }
     if (checkOnly) {
-        switch (v.getParameter().departLaneProcedure) {
+        DepartLaneDefinition dld = v.getParameter().departLaneProcedure;
+        if (dld == DepartLaneDefinition::DEFAULT) {
+            dld = myDefaultDepartLaneDefinition;
+        }
+        switch (dld) {
             case DepartLaneDefinition::GIVEN:
             case DepartLaneDefinition::DEFAULT:
             case DepartLaneDefinition::FIRST_ALLOWED: {
@@ -1202,11 +1206,11 @@ MSEdge::getVehicleMaxSpeed(const SUMOTrafficObject* const veh) const {
 
 
 void
-MSEdge::setMaxSpeed(double val, double jamThreshold) {
+MSEdge::setMaxSpeed(const double val, const bool modified, const double jamThreshold) {
     assert(val >= 0);
     if (myLanes != nullptr) {
-        for (std::vector<MSLane*>::const_iterator i = myLanes->begin(); i != myLanes->end(); ++i) {
-            (*i)->setMaxSpeed(val, false, false, jamThreshold);
+        for (MSLane* const lane : *myLanes) {
+            lane->setMaxSpeed(val, modified, jamThreshold);
         }
     }
 }

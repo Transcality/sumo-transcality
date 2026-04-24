@@ -89,6 +89,7 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
     }
     const SumoXMLAttrMask& mask = MSDevice_FCD::getWrittenAttributes();
     const bool useGeo = MSDevice_FCD::useGeo();
+    const bool useUTM = MSDevice_FCD::useUTM();
     const double maxLeaderDistance = MSDevice_FCD::getMaxLeaderDistance();
     const std::vector<std::string>& params = MSDevice_FCD::getParamsToWrite();
     MSNet* net = MSNet::getInstance();
@@ -127,6 +128,8 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
                 if (useGeo) {
                     of.setPrecision(gPrecisionGeo);
                     GeoConvHelper::getFinal().cartesian2geo(pos);
+                } else if (useUTM) {
+                    pos.sub(GeoConvHelper::getFinal().getOffset());
                 }
                 of.openTag(SUMO_TAG_VEHICLE);
                 of.writeAttr(SUMO_ATTR_ID, veh->getID());
@@ -142,6 +145,10 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
                 }, mask);
                 of.writeFuncAttr(SUMO_ATTR_SPEED, [ = ]() {
                     return veh->getSpeed();
+                }, mask);
+                of.writeFuncAttr(SUMO_ATTR_SPEEDREL, [ = ]() {
+                    const double speedLimit = veh->getEdge()->getSpeedLimit();
+                    return speedLimit > 0 ? veh->getSpeed() / speedLimit : 0.;
                 }, mask);
                 of.writeFuncAttr(SUMO_ATTR_POSITION, [ = ]() {
                     if (MSGlobals::gUseMesoSim) {
@@ -173,7 +180,7 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
                     return MSGlobals::gUseMesoSim ? "" : microVeh->getLane()->getID();
                 }, mask, MSGlobals::gUseMesoSim);
                 of.writeFuncAttr(SUMO_ATTR_EDGE, [ = ]() {
-                    return veh->getEdge()->getID();
+                    return veh->getCurrentEdge()->getID();
                 }, mask, !MSGlobals::gUseMesoSim);
                 of.writeFuncAttr(SUMO_ATTR_SLOPE, [ = ]() {
                     return veh->getSlope();
@@ -187,6 +194,12 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
                     }, mask);
                     of.writeFuncAttr(SUMO_ATTR_ACCELERATION_LAT, [ = ]() {
                         return microVeh->getLaneChangeModel().getAccelerationLat();
+                    }, mask);
+                    of.writeFuncAttr(SUMO_ATTR_SPEED_VEC, [ = ]() {
+                        return GeomHelper::vectorize(microVeh->getSpeed(), microVeh->getAngle());
+                    }, mask);
+                    of.writeFuncAttr(SUMO_ATTR_ACCEL_VEC, [ = ]() {
+                        return GeomHelper::vectorize(microVeh->getAcceleration(), microVeh->getAngle());
                     }, mask);
                 }
                 of.writeFuncAttr(SUMO_ATTR_DISTANCE, [ = ]() {
@@ -271,6 +284,14 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
                     }
                     return arrivalDelay;
                 }, mask);
+                of.writeFuncAttr(SUMO_ATTR_DELAY, [ = ]() {
+                    const double delay = static_cast<const MSBaseVehicle*>(veh)->getStopDelay();
+                    if (delay < 0) {
+                        // no upcoming stop also means that there is no delay
+                        return 0.;
+                    }
+                    return delay;
+                }, mask);
                 if (MSGlobals::gUseMesoSim) {
                     const MEVehicle* mesoVeh = static_cast<const MEVehicle*>(veh);
                     of.writeFuncAttr(SUMO_ATTR_SEGMENT, [ = ]() {
@@ -292,6 +313,8 @@ MSFCDExport::write(OutputDevice& of, const SUMOTime timestep, const SumoXMLTag t
                 of.writeFuncAttr(SUMO_ATTR_TAG, [ = ]() {
                     return toString(SUMO_TAG_VEHICLE);
                 }, mask);
+                of.writeOptionalAttr(SUMO_ATTR_PERSON_NUMBER, veh->getPersonNumber(), mask);
+                of.writeOptionalAttr(SUMO_ATTR_CONTAINER_NUMBER, veh->getContainerNumber(), mask);
                 MSEmissionExport::writeEmissions(of, static_cast<const MSBaseVehicle*>(veh), false, mask);
                 of.closeTag();
             }
@@ -378,11 +401,13 @@ MSFCDExport::writeTransportable(OutputDevice& of, const MSEdge* const e, const M
     of.writeOptionalAttr(SUMO_ATTR_ANGLE, GeomHelper::naviDegree(p->getAngle()), mask);
     of.writeOptionalAttr(SUMO_ATTR_TYPE, p->getVehicleType().getID(), mask);
     of.writeOptionalAttr(SUMO_ATTR_SPEED, p->getSpeed(), mask);
+    of.writeOptionalAttr(SUMO_ATTR_SPEEDREL, e->getSpeedLimit() > 0 ? p->getSpeed() / e->getSpeedLimit() : 0., mask);
     of.writeOptionalAttr(SUMO_ATTR_POSITION, p->getEdgePos(), mask);
     of.writeOptionalAttr(SUMO_ATTR_LANE, "", mask, true);
     of.writeOptionalAttr(SUMO_ATTR_EDGE, e->getID(), mask);
     of.writeOptionalAttr(SUMO_ATTR_SLOPE, e->getLanes()[0]->getShape().slopeDegreeAtOffset(p->getEdgePos()), mask);
     of.writeOptionalAttr(SUMO_ATTR_VEHICLE, v == nullptr ? "" : v->getID(), mask);
+    of.writeOptionalAttr(SUMO_ATTR_STAGE, p->getCurrentStageDescription(), mask);
     of.writeOptionalAttr(SUMO_ATTR_TAG, toString(tag), mask);
     of.closeTag();
 }

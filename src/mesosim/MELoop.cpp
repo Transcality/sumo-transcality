@@ -153,7 +153,8 @@ MELoop::checkCar(MEVehicle* veh) {
             return;
         }
     }
-    if (veh->getBlockTime() == SUMOTime_MAX && !veh->isStopped()) {
+    if (veh->getBlockTime() == SUMOTime_MAX && (!veh->isStopped()
+                || (!veh->isStoppedTriggered() && veh->isStoppedParking()))) {
         veh->setBlockTime(leaveTime);
     }
     if (nextEntry == SUMOTime_MAX) {
@@ -216,6 +217,8 @@ MELoop::teleportVehicle(MEVehicle* veh, MESegment* const toSegment, bool disconn
             onSegment->send(veh, nullptr, qIdx, leaveTime, MSMoveReminder::NOTIFICATION_TELEPORT);
             // mark veh as teleporting
             veh->setSegment(nullptr);
+        } else {
+            veh->updateDetectors(veh->getLastEntryTime(), leaveTime, true, MSMoveReminder::NOTIFICATION_TELEPORT);
         }
         // @caution microsim uses current travel time teleport duration
         const SUMOTime teleArrival = leaveTime + TIME2STEPS(veh->getEdge()->getLength() / MAX2(veh->getEdge()->getSpeedLimit(), NUMERICAL_EPS));
@@ -284,6 +287,12 @@ MELoop::nextSegment(MESegment* s, MEVehicle* v) {
     if (nextEdge == nullptr) {
         // end of route
         return nullptr;
+    }
+    if (MSGlobals::gUsingInternalLanes && s != nullptr && s->getEdge().isNormal()) {
+        const MSEdge* internal = s->getEdge().getInternalFollowingEdge(nextEdge, v->getVClass());
+        if (internal) {
+            nextEdge = internal;
+        }
     }
     return myEdges2FirstSegments[nextEdge->getNumericalID()];
 }

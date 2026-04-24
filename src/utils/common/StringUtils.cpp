@@ -86,6 +86,16 @@ StringUtils::to_lower_case(const std::string& str) {
 
 
 std::string
+StringUtils::to_upper_case(const std::string& str) {
+    std::string s = str;
+    std::transform(s.begin(), s.end(), s.begin(), [](char c) {
+        return (char)::toupper(c);
+    });
+    return s;
+}
+
+
+std::string
 StringUtils::latin1_to_utf8(std::string str) {
     // inspired by http://stackoverflow.com/questions/4059775/convert-iso-8859-1-strings-to-utf-8-in-c-c
     std::string result;
@@ -756,16 +766,16 @@ StringUtils::wrapText(const std::string s, int width) {
             } else {
                 line += " ";
             }
-            line = line + p;
+            line += p;
         } else {
             if (firstLine) {
                 firstLine = false;
             } else {
                 result += "\n";
             }
-            result = result + line;
+            result += line;
             line.clear();
-            firstWord = true;
+            line += p;
         }
     }
     if (line.size() > 0) {
@@ -774,7 +784,7 @@ StringUtils::wrapText(const std::string s, int width) {
         } else {
             result += "\n";
         }
-        result = result + line;
+        result += line;
     }
     return result;
 }

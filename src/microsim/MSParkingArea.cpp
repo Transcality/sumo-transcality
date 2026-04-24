@@ -186,9 +186,7 @@ MSParkingArea::getLastFreePos(const SUMOVehicle& forVehicle, double brakePos) co
         }
 #endif
         return myLastFreePos - forVehicle.getVehicleType().getMinGap() - POSITION_EPS;
-    } else if (myOnRoad
-            && ((myLane.getEdge().getNumLanes() < myLane.getIndex() + 2) || !myLane.allowsChangingLeft(forVehicle.getVClass()))
-            && (myLane.getIndex() == 0 || !myLane.allowsChangingRight(forVehicle.getVClass()))) {
+    } else if (mustAdvance(forVehicle.getVClass())) {
         // vehicles cannot overtake so we must fill from the downstream end
         int skipN = SIMSTEP == myReservationTime ? myReservations - 1 : 0;
         //std::cout << SIMTIME << " v=" << forVehicle.getID() << " t=" << SIMTIME << " resTime=" << STEPS2TIME(myReservationTime) << " myR=" << myReservations << " skip=" << skipN << " rV=" << toString(myReservedVehicles) << "\n";
@@ -208,7 +206,7 @@ MSParkingArea::getLastFreePos(const SUMOVehicle& forVehicle, double brakePos) co
             }
         }
         // should not happen
-        return myEndPos;
+        return brakePos;
     } else {
         const double minPos = MIN2(myEndPos, brakePos);
         if (myLastFreePos >= minPos) {
@@ -240,6 +238,20 @@ MSParkingArea::getLastFreePos(const SUMOVehicle& forVehicle, double brakePos) co
         }
     }
 }
+
+bool
+MSParkingArea::mustAdvance(SUMOVehicleClass svc) const {
+    return myOnRoad && cannotChange(svc);
+}
+
+bool
+MSParkingArea::cannotChange(SUMOVehicleClass svc) const {
+    const MSLane* left = myLane.getParallelLane(1, false);
+    const MSLane* right = myLane.getParallelLane(-1, false);
+    return ((left == nullptr || !left->allowsVehicleClass(svc) || !myLane.allowsChangingLeft(svc))
+        && (right == nullptr || !right->allowsVehicleClass(svc) || !myLane.allowsChangingRight(svc)));
+}
+
 
 Position
 MSParkingArea::getVehiclePosition(const SUMOVehicle& forVehicle) const {
@@ -498,9 +510,11 @@ MSParkingArea::getLastFreePosWithReservation(SUMOTime t, const SUMOVehicle& forV
             // check if there is a reservation from the last time step
             // (this could also be in myReserations, if myLane wasn't processed before the forVehicle-lane)
             const SUMOTime last = t - DELTA_T;
+#ifdef DEBUG_RESERVATIONS
             if (DEBUG_COND2(forVehicle)) {
                 std::cout << SIMTIME << " last=" << time2string(last) << " lastRes=" << time2string(myLastReservationTime) << " resTime=" << toString(myReservationTime) << "\n";
             }
+#endif
             if (myLastReservationTime == last || myReservationTime == last) {
                 int res = myLastReservationTime == last ? myLastReservations : myReservations;
                 if (myCapacity <= getOccupancy() + res) {
@@ -614,14 +628,14 @@ MSParkingArea::getOccupancyIncludingReservations(const SUMOVehicle* forVehicle) 
     const bool reservedRemote = myRemoteReservedVehicles.count(forVehicle) != 0;
     return ((int)myEndPositions.size()
         + (reservedLocal ? 0 : myReservations)
-        + (reservedRemote ? 0 : myRemoteReservedVehicles.size()));
+        + (reservedRemote ? 0 : (int)myRemoteReservedVehicles.size()));
 }
 
 
 int
 MSParkingArea::getOccupancyIncludingRemoteReservations(const SUMOVehicle* forVehicle) const {
-    const bool reservedRemote = myRemoteReservedVehicles.count(forVehicle) != 0;
-    return getOccupancy() + (int)myRemoteReservedVehicles.size() - (reservedRemote ? 1 : 0);
+    const int reservedRemote = myRemoteReservedVehicles.count(forVehicle) != 0;
+    return getOccupancy() + (int)myRemoteReservedVehicles.size() - reservedRemote;
 }
 
 
@@ -633,8 +647,8 @@ MSParkingArea::getLastStepOccupancy() const {
 
 int
 MSParkingArea::getLastStepOccupancyIncludingRemoteReservations(const SUMOVehicle* forVehicle) const {
-    const bool reservedRemote = myLastRemoteReservedVehicles.count(forVehicle) != 0;
-    return myLastStepOccupancy - (int)myLastRemoteReservedVehicles.size() + (reservedRemote ? 1 : 0);
+    const int reservedRemote = myLastRemoteReservedVehicles.count(forVehicle) != 0;
+    return myLastStepOccupancy + (int)myLastRemoteReservedVehicles.size() - reservedRemote;
 }
 
 
@@ -724,6 +738,7 @@ MSParkingArea::setRoadsideCapacity(int capacity) {
     // Initialize space occupancies if there is a road-side capacity
     // The overall number of lots is fixed and each lot accepts one vehicle regardless of size
     const double spaceDim = myRoadSideCapacity > 0 ? myLane.interpolateLanePosToGeometryPos((myEndPos - myBegPos) / myRoadSideCapacity) : 7.5;
+    const double spaceOffset = myRoadSideCapacity > 0 ? (myEndPos - myBegPos) / myRoadSideCapacity : 7.5;
     if (myLength == 0) {
         myLength = spaceDim;
     }
@@ -737,7 +752,7 @@ MSParkingArea::setRoadsideCapacity(int capacity) {
         // add lotEntry
         addLotEntry(pos.x(), pos.y(), pos.z(), myWidth, myLength, spaceAngle, spaceSlope);
         // update endPos
-        mySpaceOccupancies.back().endPos = MIN2(myEndPos, myBegPos + MAX2(POSITION_EPS, spaceDim * (i + 1)));
+        mySpaceOccupancies.back().endPos = MIN2(myEndPos, myBegPos + MAX2(POSITION_EPS, spaceOffset * (i + 1)));
     }
     // recompute after modifying the last endPos
     computeLastFreePos();

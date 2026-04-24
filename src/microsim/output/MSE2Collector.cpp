@@ -49,6 +49,8 @@
 #include <microsim/MSVehicleType.h>
 #include <microsim/transportables/MSTransportable.h>
 #include <microsim/transportables/MSPModel.h>
+#include <utils/common/StringUtils.h>
+#include <utils/iodevices/OutputDevice.h>
 #include "MSE2Collector.h"
 
 //#define DEBUG_E2_CONSTRUCTOR
@@ -76,26 +78,7 @@ MSE2Collector::MSE2Collector(const std::string& id,
     myName(name),
     myJamHaltingSpeedThreshold(haltingSpeedThreshold),
     myJamHaltingTimeThreshold(haltingTimeThreshold),
-    myJamDistanceThreshold(jamDistThreshold),
-    myNumberOfEnteredVehicles(0),
-    myNumberOfSeenVehicles(0),
-    myNumberOfLeftVehicles(0),
-    myCurrentVehicleSamples(0),
-    myCurrentOccupancy(0),
-    myCurrentMeanSpeed(0),
-    myCurrentMeanLength(0),
-    myCurrentJamNo(0),
-    myCurrentMaxJamLengthInMeters(0),
-    myCurrentJamLengthInMeters(0),
-    myCurrentJamLengthInVehicles(0),
-    myCurrentHaltingsNumber(0),
-    myPreviousMeanOccupancy(0),
-    myPreviousMeanSpeed(0),
-    myPreviousMeanTimeLoss(0),
-    myPreviousMaxJamLengthInMeters(0),
-    myPreviousNumberOfSeenVehicles(0),
-    myOverrideVehNumber(-1) {
-    reset();
+    myJamDistanceThreshold(jamDistThreshold) {
 
 #ifdef DEBUG_E2_CONSTRUCTOR
     if (DEBUG_COND) {
@@ -184,26 +167,7 @@ MSE2Collector::MSE2Collector(const std::string& id,
     myEndPos(endPos),
     myJamHaltingSpeedThreshold(haltingSpeedThreshold),
     myJamHaltingTimeThreshold(haltingTimeThreshold),
-    myJamDistanceThreshold(jamDistThreshold),
-    myNumberOfEnteredVehicles(0),
-    myNumberOfSeenVehicles(0),
-    myNumberOfLeftVehicles(0),
-    myCurrentVehicleSamples(0),
-    myCurrentOccupancy(0),
-    myCurrentMeanSpeed(0),
-    myCurrentMeanLength(0),
-    myCurrentJamNo(0),
-    myCurrentJamLengthInMeters(0),
-    myCurrentJamLengthInVehicles(0),
-    myCurrentJamDuration(0),
-    myCurrentHaltingsNumber(0),
-    myPreviousMeanOccupancy(0),
-    myPreviousMeanSpeed(0),
-    myPreviousMeanTimeLoss(0),
-    myPreviousMaxJamLengthInMeters(0),
-    myPreviousNumberOfSeenVehicles(0),
-    myOverrideVehNumber(-1) {
-    reset();
+    myJamDistanceThreshold(jamDistThreshold) {
 
     for (std::vector<MSLane*>::const_iterator i = lanes.begin(); i != lanes.end(); ++i) {
         assert((*i) != 0);
@@ -1379,9 +1343,6 @@ MSE2Collector::writeXMLOutput(OutputDevice& dev, SUMOTime startTime, SUMOTime st
         reset();
         return;
     }
-    dev << "   <interval begin=\"" << time2string(startTime) << "\" end=\"" << time2string(stopTime) << "\" " << "id=\"" << getID() << "\" ";
-
-
     const double meanJamLengthInMeters = myTimeSamples != 0 ? myMeanMaxJamInMeters / (double) myTimeSamples : 0;
     const double meanJamLengthInVehicles = myTimeSamples != 0 ? myMeanMaxJamInVehicles / (double) myTimeSamples : 0;
     const double meanVehicleNumber = myTimeSamples != 0 ? (double) myMeanVehicleNumber / (double) myTimeSamples : 0;
@@ -1429,31 +1390,32 @@ MSE2Collector::writeXMLOutput(OutputDevice& dev, SUMOTime startTime, SUMOTime st
     }
 #endif
 
-
-    dev << "sampledSeconds=\"" << myVehicleSamples << "\" "
-        << "nVehEntered=\"" << myNumberOfEnteredVehicles << "\" "
-        << "nVehLeft=\"" << myNumberOfLeftVehicles << "\" "
-        << "nVehSeen=\"" << myNumberOfSeenVehicles << "\" "
-        << "meanSpeed=\"" << meanSpeed << "\" "
-        << "meanTimeLoss=\"" << meanTimeLoss << "\" "
-        << "meanOccupancy=\"" << meanOccupancy << "\" "
-        << "maxOccupancy=\"" << myMaxOccupancy << "\" "
-        << "meanMaxJamLengthInVehicles=\"" << meanJamLengthInVehicles << "\" "
-        << "meanMaxJamLengthInMeters=\"" << meanJamLengthInMeters << "\" "
-        << "maxJamLengthInVehicles=\"" << myMaxJamInVehicles << "\" "
-        << "maxJamLengthInMeters=\"" << myMaxJamInMeters << "\" "
-        << "jamLengthInVehiclesSum=\"" << myJamLengthInVehiclesSum << "\" "
-        << "jamLengthInMetersSum=\"" << myJamLengthInMetersSum << "\" "
-        << "meanHaltingDuration=\"" << STEPS2TIME(meanHaltingDuration) << "\" "
-        << "maxHaltingDuration=\"" << STEPS2TIME(maxHaltingDuration) << "\" "
-        << "haltingDurationSum=\"" << STEPS2TIME(haltingDurationSum) << "\" "
-        << "meanIntervalHaltingDuration=\"" << STEPS2TIME(intervalMeanHaltingDuration) << "\" "
-        << "maxIntervalHaltingDuration=\"" << STEPS2TIME(intervalMaxHaltingDuration) << "\" "
-        << "intervalHaltingDurationSum=\"" << STEPS2TIME(intervalHaltingDurationSum) << "\" "
-        << "startedHalts=\"" << myStartedHalts << "\" "
-        << "meanVehicleNumber=\"" << meanVehicleNumber << "\" "
-        << "maxVehicleNumber=\"" << myMaxVehicleNumber << "\" "
-        << "/>\n";
+    dev.openTag(SUMO_TAG_INTERVAL).writeTime(SUMO_ATTR_BEGIN, startTime).writeTime(SUMO_ATTR_END, stopTime);
+    dev.writeAttr(SUMO_ATTR_ID, StringUtils::escapeXML(getID()));
+    dev.writeAttr("sampledSeconds", myVehicleSamples)
+    .writeAttr("nVehEntered", myNumberOfEnteredVehicles)
+    .writeAttr("nVehLeft", myNumberOfLeftVehicles)
+    .writeAttr("nVehSeen", myNumberOfSeenVehicles)
+    .writeAttr("meanSpeed", meanSpeed)
+    .writeAttr("meanTimeLoss", meanTimeLoss)
+    .writeAttr("meanOccupancy", meanOccupancy)
+    .writeAttr("maxOccupancy", myMaxOccupancy)
+    .writeAttr("meanMaxJamLengthInVehicles", meanJamLengthInVehicles)
+    .writeAttr("meanMaxJamLengthInMeters", meanJamLengthInMeters)
+    .writeAttr("maxJamLengthInVehicles", myMaxJamInVehicles)
+    .writeAttr("maxJamLengthInMeters", myMaxJamInMeters)
+    .writeAttr("jamLengthInVehiclesSum", myJamLengthInVehiclesSum)
+    .writeAttr("jamLengthInMetersSum", myJamLengthInMetersSum)
+    .writeAttr("meanHaltingDuration", STEPS2TIME(meanHaltingDuration))
+    .writeAttr("maxHaltingDuration", STEPS2TIME(maxHaltingDuration))
+    .writeAttr("haltingDurationSum", STEPS2TIME(haltingDurationSum))
+    .writeAttr("meanIntervalHaltingDuration", STEPS2TIME(intervalMeanHaltingDuration))
+    .writeAttr("maxIntervalHaltingDuration", STEPS2TIME(intervalMaxHaltingDuration))
+    .writeAttr("intervalHaltingDurationSum", STEPS2TIME(intervalHaltingDurationSum))
+    .writeAttr("startedHalts", myStartedHalts)
+    .writeAttr("meanVehicleNumber", meanVehicleNumber)
+    .writeAttr("maxVehicleNumber", myMaxVehicleNumber)
+    .closeTag();
 
     reset();
 }

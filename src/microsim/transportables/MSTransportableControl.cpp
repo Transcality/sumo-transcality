@@ -30,12 +30,13 @@
 #include <microsim/transportables/MSPerson.h>
 #include <microsim/transportables/MSStageDriving.h>
 #include <microsim/transportables/MSPModel_NonInteracting.h>
-#ifdef JPS_VERSION
+#ifdef HAVE_JUPEDSIM
 #include <microsim/transportables/MSPModel_JuPedSim.h>
 #endif
 #include <microsim/transportables/MSPModel_Striping.h>
 #include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/devices/MSDevice_Vehroutes.h>
+#include <microsim/devices/MSDevice_Taxi.h>
 #include <microsim/MSNet.h>
 #include <microsim/MSEdge.h>
 #include <microsim/MSVehicle.h>
@@ -66,7 +67,7 @@ MSTransportableControl::MSTransportableControl(const bool isPerson):
         const std::string& model = oc.getString("pedestrian.model");
         if (model == "striping") {
             myMovementModel = new MSPModel_Striping(oc, net);
-#ifdef JPS_VERSION
+#ifdef HAVE_JUPEDSIM
         } else if (model == "jupedsim") {
             myMovementModel = new MSPModel_JuPedSim(oc, net);
 #endif
@@ -163,7 +164,7 @@ MSTransportableControl::erase(MSTransportable* transportable) {
                     OutputDevice_String od(1);
                     transportable->routeOutput(od, oc.getBool("vehroute-output.route-length"));
                     MSDevice_Vehroutes::writeSortedOutput(&myRouteInfos,
-                                                          departure, transportable->getID(), od.getString());
+                                                          departure, transportable->getNumericalID(), od.getString());
                 } else {
                     transportable->routeOutput(*myRouteInfos.routeOut, oc.getBool("vehroute-output.route-length"));
                 }
@@ -180,6 +181,16 @@ MSTransportableControl::erase(MSTransportable* transportable) {
                 transportable->isPerson() ? MSNet::TransportableState::PERSON_ARRIVED : MSNet::TransportableState::CONTAINER_ARRIVED);
         delete i->second;
         myTransportables.erase(i);
+    }
+}
+
+
+void
+MSTransportableControl::eraseAll() {
+    // avoid taxi device having dangling references to erased customers
+    MSDevice_Taxi::allCustomersErased();
+    while (loadedBegin() != loadedEnd()) {
+        erase(loadedBegin()->second);
     }
 }
 
@@ -428,7 +439,7 @@ MSTransportableControl::abortWaiting(MSTransportable* t) {
 MSTransportable*
 MSTransportableControl::buildPerson(const SUMOVehicleParameter* pars, MSVehicleType* vtype, MSTransportable::MSTransportablePlan* plan,
                                     SumoRNG* rng) const {
-    const double speedFactor = vtype->computeChosenSpeedDeviation(rng);
+    const double speedFactor = vtype->computeChosenSpeedDeviation(pars->speedFactor, rng);
     return new MSPerson(pars, vtype, plan, speedFactor);
 }
 

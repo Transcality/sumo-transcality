@@ -41,6 +41,7 @@
 #include <microsim/devices/MSRoutingEngine.h>
 #include <microsim/devices/MSDevice_BTreceiver.h>
 #include <microsim/devices/MSDevice_ToC.h>
+#include <microsim/devices/MSDispatch.h>
 #include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/output/MSDetectorControl.h>
@@ -150,6 +151,11 @@ MSStateHandler::saveState(const std::string& file, SUMOTime step, bool usePrefix
             MSNet::getInstance()->getEdgeControl().saveState(out);
         }
     }
+    const MSDispatch* dispatcher = MSDevice_Taxi::getDispatchAlgorithm();
+    if (dispatcher != nullptr) {
+        // save early to pre-empty initialization from loaded persons
+        dispatcher->saveState(out, MSDevice_Taxi::getNextDispatchTime());
+    }
     MSRoute::dict_saveState(out);
     MSNet::getInstance()->getVehicleControl().saveState(out);
     MSNet::getInstance()->getInsertionControl().saveState(out);
@@ -253,6 +259,9 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             bool ok = true;
             const SUMOTime lastAdaptation = attrs.get<SUMOTime>(SUMO_ATTR_LAST, nullptr, ok);
             const int index = attrs.get<int>(SUMO_ATTR_INDEX, nullptr, ok);
+            if (lastAdaptation >= 0) {
+                MSRoutingEngine::initWeightUpdate(lastAdaptation);
+            }
             MSRoutingEngine::initEdgeWeights(SVC_PASSENGER, lastAdaptation, index);
             if (OptionsCont::getOptions().getBool("device.rerouting.bike-speeds")) {
                 MSRoutingEngine::initEdgeWeights(SVC_BICYCLE);
@@ -276,6 +285,8 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             if (myVCAttrs != nullptr) {
                 delete myVCAttrs;
             }
+            bool ok;
+            MSNet::getInstance()->setLoaderTime(attrs.getOpt<SUMOTime>(SUMO_ATTR_LOADERTIME, nullptr, ok, 0));
             myVCAttrs = attrs.clone();
             break;
         }
@@ -463,6 +474,16 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             }
             // might not be set if the phase happens to match and there are multiple programs
             tl->loadState(tlc, myTime, phase, spentDuration, active);
+            if (attrs.hasAttribute(SUMO_ATTR_STATE)) {
+                tl->loadExtraState(attrs.get<std::string>(SUMO_ATTR_STATE, tlID.c_str(), ok));
+            }
+            break;
+        }
+        case SUMO_TAG_DISPATCHER: {
+            bool ok = true;
+            SUMOTime next = attrs.get<SUMOTime>(SUMO_ATTR_NEXT, "dispatcher", ok);
+            MSDevice_Taxi::initDispatch(next);
+            MSDevice_Taxi::getDispatchAlgorithm()->loadState(attrs);
             break;
         }
         default:
@@ -499,7 +520,9 @@ MSStateHandler::myEndElement(int element) {
                         myVCAttrs->getInt(SUMO_ATTR_BEGIN),
                         myVCAttrs->getInt(SUMO_ATTR_END),
                         myVCAttrs->getFloat(SUMO_ATTR_DEPART),
-                        myVCAttrs->getFloat(SUMO_ATTR_TIME));
+                        myVCAttrs->getFloat(SUMO_ATTR_TIME),
+                        myVCAttrs->getFloat(SUMO_ATTR_SPEEDFACTOR),
+                        myVCAttrs->getFloat(SUMO_ATTR_DECEL));
             if (myRemoved > 0) {
                 WRITE_MESSAGEF(TL("Removed % vehicles while loading state."), toString(myRemoved));
                 vc.discountStateRemoved(myRemoved);
@@ -508,6 +531,16 @@ MSStateHandler::myEndElement(int element) {
                 // state was created with active option --keep-after-arrival
                 vc.deleteKeptVehicle(v);
             }
+            if (!MSGlobals::gUseMesoSim) {
+                for (MSVehicleControl::constVehIt i = vc.loadedVehBegin(); i != vc.loadedVehEnd(); ++i) {
+                    MSVehicle* microVeh = dynamic_cast<MSVehicle*>((*i).second);
+                    if (microVeh->hasDeparted() && microVeh->getLane() != nullptr) {
+                        // occupancy update must happen after all lane states have been loaded
+                        microVeh->updateBestLanes();
+                    }
+                }
+            }
+            MSDevice_Taxi::finalizeLoadState();
             break;
         }
         default:
@@ -538,6 +571,13 @@ MSStateHandler::closeVehicle() {
         myVehicleParameter->setParameter(MSDevice::LOADSTATE_DEVICENAMES, toString(deviceNames));
         MSRouteHandler::closeVehicle();
         SUMOVehicle* v = vc.getVehicle(vehID);
+        // special case: transportable devices are not assigned by options
+        if (std::find(deviceNames.begin(), deviceNames.end(), "person") != deviceNames.end()) {
+            dynamic_cast<MSBaseVehicle*>(v)->initTransportableDevice(true);
+        }
+        if (std::find(deviceNames.begin(), deviceNames.end(), "container") != deviceNames.end()) {
+            dynamic_cast<MSBaseVehicle*>(v)->initTransportableDevice(false);
+        }
         // clean up added param after initializing devices in closeVehicle
         ((SUMOVehicleParameter&)v->getParameter()).unsetParameter(MSDevice::LOADSTATE_DEVICENAMES);
         if (v == nullptr) {
@@ -595,6 +635,14 @@ MSStateHandler::closeVehicle() {
 
         myVehicleParameter = nullptr;
         myRemoved++;
+        while (!myDeviceAttrs.empty()) {
+            delete myDeviceAttrs.back();
+            myDeviceAttrs.pop_back();
+        }
+        while (!myReminderAttrs.empty()) {
+            delete myReminderAttrs.back();
+            myReminderAttrs.pop_back();
+        }
     }
     delete myAttrs;
 }

@@ -280,7 +280,7 @@ GUIEdge::drawGL(const GUIVisualizationSettings& s) const {
     GLHelper::popName();
     // (optionally) draw the name and/or the street name
     GUILane* lane2 = dynamic_cast<GUILane*>((*myLanes).back());
-    const GUIGlObject* selCheck = gSelected.isSelected(this) ? (GUIGlObject*)this : (GUIGlObject*)lane2;
+    const GUIGlObject* selCheck = gSelected.isSelected(this) ? (GUIGlObject*)this : (GUIGlObject*)anySelectedLane();
     const bool drawEdgeName = s.edgeName.show(selCheck) && myFunction == SumoXMLEdgeFunc::NORMAL;
     const bool drawInternalEdgeName = s.internalEdgeName.show(selCheck) && myFunction == SumoXMLEdgeFunc::INTERNAL;
     const bool drawCwaEdgeName = s.cwaEdgeName.show(selCheck) && (myFunction == SumoXMLEdgeFunc::CROSSING || myFunction == SumoXMLEdgeFunc::WALKINGAREA);
@@ -462,6 +462,7 @@ void
 GUIEdge::setColor(const GUIVisualizationSettings& s) const {
     myMesoColor = RGBColor(0, 0, 0); // default background color when using multiColor
     const GUIColorer& c = s.edgeColorer;
+    mySegmentColors.clear();
     if (!setFunctionalColor(c) && !setMultiColor(c)) {
         myMesoColor = c.getScheme().getColor(getColorValue(s, c.getActive()));
     }
@@ -493,7 +494,6 @@ GUIEdge::setFunctionalColor(const GUIColorer& c) const {
 bool
 GUIEdge::setMultiColor(const GUIColorer& c) const {
     const int activeScheme = c.getActive();
-    mySegmentColors.clear();
     switch (activeScheme) {
         case 10: // alternating segments
             for (MESegment* segment = MSGlobals::gMesoNet->getSegmentForEdge(*this);
@@ -672,5 +672,18 @@ GUIEdge::getClickPriority() const {
         return INVALID_PRIORITY;
     }
     return GLO_EDGE;
+}
+
+
+GUILane*
+GUIEdge::anySelectedLane() const {
+    MSLane* result = myLanes->back();
+    for (MSLane* lane : *myLanes) {
+        if (lane->isSelected()) {
+            result = lane;
+            break;
+        }
+    }
+    return dynamic_cast<GUILane*>(result);
 }
 /****************************************************************************/

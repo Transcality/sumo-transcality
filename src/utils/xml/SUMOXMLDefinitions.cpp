@@ -172,6 +172,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "subDriveWay",                            SUMO_TAG_SUBDRIVEWAY },
     { "link",                                   SUMO_TAG_LINK },
     { "approaching",                            SUMO_TAG_APPROACHING },
+    { "dispatcher",                             SUMO_TAG_DISPATCHER },
     // OSM
     { "way",                                    SUMO_TAG_WAY },
     { "nd",                                     SUMO_TAG_ND },
@@ -649,7 +650,11 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "odometer",               SUMO_ATTR_ODOMETER },
     { "posLat",                 SUMO_ATTR_POSITION_LAT },
     { "speedLat",               SUMO_ATTR_SPEED_LAT },
+    { "stage",                  SUMO_ATTR_STAGE },
+    { "speedVec",               SUMO_ATTR_SPEED_VEC },
+    { "accelerationVec",        SUMO_ATTR_ACCEL_VEC },
     // only usable with SumoXMLAttrMask
+    { "delay",                  SUMO_ATTR_DELAY },
     { "arrivalDelay",           SUMO_ATTR_ARRIVALDELAY },
     // emission-output
     { "CO",                     SUMO_ATTR_CO },
@@ -671,6 +676,8 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "tag",                    SUMO_ATTR_TAG },
     { "overlapDensity",         SUMO_ATTR_OVERLAPDENSITY },
     { "flow",                   SUMO_ATTR_FLOW },
+    { "personNumber",           SUMO_ATTR_PERSON_NUMBER },
+    { "containerNumber",        SUMO_ATTR_CONTAINER_NUMBER },
     // Edge
     { "id",                     SUMO_ATTR_ID },
     { "refId",                  SUMO_ATTR_REFID },
@@ -1008,8 +1015,6 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "personCapacity",         SUMO_ATTR_PERSON_CAPACITY },
     { "containerCapacity",      SUMO_ATTR_CONTAINER_CAPACITY },
     { "parkingLength",          SUMO_ATTR_PARKING_LENGTH },
-    { "personNumber",           SUMO_ATTR_PERSON_NUMBER },
-    { "containerNumber",        SUMO_ATTR_CONTAINER_NUMBER },
     { "modes",                  SUMO_ATTR_MODES },
     { "walkFactor",             SUMO_ATTR_WALKFACTOR },
 
@@ -1050,6 +1055,8 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "dir",                    SUMO_ATTR_DIR },
     { "state",                  SUMO_ATTR_STATE },
     { "lcState",                SUMO_ATTR_LCSTATE },
+    { "lcState2",               SUMO_ATTR_LCSTATE2 },
+    { "lcStateBase",            SUMO_ATTR_LCSTATE_BASE },
     { "icon",                   SUMO_ATTR_ICON },
     { "layer",                  SUMO_ATTR_LAYER },
     { "fill",                   SUMO_ATTR_FILL },
@@ -1067,6 +1074,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "viaJunctions",           SUMO_ATTR_VIAJUNCTIONS },
     { "nodes",                  SUMO_ATTR_NODES },
     { "visibility",             SUMO_ATTR_VISIBILITY_DISTANCE },
+    { "reset",                  SUMO_ATTR_RESET },
 
     { "minDur",                 SUMO_ATTR_MINDURATION },
     { "maxDur",                 SUMO_ATTR_MAXDURATION },
@@ -1378,12 +1386,20 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "device.toc",        SUMO_ATTR_RNG_DEVICE_TOC },
     { "driverState",       SUMO_ATTR_RNG_DRIVERSTATE },
     // @}
+    //
+    // @name Taxi state saving attributes
+    // @{
+    { "customers",         SUMO_ATTR_CUSTOMERS },
+    { "reservations",      SUMO_ATTR_RESERVATIONS },
+    // @}
 
     // @name further state saving attributes
     // @{
     { "bikeSpeed",         SUMO_ATTR_BIKESPEED },
     { "pastSpeed",         SUMO_ATTR_PASTSPEED },
     { "pastBikeSpeed",     SUMO_ATTR_PASTBIKESPEED },
+    { "loaderTime",        SUMO_ATTR_LOADERTIME },
+    { "entryPos",          SUMO_ATTR_ENTRYPOS },
     // @}
 
     //@name meso edge type attributes
@@ -1443,7 +1459,8 @@ StringBijection<SumoXMLEdgeFunc>::Entry SUMOXMLDefinitions::sumoEdgeFuncValues[]
 StringBijection<LaneSpreadFunction>::Entry SUMOXMLDefinitions::laneSpreadFunctionValues[] = {
     {"right",      LaneSpreadFunction::RIGHT }, // default: geometry is left edge border, lanes flare to the right
     {"roadCenter", LaneSpreadFunction::ROADCENTER }, // geometry is center of the bidirectional road
-    {"center",     LaneSpreadFunction::CENTER } // geometry is center of the edge (must be the last one)
+    {"center",     LaneSpreadFunction::CENTER }, // geometry is center of the edge (must be the last one)
+    {"unknown",    LaneSpreadFunction::SPREAD_UNKNOWN } // geometry is not defined in typemap (must be the last one)
 };
 
 StringBijection<ParkingType>::Entry SUMOXMLDefinitions::parkingTypeValues[] = {
@@ -1765,8 +1782,14 @@ StringBijection<NeteditConfigFileExtension>::Entry SUMOXMLDefinitions::neteditCo
 
 StringBijection<NetconvertConfigFileExtension>::Entry SUMOXMLDefinitions::netconvertConfigFileExtensionValues[] = {
     {TL("Netconvert config files") + std::string(" (*.netccfg)"),   NetconvertConfigFileExtension::NETCCFG},
-    {TL("XML files") + std::string(" (*.xml"),                      NetconvertConfigFileExtension::XML},
+    {TL("XML files") + std::string(" (*.xml)"),                     NetconvertConfigFileExtension::XML},
     {TL("All files") + std::string(" (*)"),                         NetconvertConfigFileExtension::ALL} //< must be the last one
+};
+
+StringBijection<NetconvertPlainFileExtension>::Entry SUMOXMLDefinitions::netconvertPlainFileExtensionValues[] = {
+    {TL("Netconvert plain-xml files") + std::string(" (*.edg.xml)"),     NetconvertPlainFileExtension::EDGXML},
+    {TL("XML files") + std::string(" (*.xml)"),                           NetconvertPlainFileExtension::XML},
+    {TL("All files") + std::string(" (*)"),                              NetconvertPlainFileExtension::ALL} //< must be the last one
 };
 
 StringBijection<OSMFileExtension>::Entry SUMOXMLDefinitions::osmFileExtensionValues[] = {
@@ -1840,7 +1863,7 @@ StringBijection<SumoXMLEdgeFunc> SUMOXMLDefinitions::EdgeFunctions(
     SUMOXMLDefinitions::sumoEdgeFuncValues, SumoXMLEdgeFunc::INTERNAL);
 
 StringBijection<LaneSpreadFunction> SUMOXMLDefinitions::LaneSpreadFunctions(
-    SUMOXMLDefinitions::laneSpreadFunctionValues, LaneSpreadFunction::CENTER);
+    SUMOXMLDefinitions::laneSpreadFunctionValues, LaneSpreadFunction::SPREAD_UNKNOWN);
 
 StringBijection<ParkingType> SUMOXMLDefinitions::ParkingTypes(
     SUMOXMLDefinitions::parkingTypeValues, ParkingType::OPPORTUNISTIC);
@@ -1934,6 +1957,9 @@ StringBijection<NeteditConfigFileExtension> SUMOXMLDefinitions::NeteditConfigFil
 
 StringBijection<NetconvertConfigFileExtension> SUMOXMLDefinitions::NetconvertConfigFileExtensions(
     SUMOXMLDefinitions::netconvertConfigFileExtensionValues, NetconvertConfigFileExtension::ALL, false);
+
+StringBijection<NetconvertPlainFileExtension> SUMOXMLDefinitions::NetconvertPlainFileExtensions(
+    SUMOXMLDefinitions::netconvertPlainFileExtensionValues, NetconvertPlainFileExtension::ALL, false);
 
 StringBijection<OSMFileExtension> SUMOXMLDefinitions::OSMFileExtensions(
     SUMOXMLDefinitions::osmFileExtensionValues, OSMFileExtension::ALL, false);

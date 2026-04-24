@@ -146,6 +146,9 @@ public:
     ConstMSEdgeVector getEdges() const;
 
     void setVehicle(SUMOVehicle* v);
+    void setVehicleID(const std::string vehID) {
+        myVehicleID = vehID;
+    }
 
     /// @brief marks arrival time and records driven distance
     const std::string setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now, const bool vehicleArrived);
@@ -183,7 +186,7 @@ public:
 
     /** @brief Saves the current state into the given stream
      */
-    void saveState(std::ostringstream& out);
+    void saveState(std::ostringstream& out, MSTransportable* transportable);
 
     /** @brief Reconstructs the current state
      */
@@ -229,7 +232,7 @@ protected:
 
     std::string myIntendedVehicleID;
     SUMOTime myIntendedDepart;
-
+    double myReservationWaitingPos = INVALID_DOUBLE;
 
 private:
     /// brief register waiting person (on proceed or loadState)
@@ -255,8 +258,4 @@ private:
         MSStageDriving* myStage;
         double myWaitingPos;
     };
-
-protected:
-    BookReservation* myReservationCommand;
-
 };

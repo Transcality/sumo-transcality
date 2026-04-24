@@ -101,35 +101,26 @@ public:
      * @param[in] isNull The given value is not set
      */
     template <class T>
-    void writeAttr(std::ostream& /* into */, const SumoXMLAttr attr, const T& val, const bool isNull = false) {
+    void writeAttr(std::ostream& /* into */, const SumoXMLAttr attr, const T& val, const bool isNull) {
         checkAttr(attr);
-        if (!myWroteHeader) {
-            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(toString(attr)), arrow::utf8()));
-            myBuilders.push_back(std::make_shared<arrow::StringBuilder>());
-        }
+        checkBuilder<SumoXMLAttr, arrow::StringBuilder>(attr, arrow::utf8);
         myValues.push_back(isNull ? nullptr : std::make_shared<arrow::StringScalar>(toString(val)));
     }
 
     template <class T>
-    void writeAttr(std::ostream& /* into */, const std::string& attr, const T& val) {
+    void writeAttr(std::ostream& /* into */, const std::string& attr, const T& val, const bool isNull) {
         assert(!myCheckColumns);
-        if (!myWroteHeader) {
-            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(attr), arrow::utf8()));
-            myBuilders.push_back(std::make_shared<arrow::StringBuilder>());
-        }
-        myValues.push_back(std::make_shared<arrow::StringScalar>(toString(val)));
+        checkBuilder<std::string, arrow::StringBuilder>(attr, arrow::utf8);
+        myValues.push_back(isNull ? nullptr : std::make_shared<arrow::StringScalar>(toString(val)));
     }
 
     void writeTime(std::ostream& into, const SumoXMLAttr attr, const SUMOTime val) {
         if (!gHumanReadableTime) {
-            if (!myWroteHeader) {
-                mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(toString(attr)), arrow::float64()));
-                myBuilders.push_back(std::make_shared<arrow::DoubleBuilder>());
-            }
+            checkBuilder<SumoXMLAttr, arrow::DoubleBuilder>(attr, arrow::float64);
             myValues.push_back(std::make_shared<arrow::DoubleScalar>(STEPS2TIME(val)));
             return;
         }
-        writeAttr(into, attr, time2string(val));
+        writeAttr(into, attr, time2string(val), false);
     }
 
     bool wroteHeader() const {
@@ -167,6 +158,30 @@ private:
         }
     }
 
+    template <class ATTR_TYPE, class BUILDER>
+    inline void checkBuilder(const ATTR_TYPE& attr, const std::shared_ptr<arrow::DataType>& (*dataType)()) {
+        myNeedsWrite = true;
+        if (!myWroteHeader) {
+            const std::string fieldName = getAttrString(toString(attr));
+            for (const auto& field : mySchema->fields()) {
+                if (field->name() == fieldName) {
+                    return;
+                }
+            }
+            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(fieldName, dataType()));
+            auto builder = std::make_shared<BUILDER>();
+            if (!myBuilders.empty()) {
+                if (myBuilders.back()->length() > 0) {
+                    PARQUET_THROW_NOT_OK(builder->AppendNulls(myBuilders.back()->length()));
+                }
+                while (myValues.size() < myBuilders.size()) {
+                    myValues.push_back(nullptr);
+                }
+            }
+            myBuilders.push_back(builder);
+        }
+    }
+
     /// @brief the format to use for the column names
     const std::string myHeaderFormat;
 
@@ -195,13 +210,16 @@ private:
     std::vector<std::shared_ptr<arrow::Scalar> > myValues;
 
     /// @brief the maximum depth of the XML hierarchy
-    int myMaxDepth = 0;
+    int myMaxDepth = 2;
 
     /// @brief whether the schema has been constructed completely
     bool myWroteHeader = false;
 
     /// @brief whether the columns should be checked for completeness
     bool myCheckColumns = false;
+
+    /// @brief whether there is still unwritten data
+    bool myNeedsWrite = false;
 
     /// @brief the attributes which are expected for a complete row (including null values)
     SumoXMLAttrMask myExpectedAttrs;
@@ -218,16 +236,10 @@ template <>
 inline void ParquetFormatter::writeAttr(std::ostream& into, const SumoXMLAttr attr, const double& val, const bool isNull) {
     checkAttr(attr);
     if (attr == SUMO_ATTR_X || attr == SUMO_ATTR_Y || into.precision() > 2) {
-        if (!myWroteHeader) {
-            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(toString(attr)), arrow::float64()));
-            myBuilders.push_back(std::make_shared<arrow::DoubleBuilder>());
-        }
+        checkBuilder<SumoXMLAttr, arrow::DoubleBuilder>(attr, arrow::float64);
         myValues.push_back(isNull ? nullptr : std::make_shared<arrow::DoubleScalar>(val));
     } else {
-        if (!myWroteHeader) {
-            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(toString(attr)), arrow::float32()));
-            myBuilders.push_back(std::make_shared<arrow::FloatBuilder>());
-        }
+        checkBuilder<SumoXMLAttr, arrow::FloatBuilder>(attr, arrow::float32);
         myValues.push_back(isNull ? nullptr : std::make_shared<arrow::FloatScalar>((float)val));
     }
 }
@@ -235,37 +247,25 @@ inline void ParquetFormatter::writeAttr(std::ostream& into, const SumoXMLAttr at
 template <>
 inline void ParquetFormatter::writeAttr(std::ostream& /* into */, const SumoXMLAttr attr, const int& val, const bool isNull) {
     checkAttr(attr);
-    if (!myWroteHeader) {
-        mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(toString(attr)), arrow::int32()));
-        myBuilders.push_back(std::make_shared<arrow::Int32Builder>());
-    }
+    checkBuilder<SumoXMLAttr, arrow::Int32Builder>(attr, arrow::int32);
     myValues.push_back(isNull ? nullptr : std::make_shared<arrow::Int32Scalar>(val));
 }
 
 template <>
-inline void ParquetFormatter::writeAttr(std::ostream& into, const std::string& attr, const double& val) {
+inline void ParquetFormatter::writeAttr(std::ostream& into, const std::string& attr, const double& val, const bool isNull) {
     assert(!myCheckColumns);
     if (into.precision() > 2) {
-        if (!myWroteHeader) {
-            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(attr), arrow::float64()));
-            myBuilders.push_back(std::make_shared<arrow::DoubleBuilder>());
-        }
-        myValues.push_back(std::make_shared<arrow::DoubleScalar>(val));
+        checkBuilder<std::string, arrow::DoubleBuilder>(attr, arrow::float64);
+        myValues.push_back(isNull ? nullptr : std::make_shared<arrow::DoubleScalar>(val));
     } else {
-        if (!myWroteHeader) {
-            mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(attr), arrow::float32()));
-            myBuilders.push_back(std::make_shared<arrow::FloatBuilder>());
-        }
-        myValues.push_back(std::make_shared<arrow::FloatScalar>((float)val));
+        checkBuilder<std::string, arrow::FloatBuilder>(attr, arrow::float32);
+        myValues.push_back(isNull ? nullptr : std::make_shared<arrow::FloatScalar>((float)val));
     }
 }
 
 template <>
-inline void ParquetFormatter::writeAttr(std::ostream& /* into */, const std::string& attr, const int& val) {
+inline void ParquetFormatter::writeAttr(std::ostream& /* into */, const std::string& attr, const int& val, const bool isNull) {
     assert(!myCheckColumns);
-    if (!myWroteHeader) {
-        mySchema = *mySchema->AddField(mySchema->num_fields(), arrow::field(getAttrString(attr), arrow::int32()));
-        myBuilders.push_back(std::make_shared<arrow::Int32Builder>());
-    }
-    myValues.push_back(std::make_shared<arrow::Int32Scalar>(val));
+    checkBuilder<std::string, arrow::Int32Builder>(attr, arrow::int32);
+    myValues.push_back(isNull ? nullptr : std::make_shared<arrow::Int32Scalar>(val));
 }

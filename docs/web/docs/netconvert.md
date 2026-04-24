@@ -417,12 +417,12 @@ Files](Basics/Using_the_Command_Line_Applications.md#configuration_files).
 | **--no-turnarounds.tls** {{DT_BOOL}} | Disables building turnarounds at tls-controlled junctions; *default:* **false** |
 | **--no-turnarounds.geometry** {{DT_BOOL}} | Disables building turnarounds at geometry-like junctions; *default:* **true** |
 | **--no-turnarounds.except-deadend** {{DT_BOOL}} | Disables building turnarounds except at dead end junctions; *default:* **false** |
-| **--no-turnarounds.except-turnlane** {{DT_BOOL}} | Disables building turnarounds except at at junctions with a dedicated turning lane; *default:* **false** |
+| **--no-turnarounds.except-turnlane** {{DT_BOOL}} | Disables building turnarounds except at junctions with a dedicated turning lane; *default:* **false** |
 | **--no-turnarounds.fringe** {{DT_BOOL}} | Disables building turnarounds at fringe junctions; *default:* **false** |
 | **--no-left-connections** {{DT_BOOL}} | Disables building connections to left; *default:* **false** |
 | **--junctions.join** {{DT_BOOL}} | Joins junctions that are close to each other (recommended for OSM import); *default:* **false** |
 | **--junctions.join-dist** {{DT_FLOAT}} | Determines the maximal distance for joining junctions (defaults to 10); *default:* **10** |
-| **--junctions.join.parallel-threshold** {{DT_FLOAT}} | The angular threshold in degress for rejection of parallel edges when joining junctions; *default:* **30** |
+| **--junctions.join.parallel-threshold** {{DT_FLOAT}} | The angular threshold in degrees for rejection of parallel edges when joining junctions; *default:* **30** |
 | **--junctions.join-exclude** {{DT_STR_LIST}} | Interprets STR[] as list of junctions to exclude from joining |
 | **--junctions.join-same** {{DT_FLOAT}} | Joins junctions that have similar coordinates even if not connected; *default:* **-1** |
 | **--junctions.attach-removed** {{DT_FLOAT}} | Attach junction to the closest edge within FLOAT distance that has it's id in param removedNodeIDs (for joining networks); *default:* **-1** |

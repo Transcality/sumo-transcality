@@ -983,7 +983,8 @@ NBNode::needsCont(const NBEdge* fromE, const NBEdge* otherFromE,
     if (!checkOnlyTLS) {
         if (myType == SumoXMLNodeType::RIGHT_BEFORE_LEFT
                 || myType == SumoXMLNodeType::LEFT_BEFORE_RIGHT
-                || myType == SumoXMLNodeType::ALLWAY_STOP) {
+                || myType == SumoXMLNodeType::ALLWAY_STOP
+                || myType == SumoXMLNodeType::ZIPPER) {
             return false;
         }
         LinkDirection d1 = getDirection(fromE, toE);
@@ -4030,7 +4031,7 @@ NBNode::geometryLike() const {
 bool
 NBNode::geometryLike(const EdgeVector& incoming, const EdgeVector& outgoing) {
     if (incoming.size() == 1 && outgoing.size() == 1) {
-        return true;
+        return incoming.front()->getBidiEdge() != outgoing.front();
     }
     if (incoming.size() == 2 && outgoing.size() == 2) {
         // check whether the incoming and outgoing edges are pairwise (near) parallel and

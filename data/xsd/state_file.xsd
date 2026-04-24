@@ -26,6 +26,7 @@
                 <xsd:element name="driveWay" type="driveWayStateType" minOccurs="0"/>
                 <xsd:element name="subDriveWay" type="driveWayStateType" minOccurs="0"/>
                 <xsd:element name="routingEngine" type="routingEngineType" minOccurs="0"/>
+                <xsd:element name="dispatcher" type="dispatcherType" minOccurs="1"/>
             </xsd:choice>
             <xsd:attribute name="version" type="xsd:string"/>
             <xsd:attribute name="time" type="timeType"/>
@@ -63,6 +64,9 @@
         <xsd:attribute name="end" type="xsd:integer" use="required"/>
         <xsd:attribute name="depart" type="floatType" use="required"/>
         <xsd:attribute name="time" type="nonNegativeFloatType" use="required"/>
+        <xsd:attribute name="speedFactor" type="floatType" use="required"/>
+        <xsd:attribute name="decel" type="floatType" use="required"/>
+        <xsd:attribute name="loaderTime" type="timeType" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="vTypeDistributionStateType">
@@ -131,6 +135,9 @@
         <xsd:attribute name="distance" type="xsd:string" use="required"/>
         <xsd:attribute name="state" type="xsd:string" use="required"/>
         <xsd:attribute name="lcState" type="xsd:string" use="optional"/>
+        <xsd:attribute name="lcState2" type="xsd:string" use="optional"/>
+        <xsd:attribute name="lcStateBase" type="xsd:string" use="optional"/>
+        <xsd:attribute name="entryPos" type="floatType"/>
     </xsd:complexType>
 
     <xsd:complexType name="deviceType">
@@ -140,6 +147,8 @@
         <!-- device specific attributes -->
         <xsd:attribute name="exitTimes" type="xsd:string" use="optional"/>
         <xsd:attribute name="edge" type="xsd:string" use="optional"/>
+        <xsd:attribute name="customers" type="xsd:string" use="optional"/>
+        <xsd:attribute name="reservations" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="remType">
@@ -248,6 +257,7 @@
         <xsd:attribute name="phase" type="xsd:int" use="required"/>
         <xsd:attribute name="duration" type="xsd:integer" use="required"/>
         <xsd:attribute name="active" type="boolType"/>
+        <xsd:attribute name="state" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="driveWayStateType">
@@ -262,6 +272,12 @@
         </xsd:sequence>
         <xsd:attribute name="last" type="xsd:int" use="required"/>
         <xsd:attribute name="index" type="xsd:int" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="dispatcherType">
+        <xsd:attribute name="next" type="xsd:long" use="required"/>
+        <xsd:attribute name="count" type="xsd:int" use="required"/>
+        <xsd:attribute name="customers" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="routingEngineEdgeType">

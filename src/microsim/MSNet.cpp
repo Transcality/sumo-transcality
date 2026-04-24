@@ -173,8 +173,20 @@ MSNet::getTravelTime(const MSEdge* const e, const SUMOVehicle* const v, double t
     if (getInstance()->getWeightsStorage().retrieveExistingTravelTime(e, t, value)) {
         return value;
     }
-    if (veh != nullptr && veh->getRoutingMode() == libsumo::ROUTING_MODE_AGGREGATED_CUSTOM) {
-        return MSRoutingEngine::getEffortExtra(e, v, t);
+    if (veh != nullptr) {
+        if ((veh->getRoutingMode() & libsumo::ROUTING_MODE_AGGREGATED_CUSTOM) != 0) {
+            return MSRoutingEngine::getEffortExtra(e, v, t);
+        } else if ((veh->getRoutingMode() & libsumo::ROUTING_MODE_AGGREGATED) != 0) {
+            if (MSRoutingEngine::hasBikeSpeeds() && v->getVClass() == SVC_BICYCLE) {
+                return MSRoutingEngine::getEffortBike(e, v, t);
+            } else {
+                return MSRoutingEngine::getEffort(e, v, t);
+            }
+        } else if (MSRoutingEngine::haveExtras()) {
+            double tt = e->getMinimumTravelTime(v);
+            MSRoutingEngine::applyExtras(e, v, SIMSTEP, tt);
+            return tt;
+        }
     }
     return e->getMinimumTravelTime(v);
 }
@@ -225,6 +237,7 @@ MSNet::MSNet(MSVehicleControl* vc, MSEventControl* beginOfTimestepEvents,
     }
     OptionsCont& oc = OptionsCont::getOptions();
     myStep = string2time(oc.getString("begin"));
+    myStateLoaderTime = myStep,
     myMaxTeleports = oc.getInt("max-num-teleports");
     myLogExecutionTime = !oc.getBool("no-duration-log");
     myLogStepNumber = !oc.getBool("no-step-log");
@@ -332,11 +345,12 @@ MSNet::~MSNet() {
         delete router.second;
     }
     myPedestrianRouter.clear();
-    for (auto& router : myIntermodalRouter) {
-        delete router.second;
-    }
-    myIntermodalRouter.clear();
+    resetIntermodalRouter();
     myLanesRTree.second.RemoveAll();
+    for (MSTractionSubstation* sub : myTractionSubstations) {
+        delete sub;
+    }
+    myTractionSubstations.clear();
     clearAll();
     if (MSGlobals::gUseMesoSim) {
         delete MSGlobals::gMesoNet;
@@ -662,7 +676,6 @@ MSNet::writeStatistics(const SUMOTime start, const long now) const {
     if (OptionsCont::getOptions().isSet("tripinfo-output") || OptionsCont::getOptions().getBool("duration-log.statistics")) {
         MSDevice_Tripinfo::writeStatistics(od);
     }
-
 }
 
 
@@ -1105,6 +1118,17 @@ MSNet::clearState(const SUMOTime step, bool quickReload) {
 }
 
 
+SUMOTime
+MSNet::getLoaderTime() const {
+    return myRouteLoaders->getCurrentLoadTime();
+}
+
+void
+MSNet::setLoaderTime(SUMOTime time) {
+    myRouteLoaders->setCurrentLoadTime(time);
+    myStateLoaderTime = MAX2(myStateLoaderTime, time);
+}
+
 void
 MSNet::writeOutput() {
     // update detector values
@@ -1197,7 +1221,11 @@ MSNet::writeOutput() {
 
         if (MSNet::getInstance()->getVehicleControl().getRunningVehicleNo() > 0) {
             std::string timestep = time2string(myStep);
-            timestep = timestep.substr(0, timestep.length() - 3);
+            if (TS >= 1.0) {
+                timestep = timestep.substr(0, timestep.length() - 3);
+            } else if (DELTA_T % 100 == 0) {
+                timestep = timestep.substr(0, timestep.length() - 1);
+            }
             std::string output = OptionsCont::getOptions().getString("vtk-output");
             std::string filename = output + "_" + timestep + ".vtp";
 
@@ -1596,17 +1624,6 @@ MSNet::findTractionSubstation(const std::string& substationId) {
 }
 
 
-bool
-MSNet::existTractionSubstation(const std::string& substationId) {
-    for (std::vector<MSTractionSubstation*>::iterator it = myTractionSubstations.begin(); it != myTractionSubstations.end(); ++it) {
-        if ((*it)->getID() == substationId) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
 MSVehicleRouter&
 MSNet::getRouterTT(int rngIndex, const Prohibitions& prohibited) const {
     if (MSGlobals::gNumSimThreads == 1) {
@@ -1673,6 +1690,15 @@ MSNet::getIntermodalRouter(int rngIndex, const int routingMode, const Prohibitio
     }
     myIntermodalRouter[key]->prohibit(prohibited);
     return *myIntermodalRouter[key];
+}
+
+
+void
+MSNet::resetIntermodalRouter() const {
+    for (auto& router : myIntermodalRouter) {
+        delete router.second;
+    }
+    myIntermodalRouter.clear();
 }
 
 

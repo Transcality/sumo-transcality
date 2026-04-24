@@ -9,14 +9,25 @@ option(PROFILING "Enable output of profiling data (applies to gcc/clang builds o
 option(PPROF "Link the pprof profiler library (applies to gcc/clang builds only)")
 option(COVERAGE "Enable output of coverage data (applies to gcc/clang builds only)")
 option(SUMO_UTILS "Enable generation of a shared library for the utility functions for option handling, XML parsing etc.")
-option(FMI "Enable generation of an FMI library for SUMO" ON)
-option(NETEDIT "Enable build of netedit" ON)
+option(ENABLE_FMI "Enable generation of an FMI library for SUMO" ON)
+option(ENABLE_NETEDIT "Enable build of netedit" ON)
 option(ENABLE_PYTHON_BINDINGS "Build Python Bindings" ON)
 option(ENABLE_JAVA_BINDINGS "Build Java Bindings" ON)
 option(ENABLE_CS_BINDINGS "Build C# Bindings" ON)
 option(CCACHE_SUPPORT "Enable ccache support if installed" ON)
-option(TCMALLOC "Use tcmalloc if installed" ON)
-option(PARQUET "Compile with Parquet support" ON)
+option(ENABLE_TCMALLOC "Use tcmalloc if installed" ON)
+option(ENABLE_PARQUET "Compile with Parquet support" ON)
+option(ENABLE_PROJ "Enable PROJ for geopositioning" ON)
+option(ENABLE_FOX "Enable FOX toolkit for GUI" ON)
+option(ENABLE_EIGEN "Enable Eigen for overhead wire simulation" ON)
+option(ENABLE_FMT "Enable {fmt} library" ON)
+option(ENABLE_GTEST "Enable Google Test for unit testing" ON)
+option(ENABLE_GDAL "Enable GDAL for shapefile and geotiff support" ${CHECK_OPTIONAL_LIBS})
+option(ENABLE_FFMPEG "Enable FFMPEG for video recording" ${CHECK_OPTIONAL_LIBS})
+option(ENABLE_OSG "Enable OpenSceneGraph for 3D view" ${CHECK_OPTIONAL_LIBS})
+option(ENABLE_GL2PS "Enable GL2PS for vector graphics export" ${CHECK_OPTIONAL_LIBS})
+option(ENABLE_JUPEDSIM "Enable JuPedSim pedestrian simulation integration" ${CHECK_OPTIONAL_LIBS})
+option(ENABLE_BOOST "Enable Boost for stacktrace support" ${CHECK_OPTIONAL_LIBS})
 option(VERBOSE_SUB "Let sub-commands be more verbose")
 set(BINARY_SUFFIX "" CACHE STRING "Append the suffix to every generated binary")
 set(COMPILE_DEFINITIONS "" CACHE STRING "Macros or defines to add when compiling")
@@ -92,14 +103,21 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set (CLANG_COMPILER True)
 endif ()
 
-# C++17 is needed by std::filesystem and parquet.
+# C++20 is needed by Parquet >= 24.
+# C++17 is needed by std::filesystem and Parquet.
 # C++14 is needed by Google Test >= 1.13, for all the other parts C++11 should be enough.
 # This will silently fall back to C++14 or even C++11, whatever is supported by the compiler.
 if (${CMAKE_VERSION} VERSION_LESS 3.8.0)
-    set(CMAKE_CXX_STANDARD 14)
+    set(DEFAULT_CXX_STANDARD 14)
 else()
-    set(CMAKE_CXX_STANDARD 17)
+    # Brew does not support versioning, so it has only the most recent Arrow / Parquet. Thus we need C++20 on macOS.
+    if (APPLE)
+        set(DEFAULT_CXX_STANDARD 20)
+    else()
+        set(DEFAULT_CXX_STANDARD 17)
+    endif()
 endif()
+set(CMAKE_CXX_STANDARD ${DEFAULT_CXX_STANDARD} CACHE STRING "C++ standard")
 if (NOT "cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     message(WARNING "Your compiler does not support C++17. Please consider upgrading your compiler toolchain.")
 endif()
@@ -186,7 +204,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if (SUMO_UTILS)
     set(ENABLED_FEATURES "${ENABLED_FEATURES} SumoUtilsLibrary")
 endif ()
-if (FMI)
+if (ENABLE_FMI)
     set(ENABLED_FEATURES "${ENABLED_FEATURES} FMI")
 endif ()
 
@@ -312,51 +330,89 @@ endif ()
 if (SUMO_LIBRARIES AND WIN32)
     # Special option for MinGW32
     message(STATUS "Using 64 bit libraries from SUMO_LIBRARIES placed in " ${SUMO_LIBRARIES})
-    file(GLOB XERCES_PATH "${SUMO_LIBRARIES}/xerces-c-3.?.?")
-    file(GLOB ZLIB_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/zlib-?.?.*")
-    file(GLOB PROJ_PATH "${SUMO_LIBRARIES}/proj-?.?.?")
-    file(GLOB FOX_PATH "${SUMO_LIBRARIES}/fox-?.?.??")
-    file(GLOB FREETYPE_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/freetype-2.??.?")
-    file(GLOB EIGEN3_PATH "${SUMO_LIBRARIES}/eigen-3.?.?")
-    file(GLOB GETTEXT_PATH "${SUMO_LIBRARIES}/gettext-?.??")
-    file(GLOB ARROW_PATH "${SUMO_LIBRARIES}/apache-arrow-??.?.?")
-    file(GLOB LZ4_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/lz4-?.??.?")       # needed for Arrow
-    file(GLOB ZSTD_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/zstd-?.?.?")      # needed for Arrow
-    file(GLOB BZIP2_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-?.?.?")    # needed for Arrow
-    file(GLOB THRIFT_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/thrift-?.??.?") # needed for Arrow
+    file(GLOB XERCES_PATH "${SUMO_LIBRARIES}/xerces-c-*")
+    file(GLOB ZLIB_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/zlib-*")
+    file(GLOB PROJ_PATH "${SUMO_LIBRARIES}/proj-*")
+    file(GLOB FOX_PATH "${SUMO_LIBRARIES}/fox-*")
+    file(GLOB FREETYPE_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/freetype-*")
+    file(GLOB EIGEN3_PATH "${SUMO_LIBRARIES}/eigen-*")
+    file(GLOB GETTEXT_PATH "${SUMO_LIBRARIES}/gettext-*")
+    file(GLOB ARROW_PATH "${SUMO_LIBRARIES}/apache-arrow-*")
+    file(GLOB LZ4_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/lz4-*")        # needed for Arrow
+    file(GLOB ZSTD_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/zstd-*")      # needed for Arrow
+    file(GLOB BZIP2_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-*")    # needed for Arrow
+    file(GLOB THRIFT_PATH "${SUMO_LIBRARIES}/3rdPartyLibs/thrift-*")  # needed for Arrow
+    file(GLOB GDAL_PATH "${SUMO_LIBRARIES}/gdal-*")
+    file(GLOB FFMPEG_PATH "${SUMO_LIBRARIES}/FFMPEG-*")
+    file(GLOB OSG_PATH "${SUMO_LIBRARIES}/OSG-*")
+    file(GLOB GL2PS_PATH "${SUMO_LIBRARIES}/gl2ps-*")
+    file(GLOB GEOS_PATH "${SUMO_LIBRARIES}/geos-*")
+    file(GLOB BOOST_PATH "${SUMO_LIBRARIES}/boost-*")
 
     # set all paths in prefix
-    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${EIGEN3_PATH};${XERCES_PATH};${ZLIB_PATH};${PROJ_PATH};${FOX_PATH};${FREETYPE_PATH};${GETTEXT_PATH};${GETTEXT_PATH}/tools/gettext;${ARROW_PATH};${LZ4_PATH};${ZSTD_PATH};${BZIP2_PATH};${THRIFT_PATH}")
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${EIGEN3_PATH};${XERCES_PATH};${ZLIB_PATH};${PROJ_PATH};${FOX_PATH};${FREETYPE_PATH};${GETTEXT_PATH};${GETTEXT_PATH}/tools/gettext;${ARROW_PATH};${LZ4_PATH};${ZSTD_PATH};${BZIP2_PATH};${THRIFT_PATH};${GDAL_PATH};${FFMPEG_PATH};${OSG_PATH};${GL2PS_PATH};${GEOS_PATH};${BOOST_PATH}")
     # save in variable SUMO_LIBRARIES_DLL all paths to dll files
     file(GLOB SUMO_LIBRARIES_DLL "${XERCES_PATH}/bin/*.dll"
-                                 "${PROJ_PATH}/bin/*.dll"
-                                 "${FOX_PATH}/bin/*.dll"
                                  "${ZLIB_PATH}/bin/*.dll"
                                  "${FREETYPE_PATH}/bin/*.dll"
                                  "${GETTEXT_PATH}/bin/*.dll"
-                                 "${GDAL_PATH}/bin/*.dll"
-                                 "${ARROW_PATH}/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/libspatialite-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/geos-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/curl-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/libpng-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/libssh2-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/openssl-*/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/sqlite-*/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/tiff-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/libxml2-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/libiconv-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/openssl-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/sqlite-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/freexl-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/libexpat-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/librttopo-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/minizip-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/thrift-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/zstd-*/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/3rdPartyLibs/lz4-*/bin/*.dll"
                                  )
+    if (ENABLE_GDAL OR ENABLE_PROJ)
+        file(GLOB _PROJ_DLLS "${PROJ_PATH}/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/curl-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/libssh2-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/openssl-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/sqlite-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/tiff-*/bin/*.dll"
+                             )
+        list(APPEND SUMO_LIBRARIES_DLL ${_PROJ_DLLS})
+    endif ()
+    if (ENABLE_FOX)
+        file(GLOB _FOX_DLLS "${FOX_PATH}/bin/*.dll"
+                            "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-*/bin/*.dll"
+                            "${SUMO_LIBRARIES}/3rdPartyLibs/libpng-*/bin/*.dll"
+                            "${SUMO_LIBRARIES}/3rdPartyLibs/tiff-*/bin/*.dll"
+                            )
+        list(APPEND SUMO_LIBRARIES_DLL ${_FOX_DLLS})
+    endif ()
+    if (ENABLE_GDAL)
+        file(GLOB _GDAL_DLLS "${GDAL_PATH}/bin/*.dll"
+                             "${SUMO_LIBRARIES}/libspatialite-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/libxml2-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/libiconv-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/freexl-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/libexpat-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/librttopo-*/bin/*.dll"
+                             "${SUMO_LIBRARIES}/3rdPartyLibs/minizip-*/bin/*.dll"
+                             )
+        list(APPEND SUMO_LIBRARIES_DLL ${_GDAL_DLLS})
+    endif ()
+    if (ENABLE_FFMPEG)
+        file(GLOB _FFMPEG_DLLS "${FFMPEG_PATH}/bin/*.dll")
+        list(APPEND SUMO_LIBRARIES_DLL ${_FFMPEG_DLLS})
+    endif ()
+    if (ENABLE_OSG)
+        file(GLOB _OSG_DLLS "${OSG_PATH}/bin/*.dll")
+        list(APPEND SUMO_LIBRARIES_DLL ${_OSG_DLLS})
+    endif ()
+    if (ENABLE_GL2PS)
+        file(GLOB _GL2PS_DLLS "${GL2PS_PATH}/bin/*.dll")
+        list(APPEND SUMO_LIBRARIES_DLL ${_GL2PS_DLLS})
+    endif ()
+    if (ENABLE_JUPEDSIM)
+        file(GLOB _JUPEDSIM_DLLS "${JUPEDSIM_CUSTOMDIR}/bin/*.dll"
+                                 "${SUMO_LIBRARIES}/geos-*/bin/*.dll")
+        list(APPEND SUMO_LIBRARIES_DLL ${_JUPEDSIM_DLLS})
+    endif ()
+    if (ENABLE_PARQUET)
+        file(GLOB _ARROW_DLLS "${ARROW_PATH}/bin/*.dll"
+                              "${SUMO_LIBRARIES}/3rdPartyLibs/bzip2-*/bin/*.dll"
+                              "${SUMO_LIBRARIES}/3rdPartyLibs/thrift-*/bin/*.dll"
+                              "${SUMO_LIBRARIES}/3rdPartyLibs/zstd-*/bin/*.dll"
+                              "${SUMO_LIBRARIES}/3rdPartyLibs/lz4-*/bin/*.dll"
+                              )
+        list(APPEND SUMO_LIBRARIES_DLL ${_ARROW_DLLS})
+    endif ()
     # check if MSVC dll runtimes have to be copied
     if (INSTALL_DLL_RUNTIMES)
         file(GLOB MSVC_DLLS "${SUMO_LIBRARIES}/runtimes/*.dll")
@@ -364,35 +420,39 @@ if (SUMO_LIBRARIES AND WIN32)
     endif(INSTALL_DLL_RUNTIMES)
     if (MSVC_VERSION GREATER 1919)
         # fmt in SUMOLibraries only works with MSVC 2019 and later
-        file(GLOB fmt_PATH "${SUMO_LIBRARIES}/fmt-??.?.?")
+        file(GLOB fmt_PATH "${SUMO_LIBRARIES}/fmt-*")
     endif ()
-    # declare flag for use google test
-    set(USE_GOOGLETEST true)
-    # check if use google test
-    if (WIN32)
-        if (GNU_COMPILER AND NOT USE_MINGW_64BITS)
-            message(STATUS "Disabled Google Test in Mingw32")
-            set(USE_GOOGLETEST false)
-        elseif(CLANG_COMPILER)
-            message(STATUS "Disabled Google Test in Clang (Windows)")
-            set(USE_GOOGLETEST false)
+    if (ENABLE_GTEST)
+        # declare flag for use google test
+        set(USE_GOOGLETEST true)
+        # check if use google test
+        if (WIN32)
+            if (GNU_COMPILER AND NOT USE_MINGW_64BITS)
+                message(STATUS "Disabled Google Test in Mingw32")
+                set(USE_GOOGLETEST false)
+            elseif(CLANG_COMPILER)
+                message(STATUS "Disabled Google Test in Clang (Windows)")
+                set(USE_GOOGLETEST false)
+            endif ()
+        endif()
+        if (USE_GOOGLETEST)
+            file(GLOB GTEST_ROOT "${SUMO_LIBRARIES}/googletest-?.??.?")
+            message(STATUS "Found Google test: " ${GTEST_ROOT})
+            include_directories("${GTEST_ROOT}/include")
+            # set both google test library
+            set(GTEST_BOTH_LIBRARIES "${GTEST_ROOT}/lib/gtest.lib" "${GTEST_ROOT}/lib/gtest_main.lib")
+            # set google test DLLs
+            file(GLOB GTEST_DLL "${GTEST_ROOT}/bin/gtest*.dll")
+            set(GTEST_FOUND true)
         endif ()
-    endif()
-    if (USE_GOOGLETEST)
-        file(GLOB GTEST_ROOT "${SUMO_LIBRARIES}/googletest-?.??.?")
-        message(STATUS "Found Google test: " ${GTEST_ROOT})
-        include_directories("${GTEST_ROOT}/include")
-        # set both google test library
-        set(GTEST_BOTH_LIBRARIES "${GTEST_ROOT}/lib/gtest.lib" "${GTEST_ROOT}/lib/gtest_main.lib")
-        # set google test DLLs
-        file(GLOB GTEST_DLL "${GTEST_ROOT}/bin/gtest*.dll")
-        set(GTEST_FOUND true)
     endif ()
     file(GLOB SWIG_EXECUTABLE "${SUMO_LIBRARIES}/swigwin-*/swig.exe")
     file(GLOB MVN_EXECUTABLE "${SUMO_LIBRARIES}/apache-maven-*/bin/mvn.cmd")
 else ()
     # for Linux and Mac only
-    find_package(GTest)
+    if (ENABLE_GTEST)
+        find_package(GTest)
+    endif ()
 endif ()
 
 find_package(XercesC REQUIRED)
@@ -400,26 +460,31 @@ if (XercesC_FOUND)
     include_directories(SYSTEM ${XercesC_INCLUDE_DIRS})
 endif (XercesC_FOUND)
 
-find_package(Proj)
-if (PROJ_FOUND)
-    include_directories(SYSTEM ${PROJ_INCLUDE_DIR})
-    set(ENABLED_FEATURES "${ENABLED_FEATURES} Proj")
-endif (PROJ_FOUND)
+if (ENABLE_PROJ)
+    find_package(Proj)
+    if (PROJ_FOUND)
+        include_directories(SYSTEM ${PROJ_INCLUDE_DIR})
+        set(HAVE_PROJ 1)
+        set(ENABLED_FEATURES "${ENABLED_FEATURES} Proj")
+    endif (PROJ_FOUND)
+endif (ENABLE_PROJ)
 
-find_package(FOX)
-if (FOX_FOUND)
-    set(OpenGL_GL_PREFERENCE LEGACY)
-    find_package(OpenGL)
-    if (OPENGL_FOUND AND OPENGL_GLU_FOUND)
-        include_directories(SYSTEM ${FOX_INCLUDE_DIR})
-        add_definitions(${FOX_CXX_FLAGS})
-        add_definitions(-DFLOAT_MATH_FUNCTIONS)
-        set(HAVE_FOX 1)
-        set(ENABLED_FEATURES "${ENABLED_FEATURES} GUI")
-    else ()
-        message(WARNING "Fox is present but OpenGL or GLU cannot be found, GUI will be disabled.")
-    endif ()
-endif (FOX_FOUND)
+if (ENABLE_FOX)
+    find_package(FOX)
+    if (FOX_FOUND)
+        set(OpenGL_GL_PREFERENCE LEGACY)
+        find_package(OpenGL)
+        if (OPENGL_FOUND AND OPENGL_GLU_FOUND)
+            include_directories(SYSTEM ${FOX_INCLUDE_DIR})
+            add_definitions(${FOX_CXX_FLAGS})
+            add_definitions(-DFLOAT_MATH_FUNCTIONS)
+            set(HAVE_FOX 1)
+            set(ENABLED_FEATURES "${ENABLED_FEATURES} GUI")
+        else ()
+            message(WARNING "Fox is present but OpenGL or GLU cannot be found, GUI will be disabled.")
+        endif ()
+    endif (FOX_FOUND)
+endif (ENABLE_FOX)
 
 find_package(Freetype)
 if (FREETYPE_FOUND)
@@ -428,26 +493,28 @@ else (FREETYPE_FOUND)
     message(WARNING "FreeType cannot be found. If you are using SUMO libraries, update SUMO_LIBRARIES folder with git pull. Otherwise, specify manually FreeType include folder and libs.")
 endif (FREETYPE_FOUND)
 
-if (SUMO_LIBRARIES AND WIN32)
-    find_package(fmt PATHS ${fmt_PATH} NO_DEFAULT_PATH)
-    if (fmt_FOUND)
-        message(STATUS "Found FMT (SUMOLibraries): " ${fmt_DIR})
-        include_directories(SYSTEM "${fmt_PATH}/include")
-        set(FMT_LIBRARY fmt::fmt)
-        set(HAVE_FMT 1)
-        set(ENABLED_FEATURES "${ENABLED_FEATURES} FMT")
-    endif (fmt_FOUND)
-elseif (NOT MSVC)
-    find_package(fmt QUIET)
-    if (fmt_FOUND)
-        set(HAVE_FMT 1)
-        set(FMT_LIBRARY fmt::fmt)
-        # next 2 lines could fix the include path for mambaforge fmt on DLR machines (maybe outdated cmake?)
-        # get_target_property(fmt_INCLUDE_DIR fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
-        # include_directories(SYSTEM ${fmt_INCLUDE_DIR})
-        set(ENABLED_FEATURES "${ENABLED_FEATURES} FMT")
-    endif (fmt_FOUND)
-endif ()
+if (ENABLE_FMT)
+    if (SUMO_LIBRARIES AND WIN32)
+        find_package(fmt PATHS ${fmt_PATH} NO_DEFAULT_PATH)
+        if (fmt_FOUND)
+            message(STATUS "Found FMT (SUMOLibraries): " ${fmt_DIR})
+            include_directories(SYSTEM "${fmt_PATH}/include")
+            set(FMT_LIBRARY fmt::fmt)
+            set(HAVE_FMT 1)
+            set(ENABLED_FEATURES "${ENABLED_FEATURES} FMT")
+        endif (fmt_FOUND)
+    elseif (NOT MSVC)
+        find_package(fmt QUIET)
+        if (fmt_FOUND)
+            set(HAVE_FMT 1)
+            set(FMT_LIBRARY fmt::fmt)
+            # next 2 lines could fix the include path for mambaforge fmt on DLR machines (maybe outdated cmake?)
+            # get_target_property(fmt_INCLUDE_DIR fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
+            # include_directories(SYSTEM ${fmt_INCLUDE_DIR})
+            set(ENABLED_FEATURES "${ENABLED_FEATURES} FMT")
+        endif (fmt_FOUND)
+    endif ()
+endif (ENABLE_FMT)
 
 find_package(X11)
 if (X11_FOUND)
@@ -477,7 +544,7 @@ if (SWIG_FOUND)
     set(ENABLED_FEATURES "${ENABLED_FEATURES} SWIG")
 endif ()
 
-if (TCMALLOC)
+if (ENABLE_TCMALLOC)
     find_library(TCMALLOC_LIBRARY NAMES tcmalloc_minimal)
     if (TCMALLOC_LIBRARY)
         set(ENABLED_FEATURES "${ENABLED_FEATURES} tcmalloc")
@@ -486,7 +553,8 @@ if (TCMALLOC)
     endif ()
 endif ()
 
-if (PARQUET)
+set(PARQUET_LIBRARY "")
+if (ENABLE_PARQUET)
     set(lz4Alt_FIND_QUIETLY True)
     set(re2Alt_FIND_QUIETLY True)
     set(ThriftAlt_FIND_QUIETLY True)
@@ -494,41 +562,28 @@ if (PARQUET)
     find_package(Arrow)
     find_package(Parquet)
     if (Arrow_FOUND AND Parquet_FOUND)
-        set(HAVE_PARQUET 1)
-        set(ENABLED_FEATURES "${ENABLED_FEATURES} Parquet")
-        set(PARQUET_LIBRARY Parquet::parquet_shared)
-        include_directories(SYSTEM ${ARROW_INCLUDE_DIR})
-        # if (GTEST_FOUND)
-        #     add_definitions("GTest_SOURCE=Bundled")
-        # endif()
-        # this is for gtest compatibility
-    else()
-        message(WARNING "Parquet support requested but Arrow or Parquet libraries not found. Disabling Parquet support.")
-        set(PARQUET_LIBRARY "")
+        if (CMAKE_CXX_STANDARD GREATER_EQUAL 20 OR Arrow_VERSION VERSION_LESS 24.0)
+            set(ENABLED_FEATURES "${ENABLED_FEATURES} Parquet")
+            set(PARQUET_LIBRARY Parquet::parquet_shared)
+            set(HAVE_PARQUET 1)
+            include_directories(SYSTEM ${ARROW_INCLUDE_DIR})
+        else()
+            message(WARNING "Arrow >= 24 requires C++20 (current: C++${CMAKE_CXX_STANDARD}). Disabling Parquet support.")
+        endif()
     endif()
-else()
-    set(PARQUET_LIBRARY "")
-    set(HAVE_PARQUET 0)
 endif()
 
 # Eigen (for overhead wire / electric circuit simulation)
-find_package(Eigen3 3.2)
-if (EIGEN3_FOUND)
-    include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
-    set(HAVE_EIGEN 1)  # see config.h.cmake for #cmakedefine
-    set(ENABLED_FEATURES "${ENABLED_FEATURES} Eigen")
-endif (EIGEN3_FOUND)
+if (ENABLE_EIGEN)
+    find_package(Eigen3)
+    if (EIGEN3_FOUND)
+        include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
+        set(HAVE_EIGEN 1)  # see config.h.cmake for #cmakedefine
+        set(ENABLED_FEATURES "${ENABLED_FEATURES} Eigen")
+    endif (EIGEN3_FOUND)
+endif (ENABLE_EIGEN)
 
-if (CHECK_OPTIONAL_LIBS)
-    file(GLOB GDAL_PATH "${SUMO_LIBRARIES}/gdal-?.?.?")
-    file(GLOB FFMPEG_PATH "${SUMO_LIBRARIES}/FFMPEG-?.?.?")
-    file(GLOB OSG_PATH "${SUMO_LIBRARIES}/OSG-?.?.?")
-    file(GLOB GL2PS_PATH "${SUMO_LIBRARIES}/gl2ps-?.?.?")
-    file(GLOB GEOS_PATH "${SUMO_LIBRARIES}/geos-?.??.?")
-    file(GLOB BOOST_PATH "${SUMO_LIBRARIES}/boost-?.??.?")
-    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${GDAL_PATH};${FFMPEG_PATH};${OSG_PATH};${GL2PS_PATH};${GEOS_PATH};${BOOST_PATH}")
-    file(GLOB SUMO_OPTIONAL_LIBRARIES_DLL "${GDAL_PATH}/bin/*.dll" "${FFMPEG_PATH}/bin/*.dll" "${OSG_PATH}/bin/*.dll" "${GL2PS_PATH}/bin/*.dll" "${JUPEDSIM_CUSTOMDIR}/bin/*.dll")
-
+if (ENABLE_GDAL)
     # GDAL (for geopositioning)
     find_package(GDAL)
     if (GDAL_FOUND)
@@ -538,39 +593,46 @@ if (CHECK_OPTIONAL_LIBS)
     else (GDAL_FOUND)
         set(GDAL_LIBRARY "")
     endif (GDAL_FOUND)
+endif ()
 
-    if (FOX_FOUND)
-        # FFMPEG (for recording videos)
-        find_package(FFMPEG)
-        if (FFMPEG_FOUND)
-            include_directories(SYSTEM ${FFMPEG_INCLUDE_DIR})
-            set(HAVE_FFMPEG 1)
-            set(ENABLED_FEATURES "${ENABLED_FEATURES} FFmpeg")
-        endif ()
-
-        # OSG (For 3D view)
-        find_package(OpenSceneGraph 3.4.0 COMPONENTS osgGA osgViewer osgUtil osgDB osgText)
-        if (OPENSCENEGRAPH_FOUND)
-            include_directories(SYSTEM ${OPENSCENEGRAPH_INCLUDE_DIRS})
-            set(HAVE_OSG 1)
-            set(ENABLED_FEATURES "${ENABLED_FEATURES} OSG")
-        endif ()
-
-        # GL2PS (deprecated, will be changed by FreeType)
-        find_package(GL2PS)
-        if (GL2PS_FOUND)
-            include_directories(SYSTEM ${GL2PS_INCLUDE_DIR})
-            set(HAVE_GL2PS 1)
-            set(ENABLED_FEATURES "${ENABLED_FEATURES} GL2PS")
-        endif (GL2PS_FOUND)
+if (ENABLE_FFMPEG AND HAVE_FOX)
+    # FFMPEG (for recording videos)
+    find_package(FFMPEG)
+    if (FFMPEG_FOUND)
+        include_directories(SYSTEM ${FFMPEG_INCLUDE_DIR})
+        set(HAVE_FFMPEG 1)
+        set(ENABLED_FEATURES "${ENABLED_FEATURES} FFmpeg")
     endif ()
+endif ()
 
+if (ENABLE_OSG AND HAVE_FOX)
+    # OSG (For 3D view)
+    find_package(OpenSceneGraph 3.4.0 COMPONENTS osgGA osgViewer osgUtil osgDB osgText)
+    if (OPENSCENEGRAPH_FOUND)
+        include_directories(SYSTEM ${OPENSCENEGRAPH_INCLUDE_DIRS})
+        set(HAVE_OSG 1)
+        set(ENABLED_FEATURES "${ENABLED_FEATURES} OSG")
+    endif ()
+endif ()
+
+if (ENABLE_GL2PS AND HAVE_FOX)
+    # GL2PS (deprecated, will be changed by FreeType)
+    find_package(GL2PS)
+    if (GL2PS_FOUND)
+        include_directories(SYSTEM ${GL2PS_INCLUDE_DIR})
+        set(HAVE_GL2PS 1)
+        set(ENABLED_FEATURES "${ENABLED_FEATURES} GL2PS")
+    endif (GL2PS_FOUND)
+endif ()
+
+if (ENABLE_JUPEDSIM)
     find_package(jupedsim CONFIG HINTS ${JUPEDSIM_CUSTOMDIR} QUIET)
     if (jupedsim_FOUND)
         find_package(GEOS 3.3.0)
         if (GEOS_FOUND)
             include_directories(SYSTEM ${GEOS_INCLUDE_DIR})
             set(JPS_VERSION "${jupedsim_VERSION_MAJOR}${jupedsim_VERSION_MINOR}${jupedsim_VERSION_PATCH}")
+            set(HAVE_JUPEDSIM 1)
             set(ENABLED_FEATURES "${ENABLED_FEATURES} JuPedSim")
             message(STATUS "Found JuPedSim: ${jupedsim_DIR} ${jupedsim_VERSION}")
         else (GEOS_FOUND)
@@ -579,10 +641,9 @@ if (CHECK_OPTIONAL_LIBS)
     else (jupedsim_FOUND)
         message(STATUS "Could NOT find JuPedSim! Skipping JuPedSim integration.")
     endif (jupedsim_FOUND)
+endif ()
 
-    # add optional libraries
-    list(APPEND SUMO_LIBRARIES_DLL ${SUMO_OPTIONAL_LIBRARIES_DLL})
-
+if (ENABLE_BOOST)
     # BOOST (needed for stacktrace, minimum version 1.80.0)
     find_package(boost_filesystem CONFIG QUIET)
     find_package(boost_process CONFIG QUIET)
@@ -603,8 +664,7 @@ if (CHECK_OPTIONAL_LIBS)
     else()
         message(STATUS "Boost not found, building without stacktrace support")
     endif()
-
-endif (CHECK_OPTIONAL_LIBS)
+endif ()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -843,7 +903,7 @@ set_property(TARGET doxygen PROPERTY EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 set_property(TARGET doxygen PROPERTY FOLDER "doc")
 
 add_custom_target(userdoc
-    COMMAND ../../tools/build_config/buildPyDoc.py -p ../pydoc -c
+    COMMAND ${Python_EXECUTABLE} ../../tools/build_config/buildPyDoc.py ../pydoc --clean
     COMMAND mkdocs build -d ../userdoc
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs/web)
 set_property(TARGET userdoc PROPERTY EXCLUDE_FROM_DEFAULT_BUILD TRUE)

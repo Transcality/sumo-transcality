@@ -52,6 +52,7 @@
 #include <microsim/devices/MSDevice_ToC.h>
 #include <microsim/devices/MSDevice_BTreceiver.h>
 #include <microsim/devices/MSDevice_FCDReplay.h>
+#include <microsim/devices/MSRoutingEngine.h>
 #include <microsim/MSEdgeControl.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/output/MSDetectorControl.h>
@@ -131,8 +132,12 @@ NLBuilder::build() {
         throw ProcessError(TL("Invalid network, no network version declared."));
     }
     // check whether the loaded net agrees with the simulation options
-    if ((myOptions.getBool("no-internal-links") || myOptions.getBool("mesosim")) && myXMLHandler.haveSeenInternalEdge() && myXMLHandler.haveSeenDefaultLength()) {
+    if ((myOptions.getBool("no-internal-links")) && myXMLHandler.haveSeenInternalEdge() && myXMLHandler.haveSeenDefaultLength()) {
         WRITE_WARNING(TL("Network contains internal links which are ignored. Vehicles will 'jump' across junctions and thus underestimate route lengths and travel times."));
+    }
+    if (!myXMLHandler.haveSeenInternalEdge() && myOptions.getBool("mesosim")) {
+        // @todo: setting this option has some side effect in microsim that manifest even in networks without internal lanes this should be checked
+        MSGlobals::gUsingInternalLanes = false;
     }
     buildNet();
     if (myOptions.isSet("alternative-net-file")) {
@@ -157,6 +162,7 @@ NLBuilder::build() {
         const SUMOTime stateTime = MSStateHandler::MSStateTimeHandler::getTime(myOptions.getString("load-state"));
         if (myOptions.isDefault("begin")) {
             myOptions.set("begin", time2string(stateTime));
+            myNet.setLoaderTime(stateTime);
             if (TraCIServer::getInstance() != nullptr) {
                 TraCIServer::getInstance()->stateLoaded(stateTime);
             }
@@ -232,6 +238,8 @@ NLBuilder::build() {
             }
         }
     }
+    // init after preferences have been loaded from additional-files
+    MSRoutingEngine::initWeightConstants(myOptions);
     // init tls after all detectors have been loaded
     myJunctionBuilder.postLoadInitialization();
     // declare meandata set by options
@@ -504,8 +512,8 @@ NLBuilder::buildDefaultMeanData(const std::string& optionName, const std::string
         }
         try {
             SUMOTime begin = string2time(OptionsCont::getOptions().getString("begin"));
-            myDetectorBuilder.createEdgeLaneMeanData(id, -1, begin, -1, "traffic", useLanes, false, false,
-                    false, false, false, 100000, 0, SUMO_const_haltingSpeed, "", "", std::vector<MSEdge*>(), AggregateType::NO,
+            myDetectorBuilder.createEdgeLaneMeanData(id, -1, begin, -1, "traffic", useLanes, "true",
+                    false, false, 0, 100000, 0, SUMO_const_haltingSpeed, "", "", std::vector<MSEdge*>(), AggregateType::NO,
                     OptionsCont::getOptions().getString(optionName));
         } catch (InvalidArgument& e) {
             WRITE_ERROR(e.what());

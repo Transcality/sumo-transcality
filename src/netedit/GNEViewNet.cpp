@@ -531,7 +531,8 @@ GNEViewNet::updateObjectsInPosition(const Position& pos) {
     // swap selected objects (needed after selecting)
     gViewObjectsHandler.reverseSelectedObjects();
     // check if filter edges that have the mouse over their geometry points
-    if (myEditModes.isCurrentSupermodeNetwork() && myEditModes.networkEditMode == NetworkEditMode::NETWORK_MOVE) {
+    if (myEditModes.isCurrentSupermodeNetwork() && myEditModes.networkEditMode == NetworkEditMode::NETWORK_MOVE
+            && myEditNetworkElementShapes.getEditedNetworkElement() == nullptr) {
         gViewObjectsHandler.isolateEdgeGeometryPoints();
     }
     // restore draw for view objects handler (this calculate the contours)
@@ -1828,6 +1829,7 @@ GNEViewNet::hotkeyDel() {
             }
         }
     }
+    getViewParent()->getInspectorFrame()->clearInspection();
 }
 
 
@@ -5936,8 +5938,10 @@ GNEViewNet::processLeftButtonPressNetwork(void* eventData) {
             break;
         }
         case NetworkEditMode::NETWORK_MOVE: {
-            // editing lane shapes in move mode isn't finished, then always filter lanes
-            myViewObjectsSelector.filterLanes();
+            if (myEditNetworkElementShapes.getEditedNetworkElement() == nullptr ||
+                    myEditNetworkElementShapes.getEditedNetworkElement()->getType() != GLO_LANE) {
+                myViewObjectsSelector.filterLanes();
+            }
             // filter locked elements
             myViewObjectsSelector.filterLockedElements({GLO_WALKINGAREA});
             // check if we're editing a shape
