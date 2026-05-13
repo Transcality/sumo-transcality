@@ -30,7 +30,7 @@ if 'SUMO_HOME' in os.environ:
     sys.path.append(os.path.join(os.environ['SUMO_HOME'], 'tools'))
 import sumolib  # noqa
 from sumolib.options import ArgumentParser  # noqa
-from sumolib.miscutils import euclidean  # noqa
+from sumolib.miscutils import euclidean,openz  # noqa
 
 
 def parse_args():
@@ -77,8 +77,8 @@ def main(options):
 
     edgeFile = options.outfile + ".edg.xml"
     nodeFile = options.outfile + ".nod.xml"
-    with open(edgeFile, 'w') as out_e:
-        with open(nodeFile, 'w') as out_n:
+    with openz(edgeFile, 'w') as out_e:
+        with openz(nodeFile, 'w') as out_n:
             sumolib.writeXMLHeader(out_e, "$Id$", "edges", options=options)
             sumolib.writeXMLHeader(out_n, "$Id$", "nodes", options=options)
             for name, stopIDs in station_stops.items():
@@ -95,7 +95,7 @@ def main(options):
                             x, y = stop_coords[stopID]
                             options.accessRadius = max(options.accessRadius,
                                                        euclidean((x, y), (mean_x, mean_y)))
-                    edge_id = name + "_access"
+                    edge_id = name.replace(' ', '_') + "_access"
                     from_id = edge_id + '_from'
                     to_id = edge_id + '_to'
                     out_n.write('    <node id="%s" x="%s" y="%s"/>\n' % (from_id, mean_x - l2, mean_y))

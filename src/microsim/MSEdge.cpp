@@ -516,7 +516,7 @@ MSEdge::allowedLanes(SUMOVehicleClass vclass, bool ignoreTransientPermissions) c
     } else {
         const SVCPermissions comP = ignoreTransientPermissions ? myOriginalCombinedPermissions : myCombinedPermissions;
         if ((comP & vclass) == vclass) {
-            const AllowedLanesCont& allowedCont = ignoreTransientPermissions ? myOrigAllowed : myAllowed;
+            const AllowedLanesCont& allowedCont = ignoreTransientPermissions && myHaveTransientPermissions ? myOrigAllowed : myAllowed;
             for (const auto& allowed : allowedCont) {
                 if ((allowed.first & vclass) == vclass) {
                     return allowed.second.get();
@@ -660,6 +660,7 @@ MSEdge::getDepartPosBound(const MSVehicle& veh, bool upper) const {
     return pos;
 }
 
+
 MSLane*
 MSEdge::getDepartLaneMeso(SUMOVehicle& veh) const {
     if (veh.getParameter().departLaneProcedure == DepartLaneDefinition::GIVEN) {
@@ -670,6 +671,7 @@ MSEdge::getDepartLaneMeso(SUMOVehicle& veh) const {
     }
     return (*myLanes)[0];
 }
+
 
 MSLane*
 MSEdge::getDepartLane(MSVehicle& veh) const {
@@ -1719,11 +1721,61 @@ MSEdge::getPreference(const SUMOVTypeParameter& pars) const {
     return MSNet::getInstance()->getPreference(getRoutingType(), pars);
 }
 
+
 void
 MSEdge::clearState() {
     myPersons.clear();
     myContainers.clear();
     myWaiting.clear();
 }
+
+
+const std::map<const MEVehicle*, std::pair<double, int> >&
+MSEdge::getMesoPositions() const {
+    assert(MSGlobals::gUseMesoSim);
+    if (myLastCacheUpdate < SIMSTEP) {
+        myLastCacheUpdate = SIMSTEP;
+        myCachedMesoPos.clear();
+        int laneIndex = 0;
+        const double now = SIMTIME;
+        for (std::vector<MSLane*>::const_iterator msl = myLanes->begin(); msl != myLanes->end(); ++msl, ++laneIndex) {
+            // go through the vehicles
+            double segmentOffset = 0; // offset at start of current segment
+            for (MESegment* segment = MSGlobals::gMesoNet->getSegmentForEdge(*this);
+                    segment != nullptr; segment = segment->getNextSegment()) {
+                const double length = segment->getLength();
+                if (laneIndex < segment->numQueues()) {
+                    // make a copy so we don't have to worry about synchronization
+                    std::vector<MEVehicle*> queue = segment->getQueue(laneIndex);
+                    const int queueSize = (int)queue.size();
+                    SUMOTime earliestExitTime = segment->getQueueBlockTime(laneIndex);
+                    int overlap = 0;
+                    double prevPos = std::numeric_limits<double>::max();
+                    for (int i = 0; i < queueSize; ++i) {
+                        const MEVehicle* const veh = queue[queueSize - i - 1];
+                        earliestExitTime = MAX2(earliestExitTime, veh->getEventTime());
+                        const double vehLength = veh->getVehicleType().getLengthWithGap();
+                        if (i > 0) {
+                            earliestExitTime += segment->getMinTauWithVehLength(vehLength, veh->getVehicleType().getCarFollowModel().getHeadwayTime());
+                        }
+                        const double entry = veh->getLastEntryTimeSeconds();
+                        const double pos = segmentOffset + length * (now - entry) / (STEPS2TIME(earliestExitTime) - entry);
+                        // check if we overlap with the previous vehicle such that the gui has the chance to add some lateral offset
+                        if (overlap == 0 && prevPos - pos < vehLength) {
+                            overlap = 1;
+                        } else {
+                            overlap = 0;
+                        }
+                        myCachedMesoPos[veh] = std::make_pair(pos, overlap);
+                        prevPos = pos;
+                    }
+                }
+                segmentOffset += length;
+            }
+        }
+    }
+    return myCachedMesoPos;
+}
+
 
 /****************************************************************************/

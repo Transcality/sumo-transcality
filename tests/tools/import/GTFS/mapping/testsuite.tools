@@ -13,6 +13,10 @@ stops_otherEdge
 # ensure that stops on the same edge are in the correct sequence
 stops_sameEdgeOrder
 
+# a looped route passes multiple candidate stops.
+# One stop is physically closer but doesn't permit closing the loop so it must only be used on the final leg
+stops_looped_laterCloser
+
 # use candiate stop locations to restrict mapping
 stops_gtfs_ids
 
@@ -30,6 +34,12 @@ lane_disallowed
 
 # set stops to parking
 parking
+
+# set long-duration stops to parking 
+parking_threshold
+
+# set stops to parking
+load_stops_add_missing
 
 # import public transport using a network that doesn't cover all stops
 subnet
@@ -63,3 +73,6 @@ radius_next_stop
 
 # radius is high enough to add candidate stops from the subsequent location
 radius_next_stop_ignore_dist
+
+# test reading gzipped input
+mergedCSVgz

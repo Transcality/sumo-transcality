@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2026-03-17 13:41+0100\n"
-"PO-Revision-Date: 2026-04-23 07:56+0000\n"
+"PO-Revision-Date: 2026-05-11 14:32+0000\n"
 "Last-Translator: Angelo Banse <Olaf.BanseBueno@dlr.de>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eclipse-sumo/"
 "sumo-gui-netedit/es/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.17.1-dev\n"
+"X-Generator: Weblate 2026.5-dev\n"
 
 #: src/gui/GUIApplicationWindow.cpp:314 src/gui/GUIApplicationWindow.cpp:317
 #: src/gui/GUIApplicationWindow.cpp:2316 src/gui/GUIApplicationWindow.cpp:2317
@@ -2044,11 +2044,11 @@ msgstr "credenciales de acceso"
 
 #: src/guisim/GUIParkingArea.cpp:118
 msgid "reservations [#]"
-msgstr ""
+msgstr "reservas [#]"
 
 #: src/guisim/GUIParkingArea.cpp:119
 msgid "reservation ids"
-msgstr ""
+msgstr "ID de las reserva"
 
 #: src/guisim/GUIPerson.cpp:235
 msgid "dest stop [id]"
@@ -5677,6 +5677,9 @@ msgid ""
 "sets index for the internal junction of this connection within the "
 "controlling traffic light (-1 means internal junction not controlled)"
 msgstr ""
+"establece el índice para el cruce interno de esta conexión dentro del "
+"semáforo que la controla (-1 significa que el cruce interno no está "
+"controlado)"
 
 #: src/netedit/GNETagPropertiesDatabase.cpp:1104
 msgid "sets custom speed limit for the connection"
@@ -8416,7 +8419,7 @@ msgstr "velocidad de la persona para este % en m/s (no junto con la duración)"
 #: src/netedit/GNETagPropertiesDatabase.cpp:7512
 #: src/netedit/GNETagPropertiesDatabase.cpp:7558
 msgid "duration of the plan in second (not together with speed)"
-msgstr ""
+msgstr "duración del plan en segundos (excluye el uso de velocidad)"
 
 #: src/netedit/GNETagPropertiesDatabase.cpp:7523
 msgid "list of vehicle alternatives to take for the ride"
@@ -12444,7 +12447,7 @@ msgstr "Los carriles no están conectados"
 
 #: src/netedit/elements/moving/GNEMoveElementLaneDouble.cpp:335
 msgid "starPos > (endPos - EPS)"
-msgstr ""
+msgstr "starPos > (endPos - EPS)"
 
 #: src/netedit/elements/moving/GNEMoveElementLaneDouble.cpp:457
 #: src/netedit/elements/moving/GNEMoveElementLaneSingle.cpp:331
@@ -12477,7 +12480,7 @@ msgstr "% > longitud de carril"
 
 #: src/netedit/elements/moving/GNEMoveElementLaneSingle.cpp:224
 msgid "% > (length of lane - EPS)"
-msgstr ""
+msgstr "% > (longitud de carril - EPS)"
 
 #: src/netedit/elements/moving/GNEMoveElementPlan.cpp:127
 #: src/netedit/elements/moving/GNEMoveElementVehicle.cpp:193

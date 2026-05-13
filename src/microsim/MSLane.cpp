@@ -56,6 +56,7 @@
 #include <microsim/traffic_lights/MSDriveWay.h>
 #include <microsim/lcmodels/MSAbstractLaneChangeModel.h>
 #include <microsim/devices/MSDevice_Taxi.h>
+#include <microsim/trigger/MSTriggeredRerouter.h>
 #include <mesosim/MELoop.h>
 #include "MSNet.h"
 #include "MSVehicleType.h"
@@ -1008,6 +1009,14 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
                         return false;
                     }
                 }
+                if (mayContinue(aVehicle) && hasUnsafeLink()) {
+                    // since the route is likely to continue we must be prepared for braking
+                    if (checkFailure(aVehicle, speed, dist, cfModel.insertionStopSpeed(aVehicle, speed, seen),
+                                patchSpeedSpecial, "junction '" + currentLane->getEdge().getToJunction()->getID() + "' too close", InsertionCheck::JUNCTION)) {
+                        // we may not drive with the given velocity - we cannot stop at the junction
+                        return false;
+                    }
+                }
             } else {
                 // lane does not continue
                 if (checkFailure(aVehicle, speed, dist, cfModel.insertionStopSpeed(aVehicle, speed, seen),
@@ -1042,7 +1051,8 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
         if (!(*link)->opened(arrivalTime, speed, speed, aVehicle->getVehicleType().getLength(), aVehicle->getImpatience(),
                              cfModel.getMaxDecel(), 0, posLat, nullptr, false, aVehicle)
                 || (*link)->railSignalWasPassed()
-                || !(*link)->havePriority()) {
+                || !(*link)->havePriority()
+                || (*link)->getState() == LINKSTATE_ZIPPER) {
             // have to stop at junction
             std::string errorMsg = "";
             const LinkState state = (*link)->getState();
@@ -4755,6 +4765,32 @@ MSLane::getFromJunction() const {
 const MSJunction*
 MSLane::getToJunction() const {
     return myEdge->getToJunction();
+}
+
+
+bool
+MSLane::mayContinue(const MSVehicle* veh) const {
+    if (veh->getDevice(typeid(MSDevice_Taxi)) != nullptr) {
+        // taxi device may assign a new route that continues past the end of the initial route
+        return true;
+    }
+    for (const MSMoveReminder* rem : myMoveReminders) {
+        if (dynamic_cast<const MSTriggeredRerouter*>(rem) != nullptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool
+MSLane::hasUnsafeLink() const {
+    for (const MSLink* link : myLinks) {
+        if (!link->havePriority() || link->getState() == LINKSTATE_ZIPPER) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /****************************************************************************/

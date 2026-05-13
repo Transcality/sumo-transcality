@@ -65,7 +65,7 @@ visually in [netedit](../Netedit/editModesNetwork.md#traffic_lights).
   option **--tls.allred.time** can be used.
 - It is also possible to generate
   [Actuated Traffic Lights](#type_actuated)
-  by setting the option **--tls.default-type**. This will generated the same signal plans as
+  by setting the option **--tls.default-type**. This will generate the same signal plans as
   above but with green phases that have a variable length of 5s-50s
   (both values can be set using the options **--tls.min-dur, --tls.max-dur**).
   - default type **actuated**: traffic light actuation is based on gaps measured by automatically generated induction loops
@@ -266,9 +266,9 @@ the input file.
 TLS Link indices can be access using either
 
 - [sumolib](../Tools/Sumolib.md) using
-  [connection.getTLLinkIndex()](https://sumo.dlr.de/pydoc/sumolib.net.connection.html)
+  [connection.getTLLinkIndex()](https://sumo.dlr.de/pydoc/sumolib/net/connection.html)
 - [sumolib](../Tools/Sumolib.md) using
-  [tls.getConnections()](https://sumo.dlr.de/pydoc/sumolib.net.html#TLS)
+  [tls.getConnections()](https://sumo.dlr.de/pydoc/sumolib/net.html#TLS)
 - or [TraCI](../TraCI/index.md) using
   [traci.trafficlight.getControlledLinks()](../TraCI/Traffic_Lights_Value_Retrieval.md#structure_of_compound_object_controlled_links)
 
@@ -532,6 +532,7 @@ The following elements are permitted in an expression for attributes
   - 'z:DETID': returns the time gap since the last vehicle detection for inductionLoop detector with id 'DETID' or id 'TLSID_PROGRAMID_DETID' (DETID may omit the [prefix 'TLSID_PROGRAMID_'](#detectors))
   - 'a:DETID': returns number of vehicles on detector with id 'DETID'. Supports inductionLoop and laneAreaDetectors. Also supports omitting the prefix of the detector id. (see 'z:')
   - 'w:DETID': returns longest individual waiting time in seconds for vehicles on detector with id 'DETID'. Supports inductionLoop and laneAreaDetectors. Also supports omitting the prefix of the detector id. (see 'z:')
+  - 'd:DETID': returns maximum stop arrival delay in seconds for public transport vehicles on detector with id 'DETID'. Supports inductionLoop and laneAreaDetectors. Also supports omitting the prefix of the detector id. (see 'z:')
   - 'g:TLSINDEX': returns current green duration in seconds for link with the given index
   - 'r:TLSINDEX': returns current red duration in seconds for link with the given index
   - 'p:TLSINDEX': returns the number of persons that are on a waiting area and intending to cross the pedestrian crossing with the given tls link index
