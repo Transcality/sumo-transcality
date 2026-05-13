@@ -50,6 +50,12 @@ try:
 except ImportError:
     HAVE_LXML = False
 
+try:
+    import pyproj  # noqa
+    HAVE_PYPROJ = True
+except ImportError:
+    HAVE_PYPROJ = False
+
 import sumolib
 from . import lane, edge, netshiftadaptor, node, connection, roundabout  # noqa
 from .connection import Connection
@@ -533,10 +539,9 @@ class Net:
         return projString != "!"
 
     def getGeoProj(self):
-        if not self.hasGeoProj():
-            raise RuntimeError("Network does not provide geo-projection")
+        if not self.hasGeoProj() or not HAVE_PYPROJ:
+            raise RuntimeError("Network does not provide geo-projection or pyproj not installed.")
         if self._proj is None:
-            import pyproj
             try:
                 self._proj = pyproj.Proj(projparams=self._location["projParameter"])
             except RuntimeError:

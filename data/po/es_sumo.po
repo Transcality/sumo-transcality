@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: sumo\n"
 "Report-Msgid-Bugs-To: sumo-dev@eclipse.org\n"
 "POT-Creation-Date: 2026-03-30 14:46+0200\n"
-"PO-Revision-Date: 2026-04-23 07:56+0000\n"
+"PO-Revision-Date: 2026-05-11 14:32+0000\n"
 "Last-Translator: Angelo Banse <Olaf.BanseBueno@dlr.de>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eclipse-sumo/"
 "applications/es/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.17.1-dev\n"
+"X-Generator: Weblate 2026.5-dev\n"
 
 #: src/activitygen/AGActivityGen.cpp:46
 msgid "Reading input"
@@ -1788,6 +1788,8 @@ msgstr "Cargar un estado de red desde FILE"
 #: src/microsim/MSFrame.cpp:101
 msgid "Shifts all times loaded from a saved state by the given offset"
 msgstr ""
+"Desplaza todos los tiempos cargados desde un estado guardado en el "
+"desplazamiento indicado"
 
 #: src/microsim/MSFrame.cpp:103
 msgid "Removes vehicles with the given IDs from the loaded state"
@@ -1945,6 +1947,8 @@ msgstr "Enumerar los atributos que deben incluirse en la salida FCD"
 #: src/microsim/MSFrame.cpp:187
 msgid "List shape names that should be used to filter the FCD output"
 msgstr ""
+"Listar los nombres de formas que deben usarse para filtrar el archivo de "
+"salida FCD"
 
 #: src/microsim/MSFrame.cpp:191
 msgid "Save fcd for persons and container to separate FILE"
@@ -2415,6 +2419,8 @@ msgid ""
 "Length of time interval, over which accumulated waiting time is taken into "
 "account (default is 100s.)"
 msgstr ""
+"Duración del intervalo de tiempo, durante el cual se tiene en cuenta el "
+"tiempo de espera acumulado (por defecto: 100s)"
 
 #: src/microsim/MSFrame.cpp:467
 msgid "Minimum consecutive waiting time before applying startupDelay"
@@ -2715,7 +2721,7 @@ msgstr ""
 
 #: src/microsim/MSFrame.cpp:606
 msgid "Interpret departPosLat for walks in legacy style"
-msgstr ""
+msgstr "Interpretar departPosLat para caminatas en el modo antiguo"
 
 #: src/microsim/MSFrame.cpp:609
 msgid ""
@@ -2809,18 +2815,25 @@ msgid ""
 "Apply the given time penalty when computing minimum routing costs for minor-"
 "link internal lanes"
 msgstr ""
+"Aplicar la penalización de tiempo indicada al calcular los costos mínimos de "
+"enrutamiento para carriles internos de enlaces secundarios"
 
 #: src/microsim/MSFrame.cpp:661
 msgid ""
 "Apply scaled travel time penalties based on green split when computing "
 "minimum routing costs for internal lanes at traffic lights"
 msgstr ""
+"Aplicar penalizaciones de tiempo de viaje escaladas según la proporción de "
+"verde al calcular los costos mínimos de enrutamiento para carriles internos "
+"en semáforos"
 
 #: src/microsim/MSFrame.cpp:664 src/router/ROFrame.cpp:206
 msgid ""
 "Apply the given time penalty when computing routing costs for turnaround "
 "internal lanes"
 msgstr ""
+"Aplicar la penalización de tiempo indicada al calcular los costos de "
+"enrutamiento para carriles internos de retorno"
 
 #: src/microsim/MSFrame.cpp:667 src/router/ROFrame.cpp:209
 msgid ""
@@ -2956,6 +2969,8 @@ msgid ""
 "Do not build queues (or reduce capacity) for lanes allowing only the given "
 "vclasses"
 msgstr ""
+"No crear colas (o reducir la capacidad) para carriles que solo permiten las "
+"clases de vehículo indicadas"
 
 #: src/microsim/MSFrame.cpp:775
 msgid "Enable mesoscopic traffic light and priority junction handling"
@@ -2969,6 +2984,8 @@ msgstr "Habilita el adelantamiento mesoscópico"
 msgid ""
 "Time interval for rechecking insertion into the next segment after failure"
 msgstr ""
+"Intervalo de tiempo para volver a intentar la inserción en el siguiente "
+"segmento tras un fallo"
 
 #: src/microsim/MSFrame.cpp:803
 msgid "Load visualisation settings from FILE"
@@ -3161,6 +3178,8 @@ msgid ""
 "Railsignal-deadlock will not be detected because time-to-teleport (%) is "
 "lower than time-to-teleport.railsignal-deadlock (%)."
 msgstr ""
+"No se detectará el bloqueo por señales ferroviarias porque time-to-teleport "
+"(%) es menor que time-to-teleport.railsignal-deadlock (%)."
 
 #: src/microsim/MSFrame.cpp:1085
 msgid "You need a non-negative delay."
@@ -3179,6 +3198,8 @@ msgid ""
 "Number of threads exceeds number of thread-rngs. Simulation runs with the "
 "same seed may produce different results."
 msgstr ""
+"El número de hilos excede el número de generadores de números aleatorios. "
+"Las simulaciones con la misma semilla pueden producir resultados diferentes."
 
 #: src/microsim/MSFrame.cpp:1110
 msgid "game.mode must be one of ['tls', 'drt']"
@@ -3383,6 +3404,8 @@ msgid ""
 "State was saved with more than % threads. Change the number of threads or do "
 "not load RNG state"
 msgstr ""
+"El estado se guardó con más de % hilos. Cambie el número de hilos o no "
+"cargue el estado del generador de números aleatorios"
 
 #: src/microsim/MSLeaderInfo.h:172 src/microsim/MSLeaderInfo.h:239
 #: src/microsim/MSLeaderInfo.h:246
@@ -3849,6 +3872,8 @@ msgstr ""
 #: src/microsim/MSVehicle.cpp:1746
 msgid "Vehicle '%' aborts joining after extension of %s at time %."
 msgstr ""
+"El vehículo '%' cancela su incorporación después de una extensión de %s en "
+"el tiempo %."
 
 #: src/microsim/MSVehicle.cpp:1907
 msgid "Vehicle '%' to split from vehicle '%' is not known. time=%."
@@ -5357,6 +5382,9 @@ msgid ""
 "If any openGap parameters for the ToC model are specified, then at least one "
 "of toc.ogNewTimeHeadway and toc.ogNewSpaceHeadway must be defined."
 msgstr ""
+"Si se especifica algún parámetro openGap para el modelo ToC, entonces al "
+"menos uno de toc.ogNewTimeHeadway o toc.ogNewSpaceHeadway debe estar "
+"definido."
 
 #: src/microsim/devices/MSDevice_ToC.cpp:551
 msgid "Ignoring unknown safe spot '%' for vehicle '%'."
@@ -5471,7 +5499,7 @@ msgstr "¡Algoritmo de enrutamiento desconocido '%'!"
 
 #: src/microsim/devices/MSTransportableDevice_Routing.cpp:48
 msgid "The period with which the person shall be rerouted"
-msgstr ""
+msgstr "El período con el que la persona será reenrutada"
 
 #: src/microsim/devices/MSTransportableDevice_Routing.cpp:54
 msgid ""
@@ -5575,6 +5603,8 @@ msgid ""
 "Unknown inductionLoop '%' given as custom detector for actuated tlLogic '%', "
 "program '%."
 msgstr ""
+"Bucle de inducción desconocido '%' indicado como detector personalizado para "
+"la lógica de semáforo actuado '%', programa '%."
 
 #: src/microsim/traffic_lights/MSActuatedTrafficLightLogic.cpp:252
 msgid ""
@@ -5594,12 +5624,16 @@ msgid ""
 "Invalid link '%' given as linkMaxDur parameter for actuated tlLogic '%', "
 "program '%."
 msgstr ""
+"Enlace no válido '%' dado como parámetro linkMaxDur para la lógica de "
+"semáforo actuado '%', programa '%."
 
 #: src/microsim/traffic_lights/MSActuatedTrafficLightLogic.cpp:493
 msgid ""
 "Invalid link '%' given as linkMinDur parameter for actuated tlLogic '%', "
 "program '%."
 msgstr ""
+"Enlace no válido '%' dado como parámetro linkMinDur para la lógica de "
+"semáforo actuado '%', programa '%."
 
 #: src/microsim/traffic_lights/MSActuatedTrafficLightLogic.cpp:1225
 msgid "Unmatched parentheses in condition %'"
@@ -5812,6 +5846,8 @@ msgid ""
 "Missing yellow phase in tlLogic '%', program '%' for tl-index % when "
 "switching% to phase %."
 msgstr ""
+"Falta la fase amarilla en la lógica de semáforo '%', programa '%' para el "
+"índice semafórico % al cambiar% a la fase %."
 
 #: src/microsim/traffic_lights/MSTrafficLightLogic.cpp:221
 msgid "Missing green phase in tlLogic '%', program '%' for tl-index %."
@@ -5827,6 +5863,8 @@ msgid ""
 "Unsafe green phase % in tlLogic '%', program '%'. Lane '%' is targeted by % "
 "'G'-links. (use 'g' instead)%"
 msgstr ""
+"Fase verde insegura % en la lógica de semáforo '%', programa '%'. El carril "
+"'%' es objetivo de % enlaces 'G'. (use 'g' en su lugar)%"
 
 #: src/microsim/traffic_lights/MSTrafficLightLogic.cpp:333
 msgid ""
@@ -5849,6 +5887,8 @@ msgstr ""
 #: src/microsim/traffic_lights/MSTrafficLightLogic.cpp:538
 msgid "Green fraction is only 1% for link % in tlLogic '%', program '%'."
 msgstr ""
+"La fracción verde es de solo 1% para el enlace % en la lógica de semáforo "
+"'%', programa '%'."
 
 #: src/microsim/traffic_lights/MSTrafficLightLogic.cpp:543
 #, c-format
@@ -6388,6 +6428,9 @@ msgid ""
 "ParkingArea '%' is targeted by rerouter '%' but doesn't have its own "
 "rerouter. This may cause parking search to abort."
 msgstr ""
+"La zona de estacionamiento '%' es objetivo del rerouter '%', pero no tiene "
+"su propio rerouter. Esto puede hacer que se cancele la búsqueda de "
+"estacionamiento."
 
 #: src/netbuild/NBAlgorithms.cpp:153
 msgid "Ambiguity in turnarounds computation at junction '%'."
@@ -6425,7 +6468,7 @@ msgstr "Ignorando % aristas porque tienen el tipo de propagación incorrecto"
 #: src/netbuild/NBAlgorithms_Railway.cpp:203
 #, c-format
 msgid "Bidi-edge '%' prevented by filtering rules."
-msgstr ""
+msgstr "Arista bidireccional '%' impedida por las reglas de filtrado."
 
 #: src/netbuild/NBAlgorithms_Railway.cpp:217
 msgid "Could not add bidi-edge '%'."
@@ -6595,6 +6638,7 @@ msgstr "ID de arista '%' no válida."
 #, c-format
 msgid "Edge's '%' from- and to-node are at the same position."
 msgstr ""
+"Los nodos de origen y destino de la arista '%' están en la misma posición."
 
 #: src/netbuild/NBEdge.cpp:1077
 msgid "Removing sharp angle of % degrees at edge '%', segment %."
@@ -6793,14 +6837,20 @@ msgstr ""
 #: src/netbuild/NBEdge.cpp:4433
 msgid "Ignoring invalid stopOffset for edge '%' (negative offset)."
 msgstr ""
+"Ignorando stopOffset no válido para la arista '%' (el desplazamiento es "
+"negativo)."
 
 #: src/netbuild/NBEdge.cpp:4442
 msgid "Ignoring invalid stopOffset for lane '%' (negative offset)."
 msgstr ""
+"Ignorando stopOffset no válido para el carril '%' (el desplazamiento es "
+"negativo)."
 
 #: src/netbuild/NBEdge.cpp:4448
 msgid "Ignoring invalid stopOffset for lane '%' (invalid lane index)."
 msgstr ""
+"Ignorando stopOffset no válido para el carril '%' (índice de carril no "
+"válido)."
 
 #: src/netbuild/NBEdge.cpp:4712
 #, c-format
@@ -6822,6 +6872,8 @@ msgstr ""
 #: src/netbuild/NBEdge.cpp:4872
 msgid "Could not avoid overlapping shape at node '%' for edge '%'."
 msgstr ""
+"No se pudo evitar la superposición de la forma en el cruce '%' para la "
+"arista '%'."
 
 #: src/netbuild/NBEdgeCont.cpp:121 src/netbuild/NBEdgeCont.cpp:140
 msgid "Invalid boundary: need at least 2 coordinates"
@@ -6900,13 +6952,13 @@ msgstr "Aristas de tranvía ambiguas '%' y '%' para el carril '%'."
 #: src/netimport/NIXMLEdgesHandler.cpp:554
 #, c-format
 msgid "Edge's '%' from-node '%' is not known."
-msgstr ""
+msgstr "En la arista '%', el nodo de origen '%' es desconocido."
 
 #: src/netbuild/NBEdgeCont.cpp:2142 src/netimport/NIImporter_SUMO.cpp:150
 #: src/netimport/NIXMLEdgesHandler.cpp:566
 #, c-format
 msgid "Edge's '%' to-node '%' is not known."
-msgstr ""
+msgstr "En la arista '%', el nodo destino '%' es desconocido."
 
 #: src/netbuild/NBFrame.cpp:52
 msgid "The default number of lanes in an edge"
@@ -6998,6 +7050,8 @@ msgid ""
 "The default algorithm for computing right of way rules ('default', "
 "'edgePriority')"
 msgstr ""
+"El algoritmo predeterminado para calcular las reglas de prioridad de paso "
+"('default', 'edgePriority')"
 
 #: src/netbuild/NBFrame.cpp:117
 msgid ""
@@ -7285,6 +7339,8 @@ msgstr ""
 #: src/netbuild/NBFrame.cpp:301
 msgid "Smooth edge geometries with a grade above the warning threshold."
 msgstr ""
+"Suavizar geometrías de aristas con una pendiente superior al umbral de "
+"advertencia."
 
 #: src/netbuild/NBFrame.cpp:305
 msgid "Turn off normalizing node positions"
@@ -7340,7 +7396,7 @@ msgstr ""
 
 #: src/netbuild/NBFrame.cpp:346
 msgid "Assumes left-hand traffic on the network"
-msgstr ""
+msgstr "Asumir la circulación por la izquierda en la red"
 
 #: src/netbuild/NBFrame.cpp:350
 msgid ""
@@ -7366,6 +7422,8 @@ msgid ""
 "The angular threshold in degrees for rejection of parallel edges when "
 "joining junctions"
 msgstr ""
+"El umbral angular en grados para no considerar aristas como paralelas en el "
+"proceso de combinar cruces"
 
 #: src/netbuild/NBFrame.cpp:366
 msgid "Interprets STR[] as list of junctions to exclude from joining"
@@ -7431,6 +7489,8 @@ msgid ""
 "Generate longer intersections to allow for smooth s-curves when the number "
 "of lanes changes"
 msgstr ""
+"Generar cruces más largos para permitir curvas en S suaves cuando cambia el "
+"número de carriles"
 
 #: src/netbuild/NBFrame.cpp:411
 msgid ""
@@ -7533,7 +7593,7 @@ msgstr ""
 
 #: src/netbuild/NBFrame.cpp:466
 msgid "Guess pedestrian sidewalks based on edge speed"
-msgstr ""
+msgstr "Detectar (adivinar) aceras peatonales según la velocidad de la arista"
 
 #: src/netbuild/NBFrame.cpp:470
 msgid "Add sidewalks for edges with a speed equal or below the given limit"
@@ -7670,12 +7730,17 @@ msgid ""
 "Do not build mutually conflicting response matrix, potentially ignoring "
 "vehicles that are stuck at an internal junction when their phase has ended"
 msgstr ""
+"No crear una matriz de respuesta mutuamente conflictiva, lo que podría "
+"ignorar vehículos atascados en un cruce interno cuando su fase haya terminado"
 
 #: src/netbuild/NBFrame.cpp:571
 msgid ""
 "Interprets tls nodes surrounding an intersection as signal positions for a "
 "larger TLS. This is typical pattern for OSM-derived networks"
 msgstr ""
+"Interpreta los nodos de semáforo que rodean una intersección como posiciones "
+"de señal para un semáforo más grande. Este es un patrón típico en redes "
+"derivadas de OSM"
 
 #: src/netbuild/NBFrame.cpp:574
 msgid "Distance for interpreting nodes as signal locations"
@@ -7686,6 +7751,8 @@ msgid ""
 "Number of uncontrolled entry edges to accept and still consider the central "
 "node as a traffic light"
 msgstr ""
+"Número de aristas entrantes no controladas que se aceptan para aún "
+"considerar el nodo central como un semáforo"
 
 #: src/netbuild/NBFrame.cpp:583
 msgid "Use INT as cycle duration"
@@ -8181,7 +8248,7 @@ msgstr " Se eliminaron % aristas debido al ancho de carril."
 #: src/netbuild/NBNetBuilder.cpp:137
 #, c-format
 msgid " Split % edges to attach removed nodes"
-msgstr ""
+msgstr " Dividir % aristas para adjuntar nodos eliminados"
 
 #: src/netbuild/NBNetBuilder.cpp:142
 msgid "Processing public transport stops"
@@ -8506,6 +8573,8 @@ msgstr ""
 #, c-format
 msgid "Ignoring additional sidewalk lane % on edge '%' for walkingareas."
 msgstr ""
+"Ignorando el carril adicional de acera % en la arista '%' para áreas "
+"peatonales."
 
 #: src/netbuild/NBNode.cpp:3488
 msgid ""
@@ -8566,11 +8635,14 @@ msgid ""
 "Ignoring join exclusion for junction '%' since it already occurred in a list "
 "of nodes to be joined."
 msgstr ""
+"Ignorando la exclusión de combinación para el cruce '%' ya que ya aparece en "
+"una lista de nodos a combinar."
 
 #: src/netbuild/NBNodeCont.cpp:734
 msgid ""
 "Ignoring join-cluster because junction '%' was already excluded from joining."
 msgstr ""
+"Ignorando join-cluster porque el cruce '%' ya fue excluido de la combinación."
 
 #: src/netbuild/NBNodeCont.cpp:737
 #, c-format
@@ -8578,15 +8650,16 @@ msgid ""
 "Ignoring join-cluster because junction '%' already occurred in another join-"
 "cluster."
 msgstr ""
+"Ignorando join-cluster porque el cruce '%' ya aparece en otro join-cluster."
 
 #: src/netbuild/NBNodeCont.cpp:743
 #, c-format
 msgid "Unknown junction '%' in join-cluster."
-msgstr ""
+msgstr "Cruce '%' desconocido en el join-cluster."
 
 #: src/netbuild/NBNodeCont.cpp:751
 msgid "Ignoring join-cluster '%' because it has size '%'."
-msgstr ""
+msgstr "Ignorando join-cluster '%' porque tiene un tamaño de '%'."
 
 #: src/netbuild/NBNodeCont.cpp:765
 msgid "unknown junction '%' while joining."
@@ -8866,6 +8939,9 @@ msgid ""
 "Could not find corresponding edge or compatible lane for free-floating pt "
 "stop '%' (%). Thus, it will be removed!"
 msgstr ""
+"No se pudo encontrar una arista correspondiente o un carril compatible para "
+"la parada de transporte público flotante '%' (%). Por lo tanto, ¡será "
+"eliminada!"
 
 #: src/netbuild/NBParking.cpp:44
 #, c-format
@@ -8924,6 +9000,8 @@ msgstr "No se pudo crear el programa '%' para el semáforo '%'"
 #: src/netbuild/NBTrafficLightLogicCont.cpp:389
 msgid "Guessing signalID for link index % at traffic light '%'."
 msgstr ""
+"Detectando el ID de señal (signalID) para el índice de enlace % en el "
+"semáforo '%'."
 
 #: src/netbuild/NBTrafficLightLogicCont.cpp:496
 #, c-format
@@ -10188,6 +10266,8 @@ msgid ""
 "Almost duplicate s-value '%' for lane sections occurred at edge '%'; first "
 "entry was removed."
 msgstr ""
+"Se detectó un valor s casi duplicado '%' para secciones de carril en la "
+"arista '%'; se eliminó la primera entrada."
 
 #: src/netimport/NIImporter_OpenDrive.cpp:1824
 msgid "Could not compute spiral geometry for edge '%' (cDot=% length=%)."
@@ -11737,12 +11817,16 @@ msgid ""
 "A connecting overhead wire start segment '%' defined for overhead wire clamp "
 "'%' is not assigned to the traction substation '%'."
 msgstr ""
+"Un segmento inicial de catenaria de conexión '%' definido para la abrazadera "
+"de catenaria '%' no está asignado a la subestación de carga '%'."
 
 #: src/netload/NLTriggerBuilder.cpp:386
 msgid ""
 "A connecting overhead wire end segment '%' defined for overhead wire clamp "
 "'%' is not assigned to the traction substation '%'."
 msgstr ""
+"Un segmento final de catenaria de conexión '%' definido para la abrazadera "
+"de catenaria '%' no está asignado a la subestación de carga '%'."
 
 #: src/netload/NLTriggerBuilder.cpp:390
 msgid ""
@@ -11790,6 +11874,8 @@ msgid ""
 "It is strongly advisable to give an explicit position when using radius in "
 "the definition of rerouter '%'."
 msgstr ""
+"Es muy recomendable especificar una posición explícita al usar el radio en "
+"la definición del rerouter '%'."
 
 #: src/netwrite/NWFrame.cpp:54
 msgid "The generated net will be written to FILE"
@@ -11804,6 +11890,8 @@ msgstr ""
 #: src/netwrite/NWFrame.cpp:62
 msgid "Write all lanes and their attributes even when they are not customized"
 msgstr ""
+"Escribir todos los carriles y sus atributos incluso cuando no estén "
+"personalizados"
 
 #: src/netwrite/NWFrame.cpp:69
 msgid "Defines a prefix for edge and junction IDs"
@@ -11863,6 +11951,8 @@ msgstr "Escribir los nombres originales, si se proporcionan, como parámetro"
 #: src/netwrite/NWFrame.cpp:109
 msgid "Writes IDs of nodes remove with --geometry.remove into edge param"
 msgstr ""
+"Escribir los IDs de los nodos eliminados con --geometry.remove en el "
+"parámetro de arista"
 
 #: src/netwrite/NWFrame.cpp:112
 msgid "Writes street signs as POIs to FILE"
@@ -11894,6 +11984,8 @@ msgid ""
 "Write shapes that are embedded in the network input and that are not "
 "supported by polyconvert (OpenDRIVE)"
 msgstr ""
+"Escribir las formas incrustadas en la red de entrada que no son compatibles "
+"con polyconvert (OpenDRIVE)"
 
 #: src/netwrite/NWFrame.cpp:135
 msgid ""
@@ -11906,12 +11998,16 @@ msgstr ""
 #: src/netwrite/NWFrame.cpp:139
 msgid "Write lanes in lefthand networks on the left side (positive indices)"
 msgstr ""
+"Escribir los carriles, en redes con circulación por la izquierda, en el lado "
+"izquierdo (índices positivos)"
 
 #: src/netwrite/NWFrame.cpp:142
 msgid ""
 "Match loaded shapes to the closest edge within FLOAT and export as road "
 "objects"
 msgstr ""
+"Ajustar las formas cargadas a la arista más cercana dentro del rango de "
+"FLOAT y exportarlas como objetos de vía"
 
 #: src/netwrite/NWFrame.cpp:165
 msgid "OpenDRIVE export needs internal links computation."
@@ -11947,6 +12043,8 @@ msgstr "Escribiendo red"
 msgid ""
 "DlrNavteq node data will be written in (floating point) cartesian coordinates"
 msgstr ""
+"Los datos de nodos DlrNavteq se escribirán en coordenadas cartesianas de "
+"punto flotante"
 
 #: src/netwrite/NWWriter_DlrNavteq.cpp:156
 #: src/netwrite/NWWriter_DlrNavteq.cpp:163
@@ -11970,12 +12068,16 @@ msgstr ""
 msgid ""
 "Uneven stop line at lane '%' (dist=%) cannot be represented in OpenDRIVE."
 msgstr ""
+"Línea de parada irregular en el carril '%' (dist=%) no se puede representar "
+"en OpenDRIVE."
 
 #: src/netwrite/NWWriter_SUMO.cpp:239
 msgid ""
 "Embedding TAZ-data inside the network is deprecated. Use option --taz-output "
 "instead"
 msgstr ""
+"Incrustar datos de zona de análisis de tráfico dentro de la red está "
+"obsoleto. Use la opción --taz-output en su lugar"
 
 #: src/netwrite/NWWriter_SUMO.cpp:476
 msgid "Could not find bidi-connection for edge '%'"
@@ -11999,6 +12101,8 @@ msgstr "ejecutar con archivo de configuración"
 #: src/od2trips_main.cpp:80
 msgid "Loads TAZ (districts; also from networks) from FILE(s)"
 msgstr ""
+"Cargar zonas de análisis de tráfico (distritos; también desde redes) desde "
+"FILE(s)"
 
 #: src/od2trips_main.cpp:102
 msgid "Writes trip definitions into FILE"
@@ -12038,6 +12142,8 @@ msgid ""
 "Defines the end time; Later trips will be discarded; Defaults to the maximum "
 "time that SUMO can represent"
 msgstr ""
+"Define el tiempo final; los viajes posteriores se descartarán; el valor "
+"predeterminado es el tiempo máximo que SUMO puede representar"
 
 #: src/od2trips_main.cpp:140
 msgid "Spreads trips uniformly over each time period"
@@ -12068,6 +12174,8 @@ msgstr "No se ha especificado ninguna entrada."
 #: src/od2trips_main.cpp:201
 msgid "No trip table output file (-o) or flow-output is specified."
 msgstr ""
+"No se especificó ningún archivo de salida de tabla de viajes (-o) ni de "
+"flujo (flow-output)."
 
 #: src/od2trips_main.cpp:205
 msgid "Only one of the Options 'pedestrians' and 'persontrips' may be set."
@@ -12085,6 +12193,8 @@ msgstr ""
 #: src/od2trips_main.cpp:270
 msgid "You must supply a TAZ, network or districts file ('-n')."
 msgstr ""
+"Debe proporcionarse un archivo de zona de análisis de trafico, red o "
+"distritos ('-n')."
 
 #: src/od2trips_main.cpp:276
 msgid "No districts loaded."
@@ -12410,6 +12520,8 @@ msgid ""
 "If FLOAT >= 0, assemble one polygon from all ways of a relation if they all "
 "connect with gaps below FLOAT"
 msgstr ""
+"Si FLOAT >= 0, ensamblar un polígono a partir de todas las vías de una "
+"relación si todas se conectan con brechas menores que FLOAT"
 
 #: src/polyconvert/polyconvert_main.cpp:115
 msgid "Reads shapes from geojson FILE"
@@ -12709,6 +12821,8 @@ msgid ""
 "Apply the given time penalty when computing routing costs across a traffic "
 "light"
 msgstr ""
+"Aplicar la penalización de tiempo indicada al calcular los costos de "
+"enrutamiento al atravesar un semáforo"
 
 #: src/router/ROFrame.cpp:233
 msgid "Defaults will override given values"
@@ -12805,6 +12919,8 @@ msgstr "Ya existe otra persona con el ID '%'."
 msgid ""
 "Bulking different maximum speeds ('%' and '%') may lead to suboptimal routes."
 msgstr ""
+"Agrupar diferentes velocidades máximas ('%' y '%') puede generar rutas "
+"subóptimas."
 
 #: src/router/RONet.cpp:712
 msgid ""
@@ -12831,6 +12947,8 @@ msgid ""
 "Already loaded prohibition for lane '%'. (Only one prohibition per lane is "
 "supported)"
 msgstr ""
+"Ya se cargó una prohibición para el carril '%'. (Solo se admite una "
+"prohibición por carril)"
 
 #: src/router/RONetHandler.cpp:159
 msgid "Invalid rerouter interval from % to %"
@@ -12973,6 +13091,8 @@ msgstr "Falta información de aceleración; intente ejecutar con --compute-a."
 #: src/tools/emissionsDrivingCycle_main.cpp:61
 msgid "Computes emissions by driving a time line using SUMO's emission models."
 msgstr ""
+"Calcula las emisiones recorriendo una línea temporal usando los modelos de "
+"emisiones de SUMO."
 
 #: src/tools/emissionsDrivingCycle_main.cpp:69
 msgid "Defines the file to read the driving cycle from."
@@ -13256,7 +13376,7 @@ msgstr "No se puede determinar el valor máximo de un mapa vacío."
 #: src/utils/common/LinearApproxHelpers.cpp:133
 #, c-format
 msgid "Mismatching data rows of % axis and % height values."
-msgstr ""
+msgstr "Filas de datos no coincidentes entre % ejes y % valores de altura."
 
 #: src/utils/common/MapMatcher.h:51
 msgid "Cannot convert geo-positions because the network has no geo-reference"
@@ -14304,16 +14424,21 @@ msgstr ""
 #, c-format
 msgid "Broken landmark file, could not parse '%' as coordinates."
 msgstr ""
+"Archivo de puntos de referencia dañado; no se pudo procesar '%' como "
+"coordenadas."
 
 #: src/utils/router/AStarLookupTable.h:189
 #: src/utils/router/AStarLookupTable.h:202
 #, c-format
 msgid "Unknown or unordered edge '%' in landmark file."
 msgstr ""
+"Arista '%' desconocida o desordenada en el archivo de puntos de referencia."
 
 #: src/utils/router/AStarLookupTable.h:199
 msgid "Broken landmark file, unexpected number of entries (%) for edge '%'."
 msgstr ""
+"Archivo de puntos de referencia dañado; número de entradas inesperado (%) "
+"para la arista '%'."
 
 #: src/utils/router/AStarLookupTable.h:222
 msgid "Calculating new lookup table."
@@ -14871,6 +14996,8 @@ msgid ""
 "Ignoring from % '%' used in % '%' and using instead the previous end element "
 "% '%'"
 msgstr ""
+"Ignorando la salida desde % '%' usada en % '%' y tomando en su lugar el "
+"destino del elemento precedente % '%'"
 
 #: src/utils/xml/CommonXMLStructure.cpp:1220
 msgid "Trying to get undefined parent '%' in SUMOBaseObject '%'"

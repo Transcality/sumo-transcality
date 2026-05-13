@@ -8,9 +8,9 @@
     <vtype-output value="None" type="file" help="Store generated vehicle types in a separate file" category="output"/>
     <weights-output-prefix value="None" type="file" help="generates weights files for visualisation" category="output"/>
     <error-log value="None" type="file" help="record routing errors" category="output"/>
-    <pedestrians value="False" type="bool" help="create a person file with pedestrian trips instead of vehicle trips" category="persons"/>
+    <persons value="False" type="bool" help="create a person file with person trips instead of vehicle trips" category="persons"/>
     <personrides value="None" type="string" help="create a person file with rides using STR as lines attribute" category="persons"/>
-    <persontrips value="False" type="bool" help="create a person file with person trips instead of vehicle trips" category="persons"/>
+    <persontrip.modes value="None" type="string" help="Use any comma-separted combination of 'bicycle', 'car','public' and 'taxi'" category="persons"/>
     <persontrip.transfer.car-walk value="None" type="string" help="Where are mode changes from car to walking allowed (possible values: 'ptStops', 'allJunctions' and combinations)" category="persons"/>
     <persontrip.walkfactor value="None" type="float" help="Use FLOAT as a factor on pedestrian maximum speed during intermodal routing" category="persons"/>
     <persontrip.walk-opposite-factor value="None" type="float" help="Use FLOAT as a factor on pedestrian maximum speed against vehicle traffic direction" category="persons"/>
@@ -51,6 +51,7 @@
     <random-routing-factor value="1" type="float" help="Edge weights for routing are dynamically disturbed by a random factor drawn uniformly from [1,FLOAT)" category="processing"/>
     <marouter value="False" type="bool" help="Compute routes with marouter instead of duarouter" category="processing"/>
     <validate value="True" type="bool" help="Whether to produce trip output that is already checked for connectivity" category="processing"/>
+    <threads value="None" type="int" help="Uses INT threads when validating trips (defaults to half the available CPUs" category="processing"/>
     <min-success-rate value="0.1" type="float" help="Minimum ratio of valid trips to retry sampling if some trips are invalid" category="processing"/>
     <verbose value="False" type="bool" help="tell me what you are doing" category="processing"/>
     <begin value="0" type="time" help="begin time" category="flow"/>

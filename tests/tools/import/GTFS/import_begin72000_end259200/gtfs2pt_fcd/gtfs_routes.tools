@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-04-22 20:27:09.507014 by Eclipse SUMO gtfs2pt.py v1_26_0+1323-bba59b89dca
+<!-- generated on 2026-04-29 09:28:32.696564 by Eclipse SUMO gtfs2pt.py v1_26_0+1426-1cb446457f9
 <configuration>
     <gtfs value="gtfs.zip"/>
     <date value="20201111"/>
@@ -96,7 +96,7 @@
         <param key="gtfs.route_name" value="418"/>
         <param key="gtfs.trip_headsign" value="A&amp;B -&gt; Wästpark"/>
     </vehicle>
-    <vehicle id="132185786.trimmed.0" route="132185786.trimmed" type="bus" depart="86570" line="418">
+    <vehicle id="132185786.trimmed.0" route="132185786.trimmed" type="bus" depart="86570" line="418#1">
         <param key="gtfs.route_name" value="418"/>
         <param key="gtfs.trip_headsign" value="A&amp;B -&gt; Wästpark"/>
     </vehicle>
@@ -124,11 +124,11 @@
         <param key="gtfs.route_name" value="413"/>
         <param key="gtfs.trip_headsign" value="Braunschweig Dieselstraße"/>
     </vehicle>
-    <vehicle id="132190299.1" route="132190299" type="bus" depart="129710" line="413">
+    <vehicle id="132190299.1" route="132190299" type="bus" depart="129710" line="413#1">
         <param key="gtfs.route_name" value="413"/>
         <param key="gtfs.trip_headsign" value="Leiferde"/>
     </vehicle>
-    <vehicle id="132190299.2" route="132190299" type="bus" depart="216110" line="413">
+    <vehicle id="132190299.2" route="132190299" type="bus" depart="216110" line="413#1">
         <param key="gtfs.route_name" value="413"/>
         <param key="gtfs.trip_headsign" value="Leiferde"/>
     </vehicle>
@@ -144,11 +144,11 @@
         <param key="gtfs.route_name" value="419"/>
         <param key="gtfs.trip_headsign" value="Braunschweig Hauptbahnhof"/>
     </vehicle>
-    <vehicle id="132183536.1" route="132183536" type="bus" depart="173930" line="419">
+    <vehicle id="132183536.trimmed.0" route="132183536" type="bus" depart="87530" line="419">
         <param key="gtfs.route_name" value="419"/>
         <param key="gtfs.trip_headsign" value="Braunschweig Hauptbahnhof"/>
     </vehicle>
-    <vehicle id="132183536.trimmed.0" route="132183536" type="bus" depart="87530" line="419">
+    <vehicle id="132183536.1" route="132183536" type="bus" depart="173930" line="419">
         <param key="gtfs.route_name" value="419"/>
         <param key="gtfs.trip_headsign" value="Braunschweig Hauptbahnhof"/>
     </vehicle>

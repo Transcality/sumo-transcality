@@ -1311,6 +1311,7 @@ GNEApplicationWindow::eventOccurred() {
 
 void
 GNEApplicationWindow::handleEvent_FileLoaded(GUIEvent* e) {
+    myMessageWindow->registerMsgHandlers();
     myAmLoading = false;
     GNEEvent_FileLoaded* fileLoadedEvent = static_cast<GNEEvent_FileLoaded*>(e);
     // check whether the loading was successful
@@ -1424,7 +1425,6 @@ GNEApplicationWindow::handleEvent_FileLoaded(GUIEvent* e) {
         }
         myNet->getSavingStatus()->networkSaved();
     }
-    myMessageWindow->registerMsgHandlers();
     // update app
     update();
     // restore focus
@@ -3738,6 +3738,7 @@ GNEApplicationWindow::onCmdSaveSumoConfig(FXObject* sender, FXSelector sel, void
             if (neteditOptions.getBool("autosave-netconvert-file")) {
                 onCmdSavePlainXML(sender, sel, ptr);
             }
+            myNet->getSavingStatus()->SumoConfigSaved();
         } else {
             WRITE_MESSAGE(TLF("Could not save SUMO configuration in '%'.", sumoConfigFile));
         }

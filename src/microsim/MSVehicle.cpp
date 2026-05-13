@@ -7860,10 +7860,6 @@ MSVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
             myStops.pop_front();
             pastStops--;
         }
-        SUMOVehicleParameter::Stop& pars = const_cast<SUMOVehicleParameter::Stop&>(myStops.front().pars);
-        if (!MSGlobals::gUseStopStarted) {
-            pars.parametersSet &= ~STOP_STARTED_SET;
-        }
         // see MSBaseVehicle constructor
         if (myParameter->wasSet(VEHPARS_FORCE_REROUTE)) {
             calculateArrivalParams(true);
@@ -7902,6 +7898,10 @@ MSVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
             stopDuration += getActionStepLength();
         }
         myStops.front().duration = stopDuration;
+        if (!MSGlobals::gUseStopStarted) {
+            SUMOVehicleParameter::Stop& pars = const_cast<SUMOVehicleParameter::Stop&>(myStops.front().pars);
+            pars.parametersSet &= ~STOP_STARTED_SET;
+        }
     }
     myLaneChangeModel->loadState(attrs);
     // no need to reset myCachedPosition here since state loading happens directly after creation
@@ -8276,7 +8276,7 @@ MSVehicle::getStopArrivalDelay() const {
             return STEPS2TIME(MSNet::getInstance()->getCurrentTimeStep()) + estimateTimeToNextStop().first - STEPS2TIME(stop.pars.arrival);
         }
     } else {
-        // vehicles can arrival earlier than planned so arrival delay can be negative
+        // vehicles can arrive earlier than planned so arrival delay can be negative
         return INVALID_DOUBLE;
     }
 }
