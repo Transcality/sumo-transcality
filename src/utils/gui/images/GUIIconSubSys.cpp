@@ -22,6 +22,8 @@
 #include <config.h>
 
 #include <utils/common/UtilExceptions.h>
+#include <utils/common/Translation.h>
+#include <utils/gui/div/GUIDesigns.h>
 
 #include "GUIIcons.h"
 #include "GUIIconSubSys.h"
@@ -110,6 +112,9 @@
 #include "icons/green_person.xpm"
 #include "icons/yellow_person.xpm"
 
+#include "icons/teleport.xpm"
+#include "icons/insertion_delay.xpm"
+
 #include "icons/colorwheel.xpm"
 #include "icons/removedb.xpm"
 #include "icons/recenter_view.xpm"
@@ -184,20 +189,18 @@
 #include "icons/computepathmanager.xpm"
 
 #include "icons/checkboxes/checkbox_applytoallphases.xpm"
-#include "icons/checkboxes/checkbox_mergeautomatically.xpm"
 #include "icons/checkboxes/checkbox_autoselectjunctions.xpm"
 #include "icons/checkboxes/checkbox_bubbles.xpm"
 #include "icons/checkboxes/checkbox_chain.xpm"
+#include "icons/checkboxes/checkbox_drawjunctionshapes.xpm"
 #include "icons/checkboxes/checkbox_elevation.xpm"
 #include "icons/checkboxes/checkbox_grid.xpm"
-#include "icons/checkboxes/checkbox_drawjunctionshapes.xpm"
 #include "icons/checkboxes/checkbox_hideconnections.xpm"
-#include "icons/checkboxes/checkbox_showsubadditionals.xpm"
-#include "icons/checkboxes/checkbox_showtazelements.xpm"
 #include "icons/checkboxes/checkbox_hidenoninspecteddemandelements.xpm"
 #include "icons/checkboxes/checkbox_hideshapes.xpm"
 #include "icons/checkboxes/checkbox_lockcontainer.xpm"
 #include "icons/checkboxes/checkbox_lockperson.xpm"
+#include "icons/checkboxes/checkbox_mergeautomatically.xpm"
 #include "icons/checkboxes/checkbox_selectededges.xpm"
 #include "icons/checkboxes/checkbox_showadditionals.xpm"
 #include "icons/checkboxes/checkbox_showconnections.xpm"
@@ -205,7 +208,10 @@
 #include "icons/checkboxes/checkbox_showdemandelements.xpm"
 #include "icons/checkboxes/checkbox_showoverlappedroutes.xpm"
 #include "icons/checkboxes/checkbox_showpersonplans.xpm"
+#include "icons/checkboxes/checkbox_showpolygonsymbols.xpm"
 #include "icons/checkboxes/checkbox_showshapes.xpm"
+#include "icons/checkboxes/checkbox_showsubadditionals.xpm"
+#include "icons/checkboxes/checkbox_showtazelements.xpm"
 #include "icons/checkboxes/checkbox_showtrips.xpm"
 #include "icons/checkboxes/checkbox_spreadvehicle.xpm"
 #include "icons/checkboxes/checkbox_tazdrawfill.xpm"
@@ -578,7 +584,6 @@
 #include "icons/languages/fr.xpm"
 #include "icons/languages/it.xpm"
 #include "icons/languages/en.xpm"
-#include "icons/languages/hu.xpm"
 #include "icons/languages/tr.xpm"
 #include "icons/languages/zh.xpm"
 #include "icons/languages/zht.xpm"
@@ -705,6 +710,9 @@ GUIIconSubSys::GUIIconSubSys(FXApp* a) {
     myIcons[GUIIcon::YELLOWVEHICLE] = new FXXPMIcon(a, yellow_vehicle_xpm);
     myIcons[GUIIcon::YELLOWPERSON] = new FXXPMIcon(a, yellow_person_xpm);
 
+    myIcons[GUIIcon::TELEPORT] = new FXXPMIcon(a, teleport_xpm);
+    myIcons[GUIIcon::INSERTION_DELAY] = new FXXPMIcon(a, insertion_delay_xpm);
+
     myIcons[GUIIcon::COLORWHEEL] = new FXXPMIcon(a, colorwheel_xpm);
     myIcons[GUIIcon::REMOVEDB] = new FXXPMIcon(a, removedb_xpm);
     myIcons[GUIIcon::SHOWTOOLTIPS_VIEW] = new FXXPMIcon(a, show_tooltips_view_xpm);
@@ -782,6 +790,7 @@ GUIIconSubSys::GUIIconSubSys(FXApp* a) {
     myIcons[GUIIcon::NETWORKMODE_CHECKBOX_SHOWSUBADDITIONALS] = new FXXPMIcon(a, checkbox_showsubadditionals_xpm);
     myIcons[GUIIcon::NETWORKMODE_CHECKBOX_SHOWTAZELEMENTS] = new FXXPMIcon(a, checkbox_showtazelements_xpm);
     myIcons[GUIIcon::NETWORKMODE_CHECKBOX_APPLYTOALLPHASES] = new FXXPMIcon(a, checkbox_applytoallphases_xpm);
+    myIcons[GUIIcon::NETWORKMODE_CHECKBOX_SHOWPOLYGONSYMBOLS] = new FXXPMIcon(a, checkbox_showpolygonsymbols_xpm);
 
     myIcons[GUIIcon::DEMANDMODE_CHECKBOX_HIDESHAPES] = new FXXPMIcon(a, checkbox_hideshapes_xpm);
     myIcons[GUIIcon::DEMANDMODE_CHECKBOX_SHOWTRIPS] = new FXXPMIcon(a, checkbox_showtrips_xpm);
@@ -1156,7 +1165,6 @@ GUIIconSubSys::GUIIconSubSys(FXApp* a) {
     myIcons[GUIIcon::LANGUAGE_PT] = new FXXPMIcon(a, language_pt_xpm);
     myIcons[GUIIcon::LANGUAGE_FR] = new FXXPMIcon(a, language_fr_xpm);
     myIcons[GUIIcon::LANGUAGE_IT] = new FXXPMIcon(a, language_it_xpm);
-    myIcons[GUIIcon::LANGUAGE_HU] = new FXXPMIcon(a, language_hu_xpm);
     myIcons[GUIIcon::LANGUAGE_TR] = new FXXPMIcon(a, language_tr_xpm);
     myIcons[GUIIcon::LANGUAGE_ZH] = new FXXPMIcon(a, language_zh_xpm);
     myIcons[GUIIcon::LANGUAGE_ZHT] = new FXXPMIcon(a, language_zht_xpm);

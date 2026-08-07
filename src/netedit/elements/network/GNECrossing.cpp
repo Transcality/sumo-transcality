@@ -33,6 +33,10 @@
 // method definitions
 // ===========================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNECrossing::GNECrossing(GNENet* net) :
     GNENetworkElement(net, "", SUMO_TAG_CROSSING),
     myMoveElementCrossing(new GNEMoveElementCrossing(this)),
@@ -48,6 +52,9 @@ GNECrossing::GNECrossing(GNEJunction* junction, std::vector<NBEdge*> crossingEdg
     // set parent
     setParent<GNEJunction*>(junction);
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GNECrossing::~GNECrossing() {
@@ -213,7 +220,7 @@ GNECrossing::drawGL(const GUIVisualizationSettings& s) const {
         // get NBCrossing
         const auto NBCrossing = getNBCrossing();
         // get scaling depending if attribute carrier is selected
-        const double crossingExaggeration = isAttributeCarrierSelected() ? s.selectorFrameScale : 1;
+        const double crossingExaggeration =  s.junctionSize.getExaggeration(s, this, 1);
         // get width
         const double crossingWidth = NBCrossing->width * 0.5 * crossingExaggeration;
         // get detail level
@@ -506,7 +513,8 @@ void
 GNECrossing::drawCrossing(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
                           const NBNode::Crossing* crossing, const double width, const double exaggeration) const {
     // don't draw crossing in TLS Mode
-    if (myNet->getViewNet()->getEditModes().networkEditMode != NetworkEditMode::NETWORK_TLS) {
+    if ((myNet->getViewNet()->getEditModes().networkEditMode != NetworkEditMode::NETWORK_TLS) &&
+            ((d <= GUIVisualizationSettings::Detail::JunctionElementDetails) || (s.junctionSize.constantSizeSelected && isAttributeCarrierSelected()))) {
         // get color
         RGBColor crossingColor = getCrossingColor(s, crossing);
         // push layer matrix
@@ -535,7 +543,7 @@ GNECrossing::drawCrossing(const GUIVisualizationSettings& s, const GUIVisualizat
             // draw geometry points
             GUIGeometry::drawGeometryPoints(d, myCrossingGeometry.getShape(), darkerColor,
                                             s.neteditSizeSettings.crossingGeometryPointRadius, exaggeration,
-                                            myNet->getViewNet()->getNetworkViewOptions().editingElevation());
+                                            true, myNet->getViewNet()->getNetworkViewOptions().editingElevation());
         }
         // pop layer matrix
         GLHelper::popMatrix();

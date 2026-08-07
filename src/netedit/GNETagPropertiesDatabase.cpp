@@ -2222,6 +2222,12 @@ GNETagPropertiesDatabase::fillShapeElements() {
                                    TL("Angle of rendered image in degree"),
                                    toString(Shape::DEFAULT_ANGLE));
 
+        new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_HEIGHT,
+                                   GNEAttributeProperties::Property::FLOAT | GNEAttributeProperties::Property::POSITIVE | GNEAttributeProperties::Property::DEFAULTVALUE,
+                                   GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+                                   TL("Height of polygonin meters"),
+                                   toString(Shape::DEFAULT_HEIGHT));
+
         new GNEAttributeProperties(myTagProperties[currentTag], SUMO_ATTR_GEO,
                                    GNEAttributeProperties::Property::BOOL | GNEAttributeProperties::Property::DEFAULTVALUE,
                                    GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE | GNEAttributeProperties::Edit::GEOEDITOR,
@@ -2237,6 +2243,7 @@ GNETagPropertiesDatabase::fillShapeElements() {
                                    GNEAttributeProperties::Property::BOOL,
                                    GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE | GNEAttributeProperties::Edit::NETEDITEDITOR,
                                    TL("Toggle close or open shape"));
+
     }
     currentTag = SUMO_TAG_POI;
     {
@@ -2702,7 +2709,7 @@ GNETagPropertiesDatabase::fillDemandElements() {
         // set values of tag
         myTagProperties[currentTag] = new GNETagProperties(currentTag, mySetTagProperties[GNE_TAG_SUPERMODE_DEMAND],
                 GNETagProperties::Type::DEMANDELEMENT | GNETagProperties::Type::DISTRIBUTIONREF,
-                GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::NOPARAMETERS,
+                GNETagProperties::Property::NOTDRAWABLE | GNETagProperties::Property::NOTSELECTABLE | GNETagProperties::Property::XMLCHILD | GNETagProperties::Property::NOPARAMETERS,
                 GNETagProperties::Over::VIEW,
                 FileBucket::Type::NOTHING,
                 GNETagProperties::Conflicts::NO_CONFLICTS,
@@ -6438,18 +6445,18 @@ GNETagPropertiesDatabase::fillCommonVehicleAttributes(GNETagProperties* tagPrope
 
     if (!calibratorFlow) {
         new GNEAttributeProperties(tagProperties, SUMO_ATTR_TYPE,
-                GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::VTYPE,
-                GNEAttributeProperties::Edit::EDITMODE,
-                TL("The id of the vehicle type to use for this vehicle"),
-                DEFAULT_VTYPE_ID);
+                                   GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::DEFAULTVALUE | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::VTYPE,
+                                   GNEAttributeProperties::Edit::EDITMODE,
+                                   TL("The id of the vehicle type to use for this vehicle"),
+                                   DEFAULT_VTYPE_ID);
         new GNEAttributeProperties(tagProperties, SUMO_ATTR_DEPARTEDGE,
-                GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::DEFAULTVALUE,
-                GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
-                TL("The index of the edge within route the vehicle starts at"));
+                                   GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::DEFAULTVALUE,
+                                   GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+                                   TL("The index of the edge within route the vehicle starts at"));
         new GNEAttributeProperties(tagProperties, SUMO_ATTR_ARRIVALEDGE,
-                GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::DEFAULTVALUE,
-                GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
-                TL("The index of the edge within route the vehicle ends at"));
+                                   GNEAttributeProperties::Property::STRING | GNEAttributeProperties::Property::UPDATEGEOMETRY | GNEAttributeProperties::Property::DEFAULTVALUE,
+                                   GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+                                   TL("The index of the edge within route the vehicle ends at"));
     }
 
     new GNEAttributeProperties(tagProperties, SUMO_ATTR_DEPARTLANE,
@@ -7730,11 +7737,12 @@ GNETagPropertiesDatabase::fillCommonMeanDataAttributes(GNETagProperties* tagProp
             TL("Restrict output to the given list of edges given in file"));
     edgesFile->setFilenameExtensions(SUMOXMLDefinitions::OutputFileExtensions.getStrings());
 
-    new GNEAttributeProperties(tagProperties, SUMO_ATTR_AGGREGATE,
-                               GNEAttributeProperties::Property::BOOL | GNEAttributeProperties::Property::DEFAULTVALUE,
-                               GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
-                               TL("Whether the traffic statistic of all edges shall be aggregated into a single value"),
-                               GNEAttributeCarrier::FALSE_STR);
+    auto aggregate = new GNEAttributeProperties(tagProperties, SUMO_ATTR_AGGREGATE,
+            GNEAttributeProperties::Property::DISCRETE | GNEAttributeProperties::Property::DEFAULTVALUE,
+            GNEAttributeProperties::Edit::CREATEMODE | GNEAttributeProperties::Edit::EDITMODE,
+            TL("Whether the traffic statistic of all edges shall be aggregated into a single value"),
+            "false");
+    aggregate->setDiscreteValues({"true", "false", "taz"});
 }
 
 

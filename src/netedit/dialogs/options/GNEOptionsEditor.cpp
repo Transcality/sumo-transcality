@@ -18,6 +18,7 @@
 // A Dialog for setting options (see OptionsCont)
 /****************************************************************************/
 #include <config.h>
+#include <utils/xml/XMLSubSys.h>
 
 #include <fstream>
 
@@ -110,37 +111,38 @@ GNEOptionsEditor::GNEOptionsEditor(GNEDialog* dialog, const std::string& titleNa
         if (myIgnoredTopics.count(topic) == 0) {
             // add topic into myTreeItemTopics and tree
             myTreeItemTopics[myTopicsTreeList->appendItem(myRootItem, topic.c_str())] = topic;
+            // processing options require save network
+            const bool requireSaveNetwork = (topic == "Processing");
             // iterate over entries
             const std::vector<std::string> entries = myOptionsContainer.getSubTopicsEntries(topic);
             for (const auto& entry : entries) {
-                // check if we have to ignore this entry
-                if (myIgnoredEntries.count(entry) == 0) {
-                    // get type
-                    const std::string type = myOptionsContainer.getTypeName(entry);
-                    // get description
-                    const std::string description = myOptionsContainer.getDescription(entry);
-                    // get default value
-                    const std::string defaultValue = myOptionsContainer.getValueString(entry);
-                    // check if is editable
-                    const bool editable = myOptionsContainer.isEditable(entry);
-                    // continue depending of type
-                    if (type == "STR") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionString(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if (type == "TIME") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionTime(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if ((type == "FILE") || (type == "NETWORK") || (type == "ADDITIONAL") || (type == "ROUTE") || (type == "DATA")) {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFilename(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if (type == "BOOL") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionBool(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if (type == "INT") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionInt(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if (type == "FLOAT") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFloat(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if (type == "INT[]") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionIntVector(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    } else if (type == "STR[]") {
-                        myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionStringVector(this, myEntriesFrame, topic, entry, description, defaultValue, editable));
-                    }
+                // if this is a critical entry, draw in red
+                const bool drawRed = (myCriticalEntries.count(entry) != 0);
+                // get type
+                const std::string type = myOptionsContainer.getTypeName(entry);
+                // get description
+                const std::string description = myOptionsContainer.getDescription(entry);
+                // get default value
+                const std::string defaultValue = myOptionsContainer.getValueString(entry);
+                // check if is editable
+                const bool editable = myOptionsContainer.isEditable(entry);
+                // continue depending of type
+                if (type == "STR") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionString(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if (type == "TIME") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionTime(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if ((type == "FILE") || (type == "NETWORK") || (type == "ADDITIONAL") || (type == "ROUTE") || (type == "DATA")) {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFilename(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if (type == "BOOL") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionBool(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if (type == "INT") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionInt(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if (type == "FLOAT") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionFloat(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if (type == "INT[]") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionIntVector(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
+                } else if (type == "STR[]") {
+                    myOptionRowEntries.push_back(new GNEOptionsEditorRow::OptionStringVector(this, myEntriesFrame, topic, entry, description, defaultValue, editable, drawRed, requireSaveNetwork));
                 }
             }
         }
@@ -176,12 +178,20 @@ GNEOptionsEditor::isOptionModified() const {
     return myOptionsModified;
 }
 
+
+bool
+GNEOptionsEditor::requireSaveNetwork() const {
+    return myRequireSaveNetwork;
+}
+
+
 void
 GNEOptionsEditor::resetAllOptions() {
     for (const auto& entry : myOptionRowEntries) {
         entry->onCmdResetOption(nullptr, 0, nullptr);
     }
     myOptionsModified = false;
+    myRequireSaveNetwork = false;
 }
 
 
@@ -235,7 +245,7 @@ GNEOptionsEditor::onCmdSaveOptions(FXObject*, FXSelector, void*) {
                                           GNEFileDialog::ConfigType::NETEDIT);
     // check file
     if (optionsFileDialog.getResult() == GNEDialog::Result::ACCEPT) {
-        std::ofstream out(StringUtils::transcodeToLocal(optionsFileDialog.getFilename()));
+        std::ofstream out(XMLSubSys::transcodeToLocal(optionsFileDialog.getFilename()));
         myOptionsContainer.writeConfiguration(out, true, false, false, optionsFileDialog.getFilename(), true);
         out.close();
     }
@@ -344,13 +354,13 @@ GNEOptionsEditor::loadConfiguration(const std::string& file) {
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(file).c_str());
+        parser.parse(XMLSubSys::transcodeToLocal(file).c_str());
         if (handler.errorOccurred()) {
             WRITE_ERROR(TL("Could not load configuration '") + file + "'.");
             return false;
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TL("Could not load tool configuration '") + file + "':\n " + StringUtils::transcode(e.getMessage()));
+        WRITE_ERROR(TL("Could not load tool configuration '") + file + "':\n " + XMLSubSys::transcode(e.getMessage()));
         return false;
     }
     // write info

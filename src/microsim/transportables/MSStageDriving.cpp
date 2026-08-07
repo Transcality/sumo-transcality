@@ -385,14 +385,14 @@ MSStageDriving::tripInfoOutput(OutputDevice& os, const MSTransportable* const tr
     os.writeAttr("arrivalPos", myArrived >= 0 ? toString(getArrivalPos()) : "-1");
     os.writeAttr("duration", myArrived >= 0 ? time2string(duration) :
                  (myDeparted >= 0 ? time2string(now - myDeparted) : "-1"));
-    os.writeAttr("routeLength", myArrived >= 0 || myVehicle != nullptr ? toString(getDistance()) : "-1");
+    os.writeAttr(SUMO_ATTR_ROUTELENGTH, myArrived >= 0 || myVehicle != nullptr ? toString(getDistance()) : "-1");
     os.writeAttr("timeLoss", myArrived >= 0 ? time2string(getTimeLoss(transportable)) : "-1");
     os.closeTag();
 }
 
 
 void
-MSStageDriving::routeOutput(const bool isPerson, OutputDevice& os, const bool withRouteLength, const MSStage* const previous) const {
+MSStageDriving::routeOutput(const bool isPerson, OutputDevice& os, const bool withRouteLength, const MSStage* const previous, const bool withTiming, const bool /*saveState*/) const {
     os.openTag(isPerson ? SUMO_TAG_RIDE : SUMO_TAG_TRANSPORT);
     if (getFromEdge() != nullptr) {
         os.writeAttr(SUMO_ATTR_FROM, getFromEdge()->getID());
@@ -422,7 +422,7 @@ MSStageDriving::routeOutput(const bool isPerson, OutputDevice& os, const bool wi
     if (withRouteLength) {
         os.writeAttr("routeLength", myVehicleDistance);
     }
-    if (OptionsCont::getOptions().getBool("vehroute-output.exit-times")) {
+    if (withTiming) {
         os.writeAttr("vehicle", myVehicleID.empty() ? "NULL" : myVehicleID);
         os.writeAttr(SUMO_ATTR_STARTED, myDeparted >= 0 ? time2string(myDeparted) : "-1");
         os.writeAttr(SUMO_ATTR_ENDED, myArrived >= 0 ? time2string(myArrived) : "-1");

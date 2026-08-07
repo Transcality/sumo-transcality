@@ -98,7 +98,7 @@ GUIDialog_ViewSettings::GUIDialog_ViewSettings(GUISUMOAbstractView* parent, GUIV
     GUIPersistentWindowPos(this, "VIEWSETTINGS", true, 20, 40, 700, 500, 400, 20),
     myParent(parent),
     mySettings(settings),
-    myBackup(settings->name, settings->netedit) {
+    myBackup(parent->getApp(), settings->name, settings->netedit) {
     // make a backup copy
     myBackup.copy(*settings);
     // create content frame
@@ -533,7 +533,7 @@ GUIDialog_ViewSettings::updateScaleRanges(FXObject* sender, std::vector<FXRealSp
 
 long
 GUIDialog_ViewSettings::onCmdColorChange(FXObject* sender, FXSelector, void* /*val*/) {
-    GUIVisualizationSettings tmpSettings(mySettings->name);
+    GUIVisualizationSettings tmpSettings(getApp(), mySettings->name);
     tmpSettings.copy(*mySettings);
     int prevLaneMode = mySettings->getLaneEdgeMode();
     int prevLaneScaleMode = mySettings->getLaneEdgeScaleMode();
@@ -558,7 +558,11 @@ GUIDialog_ViewSettings::onCmdColorChange(FXObject* sender, FXSelector, void* /*v
     tmpSettings.colorSettings.trainStopColorSign = MFXUtils::getRGBColor(myTrainStopColorSign->getRGBA());
     tmpSettings.colorSettings.containerStopColor = MFXUtils::getRGBColor(myContainerStopColor->getRGBA());
     tmpSettings.colorSettings.containerStopColorSign = MFXUtils::getRGBColor(myContainerStopColorSign->getRGBA());
-    tmpSettings.colorSettings.chargingStationColor = MFXUtils::getRGBColor(myChargingStationColor->getRGBA());
+    tmpSettings.colorSettings.parkingAreaColor = MFXUtils::getRGBColor(myParkingAreaColor->getRGBA());
+    tmpSettings.colorSettings.parkingAreaColorSign = MFXUtils::getRGBColor(myParkingAreaColorSign->getRGBA());
+    tmpSettings.colorSettings.parkingSpaceColor = MFXUtils::getRGBColor(myParkingSpaceColor->getRGBA());
+    tmpSettings.colorSettings.parkingSpaceColorContour = MFXUtils::getRGBColor(myParkingSpaceColor->getRGBA());
+    tmpSettings.colorSettings.chargingStationColor = MFXUtils::getRGBColor(myParkingSpaceColorSign->getRGBA());
     tmpSettings.colorSettings.chargingStationColorSign = MFXUtils::getRGBColor(myChargingStationColorSign->getRGBA());
     if (mySettings->netedit) {
         tmpSettings.colorSettings.stopColor = MFXUtils::getRGBColor(myStopColor->getRGBA());
@@ -987,7 +991,7 @@ GUIDialog_ViewSettings::onCmdColorChange(FXObject* sender, FXSelector, void* /*v
 
 void
 GUIDialog_ViewSettings::loadSettings(const std::string& file) {
-    GUISettingsHandler handler(file, true, mySettings->netedit);
+    GUISettingsHandler handler(getApp(), file, true, mySettings->netedit);
     for (std::string settingsName : handler.addSettings(myParent)) {
         FXint index = mySchemeName->appendIconItem(settingsName.c_str());
         mySchemeName->setCurrentItem(index);
@@ -1046,7 +1050,7 @@ GUIDialog_ViewSettings::saveDecals(OutputDevice& dev) const {
 void
 GUIDialog_ViewSettings::loadDecals(const std::string& file) {
     myParent->clearDecals();
-    GUISettingsHandler handler(file);
+    GUISettingsHandler handler(getApp(), file);
     if (handler.hasDecals()) {
         myParent->getDecalsLockMutex().lock();
         myParent->getDecals() = handler.getDecals();
@@ -1087,7 +1091,7 @@ GUIDialog_ViewSettings::onCmdSaveSetting(FXObject*, FXSelector, void* /*data*/) 
             }
         }
     }
-    GUIVisualizationSettings tmpSettings(mySettings->name, mySettings->netedit);
+    GUIVisualizationSettings tmpSettings(getApp(), mySettings->name, mySettings->netedit);
     tmpSettings.copy(*mySettings);
     tmpSettings.name = name;
     if (name == mySettings->name || StringUtils::startsWith(mySettings->name, "custom_")) {
@@ -2252,6 +2256,12 @@ GUIDialog_ViewSettings::buildAdditionalsFrame(FXTabBook* tabbook) {
     new FXLabel(matrixColor, "containerStops", nullptr, GUIDesignViewSettingsLabel1);
     myContainerStopColor = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.containerStopColor), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
     myContainerStopColorSign = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.containerStopColorSign), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
+    new FXLabel(matrixColor, TL("parking area"), nullptr, GUIDesignViewSettingsLabel1);
+    myParkingAreaColor = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.parkingAreaColor), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
+    myParkingAreaColorSign = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.parkingAreaColorSign), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
+    new FXLabel(matrixColor, TL("parking space"), nullptr, GUIDesignViewSettingsLabel1);
+    myParkingSpaceColor = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.parkingSpaceColor), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
+    myParkingSpaceColorSign = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.parkingSpaceColorContour), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
     new FXLabel(matrixColor, "chargingStations", nullptr, GUIDesignViewSettingsLabel1);
     myChargingStationColor = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.chargingStationColor), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);
     myChargingStationColorSign = new FXColorWell(matrixColor, MFXUtils::getFXColor(mySettings->colorSettings.chargingStationColorSign), this, MID_SIMPLE_VIEW_COLORCHANGE, GUIDesignViewSettingsColorWell);

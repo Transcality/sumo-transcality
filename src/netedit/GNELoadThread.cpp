@@ -25,6 +25,7 @@
 #include <netimport/NILoader.h>
 #include <netwrite/NWFrame.h>
 #include <utils/common/MsgRetrievingFunction.h>
+#include <utils/common/RandHelper.h>
 #include <utils/common/SystemFrame.h>
 #include <utils/gui/events/GUIEvent_Message.h>
 #include <utils/options/OptionsCont.h>
@@ -540,6 +541,9 @@ GNELoadThread::fillOptions(OptionsCont& neteditOptions) {
 
     neteditOptions.doRegister("gui-testing.setting-output", new Option_FileName());
     neteditOptions.addDescription("gui-testing.setting-output", "Visualisation", TL("Save gui settings in the given settings-output file"));
+
+    neteditOptions.doRegister("quit-on-fail", 'Q', new Option_Bool(false));
+    neteditOptions.addDescription("quit-on-fail", "Visualisation", TL("Quit the app if the initial net/config loading fails"));
 
     // TOPIC: Time
 

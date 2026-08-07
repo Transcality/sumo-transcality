@@ -52,6 +52,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <utils/common/RandHelper.h>
 #include <utils/common/SystemFrame.h>
+#include <utils/traction_wire/Circuit.h>
 #include "MSFrame.h"
 
 
@@ -99,7 +100,7 @@ MSFrame::fillOptions() {
     oc.addDescription("load-state", "Input", TL("Loads a network state from FILE"));
     oc.doRegister("load-state.offset", new Option_String("0", "TIME"));//!!! check, describe
     oc.addDescription("load-state.offset", "Input", TL("Shifts all times loaded from a saved state by the given offset"));
-    oc.doRegister("load-state.remove-vehicles", new Option_StringVector(StringVector({""})));
+    oc.doRegister("load-state.remove-vehicles", new Option_StringVector(StringVector({})));
     oc.addDescription("load-state.remove-vehicles", "Input", TL("Removes vehicles with the given IDs from the loaded state"));
 
     oc.doRegister("junction-taz", new Option_Bool(false));
@@ -187,6 +188,8 @@ MSFrame::fillOptions() {
     oc.addDescription("fcd-output.attributes", "Output", TL("List attributes that should be included in the FCD output"));
     oc.doRegister("fcd-output.filter-shapes", new Option_StringVector());
     oc.addDescription("fcd-output.filter-shapes", "Output", TL("List shape names that should be used to filter the FCD output"));
+    oc.doRegister("fcd-output.skip-empty", new Option_Bool(false));
+    oc.addDescription("fcd-output.skip-empty", "Output", TL("Do not save data for time steps which have no vehicles / transportables"));
 
     oc.doRegister("person-fcd-output", new Option_FileName());
     oc.addSynonyme("person-fcd-output", "person-fcd");
@@ -202,6 +205,14 @@ MSFrame::fillOptions() {
     oc.addDescription("queue-output", "Output", TL("Save the vehicle queues at the junctions (experimental)"));
     oc.doRegister("queue-output.period", new Option_String("-1", "TIME"));
     oc.addDescription("queue-output.period", "Output", TL("Save vehicle queues with the given period"));
+    oc.doRegister("queue-output.aggregation", new Option_String("-1", "TIME"));
+    oc.addDescription("queue-output.aggregation", "Output", TL("Write aggregated queue length statistics (max, median, 95th percentile) per edge for the given period (e.g. a traffic light cycle) instead of per-timestep data"));
+    oc.doRegister("queue-output.speed-threshold", new Option_Float(5.0 / 3.6));
+    oc.addDescription("queue-output.speed-threshold", "Output", TL("Maximum speed for counting a vehicle as queued"));
+    oc.doRegister("queue-output.percentile", new Option_Float(95.));
+    oc.addDescription("queue-output.percentile", "Output", TL("The percentile (0-100) to report as percentileQueueLength in aggregated queue output"));
+    oc.doRegister("queue-output.skip-empty", new Option_Bool(false));
+    oc.addDescription("queue-output.skip-empty", "Output", TL("Do not save data for time steps / intervals which have no queue (required for column based output formats)"));
 
     oc.doRegister("vtk-output", new Option_FileName());
     oc.addDescription("vtk-output", "Output", TL("Save complete vehicle positions inclusive speed values in the VTK Format (usage: /path/out will produce /path/out_$TIMESTEP$.vtp files)"));
@@ -526,6 +537,9 @@ MSFrame::fillOptions() {
     oc.doRegister("railsignal.default-classes", new Option_StringVector(StringVector({"rail", "rail_fast", "rail_electric", "rail_urban", "subway"})));
     oc.addDescription("railsignal.default-classes", "Processing", TL("List vehicle classes that uses block-based insertion checks even when the network has no rail signals for them"));
 
+    oc.doRegister("slope-centered", new Option_Bool(false));
+    oc.addDescription("slope-centered", "Processing", TL("Compute slope at the vehicle center of mass instead of integrating over front and back"));
+
     oc.doRegister("time-to-impatience", new Option_String("180", "TIME"));
     oc.addDescription("time-to-impatience", "Processing", TL("Specify how long a vehicle may wait until impatience grows from 0 to 1, defaults to 300, non-positive values disable impatience growth"));
 
@@ -753,6 +767,8 @@ MSFrame::fillOptions() {
     oc.addOptionSubTopic("Mesoscopic");
     oc.doRegister("mesosim", new Option_Bool(false));
     oc.addDescription("mesosim", "Mesoscopic", TL("Enables mesoscopic simulation"));
+    oc.doRegister("meso-ltm", new Option_Bool(false));
+    oc.addDescription("meso-ltm", "Mesoscopic", TL("Enables the meso-LTM (LIFT) model"));
     oc.doRegister("meso-edgelength", new Option_Float(98.0f));
     oc.addDescription("meso-edgelength", "Mesoscopic", TL("Length of an edge segment in mesoscopic simulation"));
     oc.doRegister("meso-tauff", new Option_String("1.13", "TIME"));
@@ -951,6 +967,9 @@ MSFrame::checkOptions() {
             WRITE_WARNING(TL("The option 'meso-junction-control.limited' implies 'meso-junction-control'."))
         }
         oc.setDefault("meso-junction-control", "true");
+    }
+    if (oc.getBool("meso-ltm") && oc.isDefault("mesosim")) {
+        oc.setDefault("mesosim", "true");
     }
     if (oc.getBool("mesosim")) {
         if (oc.isDefault("pedestrian.model")) {
@@ -1183,7 +1202,7 @@ MSFrame::setMSGlobals(OptionsCont& oc) {
     MSAbstractLaneChangeModel::initGlobalOptions(oc);
     MSGlobals::gOverheadWireSolver = oc.getBool("overhead-wire.solver");
     MSGlobals::gOverheadWireRecuperation = oc.getBool("overhead-wire.recuperation");
-    MSGlobals::gOverheadWireCurrentLimits = oc.getBool("overhead-wire.substation-current-limits");
+    Circuit::enforceCurrentLimits(oc.getBool("overhead-wire.substation-current-limits"));
     MSGlobals::gInsertionChecks = SUMOVehicleParameter::parseInsertionChecks(oc.getString("insertion-checks"));
     MSGlobals::gMaxRailSignalBlockLength = oc.getFloat("railsignal.max-block-length");
 
@@ -1225,6 +1244,7 @@ MSFrame::setMSGlobals(OptionsCont& oc) {
     MSGlobals::gTLSYellowMinDecel = oc.getFloat("tls.yellow.min-decel");
     MSGlobals::gUseStopEnded = oc.getBool("use-stop-ended");
     MSGlobals::gUseStopStarted = oc.getBool("use-stop-started");
+    MSGlobals::gSlopeCentered = oc.getBool("slope-centered");
 
     SVCPermissions defaultClasses = 0;
     for (const std::string& vClassName : oc.getStringVector("railsignal.default-classes")) {

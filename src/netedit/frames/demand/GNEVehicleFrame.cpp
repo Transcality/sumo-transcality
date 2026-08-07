@@ -134,7 +134,7 @@ GNEVehicleFrame::GNEVehicleFrame(GNEViewParent* viewParent, GNEViewNet* viewNet)
     myVehicleTagSelector = new GNETagSelector(this, GNETagProperties::Type::VEHICLE, SUMO_TAG_TRIP);
 
     // Create vehicle type selector and set DEFAULT_VTYPE_ID as default element
-    myTypeSelector = new GNEDemandElementSelector(this, SUMO_TAG_VTYPE, GNETagProperties::Type::VEHICLE);
+    myTypeSelector = new GNEDemandElementSelector(this, {SUMO_TAG_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION}, GNETagProperties::Type::VEHICLE);
 
     // Create attributes editor
     myVehicleAttributesEditor = new GNEAttributesEditor(this, GNEAttributesEditorType::EditorType::CREATOR);
@@ -609,7 +609,7 @@ GNEVehicleFrame::buildVehicleOverRoute(SumoXMLTag vehicleTag, GNEDemandElement* 
         // center view after creation
         const auto* vehicle = myViewNet->getNet()->getAttributeCarriers()->retrieveDemandElement(myVehicleBaseObject->getTag(), myVehicleBaseObject->getStringAttribute(SUMO_ATTR_ID), false);
         if (vehicle && !myViewNet->getVisibleBoundary().around(vehicle->getPositionInView())) {
-            myViewNet->centerTo(vehicle->getPositionInView(), false);
+            myViewNet->centerToPos(vehicle->getPositionInView(), false);
         }
         // refresh attributes editor
         myVehicleAttributesEditor->refreshAttributesEditor();

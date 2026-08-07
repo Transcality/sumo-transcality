@@ -39,6 +39,10 @@
 // method definitions
 // ===========================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNEConnection::GNEConnection(GNELane* from, GNELane* to) :
     GNENetworkElement(from->getNet(), "from" + from->getID() + "to" + to->getID(), SUMO_TAG_CONNECTION),
     myMoveElementConnection(new GNEMoveElementConnection(this)),
@@ -49,6 +53,9 @@ GNEConnection::GNEConnection(GNELane* from, GNELane* to) :
     setParents<GNELane*>({from, to});
     setParents<GNEEdge*>({from->getParentEdge(), to->getParentEdge()});
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GNEConnection::~GNEConnection() {
@@ -394,7 +401,7 @@ GNEConnection::drawGL(const GUIVisualizationSettings& s) const {
     // Check if connection must be drawed
     if (checkDrawConnection()) {
         // get connection exaggeration
-        const double connectionExaggeration = isAttributeCarrierSelected() ? s.selectorFrameScale : 1;
+        const double connectionExaggeration = s.junctionSize.getExaggeration(s, this, 1);
         // get detail level
         const auto d = s.getDetailLevel(connectionExaggeration);
         // check if draw shape superposed (used in train lanes)
@@ -682,11 +689,13 @@ GNEConnection::checkDrawConnection() const {
     // declare a flag to check if shape has to be draw (by deafult false)
     bool drawConnection = false;
     // only draw connections if shape isn't deprecated
-    if (myNet->getViewNet()->getEditModes().isCurrentSupermodeDemand() && myNet->getViewNet()->getNetworkViewOptions().showConnections()) {
+    if (myNet->getViewNet()->getEditModes().isCurrentSupermodeDemand() && myNet->getViewNet()->getNetworkViewOptions().showConnections(this)) {
         drawConnection = !myShapeDeprecated;
     } else if (myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork()) {
-        if (myNet->getViewNet()->getNetworkViewOptions().showConnections() || isAttributeCarrierSelected()) {
+        if (myNet->getViewNet()->getNetworkViewOptions().showConnections(this) || isAttributeCarrierSelected()) {
             drawConnection = !myShapeDeprecated;
+        } else if (myNet->getViewNet()->getInspectedElements().isACInspected(this)) {
+            drawConnection = true;
         } else {
             drawConnection = false;
         }
@@ -743,7 +752,7 @@ GNEConnection::drawConnection(const GUIVisualizationSettings& s, const GUIVisual
     // Set color
     GLHelper::setColor(connectionColor);
     // continue depending of detail level
-    if (d <= GUIVisualizationSettings::Detail::JunctionElementDetails) {
+    if ((d <= GUIVisualizationSettings::Detail::JunctionElementDetails) || (s.junctionSize.constantSizeSelected && isAttributeCarrierSelected())) {
         // draw geometry
         GLHelper::drawBoxLines(superposedGeometry.getShape(), superposedGeometry.getShapeRotations(), superposedGeometry.getShapeLengths(),
                                s.connectionSettings.connectionWidth * exaggeration);
@@ -761,7 +770,7 @@ GNEConnection::drawConnection(const GUIVisualizationSettings& s, const GUIVisual
             // draw geometry points
             GUIGeometry::drawGeometryPoints(d, superposedGeometry.getShape(), connectionColor.changedBrightness(-32),
                                             s.neteditSizeSettings.connectionGeometryPointRadius, exaggeration,
-                                            myNet->getViewNet()->getNetworkViewOptions().editingElevation());
+                                            true, myNet->getViewNet()->getNetworkViewOptions().editingElevation());
         }
     } else {
         GLHelper::drawLine(superposedGeometry.getShape());

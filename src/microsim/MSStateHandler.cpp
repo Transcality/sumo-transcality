@@ -111,6 +111,7 @@ MSStateHandler::MSStateHandler(const std::string& file, const SUMOTime offset) :
     myCurrentLink(nullptr),
     myAttrs(nullptr),
     myVCAttrs(nullptr),
+    myCFMAttrs(nullptr),
     myLastParameterised(nullptr),
     myRemoved(0),
     myFlowIndex(-1),
@@ -225,7 +226,7 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
                 RandHelper::loadState(attrs.getString(SUMO_ATTR_RNG_DEVICE), MSDevice::getEquipmentRNG());
             }
             if (attrs.hasAttribute(SUMO_ATTR_RNG_DEVICE_BT)) {
-                RandHelper::loadState(attrs.getString(SUMO_ATTR_RNG_DEVICE_BT), MSVehicleDevice_BTreceiver::getEquipmentRNG());
+                RandHelper::loadState(attrs.getString(SUMO_ATTR_RNG_DEVICE_BT), MSDevice_BTreceiver::getRNG());
             }
             if (attrs.hasAttribute(SUMO_ATTR_RNG_DRIVERSTATE)) {
                 RandHelper::loadState(attrs.getString(SUMO_ATTR_RNG_DRIVERSTATE), OUProcess::getRNG());
@@ -310,6 +311,10 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
         }
         case SUMO_TAG_DEVICE: {
             myDeviceAttrs.push_back(attrs.clone());
+            break;
+        }
+        case SUMO_TAG_CFM_VARIABLES: {
+            myCFMAttrs = attrs.clone();
             break;
         }
         case SUMO_TAG_REMINDER: {
@@ -458,6 +463,8 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             const std::string programID = attrs.get<std::string>(SUMO_ATTR_PROGRAMID, tlID.c_str(), ok);
             const int phase = attrs.get<int>(SUMO_ATTR_PHASE, tlID.c_str(), ok);
             const SUMOTime spentDuration = attrs.get<SUMOTime>(SUMO_ATTR_DURATION, tlID.c_str(), ok);
+            const SUMOTime nextSwitch = attrs.get<SUMOTime>(SUMO_ATTR_UNTIL, tlID.c_str(), ok);
+            const SUMOTime timeInCycle = attrs.get<SUMOTime>(SUMO_ATTR_CYCLETIME, tlID.c_str(), ok);
             const bool active = attrs.get<bool>(SUMO_ATTR_ACTIVE, tlID.c_str(), ok);
             MSTLLogicControl& tlc = MSNet::getInstance()->getTLSControl();
             MSTrafficLightLogic* tl = tlc.get(tlID, programID);
@@ -473,7 +480,7 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
                 throw ProcessError("Invalid phase '" + toString(phase) + "' for traffic light '" + tlID + "'");
             }
             // might not be set if the phase happens to match and there are multiple programs
-            tl->loadState(tlc, myTime, phase, spentDuration, active);
+            tl->loadState(tlc, myTime, phase, spentDuration, nextSwitch, timeInCycle, active);
             if (attrs.hasAttribute(SUMO_ATTR_STATE)) {
                 tl->loadExtraState(attrs.get<std::string>(SUMO_ATTR_STATE, tlID.c_str(), ok));
             }
@@ -624,6 +631,16 @@ MSStateHandler::closeVehicle() {
             }
             delete myReminderAttrs.back();
             myReminderAttrs.pop_back();
+        }
+        if (myCFMAttrs != nullptr) {
+            assert(!MSGlobals::gUseMesoSim);
+            MSVehicle* microVeh = dynamic_cast<MSVehicle*>(v);
+            const MSCFModel::VehicleVariables* vars = microVeh->getCarFollowVariables();
+            if (vars != nullptr) {
+                const_cast<MSCFModel::VehicleVariables*>(vars)->loadState(*myCFMAttrs);
+            }
+            delete myCFMAttrs;
+            myCFMAttrs = nullptr;
         }
     } else {
         const std::string embeddedRouteID = "!" + myVehicleParameter->id;

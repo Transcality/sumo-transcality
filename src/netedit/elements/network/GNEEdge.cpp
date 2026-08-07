@@ -73,6 +73,10 @@ const double GNEEdge::SNAP_RADIUS_SQUARED = (SUMO_const_halfLaneWidth* SUMO_cons
 // members methods
 // ===========================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNEEdge::GNEEdge(GNENet* net, NBEdge* nbe, bool wasSplit, bool loaded):
     GNENetworkElement(net, nbe->getID(), SUMO_TAG_EDGE),
     myNBEdge(nbe),
@@ -99,6 +103,9 @@ GNEEdge::GNEEdge(GNENet* net, NBEdge* nbe, bool wasSplit, bool loaded):
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GNEEdge::~GNEEdge() {
@@ -936,6 +943,9 @@ GNEEdge::remakeGNEConnections(bool junctionsReady) {
     for (const auto& connection : connections) {
         // retrieve existent GNEConnection, or create it
         GNEConnection* retrievedGNEConnection = retrieveGNEConnection(connection.fromLane, connection.toEdge, connection.toLane);
+        if (!retrievedGNEConnection) {
+            continue;
+        }
         if (junctionsReady) {
             retrievedGNEConnection->updateLinkState();
         }
@@ -2230,13 +2240,19 @@ GNEEdge::retrieveGNEConnection(int fromLane, NBEdge* to, int toLane, bool create
         }
     }
     if (createIfNoExist) {
-        // create new connection. Will be added to the rTree on first geometry computation
-        GNEConnection* connection = new GNEConnection(getChildLanes()[fromLane], myNet->getAttributeCarriers()->retrieveEdge(to->getID())->getChildLanes()[toLane]);
-        // add it into network
-        myNet->addGLObjectIntoGrid(connection);
-        // add it in attributeCarriers
-        myNet->getAttributeCarriers()->insertConnection(connection);
-        return connection;
+        const auto edge = myNet->getAttributeCarriers()->retrieveEdge(to->getID(), false);
+        if (edge) {
+            // create new connection. Will be added to the rTree on first geometry computation
+            GNEConnection* connection = new GNEConnection(getChildLanes()[fromLane], edge->getChildLanes()[toLane]);
+            // add it into network
+            myNet->addGLObjectIntoGrid(connection);
+            // add it in attributeCarriers
+            myNet->getAttributeCarriers()->insertConnection(connection);
+            return connection;
+        } else {
+            WRITE_WARNING("The NBEdge " + to->getID() + " doesn't exist in Netedit");
+            return nullptr;
+        }
     } else {
         return nullptr;
     }
@@ -2555,7 +2571,7 @@ GNEEdge::drawEdgeGeometryPoints(const GUIVisualizationSettings& s, const GUIVisu
             // move geometry point geometryPointPos
             glTranslated(geometryPointPos.x(), geometryPointPos.y(), bigGeometryPoints ? GLO_GEOMETRYPOINT : GLO_LANE + 1);
             // draw filled circle (resolution of drawn circle depending of the zoom, to improve smoothness)
-            GLHelper::drawFilledCircleDetailled(d, geometryPointRadius);
+            GLHelper::drawFilledCircleDetailed(d, geometryPointRadius);
             // draw elevation or special symbols (Start, End and Block)
             if ((d <= GUIVisualizationSettings::Detail::Text) && myNet->getViewNet()->getNetworkViewOptions().editingElevation()) {
                 // Translate to top
@@ -2605,7 +2621,7 @@ GNEEdge::drawStartGeometryPoint(const GUIVisualizationSettings& s, const GUIVisu
             // move to point position
             glTranslated(startGeometryPointPos.x(), startGeometryPointPos.y(), GLO_GEOMETRYPOINT);
             // resolution of drawn circle depending of detail
-            GLHelper::drawFilledCircleDetailled(d, geometryPointRadius, angle + 90, angle + 270);
+            GLHelper::drawFilledCircleDetailed(d, geometryPointRadius, angle + 90, angle + 270);
             // pop drawing matrix
             GLHelper::popMatrix();
             // draw a "s" over last point depending of detail level
@@ -2669,7 +2685,7 @@ GNEEdge::drawEndGeometryPoint(const GUIVisualizationSettings& s, const GUIVisual
             // move to point position
             glTranslated(geometryPointPos.x(), geometryPointPos.y(), GLO_GEOMETRYPOINT);
             // resolution of drawn circle depending of detail
-            GLHelper::drawFilledCircleDetailled(d, geometryPointRadius, angle + 90, angle + 270);
+            GLHelper::drawFilledCircleDetailed(d, geometryPointRadius, angle + 90, angle + 270);
             // pop drawing matrix
             GLHelper::popMatrix();
             // draw a "s" over last point depending of detail level

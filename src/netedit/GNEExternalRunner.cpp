@@ -18,25 +18,24 @@
 // External runner for python and external tools
 /****************************************************************************/
 #include <config.h>
+#include <utils/xml/XMLSubSys.h>
 
 #ifdef HAVE_BOOST
 #ifdef _MSC_VER
-#pragma warning(push, 0)
+#pragma warning(push)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
-#include <boost/process.hpp>
-#include <boost/process/v1/child.hpp>
-#include <boost/process/v1/io.hpp>
-#pragma warning(pop)
+#endif
+#if __has_include(<boost/process/v1.hpp>)  // Boost 1.86+
+#include <boost/process/v1.hpp>
+namespace bp = boost::process::v1;
 #else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wall"
-#pragma GCC diagnostic ignored "-Wextra"
 #include <boost/process.hpp>
-#include <boost/process/v1/child.hpp>
-#include <boost/process/v1/io.hpp>
-#pragma GCC diagnostic pop
+namespace bp = boost::process;
+#endif
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif
 #endif
 
@@ -106,9 +105,9 @@ GNEExternalRunner::run() {
 #ifdef HAVE_BOOST
     try {
         // declare both streams for read out and err
-        boost::process::v1::opstream in;
-        boost::process::v1::ipstream out;
-        boost::process::v1::ipstream err;
+        bp::opstream in;
+        bp::ipstream out;
+        bp::ipstream err;
         // declare run command
         const auto runCommand = myRunDialog->getRunCommand();
         // begin running
@@ -117,10 +116,7 @@ GNEExternalRunner::run() {
         myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::OUTPUT_OCCURRED, runCommand + "\n"), false);
         myRunDialog->addEvent(new GUIEvent_Message(GUIEventType::MESSAGE_OCCURRED, std::string(TL("starting process...\n"))), true);
         // run command derivating the std_out to out and std_err to err
-        boost::process::v1::child c(runCommand,
-                                    boost::process::v1::std_in < in,
-                                    boost::process::v1::std_out > out,
-                                    boost::process::v1::std_err > err);
+        bp::child c(runCommand, bp::std_in < in, bp::std_out > out, bp::std_err > err);
         // declare a stdout reader thread
         std::thread outReaderThread([&out, this]() {
             std::string buffer;
@@ -180,7 +176,7 @@ GNEExternalRunner::run() {
     }
     // open process showing std::err in console
 #ifdef WIN32
-    myPipe = _popen(StringUtils::transcodeToLocal(runCommand + " 2>&1").c_str(), "r");
+    myPipe = _popen(XMLSubSys::transcodeToLocal(runCommand + " 2>&1").c_str(), "r");
 #else
     myPipe = popen((runCommand + " 2>&1").c_str(), "r");
 #endif

@@ -218,8 +218,6 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_ZHT,   GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_TR,    GUIApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_TR,    GUIApplicationWindow::onUpdChangeLanguage),
-    FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_HU,    GUIApplicationWindow::onCmdChangeLanguage),
-    FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_HU,    GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_JA,    GUIApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_JA,    GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_KO,    GUIApplicationWindow::onCmdChangeLanguage),
@@ -398,7 +396,7 @@ GUIApplicationWindow::create() {
     }
     if (myOnlineMaps.empty()) {
         myOnlineMaps["GeoHack"] = "https://geohack.toolforge.org/geohack.php?params=%lat;%lon_scale:1000";
-        myOnlineMaps["Google Maps"] = "https://www.google.com/maps?ll=%lat,%lon&t=h&z=18";
+        myOnlineMaps["Google Maps"] = "https://www.google.com/maps/search/?api=1&query=%lat,%lon&zoom=19";
         myOnlineMaps["OSM"] = "https://www.openstreetmap.org/?mlat=%lat&mlon=%lon&zoom=18&layers=M";
     }
     updateTimeLCDTooltip();
@@ -1216,7 +1214,7 @@ GUIApplicationWindow::onCmdSaveConfig(FXObject*, FXSelector, void*) {
         return 1;
     }
     const std::string file = MFXUtils::assureExtension(opendialog).text();
-    std::ofstream out(StringUtils::transcodeToLocal(file));
+    std::ofstream out(XMLSubSys::transcodeToLocal(file));
     if (out.good()) {
         OptionsCont::getOptions().writeConfiguration(out, true, false, false, file, true);
         setStatusBarText(TLF("Configuration saved to %.", file));
@@ -1885,7 +1883,7 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
             if (ec->mySettingsFiles.size() > 0 && (!myIsReload || myGuiSettingsFileMTime < mTime || ec->mySettingsFiles.size() > 1)) {
                 // open a view for each file and apply settings
                 for (std::string fname : ec->mySettingsFiles) {
-                    GUISettingsHandler settings(fname);
+                    GUISettingsHandler settings(getApp(), fname);
                     GUISUMOViewParent::ViewType vt = defaultType;
                     if (settings.getViewType() == "osg" || settings.getViewType() == "3d") {
                         vt = GUISUMOViewParent::VIEW_3D_OSG;
@@ -2279,8 +2277,8 @@ GUIApplicationWindow::closeAllWindows() {
     for (GUIGlChildWindow* window : myGLWindows) {
         GUISUMOAbstractView* view = window->getView();
         gSchemeStorage.saveDecals(view->getDecals());
-        gSchemeStorage.saveViewport(view->getChanger().getXPos(), view->getChanger().getYPos(), 
-                                     view->getChanger().getZPos(), view->getChanger().getRotation());
+        gSchemeStorage.saveViewport(view->getChanger().getXPos(), view->getChanger().getYPos(),
+                                    view->getChanger().getZPos(), view->getChanger().getRotation());
     }
     // delete the simulation
     myRunThread->deleteSim();

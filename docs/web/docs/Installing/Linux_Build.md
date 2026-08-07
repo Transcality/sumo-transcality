@@ -20,7 +20,7 @@ sudo apt-get install git
 git clone --recursive https://github.com/eclipse-sumo/sumo
 cd sumo
 export SUMO_HOME="$PWD"
-sudo apt-get install $(cat build_config/build_req_deb.txt build_config/tools_req_deb.txt)
+sudo build_config/install_dependencies.sh  # this will also add repositories for parquet, download and build jupedsim from source
 cmake -B build .
 cmake --build build -j$(nproc)
 ```
@@ -60,12 +60,18 @@ alternatives below.
   - flake, astyle and autopep for style checking
   - see also further dependencies [for GUI testing](../Developer/GUI_Testing.md)
 
-The package names above are for openSUSE, for ubuntu the call to get the most important optional libraries and tools is:
+The package names above are for openSUSE, on a debian/ubuntu system the packages can be installed using:
 
 ```
-sudo apt-get install ccache libavformat-dev libswscale-dev libopenscenegraph-dev python3-pip python3-build
-sudo apt-get install libgtest-dev gettext tkdiff xvfb flake8 astyle python3-autopep8 python3-gi-cairo gir1.2-gtk-3.0
-sudo apt-get install python3-pyproj python3-rtree python3-pandas python3-pulp python3-ezdxf
+sudo apt-get install $(cat build_config/build_req_deb.txt build_config/tools_req_deb.txt)
+```
+
+In contrast to the install script this will not include jupedsim and parquet.
+Some larger dependencies need to be added manually if needed (for a description see the section above):
+
+```
+sudo apt-get install libavformat-dev libswscale-dev libopenscenegraph-dev
+sudo apt-get install python3-gi-cairo gir1.2-gtk-3.0
 python3 -m pip install texttest
 ```
 
@@ -79,7 +85,7 @@ see https://arrow.apache.org/install/
 wget https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 sudo apt install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 sudo apt update
-sudo apt install -y -V libarrow-dev libparquet-dev
+PARQUET_VERSION=$(apt-cache policy libparquet-dev | grep -o '23[0-9.-]*' | head -1) apt-get -y install libarrow-dev=$PARQUET_VERSION libparquet-dev=$PARQUET_VERSION
 ```
 
 ## Getting the source code
@@ -199,9 +205,9 @@ Other useful cmake configuration options:
   debugging the release build or using a different profiler
 - `-D ENABLE_PROJ=OFF` disable PROJ
 - `-D ENABLE_FOX=OFF` disable FOX toolkit (GUI and multithreading)
-- `-D PYTHON_EXECUTABLE=/usr/bin/python3` select a different python version (also for libsumo / libtraci)
+- `-D Python_EXECUTABLE=/usr/bin/python3` select a different python version (also for libsumo / libtraci, note the capitalization)
 - `-D MVN_EXECUTABLE=` disable maven packaging (especially useful if you have no network connection)
-- `-D ENABLE_CS_BINDINGS=ON` enable C# bindings when compiling libsumo / libtraci
+- `-D ENABLE_C_BINDINGS=ON` enable C bindings when compiling libsumo (requires SWIG at least version 4.3)
 
 After this is finished, run
 
@@ -351,7 +357,7 @@ Note that this will clone the full repository, including the latest version of J
 
 ``` bash
 cd jupedsim
-git checkout v1.3.1
+git checkout v1.4.1
 cmake -B build .
 cmake --build build
 sudo cmake --install build

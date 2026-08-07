@@ -126,7 +126,7 @@ FXDEFMAP(GNEApplicationWindow) GNEApplicationWindowMap[] = {
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_SHIFT_E_SAVENETEDITCONFIG,          GNEApplicationWindow::onCmdSaveNeteditConfig),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_SHIFT_E_SAVENETEDITCONFIG,          GNEApplicationWindow::onUpdSaveNeteditConfig),
     FXMAPFUNC(SEL_COMMAND,  MID_GNE_TOOLBARFILE_SAVENETEDITCONFIG_AS,           GNEApplicationWindow::onCmdSaveNeteditConfigAs),
-    FXMAPFUNC(SEL_UPDATE,   MID_GNE_TOOLBARFILE_SAVENETEDITCONFIG_AS,           GNEApplicationWindow::onUpdNeedsNetwork),
+    FXMAPFUNC(SEL_UPDATE,   MID_GNE_TOOLBARFILE_SAVENETEDITCONFIG_AS,           GNEApplicationWindow::onUpdSaveNeteditConfigAs),
     // SumoConfig
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_M_OPENSUMOCONFIG,       GNEApplicationWindow::onCmdOpenSumoConfig),
     FXMAPFUNC(SEL_COMMAND,  MID_GNE_TOOLBARFILE_RELOAD_SUMOCONFIG,  GNEApplicationWindow::onCmdReloadSumoConfig),
@@ -134,7 +134,7 @@ FXDEFMAP(GNEApplicationWindow) GNEApplicationWindowMap[] = {
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_SHIFT_S_SAVESUMOCONFIG, GNEApplicationWindow::onCmdSaveSumoConfig),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_SHIFT_S_SAVESUMOCONFIG, GNEApplicationWindow::onUpdSaveSumoConfig),
     FXMAPFUNC(SEL_COMMAND,  MID_GNE_TOOLBARFILE_SAVESUMOCONFIG_AS,  GNEApplicationWindow::onCmdSaveSumoConfigAs),
-    FXMAPFUNC(SEL_UPDATE,   MID_GNE_TOOLBARFILE_SAVESUMOCONFIG_AS,  GNEApplicationWindow::onUpdNeedsNetwork),
+    FXMAPFUNC(SEL_UPDATE,   MID_GNE_TOOLBARFILE_SAVESUMOCONFIG_AS,  GNEApplicationWindow::onUpdSaveSumoConfigAs),
     // TLS
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_K_OPENTLSPROGRAMS,      GNEApplicationWindow::onCmdOpenTLSPrograms),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_K_OPENTLSPROGRAMS,      GNEApplicationWindow::onUpdNeedsNetwork),
@@ -267,6 +267,8 @@ FXDEFMAP(GNEApplicationWindow) GNEApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,  MID_GNE_NETWORKVIEWOPTIONS_CHAINEDGES,               GNEApplicationWindow::onUpdToggleViewOption),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_NETWORKVIEWOPTIONS_AUTOOPPOSITEEDGES,        GNEApplicationWindow::onCmdToggleViewOption),
     FXMAPFUNC(SEL_UPDATE,  MID_GNE_NETWORKVIEWOPTIONS_AUTOOPPOSITEEDGES,        GNEApplicationWindow::onUpdToggleViewOption),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS,       GNEApplicationWindow::onCmdToggleViewOption),
+    FXMAPFUNC(SEL_UPDATE,  MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS,       GNEApplicationWindow::onUpdToggleViewOption),
     // Demand view options
     FXMAPFUNC(SEL_COMMAND, MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID,                  GNEApplicationWindow::onCmdToggleViewOption),
     FXMAPFUNC(SEL_UPDATE,  MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID,                  GNEApplicationWindow::onUpdToggleViewOption),
@@ -473,8 +475,6 @@ FXDEFMAP(GNEApplicationWindow) GNEApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_ZHT,   GNEApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_TR,    GNEApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_TR,    GNEApplicationWindow::onUpdChangeLanguage),
-    FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_HU,    GNEApplicationWindow::onCmdChangeLanguage),
-    FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_HU,    GNEApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_JA,    GNEApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_JA,    GNEApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_KO,    GNEApplicationWindow::onCmdChangeLanguage),
@@ -634,7 +634,7 @@ GNEApplicationWindow::create() {
     // fill online maps
     if (myOnlineMaps.empty()) {
         myOnlineMaps["GeoHack"] = "https://geohack.toolforge.org/geohack.php?params=%lat;%lon_scale:1000";
-        myOnlineMaps["Google Maps"] = "https://www.google.com/maps?ll=%lat,%lon&t=h&z=18";
+        myOnlineMaps["Google Maps"] = "https://www.google.com/maps/search/?api=1&query=%lat,%lon&zoom=19";
         myOnlineMaps["OSM"] = "https://www.openstreetmap.org/?mlat=%lat&mlon=%lon&zoom=18&layers=M";
     }
     // show application windows
@@ -1136,7 +1136,7 @@ GNEApplicationWindow::onUpdReloadNetwork(FXObject* sender, FXSelector, void*) {
         sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
         sender->handle(this, FXSEL(SEL_COMMAND, ID_HIDE), nullptr);
     } else if (myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETWORK) &&
-               (myFileBucketHandler->isFilenameDefined(FileBucket::Type::SUMO_CONFIG) || myFileBucketHandler->isFilenameDefined(FileBucket::Type::SUMO_CONFIG))) {
+               (myFileBucketHandler->isFilenameDefined(FileBucket::Type::SUMO_CONFIG) || myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETEDIT_CONFIG))) {
         sender->handle(this, FXSEL(SEL_COMMAND, ID_ENABLE), nullptr);
         sender->handle(this, FXSEL(SEL_COMMAND, ID_SHOW), nullptr);
     } else {
@@ -1350,6 +1350,10 @@ GNEApplicationWindow::handleEvent_FileLoaded(GUIEvent* e) {
         // write info
         WRITE_ERROR(failureMessage);
         setStatusBarText(failureMessage);
+        if (OptionsCont::getOptions().getBool("quit-on-fail")) {
+            closeAllWindows(true);
+            getApp()->exit(1);
+        }
     } else {
         // report success
         std::string successMessage;
@@ -1397,7 +1401,7 @@ GNEApplicationWindow::handleEvent_FileLoaded(GUIEvent* e) {
         myViewNet = dynamic_cast<GNEViewNet*>(viewParent->getView());
         // set settings in view
         if (viewParent->getView() && (fileLoadedEvent->getSettingsFile().size() > 0)) {
-            GUISettingsHandler settings(fileLoadedEvent->getSettingsFile(), true, true);
+            GUISettingsHandler settings(getApp(), fileLoadedEvent->getSettingsFile(), true, true);
             settings.addSettings(viewParent->getView());
             viewParent->getView()->addDecals(settings.getDecals());
             settings.applyViewport(viewParent->getView());
@@ -1684,7 +1688,7 @@ GNEApplicationWindow::closeAllWindows(const bool resetFilenames) {
         // save decals and viewport for persistence (before they are cleared)
         gSchemeStorage.saveDecals(myViewNet->getDecals());
         gSchemeStorage.saveViewport(myViewNet->getChanger().getXPos(), myViewNet->getChanger().getYPos(),
-                                     myViewNet->getChanger().getZPos(), myViewNet->getChanger().getRotation());
+                                    myViewNet->getChanger().getZPos(), myViewNet->getChanger().getRotation());
         // clear decals and release GPU textures
         if (myViewNet->makeCurrent()) {
             myViewNet->clearDecals();
@@ -2601,6 +2605,11 @@ GNEApplicationWindow::onCmdOpenOptionsDialog(FXObject*, FXSelector, void*) {
         // check if mark netedit config as unsaved
         if (neteditOptionsDialog.isOptionModified() && myNet) {
             myNet->getSavingStatus()->requireSaveNeteditConfig();
+            // aditionally, check if network requires saving
+            if (neteditOptionsDialog.requireSaveNetwork()) {
+                myNet->getSavingStatus()->requireSaveNetwork();
+                myNet->requireRecompute();
+            }
         }
     }
     return 1;
@@ -3041,6 +3050,8 @@ GNEApplicationWindow::onCmdToggleViewOption(FXObject* sender, FXSelector sel, vo
                 return myViewNet->onCmdToggleChainEdges(sender, sel, ptr);
             case MID_GNE_NETWORKVIEWOPTIONS_AUTOOPPOSITEEDGES:
                 return myViewNet->onCmdToggleAutoOppositeEdge(sender, sel, ptr);
+            case MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS:
+                return myViewNet->onCmdToggleShowPolygonSymbols(sender, sel, ptr);
             // Demand
             case MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID:
                 return myViewNet->onCmdToggleShowGrid(sender, sel, ptr);
@@ -3206,6 +3217,13 @@ GNEApplicationWindow::onUpdToggleViewOption(FXObject* sender, FXSelector sel, vo
                 break;
             case MID_GNE_NETWORKVIEWOPTIONS_AUTOOPPOSITEEDGES:
                 if (myViewNet->getNetworkViewOptions().menuCheckAutoOppositeEdge->amChecked()) {
+                    menuCheck->setCheck(TRUE);
+                } else {
+                    menuCheck->setCheck(FALSE);
+                }
+                break;
+            case MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS:
+                if (myViewNet->getNetworkViewOptions().menuCheckShowPolygonSymbols->amChecked()) {
                     menuCheck->setCheck(TRUE);
                 } else {
                     menuCheck->setCheck(FALSE);
@@ -3577,7 +3595,7 @@ GNEApplicationWindow::onCmdSaveNeteditConfig(FXObject* sender, FXSelector sel, v
         // get netedit config file
         auto neteditConfigFile = myFileBucketHandler->getDefaultFilename(FileBucket::Type::NETEDIT_CONFIG);
         // configuration
-        std::ofstream out(StringUtils::transcodeToLocal(neteditConfigFile));
+        std::ofstream out(XMLSubSys::transcodeToLocal(neteditConfigFile));
         if (out.good()) {
             const auto& neteditOptions = OptionsCont::getOptions();
             // write netedit config
@@ -3592,7 +3610,7 @@ GNEApplicationWindow::onCmdSaveNeteditConfig(FXObject* sender, FXSelector sel, v
             if (myFileBucketHandler->isFilenameDefined(FileBucket::Type::SUMO_CONFIG)) {
                 // get SumoConfig file
                 const auto sumoConfigFile = myFileBucketHandler->getDefaultFilename(FileBucket::Type::SUMO_CONFIG);
-                std::ofstream sumoCfg(StringUtils::transcodeToLocal(sumoConfigFile));
+                std::ofstream sumoCfg(XMLSubSys::transcodeToLocal(sumoConfigFile));
                 if (sumoCfg.good()) {
                     // before saving sumo config, check if force enable option junction-taz
                     if (myNet->getAttributeCarriers()->requireJunctionTazOption()) {
@@ -3646,6 +3664,9 @@ GNEApplicationWindow::onUpdSaveNeteditConfig(FXObject* sender, FXSelector, void*
     // check if enable or disable save netedit config button
     if (myNet == nullptr) {
         sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+    } else if (myNet->getAttributeCarriers()->getEdges().size() == 0) {
+        // a config requieres at least ONE edge
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
     } else if (!myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETEDIT_CONFIG)) {
         sender->handle(this, FXSEL(SEL_COMMAND, ID_ENABLE), nullptr);
     } else if (!myNet->getSavingStatus()->isNeteditConfigSaved()) {
@@ -3667,11 +3688,21 @@ GNEApplicationWindow::onUpdSaveNeteditConfig(FXObject* sender, FXSelector, void*
 
 
 long
-GNEApplicationWindow::onCmdSaveSumoConfig(FXObject* sender, FXSelector sel, void* ptr) {
-    // first check if netedit config is already saved
-    if (myNet->getSavingStatus()->isSumoConfigSaved()) {
-        return 1;
+GNEApplicationWindow::onUpdSaveNeteditConfigAs(FXObject* sender, FXSelector, void*) {
+    // check if enable or disable save netedit config button
+    if (myNet == nullptr) {
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+    } else if (myNet->getAttributeCarriers()->getEdges().size() == 0) {
+        // a config requieres at least ONE edge
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+    } else {
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_ENABLE), nullptr);
     }
+}
+
+
+long
+GNEApplicationWindow::onCmdSaveSumoConfig(FXObject* sender, FXSelector sel, void* ptr) {
     // obtain netedit option container
     auto& neteditOptions = OptionsCont::getOptions();
     // reset containers
@@ -3705,7 +3736,7 @@ GNEApplicationWindow::onCmdSaveSumoConfig(FXObject* sender, FXSelector sel, void
         // get SumoConfig file
         const auto sumoConfigFile = myFileBucketHandler->getDefaultFilename(FileBucket::Type::SUMO_CONFIG);
         // confinguration
-        std::ofstream out(StringUtils::transcodeToLocal(sumoConfigFile));
+        std::ofstream out(XMLSubSys::transcodeToLocal(sumoConfigFile));
         if (out.good()) {
             // before saving sumo config, check if force enable option junction-taz
             if (myNet->getAttributeCarriers()->requireJunctionTazOption()) {
@@ -3722,7 +3753,7 @@ GNEApplicationWindow::onCmdSaveSumoConfig(FXObject* sender, FXSelector sel, void
                 // get netedit config file
                 auto neteditConfigFile = myFileBucketHandler->getDefaultFilename(FileBucket::Type::NETEDIT_CONFIG);
                 // configuration
-                std::ofstream neteditCfg(StringUtils::transcodeToLocal(neteditConfigFile));
+                std::ofstream neteditCfg(XMLSubSys::transcodeToLocal(neteditConfigFile));
                 if (neteditCfg.good()) {
                     // write netedit config
                     neteditOptions.writeConfiguration(neteditCfg, true, false, false, myFileBucketHandler->getDefaultFolder(FileBucket::Type::NETEDIT_CONFIG), true);
@@ -3766,6 +3797,7 @@ GNEApplicationWindow::onCmdSaveSumoConfigAs(FXObject* sender, FXSelector sel, vo
         if (myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETEDIT_CONFIG)) {
             return onCmdSaveNeteditConfig(sender, sel, ptr);
         } else {
+            myNet->getSavingStatus()->requireSaveSumoConfig();
             return onCmdSaveSumoConfig(sender, sel, ptr);
         }
     } else {
@@ -3778,6 +3810,9 @@ long
 GNEApplicationWindow::onUpdSaveSumoConfig(FXObject* sender, FXSelector, void*) {
     if (myNet == nullptr) {
         return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+    } else if (myNet->getAttributeCarriers()->getEdges().size() == 0) {
+        // a config requieres at least ONE edge
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
     } else if (!myFileBucketHandler->isFilenameDefined(FileBucket::Type::SUMO_CONFIG)) {
         return sender->handle(this, FXSEL(SEL_COMMAND, ID_ENABLE), nullptr);
     } else if (!myNet->getSavingStatus()->isSumoConfigSaved()) {
@@ -3787,6 +3822,18 @@ GNEApplicationWindow::onUpdSaveSumoConfig(FXObject* sender, FXSelector, void*) {
     }
 }
 
+
+long
+GNEApplicationWindow::onUpdSaveSumoConfigAs(FXObject* sender, FXSelector, void*) {
+    if (myNet == nullptr) {
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+    } else if (myNet->getAttributeCarriers()->getEdges().size() == 0) {
+        // a config requieres at least ONE edge
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+    } else {
+        return sender->handle(this, FXSEL(SEL_COMMAND, ID_ENABLE), nullptr);
+    }
+}
 
 long
 GNEApplicationWindow::onCmdSaveTLSPrograms(FXObject* obj, FXSelector sel, void* ptr) {
@@ -5084,7 +5131,7 @@ GNEApplicationWindow::loadTrafficLights(const std::string operation) {
             update();
         }
         // requiere save network
-        myNet->getSavingStatus()->requireSaveNetwork();
+        myNet->requireRecompute();
         // if defined, require save netedit config
         if (myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETEDIT_CONFIG)) {
             myNet->getSavingStatus()->requireSaveNeteditConfig();
@@ -5124,7 +5171,7 @@ GNEApplicationWindow::loadEdgeTypes(const std::string operation) {
         // refresh edge type selector
         myViewNet->getViewParent()->getCreateEdgeFrame()->getEdgeTypeSelector()->refreshEdgeTypeSelector();
         // requiere save network
-        myNet->getSavingStatus()->requireSaveNetwork();
+        myNet->requireRecompute();
         // if defined, require save netedit config
         if (myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETEDIT_CONFIG)) {
             myNet->getSavingStatus()->requireSaveNeteditConfig();

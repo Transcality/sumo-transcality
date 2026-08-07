@@ -20,14 +20,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-14, macos-15]
-        jps_version: ['v1.3.1']
     runs-on: ${{ matrix.os }}
     env:
       CCACHE_COMPILERTYPE: clang
 
     steps:
     - name: Cloning SUMO
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: sumo
         fetch-depth: 0
@@ -37,7 +36,7 @@ jobs:
 
     - name: ccache
       if: github.event_name != 'schedule'
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         key: ${{ matrix.os }}
 

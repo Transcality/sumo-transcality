@@ -31,6 +31,10 @@
 // member method definitions
 // ===========================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNEVariableSpeedSign::GNEVariableSpeedSign(GNENet* net) :
     GNEAdditional(net, SUMO_TAG_VSS),
     GNEAdditionalSquared(this) {
@@ -47,6 +51,9 @@ GNEVariableSpeedSign::GNEVariableSpeedSign(const std::string& id, GNENet* net, F
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GNEVariableSpeedSign::~GNEVariableSpeedSign() {
@@ -325,9 +332,15 @@ GNEVariableSpeedSign::setAttribute(SumoXMLAttr key, const std::string& value) {
 void
 GNEVariableSpeedSign::rebuildVSSSymbols(const std::string& value, GNEUndoList* undoList) {
     undoList->begin(this, ("change " + getTagStr() + " attribute").c_str());
-    // drop all additional children
-    while (getChildAdditionals().size() > 0) {
-        undoList->add(new GNEChange_Additional(getChildAdditionals().front(), false), true);
+    // drop all additional symbol children
+    std::vector<GNEAdditional*> symbols;
+    for (const auto symbol : getChildAdditionals()) {
+        if (symbol->getTagProperty()->isSymbol()) {
+            symbols.push_back(symbol);
+        }
+    }
+    for (const auto symbol : symbols) {
+        undoList->add(new GNEChange_Additional(symbol, false), true);
     }
     // get lane vector
     const std::vector<GNELane*> lanes = parse<std::vector<GNELane*> >(myNet, value);
