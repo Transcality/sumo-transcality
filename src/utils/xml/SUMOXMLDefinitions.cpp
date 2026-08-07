@@ -28,6 +28,7 @@
 #include <cassert>
 #include <utils/common/StringTokenizer.h>
 #include <utils/common/StringUtils.h>
+#include <utils/common/Translation.h>
 
 #include "SUMOXMLDefinitions.h"
 
@@ -213,6 +214,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "rngLane",                                SUMO_TAG_RNGLANE },
     { "vehicleTransfer",                        SUMO_TAG_VEHICLETRANSFER },
     { "device",                                 SUMO_TAG_DEVICE },
+    { "cfmVars",                                SUMO_TAG_CFM_VARIABLES },
     { "rem",                                    SUMO_TAG_REMINDER },
     // Cars
     { "carFollowing-IDM",                       SUMO_TAG_CF_IDM },
@@ -918,6 +920,13 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "resCoef_constant",               SUMO_ATTR_RESISTANCE_COEFFICIENT_CONSTANT },
     { "resCoef_linear",                 SUMO_ATTR_RESISTANCE_COEFFICIENT_LINEAR },
     { "resCoef_quadratic",              SUMO_ATTR_RESISTANCE_COEFFICIENT_QUADRATIC },
+    { "curveResistance",                SUMO_ATTR_CURVE_RESISTANCE },
+    { "curveIntegration",               SUMO_ATTR_CURVE_INTEGRATION },
+    { "roeckl_sharp_radius",            SUMO_ATTR_ROECKL_SHARP_RADIUS },
+    { "roeckl_numerator",               SUMO_ATTR_ROECKL_NUMERATOR },
+    { "roeckl_numerator_sharp",         SUMO_ATTR_ROECKL_NUMERATOR_SHARP },
+    { "roeckl_offset",                  SUMO_ATTR_ROECKL_OFFSET },
+    { "roeckl_offset_sharp",            SUMO_ATTR_ROECKL_OFFSET_SHARP },
     /// @}
 
     /// @name Lane changing model attributes
@@ -1101,6 +1110,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "contPos",                SUMO_ATTR_CONTPOS },
     { "timeThreshold",          SUMO_ATTR_HALTING_TIME_THRESHOLD },
     { "speedThreshold",         SUMO_ATTR_HALTING_SPEED_THRESHOLD },
+    { "speedThresholdRelative", SUMO_ATTR_HALTING_SPEED_THRESHOLD_RELATIVE },
     { "jamThreshold",           SUMO_ATTR_JAM_DIST_THRESHOLD },
     { "show",                   SUMO_ATTR_SHOW_DETECTOR },
     // E3 detector
@@ -1400,6 +1410,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "pastBikeSpeed",     SUMO_ATTR_PASTBIKESPEED },
     { "loaderTime",        SUMO_ATTR_LOADERTIME },
     { "entryPos",          SUMO_ATTR_ENTRYPOS },
+    { "routeLength",       SUMO_ATTR_ROUTELENGTH },
     // @}
 
     //@name meso edge type attributes

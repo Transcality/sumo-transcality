@@ -67,6 +67,9 @@ public:
     /// @brief check if option was modified
     bool isOptionModified() const;
 
+    /// @brief check if option require save network
+    bool requireSaveNetwork() const;
+
     /// @brief reset options
     void resetAllOptions();
 
@@ -112,6 +115,9 @@ protected:
     /// @brief flag for check if options was modified
     bool myOptionsModified = false;
 
+    /// @brief flag for check if options require save network
+    bool myRequireSaveNetwork = false;
+
 private:
     /// @brief checkable button for show toolTips
     MFXCheckableButton* myShowToolTipsMenu = nullptr;
@@ -141,7 +147,7 @@ private:
     const std::set<std::string> myIgnoredTopics = {"Configuration"};
 
     /// @brief ignores entries
-    const std::set<std::string> myIgnoredEntries = {"geometry.remove", "edges.join", "geometry.split", "ramps.guess", "ramps.set"};
+    const std::set<std::string> myCriticalEntries = {"geometry.remove", "edges.join", "geometry.split", "ramps.guess", "ramps.set"};
 
     /// @brief update visible entries by selected topic
     bool updateVisibleEntriesByTopic();

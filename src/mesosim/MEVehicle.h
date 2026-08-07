@@ -172,6 +172,10 @@ public:
         return 0;
     }
 
+    bool instantStopping() const {
+        return true;
+    }
+
     ///@brief ends the current stop and performs loading/unloading
     void processStop();
 
@@ -210,6 +214,19 @@ public:
      */
     inline SUMOTime getEventTime() const {
         return myEventTime;
+    }
+
+    /** @brief Sets the minimum time at which the vehicle leaves its current segment (this includes planned stops)
+     * @param[in] t The leaving time
+     */
+    inline void setUnqueuedEventTime(SUMOTime t) {
+        myUnqueuedEventTime = t;
+    }
+    /** @brief Returns the minimum time at which the vehicle leaves its current segment
+     * @return The minimum time the vehicle could leave its segment at
+     */
+    inline SUMOTime getUnqueuedEventTime() const {
+        return myUnqueuedEventTime;
     }
 
 
@@ -291,6 +308,11 @@ public:
         return MAX2(SUMOTime(0), myEventTime - myBlockTime);
     }
 
+    /// @brief Returns the time lost compare to free flow
+    inline SUMOTime getQueuingTimeLoss() const {
+        return MAX2(SUMOTime(0), myEventTime - myUnqueuedEventTime);
+    }
+
     inline SUMOTime getTimeLoss() const {
         // slow-downs while driving are not modelled
         return getWaitingTime();
@@ -347,6 +369,14 @@ public:
         return myInfluencer != nullptr;
     }
 
+    void markJammed(bool jammed) {
+        myWasJammed = jammed;
+    }
+
+    bool wasJammed() const {
+        return myWasJammed;
+    }
+
     /// @name state io
     //@{
 
@@ -374,6 +404,12 @@ protected:
 
     /// @brief The time at which the vehicle was blocked on its current segment
     SUMOTime myBlockTime;
+
+    /// @brief The expected time of leaving the segment when following the leader at free-flow headway
+    SUMOTime myUnqueuedEventTime;
+
+    /// @brief Whether this vehicle was jammed on it's previous normal segment
+    bool myWasJammed;
 
     /// @brief An instance of a velocity/lane influencing instance; built in "getInfluencer"
     BaseInfluencer* myInfluencer;

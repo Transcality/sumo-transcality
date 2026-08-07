@@ -30,6 +30,8 @@
 #include <microsim/MSLink.h>
 #include <microsim/MSMoveReminder.h>
 #include <microsim/traffic_lights/MSTrafficLightLogic.h>
+#include <microsim/traffic_lights/MSDriveWay.h>
+#include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/output/MSXMLRawOut.h>
 #include <microsim/output/MSDetectorFileOutput.h>
 #include <microsim/MSVehicleControl.h>
@@ -331,22 +333,9 @@ MESegment::hasSpaceFor(const MEVehicle* const veh, const SUMOTime entryTime, int
                 if (q.allows(svc) && q.size() < minSize) {
                     if (init) {
                         // regular insertions and initial insertions must respect different constraints:
-                        // - regular insertions must respect entryBlockTime
-                        // - initial insertions should not cause additional jamming
-                        // - inserted vehicle should be able to continue at the current speed
-                        if (veh->getInsertionChecks() == (int)InsertionCheck::NONE) {
+                        if (veh->getInsertionChecks() == (int)InsertionCheck::NONE || hasSpaceForInsertion(q, i, newOccupancy, entryTime)) {
                             qIdx = i;
                             minSize = q.size();
-                        } else if (q.getOccupancy() <= myJamThreshold && !hasBlockedLeader() && !myTLSPenalty) {
-                            if (newOccupancy <= myJamThreshold) {
-                                qIdx = i;
-                                minSize = q.size();
-                            }
-                        } else {
-                            if (newOccupancy <= jamThresholdForSpeed(getMeanSpeed(false), -1)) {
-                                qIdx = i;
-                                minSize = q.size();
-                            }
                         }
                     } else if (entryTime >= q.getEntryBlockTime()) {
                         qIdx = i;
@@ -366,10 +355,46 @@ MESegment::hasSpaceFor(const MEVehicle* const veh, const SUMOTime entryTime, int
 
 
 bool
+MESegment::hasSpaceForInsertion(const Queue& q, int /*qIdx*/, double newOccupancy, SUMOTime /*entryTime*/) const {
+    // - regular insertions must respect entryBlockTime
+    // - initial insertions should not cause additional jamming
+    // - inserted vehicle should be able to continue at the current speed
+    if (q.getOccupancy() <= myJamThreshold && !hasBlockedLeader() && !myTLSPenalty) {
+        return newOccupancy <= myJamThreshold;
+    } else {
+        return newOccupancy <= jamThresholdForSpeed(getMeanSpeed(false), -1);
+    }
+}
+
+
+bool
 MESegment::initialise(MEVehicle* veh, SUMOTime time) {
     int qIdx = 0;
     if (hasSpaceFor(veh, time, qIdx, true) == time) {
+        const bool isRail = veh->isRail();
+        // see MSLane::isInsertionSuccess
+        if (isRail && veh->getInsertionChecks() != (int)InsertionCheck::NONE
+                && veh->getParameter().departProcedure != DepartDefinition::SPLIT
+                && MSRailSignalControl::isSignalized(veh->getVClass())
+                && isRailwayOrShared(myEdge.getPermissions())) {
+            const MSDriveWay* dw = MSDriveWay::getDepartureDriveway(veh);
+            MSEdgeVector occupied;
+            if (dw->foeDriveWayOccupied(false, veh, occupied)) {
+                myEdge.getLanes()[0]->setParameter("insertionBlocked:" + veh->getID(), dw->getID());
+                return false;
+            }
+        }
         receive(veh, qIdx, time, true);
+        if (isRail) {
+            myEdge.getLanes()[0]->unsetParameter("insertionConstraint:" + veh->getID());
+            //unsetParameter("insertionOrder:" + veh->getID());
+            //unsetParameter("insertionBlocked:" + veh->getID());
+            //// rail_signal (not traffic_light) requires approach information for
+            //// switching correctly at the start of the next simulation step
+            //if (firstRailSignal != nullptr && firstRailSignal->getJunction()->getType() == SumoXMLNodeType::RAIL_SIGNAL) {
+            //    veh->registerInsertionApproach(firstRailSignal, firstRailSignalDist);
+            //}
+        }
         // we can check only after insertion because insertion may change the route via devices
         std::string msg;
         if (MSGlobals::gCheckRoutes && !veh->hasValidRoute(msg)) {
@@ -430,6 +455,7 @@ MESegment::removeCar(MEVehicle* v, SUMOTime leaveTime, const MSMoveReminder::Not
     myNumVehicles--;
     myEdge.lock();
     MEVehicle* nextLeader = q.remove(v);
+    myEdge.invalidateMesoCache();
     myEdge.unlock();
     return nextLeader;
 }
@@ -536,6 +562,25 @@ MESegment::limitedControlOverride(const MSLink* link) const {
 }
 
 
+SUMOTime
+MESegment::computeHeadway(Queue& /*q*/, const Queue& qNext, const MESegment* const next, const MEVehicle* veh) const {
+    const bool nextFree = qNext.getOccupancy() <= next->myJamThreshold;
+    const SUMOTime tau = (!veh->wasJammed()
+            ? (nextFree ? myTau_ff : myTau_fj)
+            : (nextFree ? myTau_jf : getTauJJ((double)qNext.size(), next->myQueueCapacity, next->myJamThreshold)));
+    assert(tau >= 0);
+    SUMOTime headway = tauWithVehLength(tau, veh->getVehicleType().getLengthWithGap(), veh->getVehicleType().getCarFollowModel().getHeadwayTime());
+    if (myTLSPenalty) {
+        const MSLink* const tllink = getLink(veh, true);
+        if (tllink != nullptr && tllink->isTLSControlled()) {
+            assert(tllink->getGreenFraction() > 0);
+            headway = (SUMOTime)((double)headway / tllink->getGreenFraction());
+        }
+    }
+    return headway;
+}
+
+
 void
 MESegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) {
     Queue& q = myQueues[veh->getQueIndex()];
@@ -549,27 +594,19 @@ MESegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOT
     }
     MEVehicle* lc = removeCar(veh, time, reason); // new leaderCar
     q.setBlockTime(time);
+    if (myEdge.isNormal() && myCapacity >= 22.5 ) {
+        veh->markJammed(q.getOccupancy() > myJamThreshold);
+    }
     if (!isInvalid(next)) {
-        const bool nextFree = next->myQueues[nextQIdx].getOccupancy() <= next->myJamThreshold;
-        const SUMOTime tau = (q.getOccupancy() <= myJamThreshold
-                              ? (nextFree ? myTau_ff : myTau_fj)
-                              : (nextFree ? myTau_jf : getTauJJ((double)next->myQueues[nextQIdx].size(), next->myQueueCapacity, next->myJamThreshold)));
-        assert(tau >= 0);
-        myLastHeadway = tauWithVehLength(tau, veh->getVehicleType().getLengthWithGap(), veh->getVehicleType().getCarFollowModel().getHeadwayTime());
-        if (myTLSPenalty) {
-            const MSLink* const tllink = getLink(veh, true);
-            if (tllink != nullptr && tllink->isTLSControlled()) {
-                assert(tllink->getGreenFraction() > 0);
-                myLastHeadway = (SUMOTime)((double)myLastHeadway / tllink->getGreenFraction());
-            }
-        }
-        q.setBlockTime(q.getBlockTime() + myLastHeadway);
+        myLastHeadway = computeHeadway(q, next->myQueues[nextQIdx], next, veh);
+        q.setBlockTime(time + myLastHeadway);
     }
     if (lc != nullptr) {
         lc->setEventTime(MAX2(lc->getEventTime(), q.getBlockTime()));
         MSGlobals::gMesoNet->addLeaderCar(lc, getLink(lc));
     }
 }
+
 
 SUMOTime
 MESegment::getTauJJ(double nextQueueSize, double nextQueueCapacity, double nextJamThreshold) const {
@@ -669,6 +706,7 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
                 cars.insert(cars.begin(), veh);
             }
         }
+        myEdge.invalidateMesoCache();
         myEdge.unlock();
         myNumVehicles++;
         if (!isDepart && !isTeleport) {
@@ -678,6 +716,7 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
         }
         q.setOccupancy(MIN2(myQueueCapacity, q.getOccupancy() + veh->getVehicleType().getLengthWithGap()));
         veh->setEventTime(tleave);
+        veh->setUnqueuedEventTime(tleave);
         veh->setSegment(this, qIdx);
     }
     addReminders(veh);

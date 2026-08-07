@@ -22,6 +22,12 @@ import os
 import sys
 from collections import defaultdict
 from xml.sax import make_parser, handler
+from datetime import datetime
+
+SUMO_HOME = os.environ.get('SUMO_HOME',
+                           os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+sys.path.append(os.path.join(SUMO_HOME, 'tools'))
+from sumolib.miscutils import parseTime  # noqa
 
 MAX_POS_DEVIATION = 10
 
@@ -41,7 +47,20 @@ def relError(actual, expected):
         return (actual - expected) / expected
 
 
-def parseFlowFile(flowFile, detCol="Detector", timeCol="Time", flowCol="qPKW", speedCol="vPKW", begin=None, end=None):
+def parseFormattedTime(value, timeFormat, timeOffset=None):
+    if timeFormat is None:
+        return parseTime(value) - (0 if timeOffset is None else parseTime(timeOffset))
+    else:
+        dt = datetime.strptime(value, timeFormat)
+        if timeOffset is None:
+            offset = datetime(dt.year, 1, 1)
+        else:
+            offset = datetime.strptime(timeOffset, timeFormat)
+        return (dt - offset).total_seconds()
+
+
+def parseFlowFile(flowFile, detCol="Detector", timeCol="Time", flowCol="qPKW", speedCol="vPKW",
+                  begin=None, end=None, timeFormat=None, timeOffset=None):
     detIdx = -1
     flowIdx = -1
     speedIdx = -1
@@ -66,7 +85,7 @@ def parseFlowFile(flowFile, detCol="Detector", timeCol="Time", flowCol="qPKW", s
                     curTime = None
                     timeIsValid = True
                 else:
-                    curTime = float(flowDef[timeIdx])
+                    curTime = parseFormattedTime(flowDef[timeIdx], timeFormat, timeOffset)
                     timeIsValid = (end is None and curTime == begin) or (
                         curTime >= begin and curTime < end)
                 if timeIsValid:
@@ -78,6 +97,7 @@ class DetectorGroupData:
 
     def __init__(self, pos, isValid, id=None, detType=None):
         self.ids = []
+        self.lanes = set()
         self.pos = pos
         self.isValid = isValid
         self.totalFlow = 0
@@ -152,18 +172,19 @@ class DetectorGroupData:
 
 class DetectorReader(handler.ContentHandler):
 
-    def __init__(self, detFile=None, laneMap=None):
+    def __init__(self, detFile=None, laneMap=None, warnDoubleLane=False):
         self._edge2DetData = defaultdict(list)
         self._det2edge = {}
         self._currentGroup = None
         self._currentEdge = None
         self._laneMap = {} if laneMap is None else laneMap
+        self._warnDoubleLane = warnDoubleLane
         if detFile:
             parser = make_parser()
             parser.setContentHandler(self)
             parser.parse(detFile)
 
-    def addDetector(self, id, pos, edge, detType):
+    def addDetector(self, id, pos, edge, detType, lane=None):
         if id in self._det2edge:
             print("Warning! Detector %s already known." % id, file=sys.stderr)
             return
@@ -172,15 +193,20 @@ class DetectorReader(handler.ContentHandler):
         if self._currentGroup:
             self._currentGroup.ids.append(id)
         else:
-            haveGroup = False
+            group = None
             for data in self._edge2DetData[edge]:
                 if abs(data.pos - pos) <= MAX_POS_DEVIATION:
                     data.ids.append(id)
-                    haveGroup = True
+                    group = data
                     break
-            if not haveGroup:
-                self._edge2DetData[edge].append(
-                    DetectorGroupData(pos, True, id, detType))
+            if group is None:
+                group = DetectorGroupData(pos, True, id, detType)
+                self._edge2DetData[edge].append(group)
+            if lane is not None:
+                if self._warnDoubleLane and lane in group.lanes:
+                    print("Duplicate detectors ('%s') on lane '%s' at pos %s" % (
+                        id, lane, pos), file=sys.stderr)
+                group.lanes.add(lane)
         self._det2edge[id] = edge
 
     def getEdgeDetGroups(self, edge):
@@ -190,7 +216,7 @@ class DetectorReader(handler.ContentHandler):
         if name == 'detectorDefinition' or name == 'e1Detector' or name == 'inductionLoop':
             detType = attrs['type'] if 'type' in attrs else None
             self.addDetector(attrs['id'], float(attrs['pos']),
-                             self._laneMap.get(attrs['lane'], self._currentEdge), detType)
+                             self._laneMap.get(attrs['lane'], self._currentEdge), detType, attrs['lane'])
         elif name == 'group':
             self._currentGroup = DetectorGroupData(float(attrs['pos']),
                                                    attrs.get('valid', "1") == "1")
@@ -221,11 +247,13 @@ class DetectorReader(handler.ContentHandler):
                 group.clearFlow(begin, interval)
 
     def readFlows(self, flowFile, det="Detector", flow="qPKW",
-                  speed=None, time=None, timeVal=None, timeMax=None, addDetectors=False):
+                  speed=None, time=None, timeVal=None, timeMax=None,
+                  addDetectors=False, timeFormat=None, timeOffset=None):
         values = parseFlowFile(
             flowFile,
             detCol=det, timeCol=time, flowCol=flow,
-            speedCol=speed, begin=timeVal, end=timeMax)
+            speedCol=speed, begin=timeVal, end=timeMax, timeFormat=timeFormat,
+            timeOffset=timeOffset)
         hadFlow = False
         for det, time, flow, speed in values:
             if addDetectors and det not in self._det2edge:
@@ -244,7 +272,8 @@ class DetectorReader(handler.ContentHandler):
                 group.addDetFlowTime(time, flow, speed)
         return hadFlow
 
-    def findTimes(self, flowFile, tMin, tMax, det="Detector", time="Time"):
+    def findTimes(self, flowFile, tMin, tMax, det="Detector", time="Time",
+                  timeFormat=None, timeOffset=None):
         timeIdx = 1
         with open(flowFile) as f:
             for fl in f:
@@ -255,7 +284,7 @@ class DetectorReader(handler.ContentHandler):
                     if time in flowDef:
                         timeIdx = flowDef.index(time)
                 elif len(flowDef) > timeIdx:
-                    curTime = float(flowDef[timeIdx])
+                    curTime = parseFormattedTime(flowDef[timeIdx], timeFormat, timeOffset)
                     if tMin is None or tMin > curTime:
                         tMin = curTime
                     if tMax is None or tMax < curTime:

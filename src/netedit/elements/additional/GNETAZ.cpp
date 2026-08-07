@@ -43,23 +43,33 @@ const double GNETAZ::myHintSizeSquared = 0.64;
 // member method definitions
 // ===========================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNETAZ::GNETAZ(GNENet* net) :
     GNEAdditional(net, SUMO_TAG_TAZ),
-    TesselatedPolygon("", "", RGBColor::BLACK, {}, false, false, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, ""),
+    TesselatedPolygon("", "", RGBColor::BLACK, {}, false, false, DEFAULT_LINEWIDTH, DEFAULT_LAYER,
+DEFAULT_ANGLE, DEFAULT_IMG_FILE, "", DEFAULT_HEIGHT, DEFAULT_PARAMETERS),
 myMoveElementShape(new GNEMoveElementShape(this)) {
 }
 
 
-GNETAZ::GNETAZ(const std::string& id, GNENet* net, FileBucket* fileBucket, const PositionVector& shape, const Position& center, const bool fill,
-               const RGBColor& color, const std::string& name, const Parameterised::Map& parameters) :
+GNETAZ::GNETAZ(const std::string& id, GNENet* net, FileBucket* fileBucket, const PositionVector& shape,
+               const Position& center, const bool fill, const RGBColor& color, const std::string& name,
+               const Parameterised::Map& parameters) :
     GNEAdditional(id, net, SUMO_TAG_TAZ, fileBucket, name),
-    TesselatedPolygon(id, "", color, shape, false, fill, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, "", parameters),
+    TesselatedPolygon(id, "", color, shape, false, fill, DEFAULT_LINEWIDTH, DEFAULT_LAYER,
+                      DEFAULT_ANGLE, DEFAULT_IMG_FILE, "", DEFAULT_HEIGHT, parameters),
     myMoveElementShape(new GNEMoveElementShape(this, myShape, center, true)) {
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
     // update geometry
     updateGeometry();
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GNETAZ::~GNETAZ() {
@@ -109,8 +119,9 @@ GNETAZ::writeAdditional(OutputDevice& device) const {
     writeAdditionalAttributes(device);
     // write specific attributes
     device.writeAttr(SUMO_ATTR_SHAPE, myShape);
-    if (myMoveElementShape->myCenterPosition != myShape.getCentroid()) {
-        device.writeAttr(SUMO_ATTR_CENTER, myMoveElementShape->myCenterPosition);
+    const auto center = myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER);
+    if ((center != myShape.getCentroid()) && (center != Position::INVALID)) {
+        device.writeAttr(SUMO_ATTR_CENTER, center);
     }
     if (myFill) {
         device.writeAttr(SUMO_ATTR_FILL, true);
@@ -206,8 +217,8 @@ GNETAZ::updateCenteringBoundary(const bool updateGrid) {
     // use shape as boundary
     myAdditionalBoundary = myShape.getBoxBoundary();
     // add center
-    if (myMoveElementShape->myCenterPosition != Position::INVALID) {
-        myAdditionalBoundary.add(myMoveElementShape->myCenterPosition);
+    if (myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER) != Position::INVALID) {
+        myAdditionalBoundary.add(myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER));
     }
     // grow boundary
     myAdditionalBoundary.grow(5);
@@ -256,14 +267,13 @@ GNETAZ::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
 
 void
 GNETAZ::drawGL(const GUIVisualizationSettings& s) const {
+    // get exaggeration
+    const double TAZExaggeration = getExaggeration(s);
     // first check if poly can be drawn
-    if (myNet->getViewNet()->getDemandViewOptions().showShapes() &&
-            GUIPolygon::checkDraw(s, this, this)) {
+    if (myNet->getViewNet()->getDemandViewOptions().showShapes() && (TAZExaggeration > 0)) {
         // draw boundary
         const auto boundary = getCenteringBoundary();
         GLHelper::drawBoundary(s, boundary);
-        // get exaggeration
-        const double TAZExaggeration = getExaggeration(s);
         // get detail level
         const auto d = s.getDetailLevel(TAZExaggeration);
         // draw geometry only if we'rent in drawForObjectUnderCursor mode
@@ -312,6 +322,7 @@ GNETAZ::drawGL(const GUIVisualizationSettings& s) const {
                     const double geometryPointSize = s.neteditSizeSettings.polygonGeometryPointRadius * (moveMode ? 1 : 0.5);
                     // draw geometry points
                     GUIGeometry::drawGeometryPoints(d, myAdditionalGeometry.getShape(), darkerColor, geometryPointSize, TAZExaggeration,
+                                                    myNet->getViewNet()->getNetworkViewOptions().showPolygonSymbols(),
                                                     myNet->getViewNet()->getNetworkViewOptions().editingElevation());
                     // draw dotted contours for geometry points if we're in move mode
                     if (moveMode) {
@@ -320,30 +331,35 @@ GNETAZ::drawGL(const GUIVisualizationSettings& s) const {
                     }
                 }
             }
-            // draw center
-            const double centerRadius = s.neteditSizeSettings.polygonGeometryPointRadius * TAZExaggeration;
-            // push center matrix
-            GLHelper::pushMatrix();
-            // move to vertex
-            glTranslated(myMoveElementShape->myCenterPosition.x(), myMoveElementShape->myCenterPosition.y(), GLO_JUNCTION + 0.3);
-            // set color
-            GLHelper::setColor(darkerColor);
-            // draw circle
-            GLHelper::drawFilledCircleDetailled(d, centerRadius);
-            // move to front
-            glTranslated(0, 0, 0.1);
-            // set color
-            GLHelper::setColor(color);
-            // draw circle
-            GLHelper::drawFilledCircleDetailled(d, centerRadius * 0.8);
-            // pop center matrix
-            GLHelper::popMatrix();
+            // declare center
+            Position center = myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER);
+            // only draw if it's valid
+            if (center != Position::INVALID) {
+                // draw center
+                const double centerRadius = s.neteditSizeSettings.polygonGeometryPointRadius * TAZExaggeration;
+                // push center matrix
+                GLHelper::pushMatrix();
+                // move to vertex
+                glTranslated(center.x(), center.y(), GLO_JUNCTION + 0.3);
+                // set color
+                GLHelper::setColor(darkerColor);
+                // draw circle
+                GLHelper::drawFilledCircleDetailed(d, centerRadius);
+                // move to front
+                glTranslated(0, 0, 0.1);
+                // set color
+                GLHelper::setColor(color);
+                // draw circle
+                GLHelper::drawFilledCircleDetailed(d, centerRadius * 0.8);
+                // pop center matrix
+                GLHelper::popMatrix();
+            }
             // pop layer matrix
             GLHelper::popMatrix();
             // draw lock icon
             GNEViewNetHelper::LockIcon::drawLockIcon(d, this, getType(), getPositionInView(), TAZExaggeration);
             // draw name
-            drawName(myMoveElementShape->myCenterPosition, s.scale, s.polyName, s.angle);
+            drawName(myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER), s.scale, s.polyName, s.angle);
             // check if draw poly type
             if (s.polyType.show(this)) {
                 const Position p = myAdditionalGeometry.getShape().getPolygonCenter() + Position(0, -0.6 * s.polyType.size / s.scale);
@@ -365,7 +381,7 @@ GNETAZ::drawGL(const GUIVisualizationSettings& s) const {
             calculateContourPolygons(s, d, getShapeLayer(), TAZExaggeration, getFill());
         }
         // calculate contour for TAZ Center
-        myTAZCenterContour.calculateContourCircleShape(s, d, this, myMoveElementShape->myCenterPosition, s.neteditSizeSettings.polygonGeometryPointRadius, getShapeLayer(), TAZExaggeration, nullptr);
+        myTAZCenterContour.calculateContourCircleShape(s, d, this, myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER), s.neteditSizeSettings.polygonGeometryPointRadius, getShapeLayer(), TAZExaggeration, nullptr);
     }
 }
 
@@ -378,10 +394,10 @@ GNETAZ::getAttribute(SumoXMLAttr key) const {
         case SUMO_ATTR_SHAPE:
             return toString(myShape);
         case SUMO_ATTR_CENTER:
-            if (myMoveElementShape->myCenterPosition == myShape.getCentroid()) {
+            if (myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER) == myShape.getCentroid()) {
                 return "";
             } else {
-                return toString(myMoveElementShape->myCenterPosition);
+                return toString(myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER));
             }
         case SUMO_ATTR_COLOR:
             return toString(getShapeColor());
@@ -465,7 +481,7 @@ Position
 GNETAZ::getAttributePosition(SumoXMLAttr key) const {
     switch (key) {
         case SUMO_ATTR_CENTER:
-            return myMoveElementShape->myCenterPosition;
+            return myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER);
         case GNE_ATTR_TAZ_CENTROID:
             return myShape.getCentroid();
         default:
@@ -516,8 +532,15 @@ GNETAZ::isValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_SHAPE:
             if (value.empty()) {
                 return false;
+            } else if (canParse<PositionVector>(value)) {
+                const auto shape = parse<PositionVector>(value);
+                if (shape.front() != shape.back()) {
+                    return shape.size() >= 3;
+                } else {
+                    return shape.size() >= 4;
+                }
             } else {
-                return canParse<PositionVector>(value);
+                return false;
             }
         case SUMO_ATTR_CENTER:
             if (value.empty()) {
@@ -622,7 +645,7 @@ GNETAZ::setAttribute(SumoXMLAttr key, const std::string& value) {
             setAdditionalID(value);
             break;
         case SUMO_ATTR_SHAPE: {
-            const bool updateCenter = (myMoveElementShape->myCenterPosition == myShape.getCentroid());
+            const bool updateCenter = (myMoveElementShape->getMovingAttributePosition(SUMO_ATTR_CENTER) == myShape.getCentroid());
             // set new shape
             myShape = parse<PositionVector>(value);
             // always close shape
@@ -631,9 +654,9 @@ GNETAZ::setAttribute(SumoXMLAttr key, const std::string& value) {
             }
             // update center
             if (myShape.size() == 0) {
-                myMoveElementShape->myCenterPosition = Position(0, 0, 0);
+                myMoveElementShape->setMovingAttributePosition(SUMO_ATTR_CENTER, Position(0, 0, 0));
             } else if (updateCenter) {
-                myMoveElementShape->myCenterPosition = myShape.getCentroid();
+                myMoveElementShape->setMovingAttributePosition(SUMO_ATTR_CENTER, myShape.getCentroid());
             }
             // update geometry
             updateGeometry();
@@ -645,9 +668,9 @@ GNETAZ::setAttribute(SumoXMLAttr key, const std::string& value) {
         }
         case SUMO_ATTR_CENTER:
             if (value.empty()) {
-                myMoveElementShape->myCenterPosition = myShape.getCentroid();
+                myMoveElementShape->setMovingAttributePosition(SUMO_ATTR_CENTER, myShape.getCentroid());
             } else {
-                myMoveElementShape->myCenterPosition = parse<Position>(value);
+                myMoveElementShape->setMovingAttribute(SUMO_ATTR_CENTER, value);
             }
             // update geometry
             updateGeometry();

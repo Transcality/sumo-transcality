@@ -1011,6 +1011,8 @@ MSVehicle::MSVehicle(SUMOVehicleParameter* pars, ConstMSRoutePtr route,
     myAmIdling(false),
     myHaveToWaitOnNextLink(false),
     myAngle(0),
+    myRawAngle(0),
+    myLastAngle(INVALID_DOUBLE),
     myStopDist(std::numeric_limits<double>::max()),
     myStopSpeed(std::numeric_limits<double>::max()),
     myCollisionImmunity(-1),
@@ -1178,7 +1180,7 @@ MSVehicle::workOnMoveReminders(double oldPos, double newPos, double newSpeed) {
     }
     if (myEnergyParams != nullptr) {
         // TODO make the vehicle energy params a derived class which is a move reminder
-        myEnergyParams->setDynamicValues(isStopped() ? getNextStop().duration : -1, isParking(), getWaitingTime(), getAngle());
+        myEnergyParams->setDynamicValues(isStopped() ? getNextStop().duration : -1, isParking(), getWaitingTime(), getAngleDiff());
     }
 }
 
@@ -1228,6 +1230,17 @@ MSVehicle::getSlope() const {
     }
     if (myLane == nullptr) {
         return 0;
+    }
+    if (MSGlobals::gSlopeCentered) {
+        MSLane* centerLane = myLane;
+        double centerPos = getPositionOnLane() - getLength() / 2;
+        int furtherIndex = 0;
+        while (centerPos < 0 && furtherIndex < (int)myFurtherLanes.size()) {
+            centerLane = myFurtherLanes[furtherIndex];
+            centerPos += centerLane->getLength();
+            furtherIndex++;
+        }
+        return centerLane->getShape().slopeDegreeAtOffset(centerLane->interpolateLanePosToGeometryPos(centerPos));
     }
     const double posLat = myState.myPosLat; // @todo get rid of the '-'
     Position p1 = getPosition();
@@ -1431,6 +1444,21 @@ MSVehicle::getRerouteOrigin() const {
     }
     return myCurrEdge;
 }
+
+
+double
+MSVehicle::getAngleDiff() const {
+    return myLastAngle == INVALID_DOUBLE ? 0. : GeomHelper::angleDiff(myLastAngle, myAngle);
+}
+
+double
+MSVehicle::getCurveRadius() const {
+    const double angleDiff = getAngleDiff();
+    return angleDiff == 0
+        ? std::numeric_limits<double>::max()
+        : SPEED2DIST(getSpeed()) / fabs(angleDiff);
+}
+
 
 void
 MSVehicle::setAngle(double angle, bool straightenFurther) {
@@ -4565,8 +4593,7 @@ MSVehicle::processLaneAdvances(std::vector<MSLane*>& passedLanes, std::string& e
                     if (myLaneChangeModel->isChangingLanes()) {
                         if (link->getDirection() == LinkDirection::LEFT || link->getDirection() == LinkDirection::RIGHT) {
                             // abort lane change
-                            WRITE_WARNING("Vehicle '" + getID() + "' could not finish continuous lane change (turn lane) time=" +
-                                          time2string(MSNet::getInstance()->getCurrentTimeStep()) + ".");
+                            WRITE_WARNINGF("Vehicle '%' could not finish continuous lane change (turn lane) time=%.", getID(), time2string(SIMSTEP));
                             myLaneChangeModel->endLaneChangeManeuver();
                         }
                     }
@@ -4867,6 +4894,11 @@ MSVehicle::executeMove() {
             myLaneChangeModel->updateShadowLane();
         }
     }
+    // myAngle was already updated. Update lastAngle so moveRemindes have consisent angleDiff (after finalizeSpeed because it uses the old angles)
+    myLastAngle = myRawAngle;
+    // store angle before lane changing
+    myRawAngle = myAngle;
+
     workOnMoveReminders(myState.myPos - myState.myLastCoveredDist, myState.myPos, myState.mySpeed);
     // Return whether the vehicle did move to another lane
     return myLane != oldLane;
@@ -5178,6 +5210,8 @@ MSVehicle::getBackPositionOnLane(const MSLane* lane, bool calledByGetPosition) c
             //if (DEBUG_COND) std::cout << " comparing i=" << (*i)->getID() << " lane=" << lane->getID() << "\n";
             if (*i == lane) {
                 return -leftLength;
+            } else if (*i == lane->getBidiLane()) {
+                return lane->getLength() + leftLength - (calledByGetPosition ? 2 * myType->getLength() : 0);
             }
             ++i;
         }
@@ -5191,12 +5225,14 @@ MSVehicle::getBackPositionOnLane(const MSLane* lane, bool calledByGetPosition) c
             // if (DEBUG_COND) std::cout << " comparing i=" << (*i)->getID() << " lane=" << lane->getID() << "\n";
             if (*j == lane) {
                 return -leftLength;
+            } else if (*j == lane->getBidiLane()) {
+                return lane->getLength() + leftLength - (calledByGetPosition ? 2 * myType->getLength() : 0);
             }
             ++i;
             ++j;
         }
-        WRITE_WARNING("Request backPos of vehicle '" + getID() + "' for invalid lane '" + Named::getIDSecure(lane)
-                      + "' time=" + time2string(MSNet::getInstance()->getCurrentTimeStep()) + ".")
+        WRITE_WARNINGF("Request backPos of vehicle '%' for invalid lane '%' time=%.",
+                getID(), Named::getIDSecure(lane), time2string(SIMSTEP))
         SOFT_ASSERT(false);
         return  myState.myBackPos;
     }
@@ -5799,6 +5835,7 @@ MSVehicle::enterLaneAtInsertion(MSLane* enteredLane, double pos, double speed, d
     }
     if (notification != MSMoveReminder::NOTIFICATION_LOAD_STATE) {
         myAngle = computeAngle();
+        myRawAngle = myAngle;
         if (myLaneChangeModel->isOpposite()) {
             myAngle += M_PI;
         }
@@ -6258,7 +6295,7 @@ MSVehicle::updateBestLanes(bool forceRebuild, const MSLane* startLane) {
                 if (j.allowsContinuation) {
                     for (const LaneQ& m : nextLanes) {
                         if ((m.lane->allowsVehicleClass(getVClass()) || m.lane->hadPermissionChanges())
-                                && m.lane->isApproachedFrom(cE, j.lane)) {
+                                && m.lane->isApproachedFrom(j.lane, getVClass())) {
                             if (betterContinuation(bestConnectedNext, m)) {
                                 bestConnectedNext = &m;
                             }
@@ -6315,7 +6352,7 @@ MSVehicle::updateBestLanes(bool forceRebuild, const MSLane* startLane) {
                 if ((*j).allowsContinuation) {
                     int nextIndex = 0;
                     for (std::vector<LaneQ>::const_iterator m = nextLanes.begin(); m != nextLanes.end(); ++m, ++nextIndex) {
-                        if ((*m).lane->isApproachedFrom(cE, (*j).lane)) {
+                        if ((*m).lane->isApproachedFrom((*j).lane, getVClass())) {
                             if (bestDistToNeeded > abs((*m).bestLaneOffset)) {
                                 bestDistToNeeded = abs((*m).bestLaneOffset);
                                 bestThisIndex = index;
@@ -7019,6 +7056,13 @@ MSVehicle::getLatOffset(const MSLane* lane) const {
                                               <<  "\n";
 #endif
                 return getLatOffset(myLaneChangeModel->getShadowLane()) + myLaneChangeModel->getShadowFurtherLanesPosLat()[i] - myState.myPosLat;
+            } else if (shadowFurther[i]->getBidiLane() == lane) {
+#ifdef DEBUG_FURTHER
+                if (DEBUG_COND) {
+                    std::cout << "    getLatOffset veh=" << getID() << " shadowbidilane=" << lane->getID() << " i=" << i << " posLat=" << myState.myPosLat << " furtherBidiLat=" << myFurtherLanesPosLat[i] << "\n";
+                }
+#endif
+                return -2 * getLatOffset(myLaneChangeModel->getShadowLane()) + myLaneChangeModel->getShadowFurtherLanesPosLat()[i] - myState.myPosLat;
             }
         }
         // Check whether the vehicle issued a maneuverReservation on the lane.
@@ -7043,6 +7087,15 @@ MSVehicle::getLatOffset(const MSLane* lane) const {
                 }
 #endif
                 return latOffset;
+            } else if (targetLane != nullptr && targetLane->getBidiLane() == lane) {
+                const double targetDir = myLaneChangeModel->getManeuverDist() < 0 ? -1. : 1.;
+                const double latOffset = myFurtherLanesPosLat[i] - myState.myPosLat + targetDir * 0.5 * (myFurtherLanes[i]->getWidth() + targetLane->getWidth());
+#ifdef DEBUG_FURTHER
+                if (DEBUG_COND) {
+                    std::cout << "    getLatOffset veh=" << getID() << " furthertargetbidilane=" << lane->getID() << " i=" << i << " posLat=" << myState.myPosLat << " furtherBidiLat=" << myFurtherLanesPosLat[i] << "\n";
+                }
+#endif
+                return -2 * latOffset;
             }
         }
         assert(false);
@@ -7348,8 +7401,8 @@ MSVehicle::rerouteParkingArea(const std::string& parkingAreaID, std::string& err
         const bool onInit = myLane == nullptr;
         replaceRouteEdges(edges, routeCost, savings, "TraCI:" + toString(SUMO_TAG_PARKING_AREA_REROUTE), onInit, false, false);
     } else {
-        WRITE_WARNING("Vehicle '" + getID() + "' could not reroute to new parkingArea '" + newParkingArea->getID()
-                      + "' reason=" + errorMsg + ", time=" + time2string(MSNet::getInstance()->getCurrentTimeStep()) + ".");
+        WRITE_WARNINGF("Vehicle '%' could not reroute to new parkingArea '%' reason=%, time=%.",
+                getID(), newParkingArea->getID(), errorMsg, time2string(SIMSTEP));
         return false;
     }
     return true;
@@ -7806,6 +7859,9 @@ MSVehicle::saveState(OutputDevice& out) {
     for (MSVehicleDevice* const dev : myDevices) {
         dev->saveState(out);
     }
+    if (myCFVariables != nullptr) {
+        myCFVariables->saveState(out, getCarFollowModel());
+    }
     out.closeTag();
 }
 
@@ -7877,6 +7933,7 @@ MSVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
     sis >> myState.mySpeed >> myState.myPreviousSpeed;
     myAcceleration = SPEED2ACCEL(myState.mySpeed - myState.myPreviousSpeed);
     myAngle = GeomHelper::fromNaviDegree(attrs.getFloat(SUMO_ATTR_ANGLE));
+    myRawAngle = myAngle;
     myState.myPosLat = attrs.getFloat(SUMO_ATTR_POSITION_LAT);
     std::istringstream dis(attrs.getString(SUMO_ATTR_DISTANCE));
     dis >> myOdometer >> myNumberReroutes;

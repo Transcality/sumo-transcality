@@ -77,7 +77,7 @@ def get_options(args=None):
     op.add_argument("--personrides", category="persons",
                     help="create a person file with rides using STR as lines attribute")
     op.add_argument("--persontrip.modes", category="persons", dest="modes",
-                    help="Use any comma-separted combination of 'bicycle', 'car','public' and 'taxi'")
+                    help="Use any comma-separated combination of 'bicycle', 'car', 'public' and 'taxi'")
     op.add_argument("--persontrip.transfer.car-walk", category="persons", dest="carWalkMode",
                     help="Where are mode changes from car to walking allowed " +
                     "(possible values: 'ptStops', 'allJunctions' and combinations)")
@@ -191,10 +191,10 @@ def get_options(args=None):
                        "If option --binomial is used, the expected arrival rate is set to 1/period.")
     group.add_argument("--insertion-rate", dest="insertionRate", nargs="+", metavar="FLOAT", category="flow",
                        action=sumolib.options.SplitAction,
-                       help="How much vehicles arrive in the simulation per hour (alternative to the period option).")
+                       help="How many vehicles arrive in the simulation per hour (alternative to the period option).")
     group.add_argument("--insertion-density", dest="insertionDensity", nargs="+", metavar="FLOAT", category="flow",
                        action=sumolib.options.SplitAction,
-                       help="How much vehicles arrive in the simulation per hour per kilometer of road " +
+                       help="How many vehicles arrive in the simulation per hour per kilometer of road " +
                        "(alternative to the period option).")
     op.add_argument("--flows", category="flow", default=0, type=int,
                     help="generates INT flows that together output vehicles with the specified period")
@@ -315,7 +315,7 @@ def get_options(args=None):
         options.modes = True
 
     if options.threads is None and os.cpu_count() is not None:
-        options.threads = os.cpu_count()
+        options.threads = os.cpu_count() // 2
 
     return options
 

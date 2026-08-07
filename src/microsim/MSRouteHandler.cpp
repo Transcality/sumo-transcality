@@ -312,6 +312,7 @@ void
 MSRouteHandler::closeVehicleTypeDistribution() {
     if (myCurrentVTypeDistribution != nullptr) {
         if (MSGlobals::gStateLoaded && MSNet::getInstance()->getVehicleControl().hasVTypeDistribution(myCurrentVTypeDistributionID)) {
+            myCurrentVTypeDistribution = nullptr;
             delete myCurrentVTypeDistribution;
             return;
         }
@@ -617,7 +618,7 @@ MSRouteHandler::closeVehicle() {
     MSVehicleControl& vehControl = MSNet::getInstance()->getVehicleControl();
     if (myVehicleParameter->departProcedure == DepartDefinition::GIVEN) {
         // let's check whether this vehicle had to depart before the simulation starts
-        if (!(myAddVehiclesDirectly || checkLastDepart()) || (myVehicleParameter->depart < MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
+        if (!(myAddVehiclesDirectly || checkLastDepart()) || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
             mySkippedVehicles.insert(myVehicleParameter->id);
             return;
         }
@@ -818,7 +819,7 @@ MSRouteHandler::closeTransportable() {
         }
         // let's check whether this transportable had to depart before the simulation starts
         if (!(myAddVehiclesDirectly || checkLastDepart())
-                || (myVehicleParameter->depart < MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
+                || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
             deleteActivePlanAndVehicleParameter();
             return;
         }
@@ -876,7 +877,7 @@ MSRouteHandler::closeTransportableFlow() {
         }
         // let's check whether this transportable (person/container) had to depart before the simulation starts
         if (!(myAddVehiclesDirectly || checkLastDepart())
-                || (myVehicleParameter->depart < MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
+                || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
             deleteActivePlanAndVehicleParameter();
             return;
         }
@@ -984,18 +985,35 @@ MSRouteHandler::addFlowTransportable(SUMOTime depart, MSVehicleType* type, const
 
 void
 MSRouteHandler::closeVType() {
-    MSVehicleType* vehType = MSVehicleType::build(*myCurrentVType, getFileName());
-    vehType->check();
-    if (!MSNet::getInstance()->getVehicleControl().addVType(vehType)) {
-        const std::string id = vehType->getID();
-        delete vehType;
-        if (!MSGlobals::gStateLoaded) {
-            throw ProcessError(TLF("Another vehicle type (or distribution) with the id '%' exists.", id));
+    MSVehicleType* vehType = nullptr;
+    if (myCurrentVTypeRef.empty()) {
+        vehType = MSVehicleType::build(*myCurrentVType, getFileName());
+        vehType->check();
+        if (!MSNet::getInstance()->getVehicleControl().addVType(vehType)) {
+            const std::string id = vehType->getID();
+            delete vehType;
+            if (!MSGlobals::gStateLoaded) {
+                throw ProcessError(TLF("Another vehicle type (or distribution) with the id '%' exists.", id));
+            }
         }
-    } else {
-        if (myCurrentVTypeDistribution != nullptr) {
-            myCurrentVTypeDistribution->add(vehType, vehType->getDefaultProbability());
+    }
+    if (myCurrentVTypeDistribution != nullptr) {
+        if (!myCurrentVTypeRef.empty()) {
+            const RandomDistributor<MSVehicleType*>* const dist = MSNet::getInstance()->getVehicleControl().getVTypeDistribution(myCurrentVTypeRef);
+            if (dist != nullptr) {
+                const double distProb = (myCurrentVTypeProbability >= 0 ? myCurrentVTypeProbability : 1) / dist->getOverallProb();
+                std::vector<double>::const_iterator probIt = dist->getProbs().begin();
+                for (MSVehicleType* const type : dist->getVals()) {
+                    myCurrentVTypeDistribution->add(type, distProb * *probIt);
+                    probIt++;
+                }
+                return;
+            } else {
+                vehType = MSNet::getInstance()->getVehicleControl().getVType(myCurrentVTypeRef);
+            }
         }
+        double probability = myCurrentVTypeProbability >= 0 ? myCurrentVTypeProbability : vehType->getDefaultProbability();
+        myCurrentVTypeDistribution->add(vehType, probability);
     }
 }
 
@@ -1208,6 +1226,7 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
         stage->setDeparted(attrs.getOptSUMOTimeReporting(SUMO_ATTR_STARTED, nullptr, ok, -1));
         stage->setEnded(attrs.getOptSUMOTimeReporting(SUMO_ATTR_ENDED, nullptr, ok, -1));
         stage->setVehicleID(attrs.getOpt<std::string>(SUMO_ATTR_VEHICLE, nullptr, ok, ""));
+        stage->setVehicleDistance(attrs.getOpt<double>(SUMO_ATTR_ROUTELENGTH, nullptr, ok, -1));
         myActiveTransportablePlan->push_back(stage);
         myParamStack.push_back(stage);
     } catch (ProcessError&) {
@@ -1689,6 +1708,7 @@ MSRouteHandler::addWalk(const SUMOSAXAttributes& attrs) {
             MSStageWalking* stage = new MSStageWalking(myVehicleParameter->id, myActiveRoute, bs, duration, speed, departPos, arrivalPos, departPosLat, departLane, myActiveRouteID);
             stage->setDeparted(attrs.getOptSUMOTimeReporting(SUMO_ATTR_STARTED, nullptr, ok, -1));
             stage->setEnded(attrs.getOptSUMOTimeReporting(SUMO_ATTR_ENDED, nullptr, ok, -1));
+            stage->setTotalWaitingTime(attrs.getOptSUMOTimeReporting(SUMO_ATTR_WAITINGTIME, nullptr, ok, 0));
             if (attrs.hasAttribute(SUMO_ATTR_EXITTIMES) && OptionsCont::getOptions().getBool("vehroute-output.exit-times")) {
                 std::vector<SUMOTime>* exitTimes = new std::vector<SUMOTime>();
                 for (const std::string& tStr : attrs.get<std::vector<std::string> >(SUMO_ATTR_EXITTIMES, nullptr, ok)) {
@@ -1874,6 +1894,13 @@ MSRouteHandler::initLaneTree(NamedRTree* tree) {
 SumoRNG*
 MSRouteHandler::getRNG() {
     return &myParsingRNG;
+}
+
+
+const SUMOVTypeParameter*
+MSRouteHandler::getVTypeParameter(const std::string& refid) {
+    const auto t = MSNet::getInstance()->getVehicleControl().getVType(refid);
+    return t != nullptr ? &t->getParameter() : nullptr;
 }
 
 

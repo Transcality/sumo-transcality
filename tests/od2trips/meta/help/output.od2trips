@@ -1,4 +1,4 @@
-Eclipse SUMO od2trips v1_25_0+0045-28a3daf62ee
+Eclipse SUMO od2trips v1_27_1+0194-8d0b2b6a43c
  Copyright (C) 2001-2026 German Aerospace Center (DLR) and others; https://sumo.dlr.de
 Importer of O/D-matrices for the microscopic, multi-modal traffic simulation
  SUMO.
@@ -46,7 +46,8 @@ Output Options:
                                     derivable from the file name ('xml', 'csv',
                                     'parquet')
   --output.column-header STR       How to derive column headers from attribute
-                                    names ('none', 'tag', 'auto', 'plain')
+                                    names ('none', 'tag', 'auto', 'plain',
+                                    'full')
   --output.column-separator STR    Separator in CSV output
   -H, --human-readable-time        Write time values as hour:minute:second or
                                     day:hour:minute:second rather than seconds
@@ -54,6 +55,8 @@ Output Options:
   --flow-output FILE               Writes flow definitions into FILE
   --flow-output.probability        Writes probabilistic flow instead of evenly
                                     spaced flow
+  --flow-output.poisson            Writes poisson distributed flow instead of
+                                    evenly spaced flow
   --pedestrians                    Writes pedestrians instead of vehicles
   --persontrips                    Writes persontrips instead of vehicles
   --persontrips.modes STR[]        Add modes attribute to personTrips

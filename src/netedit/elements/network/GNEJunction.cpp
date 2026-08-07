@@ -59,6 +59,10 @@
 // method definitions
 // ===========================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4355) // mask warning about "this" in initializers
+#endif
 GNEJunction::GNEJunction(GNENet* net, NBNode* nbn, bool loaded) :
     GNENetworkElement(net, nbn->getID(), SUMO_TAG_JUNCTION),
     myMoveElementJunction(new GNEMoveElementJunction(this)),
@@ -70,6 +74,9 @@ GNEJunction::GNEJunction(GNENet* net, NBNode* nbn, bool loaded) :
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 GNEJunction::~GNEJunction() {
@@ -707,7 +714,7 @@ GNEJunction::drawGL(const GUIVisualizationSettings& s) const {
             // calculate junction contour (always before children)
             calculateJunctioncontour(s, d, junctionExaggeration, drawBubble);
             // draw Junction childs
-            drawJunctionChildren(s, d);
+            drawJunctionChildren(s);
         }
         // update drawing toggle
         *myDrawingToggle = myNet->getViewNet()->getDrawingToggle();
@@ -1633,7 +1640,11 @@ GNEJunction::isValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_TLLAYOUT:
             return myNBNode->isTLControlled() && SUMOXMLDefinitions::TrafficLightLayouts.hasString(value);
         case SUMO_ATTR_TLID:
-            return myNBNode->isTLControlled() && (value != "");
+            if (SUMOXMLDefinitions::isValidNetID(value)) {
+                return myNBNode->isTLControlled();
+            } else {
+                return false;
+            }
         case SUMO_ATTR_KEEP_CLEAR:
             return canParse<bool>(value);
         case SUMO_ATTR_RIGHT_OF_WAY:
@@ -1762,7 +1773,7 @@ GNEJunction::drawJunctionAsBubble(const GUIVisualizationSettings& s, const GUIVi
     // move matrix junction center
     glTranslated(myNBNode->getPosition().x(), myNBNode->getPosition().y(), 1.5);
     // draw filled circle
-    GLHelper::drawFilledCircleDetailled(d, bubbleRadius);
+    GLHelper::drawFilledCircleDetailed(d, bubbleRadius);
     // pop matrix
     GLHelper::popMatrix();
 }
@@ -1818,7 +1829,7 @@ GNEJunction::drawJunctionAsShape(const GUIVisualizationSettings& s, const GUIVis
             // draw geometry points
             GUIGeometry::drawGeometryPoints(d, junctionOpenShape, darkerColor,
                                             s.neteditSizeSettings.junctionGeometryPointRadius, exaggeration,
-                                            myNet->getViewNet()->getNetworkViewOptions().editingElevation());
+                                            true, myNet->getViewNet()->getNetworkViewOptions().editingElevation());
         }
     }
 }
@@ -1834,7 +1845,7 @@ GNEJunction::drawJunctionCenter(const GUIVisualizationSettings& s, const GUIVisu
         // move matrix junction center
         glTranslated(myNBNode->getPosition().x(), myNBNode->getPosition().y(), 1.7);
         // draw filled circle
-        GLHelper::drawFilledCircleDetailled(d, s.neteditSizeSettings.edgeGeometryPointRadius);
+        GLHelper::drawFilledCircleDetailed(d, s.neteditSizeSettings.edgeGeometryPointRadius);
         // pop matrix
         GLHelper::popMatrix();
     }
@@ -1882,40 +1893,37 @@ GNEJunction::drawJunctionName(const GUIVisualizationSettings& s) const {
 
 
 void
-GNEJunction::drawJunctionChildren(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d) const {
-    // check if draw junction elements
-    if (s.drawForViewObjectsHandler || (d <= GUIVisualizationSettings::Detail::JunctionElement)) {
-        // draw crossings
-        for (const auto& crossing : myGNECrossings) {
-            crossing->drawGL(s);
-        }
-        // draw walking areas
-        for (const auto& walkingArea : myGNEWalkingAreas) {
-            walkingArea->drawGL(s);
-        }
-        // draw internalLanes
-        for (const auto& internalLanes : myInternalLanes) {
-            internalLanes->drawGL(s);
-        }
-        // draw connections
-        for (const auto& incomingEdge : myGNEIncomingEdges) {
-            for (const auto& connection : incomingEdge->getGNEConnections()) {
-                connection->drawGL(s);
-            }
-        }
-        // draw child demand elements
-        for (const auto& demandElement : getChildDemandElements()) {
-            demandElement->drawGL(s);
-        }
-        // draw child demand elements
-        for (const auto& demandElement : getChildDemandElements()) {
-            demandElement->drawGL(s);
-        }
-        // draw path additional elements
-        myNet->getNetworkPathManager()->drawJunctionPathElements(s, this);
-        myNet->getDemandPathManager()->drawJunctionPathElements(s, this);
-        myNet->getDataPathManager()->drawJunctionPathElements(s, this);
+GNEJunction::drawJunctionChildren(const GUIVisualizationSettings& s) const {
+    // draw crossings
+    for (const auto& crossing : myGNECrossings) {
+        crossing->drawGL(s);
     }
+    // draw walking areas
+    for (const auto& walkingArea : myGNEWalkingAreas) {
+        walkingArea->drawGL(s);
+    }
+    // draw internalLanes
+    for (const auto& internalLanes : myInternalLanes) {
+        internalLanes->drawGL(s);
+    }
+    // draw connections
+    for (const auto& incomingEdge : myGNEIncomingEdges) {
+        for (const auto& connection : incomingEdge->getGNEConnections()) {
+            connection->drawGL(s);
+        }
+    }
+    // draw child demand elements
+    for (const auto& demandElement : getChildDemandElements()) {
+        demandElement->drawGL(s);
+    }
+    // draw child demand elements
+    for (const auto& demandElement : getChildDemandElements()) {
+        demandElement->drawGL(s);
+    }
+    // draw path additional elements
+    myNet->getNetworkPathManager()->drawJunctionPathElements(s, this);
+    myNet->getDemandPathManager()->drawJunctionPathElements(s, this);
+    myNet->getDataPathManager()->drawJunctionPathElements(s, this);
 }
 
 

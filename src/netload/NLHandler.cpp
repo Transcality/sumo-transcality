@@ -548,6 +548,17 @@ NLHandler::addLane(const SUMOSAXAttributes& attrs) {
     const double maxSpeed = attrs.get<double>(SUMO_ATTR_SPEED, id.c_str(), ok);
     const double friction = attrs.getOpt<double>(SUMO_ATTR_FRICTION, id.c_str(), ok, (double)(1.), false);
     const double length = attrs.get<double>(SUMO_ATTR_LENGTH, id.c_str(), ok);
+    // sanity check values that could lead to crashing later on
+    if (std::isnan(length)) {
+        WRITE_ERRORF(TL("Attribute length of lane '%' is invalid (%)"), id, length);
+        myCurrentIsBroken = true;
+        return;
+    }
+    if (std::isnan(maxSpeed)) {
+        WRITE_ERRORF(TL("Attribute maxSpeed of lane '%' is invalid (%)"), id, maxSpeed);
+        myCurrentIsBroken = true;
+        return;
+    }
     const std::string allow = attrs.getOpt<std::string>(SUMO_ATTR_ALLOW, id.c_str(), ok, "", false);
     const std::string disallow = attrs.getOpt<std::string>(SUMO_ATTR_DISALLOW, id.c_str(), ok, "");
     const std::string changeLeftS = attrs.getOpt<std::string>(SUMO_ATTR_CHANGE_LEFT, id.c_str(), ok, "");
@@ -810,7 +821,11 @@ NLHandler::initTrafficLightLogic(const SUMOSAXAttributes& attrs) {
         } else {
             WRITE_ERRORF(TL("Traffic light '%' has unknown type '%'."), id, typeS);
         }
-        if (MSGlobals::gUseMesoSim && (type == TrafficLightType::ACTUATED || type == TrafficLightType::NEMA)) {
+        if (MSGlobals::gUseMesoSim && type != TrafficLightType::STATIC
+                && type != TrafficLightType::ACTUATED
+                && type != TrafficLightType::RAIL_SIGNAL
+                && type != TrafficLightType::RAIL_CROSSING
+                && type != TrafficLightType::OFF) {
             if (!myHaveWarnedAboutInvalidTLType) {
                 WRITE_WARNINGF(TL("Traffic light type '%' cannot be used in mesoscopic simulation. Using '%' as fallback."), toString(type), toString(TrafficLightType::STATIC));
                 myHaveWarnedAboutInvalidTLType = true;
@@ -1324,6 +1339,7 @@ NLHandler::addEdgeLaneMeanData(const SUMOSAXAttributes& attrs, int objecttype) {
     const double maxTravelTime = attrs.getOpt<double>(SUMO_ATTR_MAX_TRAVELTIME, id.c_str(), ok, 100000);
     const double minSamples = attrs.getOpt<double>(SUMO_ATTR_MIN_SAMPLES, id.c_str(), ok, 0);
     const double haltingSpeedThreshold = attrs.getOpt<double>(SUMO_ATTR_HALTING_SPEED_THRESHOLD, id.c_str(), ok, POSITION_EPS);
+    const double haltingSpeedThresholdRel = attrs.getOpt<double>(SUMO_ATTR_HALTING_SPEED_THRESHOLD_RELATIVE, id.c_str(), ok, 0);
     const std::string excludeEmpty = attrs.getOpt<std::string>(SUMO_ATTR_EXCLUDE_EMPTY, id.c_str(), ok, "false");
     const bool withInternal = attrs.getOpt<bool>(SUMO_ATTR_WITH_INTERNAL, id.c_str(), ok, false);
     const bool trackVehicles = attrs.getOpt<bool>(SUMO_ATTR_TRACK_VEHICLES, id.c_str(), ok, false);
@@ -1389,7 +1405,7 @@ NLHandler::addEdgeLaneMeanData(const SUMOSAXAttributes& attrs, int objecttype) {
     try {
         myDetectorBuilder.createEdgeLaneMeanData(id, period, begin, end,
                 type, useLanes, excludeEmpty, withInternal, trackVehicles, detectPersons,
-                maxTravelTime, minSamples, haltingSpeedThreshold, vtypes, writeAttributes, edges, aggregate,
+                maxTravelTime, minSamples, haltingSpeedThreshold, haltingSpeedThresholdRel, vtypes, writeAttributes, edges, aggregate,
                 FileHelpers::checkForRelativity(file, getFileName()));
     } catch (InvalidArgument& e) {
         WRITE_ERROR(e.what());

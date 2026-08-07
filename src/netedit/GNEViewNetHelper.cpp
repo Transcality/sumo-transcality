@@ -31,6 +31,7 @@
 #include <netedit/elements/network/GNEInternalLane.h>
 #include <netedit/elements/network/GNEWalkingArea.h>
 #include <netedit/frames/common/GNESelectorFrame.h>
+#include <netedit/frames/network/GNEConnectorFrame.h>
 #include <netedit/frames/network/GNETLSEditorFrame.h>
 #include <netedit/GNETagProperties.h>
 #include <utils/foxtools/MFXMenuCheckIcon.h>
@@ -2821,6 +2822,13 @@ GNEViewNetHelper::NetworkViewOptions::buildNetworkViewOptionsMenuChecks() {
     menuCheckShowJunctionBubble->setChecked(false);
     menuCheckShowJunctionBubble->create();
 
+    menuCheckShowPolygonSymbols = new MFXCheckableButton(false, gripModes, toolTipMenu,
+            (std::string("\t") + TL("Show polygon symbols") + std::string("\t") + TL("Show polygon symbols.")),
+            GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_SHOWPOLYGONSYMBOLS),
+            myViewNet, MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS, GUIDesignMFXCheckableButtonSquare);
+    menuCheckShowPolygonSymbols->setChecked(true);
+    menuCheckShowPolygonSymbols->create();
+
     // always recalc after creating new elements
     gripModes->recalc();
 }
@@ -2844,6 +2852,7 @@ GNEViewNetHelper::NetworkViewOptions::hideNetworkViewOptionsMenuChecks() {
     menuCheckMoveElevation->hide();
     menuCheckChainEdges->hide();
     menuCheckAutoOppositeEdge->hide();
+    menuCheckShowPolygonSymbols->hide();
 }
 
 
@@ -2898,6 +2907,9 @@ GNEViewNetHelper::NetworkViewOptions::getVisibleNetworkMenuCommands(std::vector<
     if (menuCheckShowJunctionBubble->shown()) {
         commands.push_back(menuCheckShowJunctionBubble);
     }
+    if (menuCheckShowPolygonSymbols->shown()) {
+        commands.push_back(menuCheckShowPolygonSymbols);
+    }
 }
 
 
@@ -2930,12 +2942,23 @@ GNEViewNetHelper::NetworkViewOptions::selectEdges() const {
 
 
 bool
-GNEViewNetHelper::NetworkViewOptions::showConnections() const {
+GNEViewNetHelper::NetworkViewOptions::showConnections(const GNEConnection* connection) const {
     if (myViewNet->myEditModes.isCurrentSupermodeData()) {
         return false;
     } else if (myViewNet->myEditModes.networkEditMode == NetworkEditMode::NETWORK_CONNECT) {
-        // check if menu check hide connections ins shown
-        return (menuCheckHideConnections->amChecked() == FALSE);
+        if (!myViewNet->getViewParent()->getConnectorFrame()->getConnectionVisualization()->showConnections()) {
+            if (myViewNet->getViewParent()->getConnectorFrame()->getCurrentEditedLane()) {
+                for (const auto& outgoingConnection : myViewNet->getViewParent()->getConnectorFrame()->getCurrentEditedLane()->getParentEdge()->getGNEConnections()) {
+                    if ((connection == outgoingConnection) && (outgoingConnection->getLaneFrom() == myViewNet->getViewParent()->getConnectorFrame()->getCurrentEditedLane())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } else {
+            // check if menu check hide connections ins shown
+            return (menuCheckHideConnections->amChecked() == FALSE);
+        }
     } else if (myViewNet->myEditModes.networkEditMode == NetworkEditMode::NETWORK_PROHIBITION) {
         return true;
     } else if (myViewNet->myEditModes.isCurrentSupermodeNetwork() && menuCheckShowConnections->shown() == false) {
@@ -2974,6 +2997,16 @@ bool
 GNEViewNetHelper::NetworkViewOptions::editingElevation() const {
     if (menuCheckMoveElevation->shown()) {
         return (menuCheckMoveElevation->amChecked() == TRUE);
+    } else {
+        return false;
+    }
+}
+
+
+bool
+GNEViewNetHelper::NetworkViewOptions::showPolygonSymbols() const {
+    if (menuCheckShowPolygonSymbols->shown()) {
+        return (menuCheckShowPolygonSymbols->amChecked() == TRUE);
     } else {
         return false;
     }

@@ -27,6 +27,26 @@
 
 class MSCFModel_Rail : public MSCFModel {
 
+private:
+    class RailVehicleVariables : public MSCFModel::VehicleVariables {
+    public:
+        // track vehicle odometer and angle over multiple steps to ensure smooth curvature computation
+        std::vector<std::pair<double, double> > odometerAngles;
+
+        double getIntegratedRadius(const MSVehicle* veh, double curveIntegration);
+
+        /** @brief Saves the vehicle variables
+         * @param[in] out The OutputDevice to write the information into
+         */
+        void saveState(OutputDevice& out, const MSCFModel& cfm) const;
+
+        /** @brief Loads the state of the vehicle variables from the given description
+         * @param[in] attrs XML attributes describing the current state
+         */
+        void loadState(const SUMOSAXAttributes& attrs);
+    };
+
+
 public:
     /** @brief Constructor
      *  @param[in] vtype the type for which this model is built and also the parameter object to configure this model
@@ -40,9 +60,14 @@ public:
 
     virtual MSCFModel* duplicate(const MSVehicleType* vtype) const;
 
-
-
     virtual ~MSCFModel_Rail();
+
+    VehicleVariables* createVehicleVariables() const {
+        if (myTrainParams.curveResistance > 0) {
+            return new RailVehicleVariables();
+        }
+        return 0;
+    }
 
     virtual double maxNextSpeed(double speed, const MSVehicle* const veh) const;
 
@@ -51,8 +76,6 @@ public:
     virtual double minNextSpeedEmergency(double speed, const MSVehicle* const veh = 0) const;
 
     double getSpeedAfterMaxDecel(double v) const;
-
-    MSCFModel::VehicleVariables* createVehicleVariables() const;
 
     double finalizeSpeed(MSVehicle* const veh, double vPos) const;
 
@@ -82,6 +105,14 @@ private:
         double resCoef_constant; // kN
         double resCoef_linear;  // kN / (km/h)
         double resCoef_quadratic; // kN / (km/h)^2
+                                  //
+        double curveResistance = 0;
+        double curveIntegration = 100; // smooth curvature estimation over at least this many m of track
+        double roeckl_sharp_radius = 300;
+        double roeckl_numerator = 6380;
+        double roeckl_numerator_sharp = 4910;
+        double roeckl_offset = 55;
+        double roeckl_offset_sharp = 30;
 
         double getResistance(double speed) const;
         double getTraction(double speed) const;
@@ -89,29 +120,6 @@ private:
 
 public:
     double stopSpeed(const MSVehicle* const veh, const double speed, double gap, double decel, const CalcReason usage = CalcReason::CURRENT) const;
-
-//    class VehicleVariables : public MSCFModel::VehicleVariables {
-//
-//    public:
-//
-//        const std::string getTrainType() const { return myTrainType; };
-//
-//        void setTrainType(std::string trainType) { myTrainType = trainType; }
-//
-//        bool isNotYetInitialized() {
-//            return notYetInitialized;
-//        }
-//
-//        void setInitialized() {
-//            notYetInitialized = false;
-//        }
-//
-//    private:
-//        std::string myTrainType;
-//        bool notYetInitialized = true;
-//
-//
-//    };
 
 protected:
 
@@ -121,6 +129,8 @@ protected:
     // @brief return weight in tons
     double getWeight(const MSVehicle* const veh) const;
 
+    // @brief Röckl formula which returns kN
+    double getCurveResistance(const MSVehicle* veh) const;
 
 private:
 

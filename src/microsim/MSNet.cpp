@@ -237,7 +237,7 @@ MSNet::MSNet(MSVehicleControl* vc, MSEventControl* beginOfTimestepEvents,
     }
     OptionsCont& oc = OptionsCont::getOptions();
     myStep = string2time(oc.getString("begin"));
-    myStateLoaderTime = myStep,
+    myStateLoaderTime = myStep - 1,
     myMaxTeleports = oc.getInt("max-num-teleports");
     myLogExecutionTime = !oc.getBool("no-duration-log");
     myLogStepNumber = !oc.getBool("no-step-log");
@@ -324,6 +324,12 @@ MSNet::~MSNet() {
         myContainerControl = nullptr; // just to have that clear for later cleanups
     }
     delete myVehicleControl; // must happen after deleting transportables
+    // ShapeContainer registers polygon-update commands with the event controls.
+    // It must be torn down before the event controls so that ~ShapeContainer
+    // can still deschedule() its (live) commands; the event controls then
+    // delete the commands themselves.
+    delete myShapeContainer;
+    myShapeContainer = nullptr;
     // delete events late so that vehicles can get rid of references first
     delete myBeginOfTimestepEvents;
     myBeginOfTimestepEvents = nullptr;
@@ -331,7 +337,6 @@ MSNet::~MSNet() {
     myEndOfTimestepEvents = nullptr;
     delete myInsertionEvents;
     myInsertionEvents = nullptr;
-    delete myShapeContainer;
     delete myEdgeWeights;
     for (auto& router : myRouterTT) {
         delete router.second;
@@ -755,6 +760,9 @@ MSNet::closeSimulation(SUMOTime start, const std::string& reason) {
         WRITE_MESSAGE(TL("Reason: ") + reason);
     }
     myDetectorControl->close(myStep);
+    if (OptionsCont::getOptions().isSet("queue-output")) {
+        MSQueueExport::finish(OutputDevice::getDeviceByOption("queue-output"), myStep);
+    }
     if (MSStopOut::active() && OptionsCont::getOptions().getBool("stop-output.write-unfinished")) {
         MSStopOut::getInstance()->generateOutputForUnfinished();
     }

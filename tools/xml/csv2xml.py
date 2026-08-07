@@ -34,7 +34,7 @@ import sumolib  # noqa
 from sumolib.xml import xsd  # noqa
 
 
-def get_options():
+def get_options(args=None):
     optParser = sumolib.options.ArgumentParser(description="Convert a CSV file to a XML file.")
     optParser.add_argument("source", category="input", type=optParser.data_file,
                            help="the input CSV file")
@@ -53,7 +53,7 @@ def get_options():
                        help="xsd schema to use")
     group.add_argument("--flat", action="store_true", default=False,
                        help="use csv header as flat structure instead of a schema")
-    options = optParser.parse_args()
+    options = optParser.parse_args(args)
     if not options.output:
         options.output = os.path.splitext(options.source)[0] + ".xml"
     return options
@@ -87,51 +87,101 @@ def write_xml(toptag, tag, options, printer=row2xml):
         inputf.close()
 
 
-def checkAttributes(out, old, new, ele, tagStack, depth):
+def getAttrValue(row, tagStack, depth, tagName, attrName, used=None):
+    # Prefer the fully qualified column (ancestorPath_tag_attr).
+    longKey = "_".join(tagStack[:depth] + [tagName]) + "_" + attrName
+    if longKey in row:
+        return row[longKey]
+    # Fall back to the unqualified short form (tag_attr).
+    # If this value was already "consumed" by another position
+    # in this row (see markUsed), treat it as absent here.
+    shortKey = tagName + "_" + attrName
+    if used is not None and shortKey in used:
+        return ""
+    return row.get(shortKey, "")
+
+
+def markUsed(row, tagStack, depth, ele, used):
+    # Mark every attribute of ele that was only resolvable via the
+    # ambiguous short form (no qualified column present) as consumed, so
+    # the same value can't be attributed to another, structurally
+    # different position later in this row.
     for attr in ele.attributes:
-        name = "%s_%s" % (ele.name, attr.name)
-        if new.get(name, "") != "":
-            if depth > 0:
-                out.write(u">\n")
-            out.write(row2xml(new, ele.name, "", depth))
-            return True
-    return False
+        longKey = "_".join(tagStack[:depth] + [ele.name]) + "_" + attr.name
+        if longKey not in row:
+            used.add(ele.name + "_" + attr.name)
 
 
-def checkChanges(out, old, new, currEle, tagStack, depth):
-    # print(depth, currEle.name, tagStack)
-    if depth >= len(tagStack):
-        for ele in currEle.children:
-            # print(depth, "try", ele.name)
-            if ele.name not in tagStack and checkAttributes(out, old, new, ele, tagStack, depth):
-                # print(depth, "adding", ele.name, ele.children)
-                tagStack.append(ele.name)
-                if ele.children:
-                    checkChanges(out, old, new, ele, tagStack, depth + 1)
-    else:
-        for ele in currEle.children:
-            if ele.name in tagStack and tagStack.index(ele.name) != depth:
-                continue
+def openElement(out, row, ele, tagStack, depth, used):
+    if len(tagStack) > depth:
+        # Something else is currently open at this depth (or deeper); close
+        # it - and everything nested below it - before ele can be opened here.
+        out.write(u"/>\n")
+        del tagStack[-1]
+        while len(tagStack) > depth:
+            out.write(u"%s</%s>\n" % ((len(tagStack) - 1) * '    ', tagStack[-1]))
+            del tagStack[-1]
+    elif depth > 0:
+        # Nothing open at this depth, but the parent element's start tag is
+        # still unclosed (no ">" written yet) - close it before writing a child.
+        out.write(u">\n")
+    # Collect only the attributes that actually have a value for this row;
+    # attribute values are looked up per-position via tagStack/depth so
+    # that qualified columns win over ambiguous short-form ones.
+    attrs = ['%s="%s"' % (attr.name, getAttrValue(row, tagStack, depth, ele.name, attr.name))
+             for attr in ele.attributes
+             if getAttrValue(row, tagStack, depth, ele.name, attr.name) != ""]
+    out.write(u'%s<%s %s' % ((depth * '    '), ele.name, ' '.join(attrs)))
+    # Record which short-form keys this element consumed, then push it onto
+    # the stack as the currently open element at this depth.
+    markUsed(row, tagStack, depth, ele, used)
+    tagStack.append(ele.name)
+
+
+def elementPresent(row, tagStack, depth, ele, used):
+    # True if at least one attribute of ele has a (non-empty, not already
+    # consumed) value in this row - i.e. whether ele should exist at all for this row.
+    return any(getAttrValue(row, tagStack, depth, ele.name, attr.name, used) != "" for attr in ele.attributes)
+
+
+def checkChanges(out, old, new, currEle, tagStack, depth, used):
+    for ele in currEle.children:
+        if len(tagStack) > depth and tagStack[depth] == ele.name:
+            # ele is already open at this depth from the previous row.
+            # Determine whether any of its attribute values changed
+            # (requiring the element to be closed and reopened) and
+            # whether it's present at all in the new row (needed below to
+            # decide whether to recurse into its children).
             changed = False
             present = False
             for attr in ele.attributes:
-                name = "%s_%s" % (ele.name, attr.name)
-                if old.get(name, "") != new.get(name, "") and new.get(name, "") != "":
+                oldValue = getAttrValue(old, tagStack, depth, ele.name, attr.name)
+                newValue = getAttrValue(new, tagStack, depth, ele.name, attr.name, used)
+                if oldValue != newValue and newValue != "":
                     changed = True
-                if new.get(name, "") != "":
+                if newValue != "":
                     present = True
-            # print(depth, "seeing", ele.name, changed, tagStack)
             if changed:
-                out.write(u"/>\n")
-                del tagStack[-1]
-                while len(tagStack) > depth:
-                    out.write(u"%s</%s>\n" % ((len(tagStack) - 1) * '    ', tagStack[-1]))
-                    del tagStack[-1]
-                out.write(row2xml(new, ele.name, "", depth))
-                tagStack.append(ele.name)
-                changed = False
+                openElement(out, new, ele, tagStack, depth, used)
+            elif present:
+                # Element stays open unchanged; still needs its short-form
+                # keys marked as consumed, since openElement (which would
+                # normally do this) isn't called in this branch.
+                markUsed(new, tagStack, depth, ele, used)
             if present and ele.children:
-                checkChanges(out, old, new, ele, tagStack, depth + 1)
+                checkChanges(out, old, new, ele, tagStack, depth + 1, used)
+        elif ele.name not in tagStack[:depth]:
+            # ele is not currently open at this depth (and isn't one of
+            # its own ancestors, which would indicate a recursive schema).
+            # Evaluate presence once and reuse the result for both the
+            # open decision and the recursion decision, since openElement
+            # mutates `used` as a side effect and re-querying afterwards
+            # would give a different (wrong) answer.
+            present = elementPresent(new, tagStack, depth, ele, used)
+            if present:
+                openElement(out, new, ele, tagStack, depth, used)
+                if ele.children:
+                    checkChanges(out, old, new, ele, tagStack, depth + 1, used)
 
 
 def writeHierarchicalXml(struct, options):
@@ -140,9 +190,10 @@ def writeHierarchicalXml(struct, options):
     with contextlib.closing(sumolib.openz(options.output, "w", trySocket=True)) as outputf:
         inputf = sumolib.openz(options.source, trySocket=True)
         lastRow = OrderedDict()
-        tagStack = [struct.root.name]
+        tagStack = []
         if options.skip_root:
             outputf.write(u'<%s' % struct.root.name)
+            tagStack.append(struct.root.name)
         fields = None
         enums = {}
         first = True
@@ -152,7 +203,8 @@ def writeHierarchicalXml(struct, options):
                 for f in fields:
                     if '_' not in f:
                         continue
-                    enum = struct.getEnumerationByAttr(*f.split('_', 1))
+                    parts = f.rsplit('_', 2)
+                    enum = struct.getEnumerationByAttr(parts[-2], parts[-1])
                     if enum:
                         enums[f] = enum
             else:
@@ -161,10 +213,11 @@ def writeHierarchicalXml(struct, options):
                     if field in enums and entry.isdigit():
                         entry = enums[field][int(entry)]
                     row[field] = entry
+                used = set()
                 if first and not options.skip_root:
-                    checkAttributes(outputf, lastRow, row, struct.root, tagStack, 0)
+                    openElement(outputf, row, struct.root, tagStack, 0, used)
                     first = False
-                checkChanges(outputf, lastRow, row, struct.root, tagStack, 1)
+                checkChanges(outputf, lastRow, row, struct.root, tagStack, 1, used)
                 lastRow = row
         outputf.write(u"/>\n")
         for idx in range(len(tagStack) - 2, -1, -1):
@@ -187,8 +240,8 @@ def writeFlatXml(options):
         inputf.close()
 
 
-def main():
-    options = get_options()
+def main(args=None):
+    options = get_options(args)
     if options.type in ["nodes", "node", "nod"]:
         write_xml('nodes', 'node', options)
     elif options.type in ["edges", "edge", "edg"]:

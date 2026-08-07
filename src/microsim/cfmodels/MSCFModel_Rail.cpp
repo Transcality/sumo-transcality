@@ -25,6 +25,7 @@
 #include <utils/common/StringUtils.h>
 #include <utils/common/StringTokenizer.h>
 #include <utils/geom/GeomHelper.h>
+#include <utils/xml/SUMOSAXAttributes.h>
 #include <microsim/MSVehicle.h>
 #include <microsim/lcmodels/MSAbstractLaneChangeModel.h>
 #include "MSCFModel_Rail.h"
@@ -51,6 +52,74 @@ MSCFModel_Rail::TrainParams::getTraction(double speed) const {
         return LinearApproxHelpers::getInterpolatedValue(traction, speed); // kN
     }
 }
+
+
+// ===========================================================================
+// RailVehicleVariables method definitions
+// ===========================================================================
+void
+MSCFModel_Rail::RailVehicleVariables::saveState(OutputDevice& out, const MSCFModel& /*cfm*/) const {
+    out.openTag(SUMO_TAG_CFM_VARIABLES);
+    out.writeAttr(SUMO_ATTR_ID, "Rail");
+    std::ostringstream internals;
+    internals << odometerAngles.size() << " ";
+    for (auto item : odometerAngles) {
+        internals << item.first << " " << item.second << " ";
+    }
+    out.writeAttr(SUMO_ATTR_STATE, internals.str());
+    out.closeTag();
+}
+
+
+void
+MSCFModel_Rail::RailVehicleVariables::loadState(const SUMOSAXAttributes& attrs) {
+    bool ok = true;
+    const std::string cfmID = attrs.get<std::string>(SUMO_ATTR_ID, nullptr, ok);
+    if (cfmID != "Rail") {
+        throw ProcessError(TLF("incompatible carFollowModel '%' when loading state for Rail", cfmID));
+    }
+    std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
+    int odometerAnglesSize;
+    bis >> odometerAnglesSize;
+    for (int i = 0; i < odometerAnglesSize; i++) {
+        double o;
+        double a;
+        bis >> o;
+        bis >> a;
+        odometerAngles.push_back(std::make_pair(o, a));
+    }
+}
+
+
+
+double
+MSCFModel_Rail::RailVehicleVariables::getIntegratedRadius(const MSVehicle* veh, double curveIntegration) {
+    const double odo = veh->getOdometer();
+    // add new data point
+    if ((odometerAngles.empty() || odometerAngles.back().first != odo) && veh->hasDeparted()) {
+        odometerAngles.push_back(std::make_pair(odo, veh->getAngle()));
+        // clean up old data points beyond integration distance
+        while (odometerAngles.size() > 2) {
+            double distCleaned = odometerAngles.back().first - odometerAngles[1].first;
+            if (distCleaned >= curveIntegration) {
+                odometerAngles.erase(odometerAngles.begin());
+            } else {
+                break;
+            }
+        }
+    }
+    if (odometerAngles.size() > 1) {
+        const double dist = odometerAngles.back().first - odometerAngles.front().first;
+        const double angleDiff = GeomHelper::angleDiff(odometerAngles.back().second, odometerAngles.front().second);
+        return angleDiff == 0
+            ? std::numeric_limits<double>::max()
+            : dist / fabs(angleDiff);
+    } else {
+        return veh->getCurveRadius();
+    }
+}
+
+
 
 // ===========================================================================
 // method definitions
@@ -115,6 +184,14 @@ MSCFModel_Rail::MSCFModel_Rail(const MSVehicleType* vtype) :
     myTrainParams.resCoef_constant = vtype->getParameter().getCFParam(SUMO_ATTR_RESISTANCE_COEFFICIENT_CONSTANT, INVALID_DOUBLE);
     myTrainParams.resCoef_linear = vtype->getParameter().getCFParam(SUMO_ATTR_RESISTANCE_COEFFICIENT_LINEAR, INVALID_DOUBLE);
     myTrainParams.resCoef_quadratic = vtype->getParameter().getCFParam(SUMO_ATTR_RESISTANCE_COEFFICIENT_QUADRATIC, INVALID_DOUBLE);
+    // curve resistance parameters
+    myTrainParams.curveResistance = vtype->getParameter().getCFParam(SUMO_ATTR_CURVE_RESISTANCE, myTrainParams.curveResistance);
+    myTrainParams.curveIntegration = vtype->getParameter().getCFParam(SUMO_ATTR_CURVE_INTEGRATION, myTrainParams.curveIntegration);
+    myTrainParams.roeckl_sharp_radius = vtype->getParameter().getCFParam(SUMO_ATTR_ROECKL_SHARP_RADIUS, myTrainParams.roeckl_sharp_radius);
+    myTrainParams.roeckl_numerator = vtype->getParameter().getCFParam(SUMO_ATTR_ROECKL_NUMERATOR, myTrainParams.roeckl_numerator);
+    myTrainParams.roeckl_numerator_sharp = vtype->getParameter().getCFParam(SUMO_ATTR_ROECKL_NUMERATOR_SHARP, myTrainParams.roeckl_numerator_sharp);
+    myTrainParams.roeckl_offset = vtype->getParameter().getCFParam(SUMO_ATTR_ROECKL_OFFSET, myTrainParams.roeckl_offset);
+    myTrainParams.roeckl_offset_sharp = vtype->getParameter().getCFParam(SUMO_ATTR_ROECKL_OFFSET_SHARP, myTrainParams.roeckl_offset_sharp);
 
     if (myTrainParams.maxPower != INVALID_DOUBLE && myTrainParams.maxTraction == INVALID_DOUBLE) {
         throw ProcessError(TLF("Undefined maxPower for vType '%'.", vtype->getID()));
@@ -198,6 +275,28 @@ MSCFModel_Rail::getWeight(const MSVehicle* const veh) const {
     return veh->getVehicleType().getMass() / 1000;
 }
 
+double
+MSCFModel_Rail::getCurveResistance(const MSVehicle* veh) const {
+    if (myTrainParams.curveResistance > 0) {
+        RailVehicleVariables* vars = (RailVehicleVariables*)veh->getCarFollowVariables();
+        assert(vars != nullptr);
+        const double r = vars->getIntegratedRadius(veh, myTrainParams.curveIntegration);
+        if (r == std::numeric_limits<double>::max()) {
+            return 0;
+        } else if (r >= myTrainParams.roeckl_sharp_radius) {
+            return 0.001 * myTrainParams.curveResistance * myTrainParams.roeckl_numerator / (r - myTrainParams.roeckl_offset);
+        } else if (r > myTrainParams.roeckl_offset_sharp) {
+            return 0.001 * myTrainParams.curveResistance * myTrainParams.roeckl_numerator_sharp / (r - myTrainParams.roeckl_offset_sharp);
+        } else {
+            WRITE_WARNINGF("Cannot compute curve resistance for vehicle '%' with radius % at time %",
+                    veh->getID(), r, time2string(SIMSTEP));
+            return 0;
+        }
+    }
+    return 0;
+}
+
+
 double MSCFModel_Rail::maxNextSpeed(double speed, const MSVehicle* const veh) const {
 
     if (speed >= myTrainParams.vmax) {
@@ -210,8 +309,9 @@ double MSCFModel_Rail::maxNextSpeed(double speed, const MSVehicle* const veh) co
 
     double slope = veh->getSlope();
     double gr = getWeight(veh) * GRAVITY * sin(DEG2RAD(slope)); //kN
+    double cr = getWeight(veh) * getCurveResistance(veh); //kN
 
-    double totalRes = res + gr; //kN
+    double totalRes = res + gr + cr; //kN
 
     double trac = myTrainParams.getTraction(speed); // kN
     double a;
@@ -235,8 +335,9 @@ double MSCFModel_Rail::minNextSpeed(double speed, const MSVehicle* const veh) co
 
     const double slope = veh->getSlope();
     const double gr = getWeight(veh) * GRAVITY * sin(DEG2RAD(slope)); //kN
+    const double cr = getWeight(veh) * getCurveResistance(veh);
     const double res = myTrainParams.getResistance(speed); // kN
-    const double totalRes = res + gr; //kN
+    const double totalRes = res + gr + cr; //kN
     const double a = myTrainParams.decl + totalRes / getRotWeight(veh);
     const double vMin = speed - ACCEL2SPEED(a);
     if (MSGlobals::gSemiImplicitEulerUpdate) {
@@ -273,12 +374,6 @@ double MSCFModel_Rail::getSpeedAfterMaxDecel(double /* speed */) const {
 //    return speed + a * DELTA_T / 1000.;
     WRITE_ERROR("function call not allowed for rail model. Exiting!");
     throw ProcessError();
-}
-
-
-MSCFModel::VehicleVariables* MSCFModel_Rail::createVehicleVariables() const {
-    VehicleVariables* ret = new VehicleVariables();
-    return ret;
 }
 
 

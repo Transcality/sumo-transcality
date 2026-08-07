@@ -462,7 +462,7 @@ GNENetHelper::AttributeCarriers::getSelectedJunctions() const {
 
 
 GNEJunction*
-GNENetHelper::AttributeCarriers::registerJunction(GNEJunction* junction) {
+GNENetHelper::AttributeCarriers::registerJunction(GNEJunction* junction, bool afterVolatile) {
     // increase reference
     junction->incRef("GNENet::registerJunction");
     junction->setResponsible(false);
@@ -473,7 +473,11 @@ GNENetHelper::AttributeCarriers::registerJunction(GNEJunction* junction) {
     // add edge into grid
     myNet->addGLObjectIntoGrid(junction);
     // update geometry
-    junction->updateGeometry();
+    if (afterVolatile) {
+        junction->updateGeometryAfterNetbuild(false);
+    } else {
+        junction->updateGeometry();
+    }
     // add z in net boundary
     myNet->addZValueInBoundary(junction->getNBNode()->getPosition().z());
     return junction;
@@ -520,7 +524,7 @@ GNENetHelper::AttributeCarriers::updateJunctionID(GNEJunction* junction, const s
         // build crossings
         junction->getNBNode()->buildCrossings();
         // net has to be saved
-        myNet->getSavingStatus()->requireSaveNetwork();
+        myNet->requireRecompute();
     }
 }
 
@@ -679,7 +683,7 @@ GNENetHelper::AttributeCarriers::updateEdgeTypeID(GNEEdgeType* edgeType, const s
         // add it into myEdgeTypes again
         myEdgeTypes[edgeType->getID()] = edgeType;
         // net has to be saved
-        myNet->getSavingStatus()->requireSaveNetwork();
+        myNet->requireRecompute();
     }
 }
 
@@ -825,7 +829,7 @@ GNENetHelper::AttributeCarriers::updateEdgeID(GNEEdge* edge, const std::string& 
             lane->updateConnectionIDs();
         }
         // net has to be saved
-        myNet->getSavingStatus()->requireSaveNetwork();
+        myNet->requireRecompute();
     }
 }
 
@@ -1098,6 +1102,20 @@ GNENetHelper::AttributeCarriers::getSelectedShapes() const {
     for (const auto& additionalsTags : myAdditionals) {
         for (const auto& additional : additionalsTags.second) {
             if (additional.second->getTagProperty()->isShapeElement() && additional.second->isAttributeCarrierSelected()) {
+                result.push_back(additional.second);
+            }
+        }
+    }
+    return result;
+}
+
+std::vector<GNEAdditional*>
+GNENetHelper::AttributeCarriers::getUnselectedShapes() const {
+    std::vector<GNEAdditional*> result;
+    // returns additionals depending of selection
+    for (const auto& additionalsTags : myAdditionals) {
+        for (const auto& additional : additionalsTags.second) {
+            if (additional.second->getTagProperty()->isShapeElement() && !additional.second->isAttributeCarrierSelected()) {
                 result.push_back(additional.second);
             }
         }
@@ -1890,8 +1908,10 @@ GNENetHelper::AttributeCarriers::getNumberOfSelectedStops() const {
     int counter = 0;
     // iterate over routes
     for (const auto& route : myDemandElements.at(SUMO_TAG_ROUTE)) {
-        if (route.second->isAttributeCarrierSelected()) {
-            counter++;
+        for (const auto& stop : route.second->getChildDemandElements()) {
+            if (stop->getTagProperty()->isVehicleStop() && stop->isAttributeCarrierSelected()) {
+                counter++;
+            }
         }
     }
     // vehicles
@@ -1908,6 +1928,11 @@ GNENetHelper::AttributeCarriers::getNumberOfSelectedStops() const {
                 counter++;
             }
         }
+        for (const auto& stop : vehicle.second->getChildDemandElements()) {
+            if (stop->getTagProperty()->isVehicleStop() && stop->isAttributeCarrierSelected()) {
+                counter++;
+            }
+        }
     }
     for (const auto& flow : myDemandElements.at(SUMO_TAG_FLOW)) {
         for (const auto& stop : flow.second->getChildDemandElements()) {
@@ -1918,6 +1943,11 @@ GNENetHelper::AttributeCarriers::getNumberOfSelectedStops() const {
     }
     for (const auto& flow : myDemandElements.at(GNE_TAG_FLOW_WITHROUTE)) {
         for (const auto& stop : flow.second->getChildDemandElements().front()->getChildDemandElements()) {
+            if (stop->getTagProperty()->isVehicleStop() && stop->isAttributeCarrierSelected()) {
+                counter++;
+            }
+        }
+        for (const auto& stop : flow.second->getChildDemandElements()) {
             if (stop->getTagProperty()->isVehicleStop() && stop->isAttributeCarrierSelected()) {
                 counter++;
             }
@@ -2345,7 +2375,7 @@ GNENetHelper::AttributeCarriers::generateMeanDataID(SumoXMLTag tag) const {
 void
 GNENetHelper::AttributeCarriers::insertJunction(GNEJunction* junction) {
     myNet->getNetBuilder()->getNodeCont().insert(junction->getNBNode());
-    registerJunction(junction);
+    registerJunction(junction, false);
 }
 
 

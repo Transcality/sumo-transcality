@@ -179,7 +179,7 @@ public:
     GUIDialog_ViewSettings(GUISUMOAbstractView* parent, GUIVisualizationSettings* settings);
 
     /// @brief FOX need this
-    GUIDialog_ViewSettings() : myBackup("DUMMY") {}
+    GUIDialog_ViewSettings() : myBackup(nullptr, "DUMMY") {}
 
     /// @brief Destructor
     ~GUIDialog_ViewSettings();
@@ -310,6 +310,10 @@ protected:
     FXColorWell* myTrainStopColorSign = nullptr;
     FXColorWell* myContainerStopColor = nullptr;
     FXColorWell* myContainerStopColorSign = nullptr;
+    FXColorWell* myParkingAreaColor = nullptr;
+    FXColorWell* myParkingAreaColorSign = nullptr;
+    FXColorWell* myParkingSpaceColor = nullptr;
+    FXColorWell* myParkingSpaceColorSign = nullptr;
     FXColorWell* myChargingStationColor = nullptr;
     FXColorWell* myChargingStationColorSign = nullptr;
     FXColorWell* myStopColor = nullptr;

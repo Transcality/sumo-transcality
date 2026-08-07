@@ -64,6 +64,8 @@ enum class GUIIcon {
     HALL_OF_FAME,
     CLEARMESSAGEWINDOW,
     GITHUB,
+    TELEPORT,
+    INSERTION_DELAY,
     /// @}
 
     /// @name netedit view icons
@@ -308,6 +310,7 @@ enum class GUIIcon {
     NETWORKMODE_CHECKBOX_SHOWSUBADDITIONALS,
     NETWORKMODE_CHECKBOX_SHOWTAZELEMENTS,
     NETWORKMODE_CHECKBOX_APPLYTOALLPHASES,
+    NETWORKMODE_CHECKBOX_SHOWPOLYGONSYMBOLS,
     /// @}
 
     /// @name Netedit demand mode specific icons
@@ -761,7 +764,6 @@ enum class GUIIcon {
     LANGUAGE_PT,
     LANGUAGE_FR,
     LANGUAGE_IT,
-    LANGUAGE_HU,
     LANGUAGE_TR,
     LANGUAGE_ZH,
     LANGUAGE_ZHT,

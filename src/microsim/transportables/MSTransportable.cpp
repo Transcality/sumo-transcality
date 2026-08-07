@@ -173,6 +173,11 @@ MSTransportable::getDeparture() const {
     return -1;
 }
 
+const MSEdge*
+MSTransportable::getCurrentEdge() const {
+    const MSLane* lane = getLane();
+    return lane == nullptr ? getEdge() : &lane->getEdge();
+}
 
 double
 MSTransportable::getEdgePos() const {
@@ -275,8 +280,9 @@ MSTransportable::routeOutput(OutputDevice& os, const bool withRouteLength) const
         os.writeAttr("arrival", time2string(MSNet::getInstance()->getCurrentTimeStep()));
     }
     const MSStage* previous = nullptr;
+    const bool withTiming = OptionsCont::getOptions().getBool("vehroute-output.exit-times");
     for (const MSStage* const stage : *myPlan) {
-        stage->routeOutput(myAmPerson, os, withRouteLength, previous);
+        stage->routeOutput(myAmPerson, os, withRouteLength, previous, withTiming);
         previous = stage;
     }
     myParameter->writeParams(os);
@@ -683,7 +689,9 @@ MSTransportable::saveState(OutputDevice& out) {
     out.writeAttr(SUMO_ATTR_STATE, state.str());
     const MSStage* previous = nullptr;
     for (const MSStage* const stage : *myPlan) {
-        stage->routeOutput(myAmPerson, out, false, previous);
+        const bool routeLength = stage->getDeparted() >= 0 && stage->getStageType() == MSStageType::DRIVING;
+        const bool withTiming = stage->getDeparted() >= 0;
+        stage->routeOutput(myAmPerson, out, routeLength, previous, withTiming, true);
         previous = stage;
     }
     out.closeTag();
@@ -709,6 +717,11 @@ MSTransportable::loadState(const std::string& state) {
         myStep = myPlan->begin() + (int)step;
     }
     (*myStep)->loadState(this, iss);
+    for (int i = 1; i < step; i++) {
+        if ((*myPlan)[i]->getStageType() == MSStageType::DRIVING) {
+            dynamic_cast<MSStageDriving*>((*myPlan)[i])->setWaitingSince((*myPlan)[i - 1]->getArrived());
+        }
+    }
 }
 
 

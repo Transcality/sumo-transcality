@@ -18,6 +18,7 @@
 // The main window of Netedit (adapted from GUIApplicationWindow)
 /****************************************************************************/
 #include <config.h>
+#include <utils/xml/XMLSubSys.h>
 
 #include <regex>
 
@@ -936,6 +937,12 @@ GNEApplicationWindowHelper::EditMenuCommands::NetworkViewOptions::buildNetworkVi
                                   GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_BUBBLES),
                                   myApplicationWindow, MID_GNE_NETWORKVIEWOPTIONS_SHOWBUBBLES);
 
+    menuCheckShowPolygonSymbols = GUIDesigns::buildFXMenuCheckboxIcon(editMenu,
+                                  TL("Show polygon symbols"), "Alt+9", "",
+                                  GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_SHOWPOLYGONSYMBOLS),
+                                  myApplicationWindow, MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS);
+    menuCheckShowPolygonSymbols->setCheck(TRUE);
+
     // build separator
     separator = new FXMenuSeparator(editMenu);
 }
@@ -959,6 +966,7 @@ GNEApplicationWindowHelper::EditMenuCommands::NetworkViewOptions::hideNetworkVie
     menuCheckMoveElevation->hide();
     menuCheckChainEdges->hide();
     menuCheckAutoOppositeEdge->hide();
+    menuCheckShowPolygonSymbols->hide();
     separator->hide();
 }
 
@@ -1025,6 +1033,10 @@ GNEApplicationWindowHelper::EditMenuCommands::NetworkViewOptions::updateShortcut
     }
     if (menuCheckShowJunctionBubble->shown()) {
         menuCheckShowJunctionBubble->setAccelText(("Alt+" + toString(index)).c_str());
+        index++;
+    }
+    if (menuCheckShowPolygonSymbols->shown()) {
+        menuCheckShowPolygonSymbols->setAccelText(("Alt+" + toString(index)).c_str());
         index++;
     }
 }
@@ -2250,13 +2262,13 @@ GNEApplicationWindowHelper::GNESumoConfigHandler::loadSumoConfig() {
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(mySumoConfigFile).c_str());
+        parser.parse(XMLSubSys::transcodeToLocal(mySumoConfigFile).c_str());
         // allow to load with invalid options
         if (handler.errorOccurred()) {
             WRITE_WARNING(TLF("There are invalid options in sumo configuration '%'.", mySumoConfigFile));
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TLF("Could not load sumo configuration '%':\n %", mySumoConfigFile, StringUtils::transcode(e.getMessage())));
+        WRITE_ERROR(TLF("Could not load sumo configuration '%':\n %", mySumoConfigFile, XMLSubSys::transcode(e.getMessage())));
         return false;
     }
     // relocate files
@@ -2301,13 +2313,13 @@ GNEApplicationWindowHelper::GNENetconvertConfigHandler::loadNetconvertConfig() {
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(myNetconvertConfigFile).c_str());
+        parser.parse(XMLSubSys::transcodeToLocal(myNetconvertConfigFile).c_str());
         // allow to load with invalid options
         if (handler.errorOccurred()) {
             WRITE_WARNING(TLF("There are invalid options in netconvert configuration '%'.", myNetconvertConfigFile));
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TLF("Could not load netconvert configuration '%':\n %", myNetconvertConfigFile, StringUtils::transcode(e.getMessage())));
+        WRITE_ERROR(TLF("Could not load netconvert configuration '%':\n %", myNetconvertConfigFile, XMLSubSys::transcode(e.getMessage())));
         return false;
     }
     // relocate files
@@ -2348,13 +2360,13 @@ GNEApplicationWindowHelper::GNENeteditConfigHandler::loadNeteditConfig() {
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(myNeteditConfigFile).c_str());
+        parser.parse(XMLSubSys::transcodeToLocal(myNeteditConfigFile).c_str());
         // allow to load with invalid options
         if (handler.errorOccurred()) {
             WRITE_WARNING(TLF("There are invalid options in netedit configuration '%'.", myNeteditConfigFile));
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TLF("Could not load netedit configuration '%':\n %", myNeteditConfigFile, StringUtils::transcode(e.getMessage())));
+        WRITE_ERROR(TLF("Could not load netedit configuration '%':\n %", myNeteditConfigFile, XMLSubSys::transcode(e.getMessage())));
         return false;
     }
     // relocate files
@@ -2813,6 +2825,9 @@ GNEApplicationWindowHelper::toggleEditOptionsNetwork(GNEViewNet* viewNet, const 
     } else if (menuCheck == viewNet->getNetworkViewOptions().menuCheckShowJunctionBubble) {
         // Call manually onCmdToggleShowJunctionBubble
         viewNet->onCmdToggleShowJunctionBubbles(obj, sel, nullptr);
+    } else if (menuCheck == viewNet->getNetworkViewOptions().menuCheckShowPolygonSymbols) {
+        // Call manually onCmdToggleShowPolygonSymbols
+        viewNet->onCmdToggleShowPolygonSymbols(obj, sel, nullptr);
     } else {
         return false;
     }
