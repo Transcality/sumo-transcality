@@ -120,6 +120,9 @@ public:
     /// @brief Called if the parameter of this object shall be shown
     long onCmdShowPars(FXObject*, FXSelector, void*);
 
+    /// @brief Called if the parameter of this object parent shall be shown
+    long onCmdShowParsParent(FXObject*, FXSelector, void*);
+
     /// @brief Called if the type parameter of this object shall be shown
     long onCmdShowTypePars(FXObject*, FXSelector, void*);
 
@@ -128,6 +131,9 @@ public:
 
     /// @brief Called if the object shall be removed from the list of selected objects
     long onCmdRemoveSelected(FXObject*, FXSelector, void*);
+
+    /// @brief Called if the object can be removed
+    long onCmdDelete(FXObject*, FXSelector, void*);
 
     /// @}
 

@@ -109,6 +109,12 @@ public:
     /// @brief get icon associated with this GL Object
     FXIcon* getGLIcon() const;
 
+    /// @brief notify object about popup menu removal
+    GUIGlObject* getGLObjectParent();
+
+    /// @brief notify object about popup menu removal
+    void setGLObjectParent(GUIGlObject* parent);
+
     /// @}
 
     /// @name interfaces to be implemented by derived classes
@@ -259,7 +265,7 @@ protected:
     /// @{
     /// @brief build common popup options
     void buildPopUpMenuCommonOptions(GUIGLObjectPopupMenu* ret, GUIMainWindow& app, GUISUMOAbstractView* parent, const SumoXMLTag tag,
-                                     const bool selected, bool addSeparator = true);
+                                     const bool selected, const bool allowDelete, const bool addSeparator);
 
     /** @brief Builds the header
      * @param[in, filled] ret The popup menu to add the entry to
@@ -339,6 +345,9 @@ private:
 
     /// @brief whether the object can be deleted
     bool myAmBlocked = false;
+
+    /// @brief parent of this GLObject (usually used for lanes and edges)
+    GUIGlObject* myParent = nullptr;
 
     /// @brief Parameter table windows which refer to this object
     std::set<GUIParameterTableWindow*> myParamWindows;

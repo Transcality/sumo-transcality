@@ -167,6 +167,8 @@ GNELane::GNELane(GNEEdge* edge, const int index) :
     myLane2laneConnections(this) {
     // set parents
     setParent<GNEEdge*>(edge);
+    // this is needed for open edge popup menu
+    setGLObjectParent(edge);
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
@@ -523,6 +525,12 @@ GNELane::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
     } else {
         GUIDesigns::buildFXMenuCommand(ret, TL("Add Edge To Selected"), GUIIconSubSys::getIcon(GUIIcon::FLAG_PLUS), myNet->getViewNet(), MID_GNE_ADDSELECT_EDGE);
     }
+    // add separator
+    new FXMenuSeparator(ret);
+    // delete lane
+    if (myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork()) {
+        GUIDesigns::buildFXMenuCommand(ret, TL("Delete"), GUIIconSubSys::getIcon(GUIIcon::MODEDELETE), myNet->getViewNet(), MID_DELETE);
+    }
     // stop if we're in data mode
     if (myNet->getViewNet()->getEditModes().isCurrentSupermodeDemand()) {
         return ret;
@@ -531,7 +539,10 @@ GNELane::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
     new FXMenuSeparator(ret);
     if (editMode != NetworkEditMode::NETWORK_TLS) {
         // build show parameters menu
-        buildShowParamsPopupEntry(ret);
+        GUIDesigns::buildFXMenuCommand(ret, TL("Show lane Parameter"), GUIIconSubSys::getIcon(GUIIcon::APP_TABLE), ret, MID_SHOWPARS);
+        GUIDesigns::buildFXMenuCommand(ret, TL("Show edge Parameter"), GUIIconSubSys::getIcon(GUIIcon::APP_TABLE), ret, MID_SHOWPARS_PARENT);
+        // add separator
+        new FXMenuSeparator(ret);
         // build position copy entry
         buildPositionCopyEntry(ret, app);
     }

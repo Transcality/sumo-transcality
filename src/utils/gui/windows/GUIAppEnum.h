@@ -471,6 +471,8 @@ enum {
     MID_OPEN_ADDITIONAL_DIALOG,
     /// @brief Show object parameter - popup entry
     MID_SHOWPARS,
+    /// @brief Show object parent parameter - popup entry
+    MID_SHOWPARS_PARENT,
     /// @brief Show object type parameter - popup entry
     MID_SHOWTYPEPARS,
     /// @brief Show transportable plan
@@ -487,6 +489,8 @@ enum {
     MID_ADDSELECT,
     /// @brief Remove from selected items - Menu Entry
     MID_REMOVESELECT,
+    /// @brief delete item - menu entry
+    MID_DELETE,
     /// @brief Open the object's manipulator
     MID_MANIP,
     /// @brief Draw a vehicle's route
@@ -857,6 +861,8 @@ enum {
     MID_GNE_NETWORKVIEWOPTIONS_AUTOOPPOSITEEDGES,
     /// @brief show polygon symbols
     MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS,
+    /// @brief draw filled walking areas
+    MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS,
     /// @brief Add edge to selected items - menu entry
     MID_GNE_ADDSELECT_EDGE,
     /// @brief Remove edge from selected items - Menu Entry
@@ -1168,6 +1174,12 @@ enum {
     MID_GNE_CONNECTORFRAME_SELECTCONFLICTS,
     /// @brief select lanes with connections that have the pass attribute set to 'true'
     MID_GNE_CONNECTORFRAME_SELECTPASS,
+    /// @brief toogle inspect connections
+    MID_GNE_CONNECTORFRAME_VISIBLEININSPECTMODE,
+    /// @brief toogle show only from source connections
+    MID_GNE_CONNECTORFRAME_HIDEOTHERSOURCES,
+    /// @brief toogle inspect connections
+    MID_GNE_CONNECTORFRAME_INSPECTCONNECTIONS,
 
     /// @}
 
