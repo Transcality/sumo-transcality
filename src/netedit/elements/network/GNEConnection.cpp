@@ -359,8 +359,10 @@ GNEConnection::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
     } else {
         // create popup
         GUIGLObjectPopupMenu* ret = new GUIGLObjectPopupMenu(app, parent, this);
+        // check if allow delete connections
+        const bool allowDelete = myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork() && (myNet->getViewNet()->getEditModes().networkEditMode != NetworkEditMode::NETWORK_CONNECT);
         // build common options
-        buildPopUpMenuCommonOptions(ret, app, myNet->getViewNet(), myTagProperty->getTag(), mySelected);
+        buildPopUpMenuCommonOptions(ret, app, myNet->getViewNet(), myTagProperty->getTag(), mySelected, allowDelete, true);
         // check if we're in supermode network
         if (myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork()) {
             // create menu commands
@@ -410,7 +412,7 @@ GNEConnection::drawGL(const GUIVisualizationSettings& s) const {
             shapeSuperposed.move2side(0.5);
         }
         GUIGeometry superposedGeometry(shapeSuperposed);
-        // draw geometry only if we'rent in drawForObjectUnderCursor mode
+        // draw geometry only if we are not in drawForObjectUnderCursor mode
         if (!s.drawForViewObjectsHandler) {
             // draw connection
             drawConnection(s, d, superposedGeometry, connectionExaggeration);

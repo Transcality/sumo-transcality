@@ -545,6 +545,11 @@ GNEApplicationWindow::GNEApplicationWindow(FXApp* app, const GNETagPropertiesDat
     TemplateHandler::parseTemplate(myOriginalSumoOptions, sumoTemplate);
     TemplateHandler::parseTemplate(myNetgenerateOptions, netgenerateTemplate);
     TemplateHandler::parseTemplate(myOriginalNetgenerateOptions, netgenerateTemplate);
+    // make certain sumo options non editable
+    mySumoOptions.setOptionEditable("configuration-file", false);
+    mySumoOptions.setOptionEditable("net-file", false);
+    mySumoOptions.setOptionEditable("route-files", false);
+    mySumoOptions.setOptionEditable("additional-files", false);
     // add extra option for automatic closing
     myNetgenerateOptions.doRegister("close-dialog-automatic", new Option_Bool(true));
     myNetgenerateOptions.addDescription("close-dialog-automatic", "report", TL("Close dialog automatically"));
@@ -3052,6 +3057,8 @@ GNEApplicationWindow::onCmdToggleViewOption(FXObject* sender, FXSelector sel, vo
                 return myViewNet->onCmdToggleAutoOppositeEdge(sender, sel, ptr);
             case MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS:
                 return myViewNet->onCmdToggleShowPolygonSymbols(sender, sel, ptr);
+            case MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS:
+                return myViewNet->onCmdToggleDrawJunctionShape(sender, sel, ptr);
             // Demand
             case MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID:
                 return myViewNet->onCmdToggleShowGrid(sender, sel, ptr);
