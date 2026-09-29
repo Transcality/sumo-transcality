@@ -146,6 +146,8 @@ MSAbstractLaneChangeModel::MSAbstractLaneChangeModel(MSVehicle& v, const LaneCha
     myOvertakeRightParam(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_OVERTAKE_RIGHT, 0)),
     myAssertive(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_ASSERTIVE, 1)),
     myCooperativeHelpTime(TIME2STEPS(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_HELPTIME, 60))),
+    myCooperativeHelpThreshold(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_HELPTHRESHOLD, -1)),
+    myCooperativeMinSpeed(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_MINSPEED, 0)),
     myHaveBlueLight(v.getDevice(typeid(MSDevice_Bluelight)) != nullptr), // see MSVehicle::initDevices
     myLastLaneChangeOffset(0),
     myAmOpposite(false),
@@ -1109,9 +1111,9 @@ MSAbstractLaneChangeModel::getNormalizedLaneIndex() {
 }
 
 void
-MSAbstractLaneChangeModel::addLCSpeedAdvice(const double vSafe, bool ownAdvice) {
+MSAbstractLaneChangeModel::addLCSpeedAdvice(const double vSafe, int flag) {
     const double accel = SPEED2ACCEL(vSafe - myVehicle.getSpeed());
-    myLCAccelerationAdvices.push_back({accel, ownAdvice});
+    myLCAccelerationAdvices.push_back({accel, flag});
 }
 
 
@@ -1159,7 +1161,7 @@ MSAbstractLaneChangeModel::loadState(const SUMOSAXAttributes& attrs) {
         double prev = std::numeric_limits<double>::max();
         while (bis >> token) {
             if (prev != std::numeric_limits<double>::max()) {
-                myLCAccelerationAdvices.push_back(std::make_pair(prev, (bool)token));
+                myLCAccelerationAdvices.push_back(std::make_pair(prev, (int)token));
                 prev = std::numeric_limits<double>::max();
             }
             prev = token;

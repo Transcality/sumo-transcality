@@ -1542,6 +1542,11 @@ SUMOVehicleParserHelper::getAllowedCFModelAttrs() {
         ccParams.insert(SUMO_ATTR_CF_CC_FLATBED_H);
         allowedCFModelAttrs[SUMO_TAG_CF_CC] = ccParams;
         allParams.insert(ccParams.begin(), ccParams.end());
+        // NaSch
+        std::set<SumoXMLAttr> naschParams(genericParams);
+        naschParams.insert(SUMO_ATTR_SIGMA);
+        allowedCFModelAttrs[SUMO_TAG_CF_NASCH] = naschParams;
+        allParams.insert(naschParams.begin(), naschParams.end());
         // last element
         allowedCFModelAttrs[SUMO_TAG_NOTHING] = allParams;
     }
@@ -1571,6 +1576,9 @@ SUMOVehicleParserHelper::parseLCParams(SUMOVTypeParameter* into, LaneChangeModel
         lc2013Params.insert(SUMO_ATTR_LCA_SPEEDGAIN_URGENCY);
         lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_ROUNDABOUT);
         lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_SPEED);
+        lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_HELPTIME);
+        lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_HELPTHRESHOLD);
+        lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_MINSPEED);
         lc2013Params.insert(SUMO_ATTR_LCA_OVERTAKE_RIGHT);
         lc2013Params.insert(SUMO_ATTR_LCA_SIGMA);
         lc2013Params.insert(SUMO_ATTR_LCA_KEEPRIGHT_ACCEPTANCE_TIME);

@@ -321,6 +321,13 @@ MSEdge::getMesoPermissions(SVCPermissions p, SVCPermissions ignoreIgnored) {
 
 void
 MSEdge::rebuildAllowedLanes(const bool onInit, bool updateVehicles) {
+    // hadPermissionChanges() only tracks transient (rerouter/TraCI-temporary)
+    // changes; a permanent change (e.g. traci.lane.setDisallowed /
+    // traci.edge.setAllowed) goes straight through MSLane::setPermissions and
+    // never registers there. Comparing the aggregated permissions before and
+    // after this rebuild catches that case too.
+    const SVCPermissions oldMinimumPermissions = myMinimumPermissions;
+    const SVCPermissions oldCombinedPermissions = myCombinedPermissions;
     // rebuild myMinimumPermissions and myCombinedPermissions
     myMinimumPermissions = SVCAll;
     myCombinedPermissions = 0;
@@ -340,6 +347,14 @@ MSEdge::rebuildAllowedLanes(const bool onInit, bool updateVehicles) {
         myOrigAllowed = myAllowed;
         myOrigAllowedTargets = myAllowedTargets;
         myOrigClassesViaSuccessorMap = myClassesViaSuccessorMap;
+    }
+    if (!onInit && (lanesChangedPermission
+                    || myMinimumPermissions != oldMinimumPermissions
+                    || myCombinedPermissions != oldCombinedPermissions)) {
+        // a runtime permission change (closure / re-opening, transient or
+        // permanent) must reach the CCH metric even though the speed table
+        // does not move
+        MSRoutingEngine::invalidateCCHEdge(this);
     }
     // rebuild myAllowed
     myAllowed.clear();
@@ -374,6 +389,14 @@ MSEdge::rebuildAllowedLanes(const bool onInit, bool updateVehicles) {
         if (MSGlobals::gUseMesoSim) {
             for (MESegment* s = MSGlobals::gMesoNet->getSegmentForEdge(*this); s != nullptr; s = s->getNextSegment()) {
                 s->updatePermissions();
+            }
+        }
+        for (MSLane* const lane : *myLanes) {
+            for (MSLink* link : lane->getLinkCont()) {
+                link->updatePermissions();
+            }
+            for (auto ili : lane->getIncomingLanes()) {
+                ili.viaLink->updatePermissions();
             }
         }
     }
@@ -443,6 +466,7 @@ MSEdge::rebuildAllowedTargets(const bool updateVehicles) {
         }
     }
     myClassesSuccessorMap.clear();
+    myClassesViaSuccessorMap.clear();
 }
 
 
@@ -720,7 +744,7 @@ MSEdge::getDepartLane(MSVehicle& veh) const {
                 if (((*i).length - departPos) >= bestLength) {
                     if (isInternal()) {
                         for (MSLane* lane : *myLanes) {
-                            if (lane->getNormalSuccessorLane() == (*i).lane && lane->allowsVehicleClass(veh.getVClass()) ) {
+                            if (lane->getNormalSuccessorLane() == (*i).lane && lane->allowsVehicleClass(veh.getVClass())) {
                                 bestLanes->push_back(lane);
                             }
                         }
@@ -1335,24 +1359,23 @@ MSEdge::getViaSuccessors(SUMOVehicleClass vClass, bool ignoreTransientPermission
 #endif
     auto& viaMap = ignoreTransientPermissions && myHaveTransientPermissions ? myOrigClassesViaSuccessorMap : myClassesViaSuccessorMap;
     auto i = viaMap.find(vClass);
-    if (i != viaMap.end()) {
-        // can use cached value
-        return i->second;
-    }
-    // instantiate vector
-    MSConstEdgePairVector& result = viaMap[vClass];
-    // this vClass is requested for the first time. rebuild all successors
-    for (const auto& viaPair : myViaSuccessors) {
-        if (viaPair.first->isTazConnector()) {
-            result.push_back(viaPair);
-        } else {
-            const std::vector<MSLane*>* allowed = allowedLanes(*viaPair.first, vClass, ignoreTransientPermissions);
-            if (allowed != nullptr && allowed->size() > 0) {
+    if (i == viaMap.end()) {
+        // instantiate vector
+        MSConstEdgePairVector& result = viaMap[vClass];
+        // this vClass is requested for the first time. rebuild all successors
+        for (const auto& viaPair : myViaSuccessors) {
+            if (viaPair.first->isTazConnector()) {
                 result.push_back(viaPair);
+            } else {
+                const std::vector<MSLane*>* allowed = allowedLanes(*viaPair.first, vClass, ignoreTransientPermissions);
+                if (allowed != nullptr && allowed->size() > 0) {
+                    result.push_back(viaPair);
+                }
             }
         }
+        i = viaMap.find(vClass);
     }
-    return result;
+    return i->second;
 }
 
 
