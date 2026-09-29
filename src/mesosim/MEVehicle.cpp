@@ -324,7 +324,9 @@ MEVehicle::resumeFromStopping() {
         myStops.pop_front();
         if (myEventTime > now) {
             // if this is an aborted stop we need to change the event time of the vehicle
-            if (MSGlobals::gMesoNet->removeLeaderCar(this)) {
+            const bool isLeader = mySegment->getQueue(myQueIndex).back() == this;
+            if (isLeader) {
+                MSGlobals::gMesoNet->removeLeaderCar(this);
                 myEventTime = now + 1;
                 MSGlobals::gMesoNet->addLeaderCar(this, nullptr);
             }
@@ -392,10 +394,7 @@ MEVehicle::processStop() {
 
 
 bool
-MEVehicle::mayProceed() {
-    if (mySegment == nullptr) {
-        return true;
-    }
+MEVehicle::endTriggeredStop() {
     MSNet* const net = MSNet::getInstance();
     SUMOTime dummy = -1; // boarding- and loading-time are not considered
     for (MSStop& stop : myStops) {
@@ -454,6 +453,18 @@ MEVehicle::mayProceed() {
             // TODO do something useful here
             return false;
         }
+    }
+    return true;
+}
+
+
+bool
+MEVehicle::mayProceed() {
+    if (mySegment == nullptr) {
+        return true;
+    }
+    if (!endTriggeredStop()) {
+        return false;
     }
     return mySegment->isOpen(this);
 }

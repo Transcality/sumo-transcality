@@ -805,6 +805,7 @@ following table.
 | carFollowing-W99            | W99                                             | Car following model by Wiedemann, [10-Parameter version](https://w99demo.com/)                |
 | carFollowing-Daniel1        | Daniel1                                         | Car following model by Daniel Krajzewicz<br><br>**Caution:** lacking documentation           |
 | carFollowing-ACC            | ACC                                             | [Car following model by Milanés V. and Shladover S.E.](Car-Following-Models/ACC.md)  |
+| carFollowing-NaSch          | NaSch                                           | Discretized cellular-automaton model by Nagel and Schreckenberg (1992); speeds are rounded to multiples of the "cell size" implied by **accel** and only the gap (not the leader's speed) bounds the safe speed |
 | carFollowing-CACC           | CACC                                            | [Car following model by Milanés V. and Shladover S.E.](Car-Following-Models/CACC.md) |
 | carFollowing-Rail           | Rail                                            | [Model for various train types](Simulation/Railways.md#modelling_trains)                    |
 
@@ -976,6 +977,9 @@ lists which parameter are used by which model(s).
 | lcKeepRightAcceptanceTime | Time threshold for changing the willingness to change right. The value is compared against the anticipated time of unobstructed driving on the right. Lower values will encourage keepRight changes. If the value is changed from its default, fast approaching follower vehicles will also impact willingness to move to the right lane. *default: -1 (legacy behavior where acceptance time ~ 7 \* currentSpeed) range \[0-inf)* | LC2013, SL2015 |
 | lcCooperativeRoundabout | Factor that increases willingness to move to the inside lane in a multi-lane roundabout. *default: lcCooperative, range \[0-1\]* | LC2013, SL2015 |
 | lcCooperativeSpeed      | Factor for cooperative speed adjustments. *default: lcCooperative, range \[0-1\]* | LC2013, SL2015 |
+| lcCooperativeHelpTime   | Time threshold for yielding to any downstream vehicles that are blocked from strategic lane changing for too long. A negative value disables time-based yielding. *default: 60s* | LC2013, SL2015 |
+| lcCooperativeHelpThreshold | Only cooperatively yield for vehicles that are blocked from strategic lane changing if the speed difference is below the given threshold. The speed threshold is ignored for vehicles that have been waiting long enough (`lcCooperativeHelpTime`). A negative value yields always. *default -1* | LC2013, SL2015 |
+| lcCooperativeMinSpeed | Only cooperatively yield for vehicles that are blocked from strategic lane changing if the yielding vehicle is driving at least that given FACTOR of it's desired speed. The speed threshold is ignored for vehicles that have been waiting long enough (`lcCooperativeHelpTime`). *default 0, range \[0-1\]* | LC2013, SL2015 |
 | minGapLat              | The desired minimum lateral gap when using the [sublane-model](Simulation/SublaneModel.md) , *default: 0.6* | SL2015 |
 | lcSublane               | The eagerness for using the configured lateral alignment within the lane. Higher values result in increased willingness to sacrifice speed for alignment. *default: 1.0, range \[0-inf)*                                                                | SL2015         |
 | lcPushy                 | Willingness to encroach laterally on other drivers. *default: 0, range \[0-1\]*                  | SL2015         |

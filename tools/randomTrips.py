@@ -158,6 +158,8 @@ def get_options(args=None):
                     "apart (default 0 which disables any checks)")
     op.add_argument("-i", "--intermediate", default=0, type=int,
                     help="generates the given number of intermediate way points")
+    op.add_argument("--return-to-origin", dest="returnToOrigin", action="store_true", default=False,
+                    help="end each trip on the opposite-direction edge of its source edge if available")
     op.add_argument("--jtrrouter", action="store_true", default=False,
                     help="Create flows without destination as input for jtrrouter")
     op.add_argument("--maxtries", default=100, type=int,
@@ -207,6 +209,10 @@ def get_options(args=None):
                     "distribution with n=N and p=PERIOD/N where PERIOD is the argument given to --period")
 
     options = op.parse_args(args=args)
+    if options.returnToOrigin and options.intermediate < 1:
+        raise ValueError("Option --return-to-origin must be used with option --intermediate.")
+    if options.returnToOrigin and options.jtrrouter:
+        raise ValueError("Option --return-to-origin cannot be used with option --jtrrouter.")
     if options.edge_permission and not is_vehicle_class(options.edge_permission):
         raise ValueError("The string '%s' doesn't correspond to a legit vehicle class." % options.edge_permission)
 
@@ -412,12 +418,19 @@ class RandomEdgeGenerator:
 
 class RandomTripGenerator:
 
-    def __init__(self, source_generator, sink_generator, via_generator, intermediate, pedestrians):
+    def __init__(self, source_generator, sink_generator, via_generator, intermediate, pedestrians, return_to_origin):
         self.source_generator = source_generator
         self.sink_generator = sink_generator
         self.via_generator = via_generator
         self.intermediate = intermediate
         self.pedestrians = pedestrians
+        self.return_to_origin = return_to_origin
+
+    def get_return_edge(self, source_edge):
+        for edge in source_edge.getFromNode().getIncoming():
+            if edge.getFromNode() == source_edge.getToNode():
+                return edge
+        return source_edge
 
     def get_trip(self, min_distance, max_distance, maxtries=100, junctionTaz=False, min_dist_fringe=None):
         for min_dist in [min_distance, min_dist_fringe]:
@@ -426,7 +439,7 @@ class RandomTripGenerator:
             for _ in range(maxtries):
                 source_edge = self.source_generator.get()
                 intermediate = [self.via_generator.get() for __ in range(self.intermediate)]
-                sink_edge = self.sink_generator.get()
+                sink_edge = self.get_return_edge(source_edge) if self.return_to_origin else self.sink_generator.get()
                 is_fringe2fringe = source_edge.is_fringe() and sink_edge.is_fringe() and not intermediate
                 if min_dist == min_dist_fringe and not is_fringe2fringe:
                     continue
@@ -560,17 +573,18 @@ def buildTripGenerator(net, options):
                 max_length = max(max_length, edge.getLength())
         forbidden_source_fringe = None if options.allow_fringe else "_outgoing"
         forbidden_sink_fringe = None if options.allow_fringe else "_incoming"
-        source_generator = RandomEdgeGenerator(
-            net, get_prob_fun(options, "_incoming", forbidden_source_fringe, max_length))
-        sink_generator = RandomEdgeGenerator(
-            net, get_prob_fun(options, "_outgoing", forbidden_sink_fringe, max_length))
+        source_weight_fun = get_prob_fun(options, "_incoming", forbidden_source_fringe, max_length)
+        sink_weight_fun = get_prob_fun(options, "_outgoing", forbidden_sink_fringe, max_length)
         if options.weightsprefix:
             if os.path.isfile(options.weightsprefix + SOURCE_SUFFIX):
-                source_generator = RandomEdgeGenerator(
-                    net, LoadedProps(options.weightsprefix + SOURCE_SUFFIX))
+                source_weight_fun = LoadedProps(options.weightsprefix + SOURCE_SUFFIX)
             if os.path.isfile(options.weightsprefix + DEST_SUFFIX):
-                sink_generator = RandomEdgeGenerator(
-                    net, LoadedProps(options.weightsprefix + DEST_SUFFIX))
+                sink_weight_fun = LoadedProps(options.weightsprefix + DEST_SUFFIX)
+
+        source_generator = RandomEdgeGenerator(net, source_weight_fun)
+        sink_generator = None
+        if not options.returnToOrigin or options.weights_outprefix:
+            sink_generator = RandomEdgeGenerator(net, sink_weight_fun)
     except InvalidGenerator:
         print("Error: no valid edges for generating source or destination. Try using option --allow-fringe",
               file=sys.stderr)
@@ -590,7 +604,8 @@ def buildTripGenerator(net, options):
             via_generator = None
 
     return RandomTripGenerator(
-        source_generator, sink_generator, via_generator, options.intermediate, options.persons)
+        source_generator, sink_generator, via_generator, options.intermediate, options.persons,
+        options.returnToOrigin)
 
 
 def is_walk_attribute(attr):
@@ -980,10 +995,7 @@ def createTrips(options, trip_generator, rerunFactor=None, skipValidation=False)
         fouttrips.write("</routes>\n")
 
     # call duarouter for routes or validated trips
-    args = ['-n', options.netfile, '-r', options.tripfile, '--ignore-errors',
-            '--begin', str(options.begin), '--end', str(options.end),
-            '--no-warnings',
-            '--no-step-log']
+    args = ['-n', options.netfile, '-r', options.tripfile, '--ignore-errors', '--no-step-log']
     if options.additional is not None:
         args += ['--additional-files', options.additional]
     if options.remove_loops:
@@ -995,7 +1007,7 @@ def createTrips(options, trip_generator, rerunFactor=None, skipValidation=False)
     if options.threads is not None and options.threads > 1:
         args += ['--routing-threads', str(options.threads)]
     if options.verbose:
-        args += ['-v']
+        args += ['-v', '--aggregate-warnings', '5']
     if options.errorlog:
         args += ['--error-log', options.errorlog]
 
@@ -1029,7 +1041,7 @@ def createTrips(options, trip_generator, rerunFactor=None, skipValidation=False)
 
     if options.routefile and rerunFactor is None:
         args2 = (maargs if options.marouter else duargs)[:]
-        args2 += ['-o', options.routefile]
+        args2 += ['-o', options.routefile, '--no-warnings']
         if options.verbose:
             print("calling", " ".join(args2))
             sys.stdout.flush()
@@ -1046,6 +1058,10 @@ def createTrips(options, trip_generator, rerunFactor=None, skipValidation=False)
         if options.verbose:
             print("calling", " ".join(args2))
             sys.stdout.flush()
+        elif rerunFactor is None:
+            args2 += ['--aggregate-warnings', '0']
+        else:
+            args2 += ['--no-warnings']
         subprocess.call(args2, stdout=redirect)
         sys.stdout.flush()
 
@@ -1089,7 +1105,7 @@ def createTrips(options, trip_generator, rerunFactor=None, skipValidation=False)
 if __name__ == "__main__":
     try:
         if not main(get_options()):
-            print("Error: Trips couldn't be generated as requested. ", file=sys.stderr)
+            print("Error: Trips couldn't be generated as requested.", file=sys.stderr)
             sys.exit(1)
     except ValueError as e:
         print("Error:", e, file=sys.stderr)

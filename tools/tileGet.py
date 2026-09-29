@@ -35,6 +35,11 @@ try:
 except ImportError:
     import urllib
     from urllib2 import HTTPError as urlerror
+try:
+    from PIL import Image, ImageEnhance
+    HAVE_PIL = True
+except ImportError:
+    HAVE_PIL = False
 
 HAVE_GDAL = shutil.which("gdalwarp") is not None and shutil.which("gdal_translate") is not None
 
@@ -99,6 +104,27 @@ def getGeoTransform(filename):
     return info["geoTransform"], info["size"][0], info["size"][1]
 
 
+def _srcExtentInNetCRS(tile_list, zoom, net):
+    """Return (xmin, ymin, xmax, ymax) in the network's projected CRS.
+
+    Projects the four corners of the source tile extent to the target CRS and
+    returns the largest inscribed axis-aligned rectangle, eliminating the black
+    rotation triangles that appear when the two CRS are not axis-aligned.
+    """
+    x_tiles = [x for x, y, _ in tile_list]
+    y_tiles = [y for x, y, _ in tile_list]
+    min_x, max_x = min(x_tiles), max(x_tiles) + 1
+    min_y, max_y = min(y_tiles), max(y_tiles) + 1
+
+    def corner(xt, yt):
+        lat, lon = fromTileToLatLon(xt, yt, zoom)
+        return net.convertLonLat2XY(lon, lat, rawUTM=True)
+
+    nw, ne = corner(min_x, min_y), corner(max_x, min_y)
+    se, sw = corner(max_x, max_y), corner(min_x, max_y)
+    return max(nw[0], sw[0]), max(sw[1], se[1]), min(ne[0], se[0]), min(nw[1], ne[1])
+
+
 def reprojectTiles(options, tile_list, zoom, net, decals):
     """Merge downloaded tiles and reproject from EPSG:3857 to the network projection."""
     R = 6378137.0  # Web Mercator radius
@@ -115,23 +141,26 @@ def reprojectTiles(options, tile_list, zoom, net, decals):
     vrt_path = os.path.join(options.output_dir, options.prefix + ".vrt")
     gdalCmd("gdalbuildvrt", vrt_path, *tif_paths)
     warped_path = os.path.join(options.output_dir, options.prefix + "_warped.tif")
-    warp_args = ["-t_srs", net._location["projParameter"], "-r", "bilinear"]
-    # Warp once to get the full geotransform reliably (JPEG has no native georef support)
-    gdalCmd("gdalwarp", "-overwrite", *(warp_args + [vrt_path, warped_path]))
-    out_path = os.path.join(options.output_dir, options.prefix + ".jpg")
-    gt, xsize, ysize = getGeoTransform(warped_path)
-    w, h = gt[1] * xsize, -gt[5] * ysize
+
+    # Compute the tight valid extent before warping so gdalwarp receives it as -te,
+    # eliminating black rotation triangles.
+    xmin, ymin, xmax, ymax = _srcExtentInNetCRS(tile_list, zoom, net)
     if options.crop_margin:
         m = list(map(float, options.crop_margin.split(",")))
         if len(m) == 1:
             m = 4 * m
-        warp_args += ["-te", gt[0] + m[0], gt[3] - h + m[1], gt[0] + w - m[2], gt[3] - m[3]]
-        gdalCmd("gdalwarp", "-overwrite", *(warp_args + [vrt_path, warped_path]))
-        gt, xsize, ysize = getGeoTransform(warped_path)
-        w, h = gt[1] * xsize, -gt[5] * ysize
+        xmin += m[0]
+        ymin += m[1]
+        xmax -= m[2]
+        ymax -= m[3]
+    gdalCmd("gdalwarp", "-t_srs", net._location["projParameter"], "-r", "bilinear",
+            "-te", xmin, ymin, xmax, ymax, vrt_path, warped_path)
+
+    out_path = os.path.join(options.output_dir, options.prefix + ".jpg")
+    gt, xsize, ysize = getGeoTransform(warped_path)
+    w, h = gt[1] * xsize, -gt[5] * ysize
     gdalCmd("gdal_translate", "-of", "JPEG", warped_path, out_path)
-    if options.background_factor != 1.0:
-        from PIL import Image, ImageEnhance
+    if options.background_factor != 1.0 and HAVE_PIL:
         img = Image.open(out_path)
         for Enhancer in (ImageEnhance.Color, ImageEnhance.Brightness, ImageEnhance.Contrast):
             img = Enhancer(img).enhance(options.background_factor)
@@ -173,14 +202,35 @@ def writeSettings(options, net, tile_list, zoom, decals):
                    se[0] - nw[0], nw[1] - se[1], options.layer), file=decals)
 
 
+def zoomFromResolution(resolution):
+    """Convert a meters-per-pixel resolution to an OSM zoom level (at equator)."""
+    R = 6378137.0
+    return int(round(math.log2(2 * math.pi * R / (256 * resolution))))
+
+
+def effectiveZoom(options):
+    """Return the zoom level to use, considering --zoom, --resolution, and --max-zoom."""
+    if options.zoom is not None:
+        return min(options.zoom, options.maxZoom)
+    if options.resolution is not None:
+        return min(zoomFromResolution(options.resolution), options.maxZoom)
+    return None
+
+
 def retrieveOpenStreetMapTiles(options, west, south, east, north, decals, net, is_retina):
-    zoom = options.maxZoom + 1
-    numTiles = options.tiles + 1
-    while numTiles > options.tiles:
-        zoom -= 1
+    fixed_zoom = effectiveZoom(options)
+    if fixed_zoom is not None:
+        zoom = fixed_zoom
         sx, sy = fromLatLonToTile(north, west, zoom)
         ex, ey = fromLatLonToTile(south, east, zoom)
-        numTiles = (ex - sx + 1) * (ey - sy + 1)
+    else:
+        zoom = options.maxZoom + 1
+        numTiles = options.tiles + 1
+        while numTiles > options.tiles:
+            zoom -= 1
+            sx, sy = fromLatLonToTile(north, west, zoom)
+            ex, ey = fromLatLonToTile(south, east, zoom)
+            numTiles = (ex - sx + 1) * (ey - sy + 1)
 
     if options.user_agent:
         opener = urllib.build_opener()
@@ -200,13 +250,19 @@ def retrieveOpenStreetMapTiles(options, west, south, east, north, decals, net, i
 
 
 def retrieveMapServerTiles(options, west, south, east, north, decals, net, pattern):
-    zoom = 20
-    numTiles = options.tiles + 1
-    while numTiles > options.tiles:
-        zoom -= 1
+    fixed_zoom = effectiveZoom(options)
+    if fixed_zoom is not None:
+        zoom = fixed_zoom
         sx, sy = fromLatLonToTile(north, west, zoom)
         ex, ey = fromLatLonToTile(south, east, zoom)
-        numTiles = (ex - sx + 1) * (ey - sy + 1)
+    else:
+        zoom = 20
+        numTiles = options.tiles + 1
+        while numTiles > options.tiles:
+            zoom -= 1
+            sx, sy = fromLatLonToTile(north, west, zoom)
+            ex, ey = fromLatLonToTile(south, east, zoom)
+            numTiles = (ex - sx + 1) * (ey - sy + 1)
 
     # opener = urllib.build_opener()
     # opener.addheaders = [('User-agent', 'Mozilla/5.0')]
@@ -260,8 +316,13 @@ def get_options(args=None):
                          help="maximum number of tiles the output gets split into")
     optParser.add_option("--simulate", action="store_true", default=False,
                          help="print download urls and filenames instead of requesting from tile server")
-    optParser.add_option("-z", "--max-zoom", type=int, default=17, dest="maxZoom",
+    optParser.add_option("-z", "--max-zoom", type=int, default=19, dest="maxZoom",
                          help="restrict maximum zoom level")
+    optParser.add_option("--zoom", type=int, default=None,
+                         help="use this zoom level directly (overrides --tiles based selection, capped by --max-zoom)")
+    optParser.add_option("--resolution", type=float, default=None,
+                         help="target resolution in meters per pixel; the closest zoom level is used "
+                              "(overrides --tiles based selection, capped by --max-zoom)")
     optParser.add_option("-j", "--parallel-jobs", type=int, default=0,
                          help="Number of parallel jobs to run when downloading tiles. 0 means no parallelism.")
     optParser.add_option("-r", "--retina", action="store_true", default=False,
