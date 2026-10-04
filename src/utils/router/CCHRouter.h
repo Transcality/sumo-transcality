@@ -55,10 +55,21 @@
 #include <utils/common/MsgHandler.h>
 #include <utils/common/SUMOVehicleClass.h>
 #include <utils/router/SUMOAbstractRouter.h>
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4267 4458)
+#endif
 #include <routingkit/customizable_contraction_hierarchy.h>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 
 // ===========================================================================
@@ -373,4 +384,3 @@ private:
 private:
     CCHRouter& operator=(const CCHRouter&) = delete;
 };
-

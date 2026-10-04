@@ -56,10 +56,6 @@
 #include <utils/router/CCHGraph.h>
 #include <utils/router/CCHMetricFamily.h>
 #include <utils/router/CCHRouter.h>
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <routingkit/customizable_contraction_hierarchy.h>
-#pragma GCC diagnostic pop
 
 //#define DEBUG_SEPARATE_TURNS
 #define DEBUG_COND(obj) (obj->isSelected())
