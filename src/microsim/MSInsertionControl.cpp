@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <unordered_set>
 #include <utils/router/IntermodalRouter.h>
 #include <microsim/devices/MSDevice_Routing.h>
 #include <microsim/devices/MSRoutingEngine.h>
@@ -136,15 +137,42 @@ MSInsertionControl::emitVehicles(SUMOTime time) {
     //  will be used to append those vehicles that will not be able to depart in this
     //  time step
     MSVehicleContainer::VehicleVector refusedEmits;
+    const std::unordered_set<SUMOVehicle*> candidates(myEmitCandidates.begin(), myEmitCandidates.end());
 
     // go through the list of previously refused vehicles, first
     MSNet::getInstance()->lockPendingEmits();
-    MSVehicleContainer::VehicleVector::const_iterator veh;
-    for (veh = myPendingEmits.begin(); veh != myPendingEmits.end(); veh++) {
-        if (havePreChecked && (myEmitCandidates.count(*veh) == 0)) {
-            refusedEmits.push_back(*veh);
-        } else {
-            numEmitted += tryInsert(time, *veh, refusedEmits);
+    if (MSGlobals::gUseMesoSim) {
+        // the vehicles are inserted from the front of the queue of their edge; a refused one blocks the queue (option eager-insert)
+        for (auto item = myPendingEmitsByEdge.begin(); item != myPendingEmitsByEdge.end();) {
+            MSVehicleContainer::VehicleVector& queue = item->second;
+            for (int i = 0; i < (int)queue.size();) {
+                SUMOVehicle* const veh = queue[i];
+                if (havePreChecked && candidates.count(veh) == 0) {
+                    break;
+                }
+                numEmitted += tryInsert(time, veh, refusedEmits);
+                if (i < (int)queue.size() && queue[i] == veh) {
+                    // refused
+                    if (!myEagerInsertionCheck) {
+                        break;
+                    }
+                    i++;
+                }
+            }
+            item = queue.empty() ? myPendingEmitsByEdge.erase(item) : std::next(item);
+        }
+        refusedEmits.clear();
+        for (const auto& item : myPendingEmitsByEdge) {
+            refusedEmits.insert(refusedEmits.end(), item.second.begin(), item.second.end());
+        }
+    } else {
+        MSVehicleContainer::VehicleVector::const_iterator veh;
+        for (veh = myPendingEmits.begin(); veh != myPendingEmits.end(); veh++) {
+            if (havePreChecked && (candidates.count(*veh) == 0)) {
+                refusedEmits.push_back(*veh);
+            } else {
+                numEmitted += tryInsert(time, *veh, refusedEmits);
+            }
         }
     }
     myEmitCandidates.clear();
@@ -232,7 +260,7 @@ MSInsertionControl::checkCandidates(SUMOTime time, const bool preCheck) {
                     continue;
                 }
                 if (item.first->insertVehicle(*v, time, true, myEagerInsertionCheck)) {
-                    myEmitCandidates.insert(v);
+                    myEmitCandidates.push_back(v);
                 } else {
                     MSDevice_Routing* dev = static_cast<MSDevice_Routing*>(v->getDevice(typeid(MSDevice_Routing)));
                     if (dev != nullptr) {
@@ -251,7 +279,7 @@ MSInsertionControl::checkCandidates(SUMOTime time, const bool preCheck) {
             SUMOVehicle* const v = *veh;
             const MSEdge* const edge = v->getEdge();
             if (edge->insertVehicle(*v, time, true, myEagerInsertionCheck)) {
-                myEmitCandidates.insert(v);
+                myEmitCandidates.push_back(v);
             } else {
                 MSDevice_Routing* dev = static_cast<MSDevice_Routing*>(v->getDevice(typeid(MSDevice_Routing)));
                 if (dev != nullptr) {

@@ -27,7 +27,6 @@
 #include <map>
 #include <string>
 #include <set>
-#include <unordered_set>
 #include <utils/common/Named.h>
 #include <utils/foxtools/MFXSynchSet.h>
 #include <microsim/MSRouterDefs.h>
@@ -239,8 +238,8 @@ private:
     /// @brief The vehicles that could not be inserted by departure edge, in their order (mesosim, see checkCandidates)
     std::map<const MSEdge*, MSVehicleContainer::VehicleVector, ComparatorNumericalIdLess> myPendingEmitsByEdge;
 
-    /// @brief Buffer for vehicles that may be inserted in the current step
-    std::unordered_set<SUMOVehicle*> myEmitCandidates;
+    /// @brief Buffer for vehicles that may be inserted in the current step, in the order of the check
+    std::vector<SUMOVehicle*> myEmitCandidates;
 
     /// @brief Set of vehicles which shall not be inserted anymore
 
