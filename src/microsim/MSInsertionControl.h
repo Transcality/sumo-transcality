@@ -27,6 +27,8 @@
 #include <map>
 #include <string>
 #include <set>
+#include <unordered_set>
+#include <utils/common/Named.h>
 #include <utils/foxtools/MFXSynchSet.h>
 #include <microsim/MSRouterDefs.h>
 #include "MSVehicleContainer.h"
@@ -213,6 +215,9 @@ private:
      */
     void checkCandidates(SUMOTime time, const bool preCheck);
 
+    /// @brief removes the vehicle from the insertion queue of its edge (mesosim)
+    void dropPendingEmit(const SUMOVehicle* veh);
+
 
 private:
 
@@ -231,8 +236,11 @@ private:
     /// @brief Buffers for vehicles that could not be inserted
     MSVehicleContainer::VehicleVector myPendingEmits;
 
+    /// @brief The vehicles that could not be inserted by departure edge, in their order (mesosim, see checkCandidates)
+    std::map<const MSEdge*, MSVehicleContainer::VehicleVector, ComparatorNumericalIdLess> myPendingEmitsByEdge;
+
     /// @brief Buffer for vehicles that may be inserted in the current step
-    std::set<SUMOVehicle*> myEmitCandidates;
+    std::unordered_set<SUMOVehicle*> myEmitCandidates;
 
     /// @brief Set of vehicles which shall not be inserted anymore
 

@@ -165,21 +165,26 @@ MSInsertionControl::tryInsert(SUMOTime time, SUMOVehicle* veh,
     if ((myMaxVehicleNumber < 0 || (int)MSNet::getInstance()->getVehicleControl().getRunningVehicleNo() < myMaxVehicleNumber)
             && edge.insertVehicle(*veh, time, false, myEagerInsertionCheck || veh->getParameter().departProcedure == DepartDefinition::SPLIT)) {
         // Successful insertion
+        dropPendingEmit(veh);
         return 1;
     }
     if (myMaxDepartDelay >= 0 && time - veh->getParameter().depart > myMaxDepartDelay) {
         // remove vehicles waiting too long for departure
+        dropPendingEmit(veh);
         myVehicleControl.deleteVehicle(veh, true);
     } else if (edge.isVaporizing()) {
         // remove vehicles if the edge shall be empty
+        dropPendingEmit(veh);
         myVehicleControl.deleteVehicle(veh, true);
     } else if (myAbortedEmits.count(veh) > 0) {
         // remove vehicles which shall not be inserted for some reason
         myAbortedEmits.erase(veh);
+        dropPendingEmit(veh);
         myVehicleControl.deleteVehicle(veh, true);
     } else if ((veh->getRouteValidity(false) & (
                     MSBaseVehicle::ROUTE_START_INVALID_LANE
                     | MSBaseVehicle::ROUTE_START_INVALID_PERMISSIONS)) != 0) {
+        dropPendingEmit(veh);
         myVehicleControl.deleteVehicle(veh, true);
     } else {
         // let the vehicle wait one step, we'll retry then
@@ -197,6 +202,7 @@ MSInsertionControl::checkCandidates(SUMOTime time, const bool preCheck) {
             SUMOVehicle* veh = *it;
             if (time - veh->getParameter().depart > myMaxDepartDelay) {
                 // remove vehicles waiting too long for departure
+                dropPendingEmit(veh);
                 myVehicleControl.deleteVehicle(veh, true);
                 it = myPendingEmits.erase(it);
             } else {
@@ -207,9 +213,39 @@ MSInsertionControl::checkCandidates(SUMOTime time, const bool preCheck) {
     while (myAllVeh.anyWaitingBefore(time)) {
         const MSVehicleContainer::VehicleVector& top = myAllVeh.top();
         copy(top.begin(), top.end(), back_inserter(myPendingEmits));
+        if (MSGlobals::gUseMesoSim) {
+            for (SUMOVehicle* const veh : top) {
+                myPendingEmitsByEdge[veh->getEdge()].push_back(veh);
+            }
+        }
         myAllVeh.pop();
     }
-    if (preCheck) {
+    if (preCheck && MSGlobals::gUseMesoSim) {
+        // the vehicles wait in the queue of their edge: after a refusal the rest of the queue is not checked (option eager-insert)
+        for (auto& item : myPendingEmitsByEdge) {
+            for (auto it = item.second.begin(); it != item.second.end();) {
+                SUMOVehicle* const v = *it;
+                if (v->getEdge() != item.first) {
+                    // the route was changed since the vehicle started waiting
+                    myPendingEmitsByEdge[v->getEdge()].push_back(v);
+                    it = item.second.erase(it);
+                    continue;
+                }
+                if (item.first->insertVehicle(*v, time, true, myEagerInsertionCheck)) {
+                    myEmitCandidates.insert(v);
+                } else {
+                    MSDevice_Routing* dev = static_cast<MSDevice_Routing*>(v->getDevice(typeid(MSDevice_Routing)));
+                    if (dev != nullptr) {
+                        dev->skipRouting(time);
+                    }
+                    if (!myEagerInsertionCheck) {
+                        break;
+                    }
+                }
+                ++it;
+            }
+        }
+    } else if (preCheck) {
         MSVehicleContainer::VehicleVector::const_iterator veh;
         for (veh = myPendingEmits.begin(); veh != myPendingEmits.end(); veh++) {
             SUMOVehicle* const v = *veh;
@@ -221,6 +257,23 @@ MSInsertionControl::checkCandidates(SUMOTime time, const bool preCheck) {
                 if (dev != nullptr) {
                     dev->skipRouting(time);
                 }
+            }
+        }
+    }
+}
+
+
+void
+MSInsertionControl::dropPendingEmit(const SUMOVehicle* veh) {
+    if (MSGlobals::gUseMesoSim) {
+        MSVehicleContainer::VehicleVector& queue = myPendingEmitsByEdge[veh->getEdge()];
+        const auto it = std::find(queue.begin(), queue.end(), veh);
+        if (it != queue.end()) {
+            queue.erase(it);
+        } else {
+            // the route was changed since the vehicle started waiting
+            for (auto& item : myPendingEmitsByEdge) {
+                item.second.erase(std::remove(item.second.begin(), item.second.end(), veh), item.second.end());
             }
         }
     }
@@ -338,6 +391,7 @@ MSInsertionControl::retractDescheduleDeparture(const SUMOVehicle* veh) {
 
 void
 MSInsertionControl::alreadyDeparted(SUMOVehicle* veh) {
+    dropPendingEmit(veh);
     myPendingEmits.erase(std::remove(myPendingEmits.begin(), myPendingEmits.end(), veh), myPendingEmits.end());
     myAllVeh.remove(veh);
 }
@@ -349,6 +403,7 @@ MSInsertionControl::clearPendingVehicles(const std::string& route) {
     MSVehicleContainer::VehicleVector::iterator veh;
     for (veh = myPendingEmits.begin(); veh != myPendingEmits.end();) {
         if ((*veh)->getRoute().getID() == route || route == "") {
+            dropPendingEmit(*veh);
             myVehicleControl.deleteVehicle(*veh, true);
             veh = myPendingEmits.erase(veh);
         } else {
@@ -428,6 +483,7 @@ MSInsertionControl::clearState() {
     myFlowIDs.clear();
     myAllVeh.clearState();
     myPendingEmits.clear();
+    myPendingEmitsByEdge.clear();
     myEmitCandidates.clear();
     myAbortedEmits.clear();
     // myPendingEmitsForLane must not be cleared since it updates itself on the next call
