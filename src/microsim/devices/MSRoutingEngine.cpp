@@ -88,6 +88,7 @@ SUMOAbstractRouter<MSEdge, SUMOVehicle>::Operation MSRoutingEngine::myEffortFunc
 #ifdef HAVE_FOX
 FXMutex MSRoutingEngine::myRouteCacheMutex;
 MFXWorkerThread::Pool* MSRoutingEngine::myThreadPool = nullptr;
+MFXWorkerThread::Pool* MSRoutingEngine::myCustomizePool = nullptr;
 std::vector<MSRoutingEngine::RoutingTask*> MSRoutingEngine::myPendingTasks;
 #endif
 MSCCHGraph* MSRoutingEngine::myCCHGraph = nullptr;
@@ -236,6 +237,8 @@ MSRoutingEngine::getAssumedSpeed(const MSEdge* edge, const SUMOVehicle* veh) {
 
 SUMOTime
 MSRoutingEngine::adaptEdgeEfforts(SUMOTime currentTime) {
+    // the fill of the CCH metrics started at the last barrier reads the speed tables
+    waitForCustomize();
     initEdgeWeights(SVC_PASSENGER);
     if (myBikeSpeeds) {
         initEdgeWeights(SVC_BICYCLE);
@@ -310,8 +313,23 @@ MSRoutingEngine::adaptEdgeEfforts(SUMOTime currentTime) {
     // never route (see CCHMetricFamily::atBarrier: measured on Lausanne, the
     // unconditional per-tick customize was 80% of meso wall time at
     // adaptation-interval 2, and ran even with rerouting probability 0).
+    // With routing threads the sparse re-customization runs on its own thread
+    // while the vehicles move and is published at the next barrier; wholesale
+    // refills (new types, permission changes) stay here.
     if (myCCHLive != nullptr) {
-        myCCHLive->atBarrier(STEPS2TIME(currentTime), cchEdgeMoved);
+        myCCHLive->publish();
+        if (myCCHLive->atBarrier(cchEdgeMoved)) {
+            bool deferred = false;
+#ifdef HAVE_FOX
+            if (myCustomizePool != nullptr && !myCCHLive->prepare()) {
+                myCustomizePool->add(new CustomizeTask(STEPS2TIME(currentTime)));
+                deferred = true;
+            }
+#endif
+            if (!deferred) {
+                myCCHLive->customize(STEPS2TIME(currentTime));
+            }
+        }
     }
     if (OptionsCont::getOptions().isSet("device.rerouting.output")) {
         OutputDevice& dev = OutputDevice::getDeviceByOption("device.rerouting.output");
@@ -419,8 +437,9 @@ MSRoutingEngine::invalidateCCHEdge(const MSEdge* e) {
     // the primed connection masks reflect the OLD successor lists; the next
     // fill of either family re-primes from the live ones. Safe to do right
     // here: masks are only read at fill time, and every fill runs on the
-    // main thread (the device barrier, the free-flow repair) -- never on a
-    // query thread.
+    // main thread (the device barrier, the free-flow repair) or on the
+    // customize thread, which is joined first -- never on a query thread.
+    waitForCustomize();
     myCCHGraph->invalidateClassMasks();
     if (myCCHFreeflow != nullptr) {
         myCCHFreeflow->flagPermissionsStale();
@@ -654,6 +673,12 @@ MSRoutingEngine::initRouter(SUMOVehicle* vehicle) {
             }
         }
     }
+    if (myThreadPool != nullptr && myCCHLive != nullptr && myCustomizePool == nullptr) {
+        // the sparse re-customization of the CCH metrics runs on its own thread while the vehicles move
+        // and is published at the next barrier (see adaptEdgeEfforts)
+        myCustomizePool = new MFXWorkerThread::Pool(1);
+        myCCHLive->setPublishLag(1);
+    }
 #endif
 #endif
 }
@@ -733,6 +758,7 @@ MSRoutingEngine::reroute(MSTransportable& t, const SUMOTime currentTime, const s
 
 void
 MSRoutingEngine::setEdgeTravelTime(const MSEdge* const edge, const double travelTime) {
+    waitForCustomize();
     myEdgeSpeeds[edge->getNumericalID()] = edge->getLength() / travelTime;
 }
 
@@ -792,6 +818,16 @@ MSRoutingEngine::getIntermodalRouterTT(const int rngIndex, const Prohibitions& p
 
 
 void
+MSRoutingEngine::waitForCustomize() {
+#ifdef HAVE_FOX
+    if (myCustomizePool != nullptr) {
+        myCustomizePool->waitAll();
+    }
+#endif
+}
+
+
+void
 MSRoutingEngine::cleanupCCH() {
     // free the CCH state so a subsequent load (libsumo / GUI reload) rebuilds
     // it against the new network; the router clones referencing it were
@@ -800,6 +836,11 @@ MSRoutingEngine::cleanupCCH() {
     // MSVehicleType*, so this must run BEFORE MSNet deletes its
     // MSVehicleControl (see the call in ~MSNet); the nullptr checks below
     // make a second call from cleanup() a safe no-op.
+#ifdef HAVE_FOX
+    waitForCustomize();
+    delete myCustomizePool;
+    myCustomizePool = nullptr;
+#endif
     delete myCCHLive;
     myCCHLive = nullptr;
     delete myCCHFreeflow;
@@ -879,6 +920,7 @@ MSRoutingEngine::saveState(OutputDevice& out) {
 
 void
 MSRoutingEngine::loadState(const SUMOSAXAttributes& attrs) {
+    waitForCustomize();
     const MSEdge* const e = MSEdge::dictionary(attrs.getString(SUMO_ATTR_ID));
     e->markDelayed();
     const int id = e->getNumericalID();
@@ -930,6 +972,12 @@ MSRoutingEngine::waitForAll() {
 // ---------------------------------------------------------------------------
 // MSRoutingEngine::RoutingTask-methods
 // ---------------------------------------------------------------------------
+void
+MSRoutingEngine::CustomizeTask::run(MFXWorkerThread* /*context*/) {
+    myCCHLive->fill(myNow);
+}
+
+
 void
 MSRoutingEngine::RoutingTask::run(MFXWorkerThread* context) {
     SUMOAbstractRouter<MSEdge, SUMOVehicle>& router = static_cast<MSEdgeControl::WorkerThread*>(context)->getRouter(myVehicle.getVClass());

@@ -277,6 +277,18 @@ private:
 
     /// @brief the tasks posted since the last waitForAll, which applies the deferred routes in this order
     static std::vector<RoutingTask*> myPendingTasks;
+
+    /// @brief fills the CCH metrics between two barriers (CCHMetricFamily::fill)
+    class CustomizeTask : public MFXWorkerThread::Task {
+    public:
+        CustomizeTask(const double now) : myNow(now) {}
+        void run(MFXWorkerThread* context) override;
+    private:
+        const double myNow;
+    };
+
+    /// @brief the thread filling the CCH metrics while the vehicles move (with routing threads), nullptr otherwise
+    static MFXWorkerThread::Pool* myCustomizePool;
 #endif
 
     /// @name Network state adaptation
@@ -389,6 +401,9 @@ private:
     /// @brief build the shared CCH + the live family with one metric per
     /// loaded type, publish initial metrics
     static void initCCH();
+
+    /// @brief waits for the fill of the CCH metrics on the customize thread (before the efforts, permissions or dirty lists change)
+    static void waitForCustomize();
 
 public:
     /// @brief a runtime permission change (closure / re-opening) hit this
