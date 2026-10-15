@@ -864,7 +864,9 @@ MSNet::simulationStep(const bool onlyMove) {
         MSRailSignalControl::getInstance().updateSignals(myStep);
     }
 #ifdef HAVE_FOX
-    MSRoutingEngine::waitForAll();
+    if (!MSGlobals::gUseMesoSim) {
+        MSRoutingEngine::waitForAll();
+    }
 #endif
     if (MSGlobals::gCheck4Accidents && !MSGlobals::gUseMesoSim) {
         myEdges->detectCollisions(myStep, STAGE_EVENTS);
@@ -874,6 +876,10 @@ MSNet::simulationStep(const bool onlyMove) {
 
     if (MSGlobals::gUseMesoSim) {
         MSGlobals::gMesoNet->simulate(myStep);
+#ifdef HAVE_FOX
+        // the routes computed meanwhile are applied now (MSRoutingEngine::RoutingTask::defer)
+        MSRoutingEngine::waitForAll();
+#endif
     } else {
         // assure all lanes with vehicles are 'active'
         myEdges->patchActiveLanes();

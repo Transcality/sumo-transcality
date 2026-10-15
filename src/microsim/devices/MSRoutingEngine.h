@@ -30,6 +30,7 @@
 #include <utils/common/WrappingCommand.h>
 #include <utils/router/AStarRouter.h>
 #include <microsim/MSEdge.h>
+#include <microsim/MSBaseVehicle.h>
 #include <microsim/MSRouterDefs.h>
 #include <memory>
 #include <atomic>
@@ -249,8 +250,15 @@ private:
     public:
         RoutingTask(SUMOVehicle& v, const SUMOTime time, const std::string& info,
                     const bool onInit, const bool silent, const Prohibitions& prohibited)
-            : myVehicle(v), myTime(time), myInfo(info), myOnInit(onInit), mySilent(silent), myProhibited(prohibited) {}
+            : myVehicle(v), myTime(time), myInfo(info), myOnInit(onInit), mySilent(silent), myProhibited(prohibited), myDeferred(nullptr) {}
+        ~RoutingTask() {
+            delete myDeferred;
+        }
         void run(MFXWorkerThread* context);
+        /// @brief copies the state of the vehicle that the route is computed from, so that the vehicle may move meanwhile
+        void defer();
+        /// @brief replaces the route of the vehicle by the one computed from the copied state (see defer)
+        void apply();
     private:
         SUMOVehicle& myVehicle;
         const SUMOTime myTime;
@@ -258,11 +266,17 @@ private:
         const bool myOnInit;
         const bool mySilent;
         const Prohibitions myProhibited;
+        MSBaseVehicle::DeferredReroute* myDeferred;
     private:
         /// @brief Invalidated assignment operator.
         RoutingTask& operator=(const RoutingTask&) = delete;
     };
 
+    /// @brief the worker threads computing the routes (MSEdgeControl::WorkerThread, which provides the routers)
+    static MFXWorkerThread::Pool* myThreadPool;
+
+    /// @brief the tasks posted since the last waitForAll, which applies the deferred routes in this order
+    static std::vector<RoutingTask*> myPendingTasks;
 #endif
 
     /// @name Network state adaptation

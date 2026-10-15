@@ -87,6 +87,8 @@ bool MSRoutingEngine::myHaveExtras(false);
 SUMOAbstractRouter<MSEdge, SUMOVehicle>::Operation MSRoutingEngine::myEffortFunc = &MSRoutingEngine::getEffort;
 #ifdef HAVE_FOX
 FXMutex MSRoutingEngine::myRouteCacheMutex;
+MFXWorkerThread::Pool* MSRoutingEngine::myThreadPool = nullptr;
+std::vector<MSRoutingEngine::RoutingTask*> MSRoutingEngine::myPendingTasks;
 #endif
 MSCCHGraph* MSRoutingEngine::myCCHGraph = nullptr;
 MSCCHMetricFamily* MSRoutingEngine::myCCHLive = nullptr;
@@ -637,9 +639,15 @@ MSRoutingEngine::initRouter(SUMOVehicle* vehicle) {
     myRouterProvider = new MSRouterProvider(router, nullptr, transRouter, railRouter);
 #ifndef THREAD_POOL
 #ifdef HAVE_FOX
-    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
-    if (threadPool.size() > 0) {
-        const std::vector<MFXWorkerThread*>& threads = threadPool.getWorkers();
+    if (MSGlobals::gNumThreads > 1 && myThreadPool == nullptr) {
+        // the routes are computed by their own threads, so that the simulation threads do not wait for them
+        myThreadPool = new MFXWorkerThread::Pool();
+        for (int i = 0; i < MSGlobals::gNumThreads; i++) {
+            new MSEdgeControl::WorkerThread(*myThreadPool);
+        }
+    }
+    if (myThreadPool != nullptr) {
+        const std::vector<MFXWorkerThread*>& threads = myThreadPool->getWorkers();
         if (static_cast<MSEdgeControl::WorkerThread*>(threads.front())->setRouterProvider(myRouterProvider)) {
             for (std::vector<MFXWorkerThread*>::const_iterator t = threads.begin() + 1; t != threads.end(); ++t) {
                 static_cast<MSEdgeControl::WorkerThread*>(*t)->setRouterProvider(myRouterProvider->clone());
@@ -660,9 +668,14 @@ MSRoutingEngine::reroute(SUMOVehicle& vehicle, const SUMOTime currentTime, const
     auto& router = myRouterProvider->getVehicleRouter(vehicle.getVClass());
 #ifndef THREAD_POOL
 #ifdef HAVE_FOX
-    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
-    if (threadPool.size() > 0) {
-        threadPool.add(new RoutingTask(vehicle, currentTime, info, onInit, silent, prohibited));
+    if (myThreadPool != nullptr) {
+        RoutingTask* const task = new RoutingTask(vehicle, currentTime, info, onInit, silent, prohibited);
+        if (!onInit && MSGlobals::gUseMesoSim && !vehicle.hasStops()) {
+            // the route is computed while the vehicle moves on and applied in waitForAll
+            task->defer();
+        }
+        myPendingTasks.push_back(task);
+        myThreadPool->add(task);
         return;
     }
 #endif
@@ -740,9 +753,8 @@ MSRoutingEngine::getRouterTT(const int rngIndex, SUMOVehicleClass svc, const Pro
     }
 #ifndef THREAD_POOL
 #ifdef HAVE_FOX
-    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
-    if (threadPool.size() > 0) {
-        auto& router = static_cast<MSEdgeControl::WorkerThread*>(threadPool.getWorkers()[rngIndex % MSGlobals::gNumThreads])->getRouter(svc);
+    if (myThreadPool != nullptr) {
+        auto& router = static_cast<MSEdgeControl::WorkerThread*>(myThreadPool->getWorkers()[rngIndex % myThreadPool->size()])->getRouter(svc);
         router.prohibit(prohibited);
         return router;
     }
@@ -816,14 +828,19 @@ MSRoutingEngine::cleanup() {
         myCachedRoutes.clear();
     }
     myAdaptationStepsIndex = 0;
-    cleanupCCH();
 #ifdef HAVE_FOX
-    if (MSGlobals::gNumThreads > 1) {
+    if (myThreadPool != nullptr) {
         // router deletion is done in thread destructor
+        for (RoutingTask* const task : myPendingTasks) {
+            delete task;
+        }
+        myPendingTasks.clear();
+        delete myThreadPool;
+        myThreadPool = nullptr;
         myRouterProvider = nullptr;
-        return;
     }
 #endif
+    cleanupCCH();
     delete myRouterProvider;
     myRouterProvider = nullptr;
 }
@@ -898,9 +915,13 @@ MSRoutingEngine::loadState(const SUMOSAXAttributes& attrs) {
 void
 MSRoutingEngine::waitForAll() {
 #ifndef THREAD_POOL
-    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
-    if (threadPool.size() > 0) {
-        threadPool.waitAll();
+    if (myThreadPool != nullptr) {
+        myThreadPool->waitAll(false);
+        for (RoutingTask* const task : myPendingTasks) {
+            task->apply();
+            delete task;
+        }
+        myPendingTasks.clear();
     }
 #endif
 }
@@ -916,7 +937,11 @@ MSRoutingEngine::RoutingTask::run(MFXWorkerThread* context) {
         router.prohibit(myProhibited);
     }
     try {
-        myVehicle.reroute(myTime, myInfo, router, myOnInit, myWithTaz, mySilent);
+        if (myDeferred != nullptr) {
+            static_cast<MSBaseVehicle&>(myVehicle).reroute(myTime, myInfo, router, *myDeferred, myWithTaz, mySilent);
+        } else {
+            myVehicle.reroute(myTime, myInfo, router, myOnInit, myWithTaz, mySilent);
+        }
     } catch (ProcessError&) {
         if (!mySilent) {
             if (!myProhibited.empty()) {
@@ -936,6 +961,26 @@ MSRoutingEngine::RoutingTask::run(MFXWorkerThread* context) {
         if (MSRoutingEngine::myCachedRoutes.find(key) == MSRoutingEngine::myCachedRoutes.end()) {
             MSRoutingEngine::myCachedRoutes[key] = myVehicle.getRoutePtr();
         }
+    }
+}
+
+
+void
+MSRoutingEngine::RoutingTask::defer() {
+    const MSBaseVehicle& veh = static_cast<const MSBaseVehicle&>(myVehicle);
+    myDeferred = new MSBaseVehicle::DeferredReroute();
+    myDeferred->source = *veh.getRerouteOrigin();
+    myDeferred->sourcePos = veh.getPositionOnLane();
+    myDeferred->currentEdge = veh.getCurrentRouteEdge();
+    const MSRouteIterator& current = myDeferred->currentEdge;
+    myDeferred->oldEdges.assign(myDeferred->source == *current ? current : current + 1, veh.getRoute().end());
+}
+
+
+void
+MSRoutingEngine::RoutingTask::apply() {
+    if (myDeferred != nullptr && myDeferred->route != nullptr && myDeferred->route != myVehicle.getRoutePtr()) {
+        myVehicle.replaceRoute(myDeferred->route, myInfo, false, myDeferred->offset, false, myDeferred->removeStops);
     }
 }
 
