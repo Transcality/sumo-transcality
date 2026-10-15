@@ -151,7 +151,7 @@ The following parameters are used by the model:
 
 ## Parallel simulation
 
-With option **--meso-threads N**, the mesoscopic events are computed by N threads. The network is split into **--meso-threads.groups** groups of junctions (default 32) and every edge belongs to the group of the junction where it ends, so all vehicles which want to pass a junction or enter an edge are handled by the same group. In every simulation step, the groups process their events in parallel. Vehicles which enter an edge of another group, and all teleports, are processed at the end of the step in the order of their event times. Each group uses its own random number generator.
+With option **--meso-threads N**, the mesoscopic events are computed by N threads. The network is split into **--meso-threads.groups** groups of junctions (default 32) and every edge belongs to the group of the junction where it ends, so all vehicles which want to pass a junction or enter an edge are handled by the same group. In every simulation step, the groups process their events in parallel. Vehicles which enter an edge of another group, and all teleports, are processed at the end of the step in the order of their event times. Each group uses its own random number generator. Meanwhile a further thread reads the route files ahead (option **--route-steps**).
 
 The results depend on the number of groups but not on the number of threads. They differ slightly from the results without **--meso-threads** because moves between groups wait until the end of the step (edges which can be passed within one step therefore never connect different groups). Saving and loading the state reproduces the results of a continuous run.
 
