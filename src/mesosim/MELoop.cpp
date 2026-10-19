@@ -238,8 +238,8 @@ MELoop::checkCar(MEVehicle* veh, const int group) {
     MESegment* const onSegment = veh->getSegment();
     MESegment* const toSegment = veh->getQueIndex() == MESegment::PARKING_QUEUE ? onSegment : nextSegment(onSegment, veh);
     const bool teleporting = (onSegment == nullptr); // is the vehicle currently teleporting?
-    if (group >= 0 && (teleporting || (!MESegment::isInvalid(toSegment) && toSegment->getGroup() != group))) {
-        // entering the segment of another group is decided at the end of the step
+    if (group >= 0 && (teleporting || (!MESegment::isInvalid(toSegment) && toSegment->getGroup() != group) || !isGroupSafe(veh, onSegment, toSegment))) {
+        // entering the segment of another group, stops, passengers and reminders bound to the main thread wait for the end of the step
         veh->setDeferred(true);
         myGroups[group].deferred.push_back(veh);
         return;
@@ -442,6 +442,16 @@ MELoop::removeLeaderCar(MEVehicle* v) {
         // a deferred car has no pending event
         myGroups[getGroup(v)].invalidated.push(LeaderEvent(v, 0));
     }
+}
+
+
+bool
+MELoop::isGroupSafe(const MEVehicle* veh, const MESegment* on, const MESegment* to) {
+    // stop handling, passengers and reminders other than mean data (rerouters, calibrators, drive ways) touch state outside the group
+    if (veh->isStopped() || veh->hasStops() || veh->getPersonNumber() > 0 || veh->getContainerNumber() > 0) {
+        return false;
+    }
+    return !on->hasSerialReminders() && (MESegment::isInvalid(to) || !to->hasSerialReminders());
 }
 
 

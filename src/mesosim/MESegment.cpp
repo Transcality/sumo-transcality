@@ -34,6 +34,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/output/MSXMLRawOut.h>
 #include <microsim/output/MSDetectorFileOutput.h>
+#include <microsim/output/MSMeanData.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/devices/MSDevice.h>
 #include <utils/common/FileHelpers.h>
@@ -271,6 +272,11 @@ MESegment::jamThresholdForSpeed(double speed, double jamThresh) const {
 
 void
 MESegment::addDetector(MSMoveReminder* data, int queueIndex) {
+    // mean data updates are serialised by the reminder's own mutex; everything else (rerouters,
+    // calibrators, drive ways) keeps the moves on this segment in the serial part of the parallel loop
+    if (dynamic_cast<MSMeanData::MeanDataValues*>(data) == nullptr) {
+        myHasSerialReminders = true;
+    }
     if (queueIndex == -1) {
         for (Queue& q : myQueues) {
             q.addDetector(data);

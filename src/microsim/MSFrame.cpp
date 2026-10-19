@@ -1255,6 +1255,8 @@ MSFrame::setMSGlobals(OptionsCont& oc) {
     MSGlobals::gNumSimThreads = oc.getInt("threads");
     MSGlobals::gNumThreads = MAX2(MSGlobals::gNumSimThreads, oc.getInt("device.rerouting.threads"));
     MSGlobals::gNumMesoThreads = oc.getInt("meso-threads");
+    // the locks of the state shared between the threads (vehicle removal, state listeners) follow gNumThreads
+    MSGlobals::gNumThreads = MAX2(MSGlobals::gNumThreads, MSGlobals::gNumMesoThreads);
 
     MSGlobals::gEmergencyDecelWarningThreshold = oc.getFloat("emergencydecel.warning-threshold");
     MSGlobals::gMinorPenalty = oc.getFloat("weights.minor-penalty");

@@ -406,6 +406,11 @@ public:
      */
     SUMOTime getEventTime() const;
 
+    /// @brief whether a reminder of this segment must be updated on the main thread (see MELoop::isGroupSafe)
+    inline bool hasSerialReminders() const {
+        return myHasSerialReminders;
+    }
+
     /// @brief Like getEventTime but returns seconds (for visualization)
     inline double getEventTimeSeconds() const {
         return STEPS2TIME(getEventTime());
@@ -626,6 +631,9 @@ protected:
 
     /// @brief the last headway
     SUMOTime myLastHeadway;
+
+    /// @brief whether a reminder other than mean data was added (see hasSerialReminders)
+    bool myHasSerialReminders = false;
 
     /* @brief segment for signifying vaporization. This segment has invalid
      * data and should only be used as a unique pointer */

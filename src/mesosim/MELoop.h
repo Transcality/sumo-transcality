@@ -202,6 +202,9 @@ private:
     /// @brief the group whose queue holds the event of the given car
     int getGroup(const MEVehicle* veh) const;
 
+    /// @brief whether the move of the vehicle touches only the state of its group (no stops, passengers or reminders bound to the main thread)
+    static bool isGroupSafe(const MEVehicle* veh, const MESegment* on, const MESegment* to);
+
     /// @brief a set of junctions with the edges ending there, see buildGroups
     struct Group {
         Group(const std::string& id) : rng(id) {}

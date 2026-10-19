@@ -156,7 +156,7 @@ With option **--meso-threads N**, the mesoscopic events are computed by N thread
 The results depend on the number of groups but not on the number of threads. They differ slightly from the results without **--meso-threads** because moves between groups wait until the end of the step (edges which can be passed within one step therefore never connect different groups). Saving and loading the state reproduces the results of a continuous run.
 
 !!! note
-    The parallel computation is meant for **--meso-ltm**, where jams travel upstream at a limited speed. Stops, parking, rerouters, calibrators, TraCI, persons and rail have not been tested with **--meso-threads** yet.
+    The parallel computation is meant for **--meso-ltm**, where jams travel upstream at a limited speed. Vehicles with stops or passengers and segments with rerouters, calibrators or drive ways are handled in the serial part of the step; TraCI and rail have not been tested with **--meso-threads** yet.
 
 ## Lateral Model
 
