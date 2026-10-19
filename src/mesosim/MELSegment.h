@@ -81,9 +81,47 @@ protected:
     bool hasSpaceForInsertion(const Queue& q, int qIdx, double newOccupancy, SUMOTime entryTime) const override;
 
 private:
-    /// @brief upstream arrival times of traveling gaps between cars (for each queue)
-    // @note: could be slightly faster as a double-index ring-buffer
-    typedef std::vector<SUMOTime> GapTimes;
+    /** @brief The upstream arrival times of the gaps between the cars of a queue, oldest first
+     *
+     * The gaps travel upstream in the order of the departures which created them, so new gaps are
+     *  appended and the gaps which arrived are consumed from the front. The consumed front is cut off
+     *  once it is as long as the rest, so both ends take amortized constant time.
+     */
+    class GapTimes {
+    public:
+        bool empty() const {
+            return myFirst == (int)myTimes.size();
+        }
+        int size() const {
+            return (int)myTimes.size() - myFirst;
+        }
+        /// @brief the arrival time of the oldest gap
+        SUMOTime front() const {
+            return myTimes[myFirst];
+        }
+        void push(SUMOTime time) {
+            myTimes.push_back(time);
+        }
+        void pop() {
+            if (++myFirst * 2 >= (int)myTimes.size()) {
+                myTimes.erase(myTimes.begin(), myTimes.begin() + myFirst);
+                myFirst = 0;
+            }
+        }
+        void clear() {
+            myTimes.clear();
+            myFirst = 0;
+        }
+        /// @brief the gap times from the newest to the oldest (the order of the saved state)
+        std::vector<SUMOTime> newestFirst() const {
+            return std::vector<SUMOTime>(myTimes.rbegin(), myTimes.rend() - myFirst);
+        }
+    private:
+        std::vector<SUMOTime> myTimes;
+        /// @brief the index of the oldest gap
+        int myFirst = 0;
+    };
+    /// @brief the gaps of each queue
     std::vector<GapTimes> myGapTimes;
 
 private:

@@ -97,11 +97,10 @@ MELSegment::computeHeadway(Queue& /*q*/, const Queue& /*qNext*/, const MESegment
 
 void
 MELSegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) {
-    GapTimes& gapTimes = myGapTimes[veh->getQueIndex()];
     // record time when the gap vacated by ego will reach the upstream end of the segment
     // gaps travel quickly in free flow (the number of gaps and vehicles stays below the segment capacity)
     // but they travel more slowly when queued (startupDelay)
-    gapTimes.insert(gapTimes.begin(), time + (SUMOTime)(myLength * (double)(veh->getQueuingTimeLoss() > 0 ? myTau_jj : myTau_ff) / DEFAULT_VEH_LENGTH_WITH_GAP));
+    myGapTimes[veh->getQueIndex()].push(time + (SUMOTime)(myLength * (double)(veh->getQueuingTimeLoss() > 0 ? myTau_jj : myTau_ff) / DEFAULT_VEH_LENGTH_WITH_GAP));
     MESegment::send(veh, next, nextQIdx, time, reason);
 }
 
@@ -111,12 +110,12 @@ MELSegment::updateEntryBlockTime(SUMOTime time) {
     for (int qIdx = 0; qIdx < (int)myQueues.size(); qIdx++) {
         Queue& q = myQueues[qIdx];
         GapTimes& gapTimes = myGapTimes[qIdx];
-        while (!gapTimes.empty() && gapTimes.back() <= time) {
-            gapTimes.pop_back();
+        while (!gapTimes.empty() && gapTimes.front() <= time) {
+            gapTimes.pop();
         }
         if (!gapTimes.empty() && q.getOccupancy() + (double)gapTimes.size() * DEFAULT_VEH_LENGTH_WITH_GAP > myQueueCapacity) {
             // segment is jammed because the empty spaces have not yet reached the upstream end.
-            q.setEntryBlockTime(MAX2(q.getEntryBlockTime(), gapTimes.back()));
+            q.setEntryBlockTime(MAX2(q.getEntryBlockTime(), gapTimes.front()));
         }
     }
 }
@@ -125,8 +124,8 @@ MELSegment::updateEntryBlockTime(SUMOTime time) {
 bool
 MELSegment::hasSpaceForInsertion(const Queue& q, int qIdx, double /*newOccupancy*/, SUMOTime entryTime) const {
     GapTimes& gapTimes = const_cast<GapTimes&>(myGapTimes[qIdx]);
-    while (!gapTimes.empty() && gapTimes.back() <= entryTime) {
-        gapTimes.pop_back();
+    while (!gapTimes.empty() && gapTimes.front() <= entryTime) {
+        gapTimes.pop();
     }
     return q.getOccupancy() + (double)gapTimes.size() * DEFAULT_VEH_LENGTH_WITH_GAP <= myQueueCapacity;
 }
@@ -134,7 +133,7 @@ MELSegment::hasSpaceForInsertion(const Queue& q, int qIdx, double /*newOccupancy
 
 std::string
 MELSegment::getQueueExtraState(int qIdx) const {
-    return joinToString(myGapTimes[qIdx], " ");
+    return joinToString(myGapTimes[qIdx].newestFirst(), " ");
 }
 
 
@@ -142,8 +141,9 @@ void
 MELSegment::loadQueueExtraState(int qIdx, const std::string& state, SUMOTime offset) {
     GapTimes& gapTimes = myGapTimes[qIdx];
     gapTimes.clear();
-    for (const std::string& t : StringTokenizer(state).getVector()) {
-        gapTimes.push_back(StringUtils::toLong(t) - offset);
+    const std::vector<std::string> times = StringTokenizer(state).getVector();
+    for (auto it = times.rbegin(); it != times.rend(); ++it) {
+        gapTimes.push(StringUtils::toLong(*it) - offset);
     }
 }
 
