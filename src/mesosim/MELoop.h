@@ -223,6 +223,12 @@ private:
     /// @brief the end of the current simulation step
     SUMOTime myStepEnd = 0;
 
+    /// @brief how many parallel rounds a step may run (0: until no event is due, see simulate)
+    int myRounds = 8;
+
+    /// @brief whether a group has an event due until the given time
+    bool anyEventDue(SUMOTime tMax) const;
+
 #ifdef HAVE_FOX
     /// @brief the task processing the events of one group
     class GroupTask : public MFXWorkerThread::Task {

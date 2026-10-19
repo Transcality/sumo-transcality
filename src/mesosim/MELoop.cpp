@@ -78,34 +78,52 @@ MELoop::simulate(SUMOTime tMax) {
     }
     // each group only changes its own segments, so the groups process their events in parallel
     myStepEnd = tMax;
-#ifdef HAVE_FOX
-    for (int i = 0; i < (int)myGroupTasks.size(); i++) {
-        myThreadPool.add(myGroupTasks[i], i % myThreadPool.size());
-    }
-    myThreadPool.waitAll(false);
-#else
-    for (int i = 0; i < (int)myGroups.size(); i++) {
-        processEvents(myGroups[i].leaders, myGroups[i].invalidated, tMax, i);
-    }
-#endif
-    // moves into the segment of another group and teleports follow in the order of their event times
     std::vector<MEVehicle*> deferred;
-    for (Group& g : myGroups) {
-        deferred.insert(deferred.end(), g.deferred.begin(), g.deferred.end());
-        g.deferred.clear();
-    }
-    std::sort(deferred.begin(), deferred.end(), [](const MEVehicle * a, const MEVehicle * b) {
-        return a->getEventTime() < b->getEventTime() || (a->getEventTime() == b->getEventTime() && a->getNumericalID() < b->getNumericalID());
-    });
-    for (MEVehicle* const veh : deferred) {
-        veh->setDeferred(false);
-        // the car may have been overtaken in the meantime and then waits for its next turn as leader
-        const MESegment* const seg = veh->getSegment();
-        if (seg == nullptr || veh->getQueIndex() == MESegment::PARKING_QUEUE
-                || (!seg->getQueue(veh->getQueIndex()).empty() && seg->getQueue(veh->getQueIndex()).back() == veh)) {
-            checkCar(veh);
+    for (int round = 1; ; round++) {
+#ifdef HAVE_FOX
+        for (int i = 0; i < (int)myGroupTasks.size(); i++) {
+            myThreadPool.add(myGroupTasks[i], i % myThreadPool.size());
+        }
+        myThreadPool.waitAll(false);
+#else
+        for (int i = 0; i < (int)myGroups.size(); i++) {
+            processEvents(myGroups[i].leaders, myGroups[i].invalidated, tMax, i);
+        }
+#endif
+        // moves into the segment of another group and teleports follow in the order of their event times
+        deferred.clear();
+        for (Group& g : myGroups) {
+            deferred.insert(deferred.end(), g.deferred.begin(), g.deferred.end());
+            g.deferred.clear();
+        }
+        std::sort(deferred.begin(), deferred.end(), [](const MEVehicle * a, const MEVehicle * b) {
+            return a->getEventTime() < b->getEventTime() || (a->getEventTime() == b->getEventTime() && a->getNumericalID() < b->getNumericalID());
+        });
+        for (MEVehicle* const veh : deferred) {
+            veh->setDeferred(false);
+            // the car may have been overtaken in the meantime and then waits for its next turn as leader
+            const MESegment* const seg = veh->getSegment();
+            if (seg == nullptr || veh->getQueIndex() == MESegment::PARKING_QUEUE
+                    || (!seg->getQueue(veh->getQueIndex()).empty() && seg->getQueue(veh->getQueIndex()).back() == veh)) {
+                checkCar(veh);
+            }
+        }
+        // the cars the serial part made due again within the step (the followers at the group borders) continue in a further round
+        if (round == myRounds || !anyEventDue(tMax)) {
+            return;
         }
     }
+}
+
+
+bool
+MELoop::anyEventDue(SUMOTime tMax) const {
+    for (const Group& g : myGroups) {
+        if (!g.leaders.empty() && g.leaders.top().time <= tMax) {
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -273,11 +291,13 @@ MELoop::checkCar(MEVehicle* veh, const int group) {
     }
     if (nextEntry == SUMOTime_MAX) {
         // all usable queues on the next segment are full
-        SUMOTime newEventTime = MAX3(toSegment->getEventTime() + 1, leaveTime + 1, leaveTime + myFullRecheckInterval);
         if (group >= 0 && toSegment->getEventTime() < leaveTime) {
-            // the car blocking the next segment waits for the end of the step
-            newEventTime = MAX2(newEventTime, myStepEnd + 1);
+            // the car blocking the next segment waits for the serial part of the step: so does this one
+            veh->setDeferred(true);
+            myGroups[group].deferred.push_back(veh);
+            return;
         }
+        SUMOTime newEventTime = MAX3(toSegment->getEventTime() + 1, leaveTime + 1, leaveTime + myFullRecheckInterval);
         if (ttt) {
             // if teleporting is enabled, make sure we look at the vehicle when the gridlock-time is up
             const SUMOTime recheck = veh->getBlockTime() + 1 + ttt;
@@ -538,6 +558,7 @@ MELoop::buildGroups(const OptionsCont& oc) {
     }
     std::sort(order.begin(), order.end());
     const int numGroups = oc.getInt("meso-threads.groups");
+    myRounds = oc.getInt("meso-threads.rounds");
     long long int cumulated = 0;
     for (const auto& item : order) {
         Cluster& c = clusters[item.second];

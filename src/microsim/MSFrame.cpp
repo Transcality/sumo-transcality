@@ -779,6 +779,8 @@ MSFrame::fillOptions() {
     oc.addDescription("meso-threads", "Mesoscopic", TL("Number of threads for computing mesoscopic events in parallel"));
     oc.doRegister("meso-threads.groups", new Option_Integer(32));
     oc.addDescription("meso-threads.groups", "Mesoscopic", TL("Number of junction groups for parallel mesoscopic events (the results depend on it but not on the number of threads)"));
+    oc.doRegister("meso-threads.rounds", new Option_Integer(8));
+    oc.addDescription("meso-threads.rounds", "Mesoscopic", TL("Number of parallel rounds per step for the junction groups: the moves between groups of a round free their followers for the next one (0: until no event is due)"));
     oc.doRegister("meso-edgelength", new Option_Float(98.0f));
     oc.addDescription("meso-edgelength", "Mesoscopic", TL("Length of an edge segment in mesoscopic simulation"));
     oc.doRegister("meso-tauff", new Option_String("1.13", "TIME"));
