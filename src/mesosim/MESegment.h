@@ -554,6 +554,15 @@ protected:
     /// @brief check jam-avoidance constraints during insertion
     virtual bool hasSpaceForInsertion(const Queue& q, int qIdx, double newOccupancy, SUMOTime entryTime) const;
 
+    /** @brief add the queues leading to the successors of the given downstream edge to myFollowerMap
+     * @param[in] edge The downstream edge
+     * @param[in] reach For every lane of myEdge, the lanes of edge that can be reached without changing lanes
+     * @param[in] dist The distance between the end of myEdge and the start of edge
+     * @param[in] lookahead The lookahead distance from the end of myEdge
+     * @param[in] depth The position of edge after myEdge
+     */
+    void addDownstreamFollowers(const MSEdge& edge, const std::vector<int>& reach, const double dist, const double lookahead, const int depth);
+
 protected:
     /// @brief The microsim edge this segment belongs to
     const MSEdge& myEdge;
@@ -607,6 +616,9 @@ protected:
 
     /// @brief The follower edge to allowed que index mapping for multi queue segments
     std::map<const MSEdge*, int> myFollowerMap;
+
+    /// @brief The number of route edges after myEdge to look up in myFollowerMap
+    int myLookahead = 1;
 
     /// @brief the last headway
     SUMOTime myLastHeadway;
