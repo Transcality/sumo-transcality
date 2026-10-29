@@ -6,8 +6,8 @@ ENV PATH="${SUMO_HOME}/bin:${PATH}"
 ENV PYTHONPATH="${SUMO_HOME}/tools:${PYTHONPATH:-}"
 # Help CMake find Debian-provided package configs
 ENV CMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake:${CMAKE_PREFIX_PATH:-}"
-# Ensure C++17
-ENV CXXFLAGS="-std=c++17"
+# Arrow >= 24 needs C++20 (SUMO disables Parquet otherwise)
+ENV CXXFLAGS="-std=c++20"
 
 # Build & dev deps + Apache Arrow APT repo (Bookworm)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,13 +35,14 @@ COPY . /sumo/
 # Configure, build, install (keep prefix at /sumo)
 RUN cmake -S . -B build \
       -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+      -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_INSTALL_PREFIX=/sumo \
-      -DWITH_PARQUET=ON \
-      -DWITH_FOX=ON \
+      -DENABLE_PARQUET=ON \
+      -DENABLE_S3=ON \
+      -DENABLE_FOX=ON \
  && cmake --build build -j"$(nproc)" \
  && cmake --install build \
- && strip /sumo/bin/* 2>/dev/null || true
+ && (strip /sumo/bin/* 2>/dev/null || true)
 
 # Useful at runtime if any libs are under /sumo/lib
 ENV LD_LIBRARY_PATH="/sumo/lib:${LD_LIBRARY_PATH:-}"
