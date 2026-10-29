@@ -34,6 +34,9 @@
 #include "OutputDevice_COUT.h"
 #include "OutputDevice_CERR.h"
 #include "OutputDevice_Network.h"
+#ifdef HAVE_S3
+#include "OutputDevice_S3.h"
+#endif
 #include "PlainXMLFormatter.h"
 #include <utils/common/StringUtils.h>
 #include <utils/common/UtilExceptions.h>
@@ -86,7 +89,7 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
     } else if (name == "stderr") {
         dev = OutputDevice_CERR::getDevice();
         isCSV = isParquet = false;
-    } else if (FileHelpers::isSocket(name)) {
+    } else if (FileHelpers::isSocket(name) && name.compare(0, 5, "s3://") != 0) {
         try {
             const bool ipv6 = name[0] == '[';  // IPv6 addresses may be written like '[::1]:8000'
             const size_t sepIndex = name.find(":", ipv6 ? name.find("]") : 0);
@@ -124,7 +127,15 @@ OutputDevice::getDevice(const std::string& name, bool usePrefix) {
             name2 = FileHelpers::appendBeforeExtension(name2, suffix);
         }
         name2 = StringUtils::substituteEnvironment(name2, &OptionsIO::getLoadTime());
-        dev = new OutputDevice_File(name2, isParquet);
+        if (name2.compare(0, 5, "s3://") == 0) {
+#ifdef HAVE_S3
+            dev = new OutputDevice_S3(name2);
+#else
+            throw IOError(TLF("Could not build output file '%' (compiled without S3 support).", name2));
+#endif
+        } else {
+            dev = new OutputDevice_File(name2, isParquet);
+        }
     }
     if (isCSV) {
         dev->setFormatter(new CSVFormatter(oc.getString("output.column-header"), oc.getString("output.column-separator")[0]));

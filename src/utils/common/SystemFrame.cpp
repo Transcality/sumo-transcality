@@ -27,6 +27,9 @@
 #include <utils/common/MsgHandler.h>
 #include <utils/options/OptionsCont.h>
 #include <utils/iodevices/OutputDevice.h>
+#ifdef HAVE_S3
+#include <utils/iodevices/OutputDevice_S3.h>
+#endif
 #include "RandHelper.h"
 #include "SystemFrame.h"
 
@@ -184,6 +187,9 @@ SystemFrame::close() {
     MsgHandler::getWarningInstance()->clear();
     // close all output devices
     OutputDevice::closeAll();
+#ifdef HAVE_S3
+    OutputDevice_S3::finalize();
+#endif
     // close the xml-subsystem
     XMLSubSys::close();
     // delete build program options

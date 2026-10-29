@@ -216,6 +216,9 @@
 /* defined if Parquet is available */
 #cmakedefine HAVE_PARQUET
 
+/* defined if S3 output is available (via Arrow) */
+#cmakedefine HAVE_S3
+
 /* defined if Boost is available */
 #cmakedefine HAVE_BOOST
 

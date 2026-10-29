@@ -24,6 +24,13 @@ if (HAVE_PARQUET)
       ParquetFormatter.h
    )
 endif()
+if (HAVE_S3)
+   set(utils_iodevices_STAT_SRCS
+      ${utils_iodevices_STAT_SRCS}
+      OutputDevice_S3.cpp
+      OutputDevice_S3.h
+   )
+endif()
 add_library(utils_iodevices STATIC ${utils_iodevices_STAT_SRCS})
 add_dependencies(utils_iodevices generate-version-h)
 set_property(TARGET utils_iodevices PROPERTY PROJECT_LABEL "z_utils_iodevices")
