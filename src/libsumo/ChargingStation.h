@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -50,6 +50,7 @@ public:
     static double getEfficiency(const std::string& stopID);
     static double getChargeDelay(const std::string& stopID);
     static int getChargeInTransit(const std::string& stopID);
+    static double getTotalPower(const std::string& stopID);
 
     LIBSUMO_ID_PARAMETER_API
     LIBSUMO_SUBSCRIPTION_API
@@ -58,6 +59,7 @@ public:
     static void setEfficiency(const std::string& stopID, double efficiency);
     static void setChargeDelay(const std::string& stopID, double delay);
     static void setChargeInTransit(const std::string& stopID, bool inTransit);
+    static void setTotalPower(const std::string& stopID, double totalPower);
 
 #ifndef LIBTRACI
 #ifndef SWIG

@@ -11,7 +11,7 @@ be take in comparison to a plain vehicular simulation.
 !!! caution
     The simulation of bicycles is a developing subject and still carries some difficulties. These are discussed below.
 
-# Approaches to bicycle modelling
+# Approaches to bicycle modeling
 
 Currently, no exclusive movement model for bicycles is implemented.
 Existing models need to be re-purposed
@@ -30,7 +30,7 @@ Note, that that the `guiShape="bicycle"` along with [sensible default
 parameters](../Vehicle_Type_Parameter_Defaults.md) are
 automatically used when specifying `vClass="bicycle"`. By adapting [vType-parameters for
 acceleration,deceleration,maximumSpeed,etc..](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#vehicle_types)
-different cyclist types can be modelled.
+different cyclist types can be modeled.
 
 ## Useful Model Parameters
 Once the vClass "bicycle" is chosen, the following parameters, which can still be customized, are set for bicycle:
@@ -40,7 +40,8 @@ Once the vClass "bicycle" is chosen, the following parameters, which can still b
  - max. deceleration = 3 m/s^2
  - emergency deceleration = 7 m/s^2
  - Length = 1.6 m
- - max speed = 20 kmh where you can modify it by defining vClass specific speed limit (see the point in the Problems and workarounds below)
+ - maxSpeed = 50 km/h
+ - desiredMaxSpeed = 20 km/h
 
 The values of some other parameters for bicycles are different from those for vehicles apparently. If no real data for the respective calibrations is available, some intuitive suggestions are listed below for reference.
 
@@ -51,7 +52,18 @@ The values of some other parameters for bicycles are different from those for ve
 - lcTurnAlignmentDistance = 20. (distance to a location where bicycles start to keeping right/left of their lane for preparing to make turns)
 - jmCrossingGap = 4 (Minimum distance to pedestrians that are walking towards the conflict point with a bike - lower than the default of 10 for cars)
 - jmSigmaMinor = 0. (no imperfection while passing a minor link)
-- jmStoplineGap = 0.5 (Stopping distance in front of prioritary / TL-controlled stop line)
+- jmStoplineGap = 0.5 (Stopping distance in front of priority / TL-controlled stop line)
+
+### Speed limits
+
+Bicycles are usually not limited by the road speed limit but rather by individual preferences. This cannot easily be modeled by vType attribute `maxSpeed` because it is not subject the the randomly chosen personal `speedFactor` (unless `carFollowModel="KraussPS"` is set). Instead, bicycle speed is limited by `desiredMaxSpeed` (multiplied by the individual speedFactor). For this reason, the `desiredMaxSpeed < maxSpeed` by default.
+
+To model the effect of slopes on bicycle speed (only with `carFollowModel="KraussPS"`), it is necessary that the `desiredMaxSpeed` is above the "power limit" (`maxSpeed`).
+The slope-dependent speed is scaled according to `maxSpeed * speedFactor` which results in the follow behavior:
+
+- vehicles going uphill are slowed down to below `maxSpeed * speedFactor`
+- vehicles on level ground can go up to speed `maxSpeed * speedFactor`
+- vehicles going downhill may exceed `maxSpeed * speedFactor` and reach a speed up to `desiredMaxSpeed * speedFactor`
 
 ### Problems and workarounds
 
@@ -62,15 +74,10 @@ The values of some other parameters for bicycles are different from those for ve
 - The intersection model has no special adaptations for bicycles. This
   results in unrealistic (large) safety gaps when bicycles are
   approaching a large priority intersection from a prioritized road
-- The road speed limit is not meaningful for bicycles. This is a problem because the [default way of modelling speed distributions is by setting a random multiplier for the speed limit](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#speed_distributions). There are several possibilities remedies:
-  - define multiple vehicle types with different 'maxSpeed' for the bicycle fleet. This can be done efficiently with [Tool createVehTypeDistribution](../Tools/Misc.md#createvehtypedistributionpy)
-  speed distribution for bicycles there are several options
-  - define a meaningful speed limit for bicycle lanes (only useful if bikes always mostly use dedicated lanes)
-  - define [vClass-specific speed limits for bicycles](../Networks/PlainXML.md#vehicle-class_specific_speed_limits) on all edges where bicycles are used
 
 One way for overcoming most of these problems is to control bicycle
 movements at intersections with an [external control
-script](../TraCI.md). This approach is described in [Integration of
+script](../TraCI/index.md). This approach is described in [Integration of
 an external bicycle model in SUMO, Heather
 Twaddle 2016](https://www.researchgate.net/publication/302909195_Integration_of_an_External_Bicycle_Model_in_SUMO).
 

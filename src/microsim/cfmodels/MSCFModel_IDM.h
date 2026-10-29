@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -40,7 +40,7 @@ class MSCFModel_IDM : public MSCFModel {
 public:
     /** @brief Constructor
      *  @param[in] vtype the type for which this model is built and also the parameter object to configure this model
-     *  @param[in] idmm Wether IDM or IDMM shall be built
+     *  @param[in] idmm Whether IDM or IDMM shall be built
      */
     MSCFModel_IDM(const MSVehicleType* vtype, bool idmm);
 
@@ -191,6 +191,16 @@ private:
         VehicleVariables() : levelOfService(1.) {}
         /// @brief state variable for remembering speed deviation history (lambda)
         double levelOfService;
+
+        /** @brief Saves the vehicle variables
+         * @param[in] out The OutputDevice to write the information into
+         */
+        void saveState(OutputDevice& out, const MSCFModel& cfm) const;
+
+        /** @brief Loads the state of the vehicle variables from the given description
+         * @param[in] attrs XML attributes describing the current state
+         */
+        void loadState(const SUMOSAXAttributes& attrs);
     };
 
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -235,12 +235,17 @@ NIXMLTrafficLightsHandler::addTlConnection(const SUMOSAXAttributes& attrs) {
         return;
     }
     NBEdge::Connection c = *con_it;
+    SumoXMLNodeType type = from->getToNode()->getType();
+    if (type == SumoXMLNodeType::RAIL_CROSSING || type == SumoXMLNodeType::RAIL_SIGNAL) {
+        // no traffic light programs are built for these, indices do not need to be defined
+        return;
+    }
     // read other  attributes
     std::string tlID = attrs.getOpt<std::string>(SUMO_ATTR_TLID, nullptr, ok, "");
     if (tlID == "") {
         // we are updating an existing tl-controlled connection
+        assert(from->getToNode()->getControllingTLS().size() > 0);
         tlID = (*(from->getToNode()->getControllingTLS().begin()))->getID();
-        assert(tlID != "");
     }
     int tlIndex = attrs.getOpt<int>(SUMO_ATTR_TLLINKINDEX, nullptr, ok, -1);
     if (tlIndex == -1) {
@@ -267,10 +272,7 @@ NIXMLTrafficLightsHandler::addTlConnection(const SUMOSAXAttributes& attrs) {
             }
         }
     } else {
-        SumoXMLNodeType type = from->getToNode()->getType();
-        if (type != SumoXMLNodeType::RAIL_CROSSING && type != SumoXMLNodeType::RAIL_SIGNAL) {
-            WRITE_ERRORF(TL("The traffic light '%' is not known."), tlID);
-        }
+        WRITE_ERRORF(TL("The traffic light '%' is not known."), tlID);
     }
 }
 

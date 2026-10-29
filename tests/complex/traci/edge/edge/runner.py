@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -50,6 +50,8 @@ print("Fuel", traci.edge.getFuelConsumption(edgeID))
 print("Noise", traci.edge.getNoiseEmission(edgeID))
 print("Elec", traci.edge.getElectricityConsumption(edgeID))
 print("meanSpeed", traci.edge.getLastStepMeanSpeed(edgeID))
+print("maxSpeed", traci.edge.getMaxSpeed(edgeID))
+print("meanFriction", traci.edge.getMeanFriction(edgeID))
 print("occupancy", traci.edge.getLastStepOccupancy(edgeID))
 print("lastLength", traci.edge.getLastStepLength(edgeID))
 print("traveltime", traci.edge.getTraveltime(edgeID))
@@ -92,7 +94,10 @@ print("effort after adaption in interval (check time 25)",
 
 
 traci.edge.setMaxSpeed(edgeID, 23.)
-print("max speed after adaption", traci.lane.getMaxSpeed(edgeID + "_0"))
+print("max speed after adaption", traci.edge.getMaxSpeed(edgeID))
+traci.edge.setFriction(edgeID, 0.5)
+print("mean friction after adaption", traci.edge.getMeanFriction(edgeID))
+assert traci.edge.getMaxSpeed(edgeID) == 23.
 
 traci.edge.subscribe(edgeID)
 print(traci.edge.getSubscriptionResults(edgeID))
@@ -114,5 +119,10 @@ traci.edge.setAllowed(edgeID, "bicycle")
 print("allow_1", traci.lane.getAllowed(edgeID + "_0"))
 traci.edge.setAllowed(edgeID, ["bicycle", "pedestrian"])
 print("allow_2", traci.lane.getAllowed(edgeID + "_0"))
+
+traci.lane.setMaxSpeed("1si_0", 10.)
+traci.lane.setMaxSpeed("1si_1", 20.)
+print("max speed with different lane values", traci.edge.getMaxSpeed("1si"))
+assert traci.edge.getMaxSpeed("1si") == 10.
 
 traci.close()

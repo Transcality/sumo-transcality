@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -42,6 +42,8 @@ class MSVehicle;
 class MSLane;
 class MSPerson;
 class MSLink;
+class OutputDevice;
+class SUMOSAXAttributes;
 
 
 // ===========================================================================
@@ -61,6 +63,20 @@ public:
     class VehicleVariables {
     public:
         virtual ~VehicleVariables();
+
+        /** @brief Saves the vehicle variables
+         *
+         * The default implementation writes a warning and does nothing.
+         * @param[in] out The OutputDevice to write the information into
+         */
+        virtual void saveState(OutputDevice& out, const MSCFModel& cfm) const;
+
+        /** @brief Loads the state of the vehicle variables from the given description
+         *
+         * The default implementation does nothing.
+         * @param[in] attrs XML attributes describing the current state
+         */
+        virtual void loadState(const SUMOSAXAttributes& attrs);
     };
 
     /** @brief Constructor

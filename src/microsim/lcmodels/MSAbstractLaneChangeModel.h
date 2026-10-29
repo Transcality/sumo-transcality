@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -174,12 +174,12 @@ public:
     }
 
     /// @brief whether start of maneuvers shall be recorede
-    static bool outputLCStarted() {
+    static bool enabledOutputLCStarted() {
         return myLCStartedOutput;
     }
 
     /// @brief whether start of maneuvers shall be recorede
-    static bool outputLCEnded() {
+    static bool enabledOutputLCEnded() {
         return myLCEndedOutput;
     }
 
@@ -624,10 +624,11 @@ public:
         throw InvalidArgument("Setting parameter '" + key + "' is not supported for laneChangeModel of type '" + toString(myModel) + "'");
     }
 
-    /// reserve extra space for unseen blockers when more tnan one lane change is required
-    virtual double getExtraReservation(int /*bestLaneOffset*/) const {
-        return 0;
-    }
+    /* @brief reserve extra space for unseen blockers when more than one lane change is required
+     * @param[in] bestLaneOffset The offset to the best lane
+     * @param[in] neighExtraDist the additional distance that can be driven on the neighboring lane (after a single lane change)
+     */
+    virtual double getExtraReservation(int bestLaneOffset, double neighExtraDist = 0) const;
 
     /// @brief Check for commands issued for the vehicle via TraCI and apply the appropriate state changes
     ///        For the sublane case, this includes setting a new maneuver distance if appropriate.
@@ -644,15 +645,28 @@ public:
         return myVehicle.getVehicleType().getPreferredLateralAlignment();
     }
 
+    /// @brief return speed for helping a vehicle that is blocked from changing
+    double getCooperativeHelpSpeed(const MSLane* lane, double distToLaneEnd) const;
+
+    SUMOTime getCooperativeHelpTime() const {
+        return myCooperativeHelpTime;
+    }
+    double getCooperativeHelpThreshold() const {
+        return myCooperativeHelpThreshold;
+    }
+    double getCooperativeMinSpeed() const {
+        return myCooperativeMinSpeed;
+    }
+
     static const double NO_NEIGHBOR;
     static const double UNDEFINED_LOOKAHEAD;
+
+    virtual bool avoidOvertakeRight(const MSVehicle* const neighLeader, const bool allowProb=false) const;
 
 protected:
     virtual bool congested(const MSVehicle* const neighLeader);
 
     virtual bool predInteraction(const std::pair<MSVehicle*, double>& leader);
-
-    virtual bool avoidOvertakeRight() const;
 
     /// @brief whether the influencer cancels the given request
     bool cancelRequest(int state, int laneOffset);
@@ -666,8 +680,9 @@ protected:
      *         where operation on the speed in the next sim step had to be replaced by acceleration
      *         throughout the next action step.
      */
-    void addLCSpeedAdvice(const double vSafe, bool ownAdvice = true);
+    void addLCSpeedAdvice(const double vSafe, int flag);
 
+    bool canOvertakeRight(const MSVehicle* const nv, const double dist, const double maxSpeedDiff, const double helpOvertakeSpeed, double& vSafe, double& deltaV) const;
 
 protected:
     /// @brief The vehicle this lane-changer belongs to
@@ -792,6 +807,14 @@ protected:
     double mySigma;
     // allow overtaking right even though it is prohibited
     double myOvertakeRightParam;
+    // @brief willingness to undercut longitudinal safe gaps
+    double myAssertive;
+    // @brief brake for blocked vehicles after they have been waiting for the given time
+    SUMOTime myCooperativeHelpTime;
+    // @brief adjust speed cooperatively for vehicles that are not much slower and that are not currently blocked longer than myCooperativeHelpTime
+    double myCooperativeHelpThreshold;
+    // @brief adjust speed cooperatively unless the ego speed would drop below the given relative speed
+    double myCooperativeMinSpeed;
 
     /// @brief whether this vehicle is driving with special permissions and behavior
     bool myHaveBlueLight;
@@ -801,9 +824,9 @@ protected:
     void initLastLaneChangeOffset(int dir);
 
     /* @brief vector of LC-related acceleration recommendations combined with a
-     * boolean to indicate whether the advice is from ego or someone else.
+     * bitset to indicate who the advice came from and to which direction it applies
      * Filled in wantsChange() and applied in patchSpeed() */
-    std::vector<std::pair<double, bool> > myLCAccelerationAdvices;
+    std::vector<std::pair<double, int> > myLCAccelerationAdvices;
 
     /// @brief whether overtaking on the right is permitted
     static bool myAllowOvertakingRight;

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -84,7 +84,7 @@ SUMOVTypeParameter::VClassDefaultValues::VClassDefaultValues(SUMOVehicleClass vc
     carriageDoorWidth(1.5),
     maxPlatformDistance(3.),
     latAlignmentProcedure(LatAlignmentDefinition::CENTER) {
-    // update default values
+    // sources for the default values should be in docs/Vehicle_Type_Parameter_Defaults.md
     switch (vclass) {
         case SVC_PEDESTRIAN:
             minGap = 0.25;
@@ -102,12 +102,12 @@ SUMOVTypeParameter::VClassDefaultValues::VClassDefaultValues(SUMOVehicleClass vc
             minGap = 0.5;
             maxSpeed = 30.0 / 3.6; // https://en.wikipedia.org/wiki/Wheelchair_racing
             desiredMaxSpeed = DEFAULT_PEDESTRIAN_SPEED;
-            width = 0.8;
-            height = 1.5;
+            width = 0.72;
+            height = 1.2;
             shape = SUMOVehicleShape::PEDESTRIAN;
             osgFile = "humanResting.obj";
             emissionClass = PollutantsInterface::getClassByName(EMPREFIX + "zero", vclass);
-            mass = 90.; //
+            mass = 90.; // 20 (empty) + 70 (person)
             speedFactor.setParameter(1, 0.1);
             break;
         case SVC_BICYCLE:
@@ -292,7 +292,9 @@ SUMOVTypeParameter::VClassDefaultValues::VClassDefaultValues(SUMOVehicleClass vc
             speedFactor.setParameter(1, 0.1);
             break;
         case SVC_CONTAINER:
-            width = 2.5908;
+            // ISO Container TEU
+            width = 2.438;
+            height = 2.591;
             break;
         case SVC_DRONE:
             width = 0.5;
@@ -344,6 +346,7 @@ SUMOVTypeParameter::SUMOVTypeParameter(const std::string& vtid, const SUMOVehicl
       maxSpeedLat(1.0),
       latAlignmentOffset(0.0),
       latAlignmentProcedure(LatAlignmentDefinition::CENTER),
+      scaleVisual(1),
       carriageLength(-1),
       locomotiveLength(-1),
       carriageGap(1.),
@@ -782,6 +785,9 @@ SUMOVTypeParameter::cacheParamRestrictions(const std::vector<std::string>& restr
 
 void
 SUMOVTypeParameter::initRailVisualizationParameters(const std::string fileName) {
+    if (hasParameter("scaleVisual")) {
+        scaleVisual = StringUtils::toDouble(getParameter("scaleVisual"));
+    }
     if (hasParameter("carriageLength")) {
         carriageLength = StringUtils::toDouble(getParameter("carriageLength"));
         parametersSet |= VTYPEPARS_CARRIAGE_LENGTH_SET;

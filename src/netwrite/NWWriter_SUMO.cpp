@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,7 @@
 #include <netbuild/NBDistrict.h>
 #include <netbuild/NBHelpers.h>
 #include "NWFrame.h"
+#include "NWWriter_DlrNavteq.h"
 #include "NWWriter_SUMO.h"
 
 
@@ -67,6 +68,7 @@ NWWriter_SUMO::writeNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
         OptionsCont::getOptions().resetWritable();
         OptionsCont::getOptions().set("lefthand", "false");
     }
+    LaneSpreadFunction defaultSpread = SUMOXMLDefinitions::LaneSpreadFunctions.get(oc.getString("default.spreadtype"));
     const int cornerDetail = oc.getInt("junctions.corner-detail");
     if (cornerDetail > 0) {
         attrs[SUMO_ATTR_CORNERDETAIL] = toString(cornerDetail);
@@ -92,10 +94,7 @@ NWWriter_SUMO::writeNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
     if (!oc.isDefault("tls.ignore-internal-junction-jam")) {
         attrs[SUMO_ATTR_TLS_IGNORE_INTERNAL_JUNCTION_JAM] = toString(oc.getBool("tls.ignore-internal-junction-jam"));
     }
-    if (oc.getString("default.spreadtype") == "roadCenter") {
-        // it makes no sense to store the default=center in the net since
-        // centered edges would have the attribute written anyway and edges that
-        // should have 'right' would be misinterpreted
+    if (defaultSpread != LaneSpreadFunction::RIGHT) {
         attrs[SUMO_ATTR_SPREADTYPE] = oc.getString("default.spreadtype");
     }
     if (oc.exists("geometry.avoid-overlap") && !oc.getBool("geometry.avoid-overlap")) {
@@ -141,7 +140,7 @@ NWWriter_SUMO::writeNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
     // write edges with lanes and connected edges
     bool noNames = !oc.getBool("output.street-names");
     for (std::map<std::string, NBEdge*>::const_iterator i = ec.begin(); i != ec.end(); ++i) {
-        writeEdge(device, *(*i).second, noNames);
+        writeEdge(device, *(*i).second, noNames, defaultSpread);
     }
     device.lf();
 
@@ -230,7 +229,7 @@ NWWriter_SUMO::writeNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
 
     // write loaded prohibitions
     for (std::map<std::string, NBNode*>::const_iterator i = nc.begin(); i != nc.end(); ++i) {
-        writeProhibitions(device, i->second->getProhibitions());
+        writeProhibitions(device, i->second->getProhibitions(), ec);
     }
 
     // write roundabout information
@@ -415,7 +414,7 @@ NWWriter_SUMO::writeInternalEdges(OutputDevice& into, const NBEdgeCont& ec, cons
                               NBEdge::UNSPECIFIED_OFFSET, NBEdge::UNSPECIFIED_OFFSET,
                               StopOffset(), width, k.viaShape, &k,
                               MAX2(k.viaLength, POSITION_EPS), // microsim needs positive length
-                              0, "", "");
+                              k.internalViaLaneIndex, "", "");
                 }
                 into.closeTag();
             }
@@ -423,10 +422,8 @@ NWWriter_SUMO::writeInternalEdges(OutputDevice& into, const NBEdgeCont& ec, cons
     }
     // write pedestrian crossings
     const double crossingSpeed = OptionsCont::getOptions().getFloat("default.crossing-speed");
-    for (auto c : n.getCrossings()) {
-        into.openTag(SUMO_TAG_EDGE);
-        into.writeAttr(SUMO_ATTR_ID, c->id);
-        into.writeAttr(SUMO_ATTR_FUNCTION, SumoXMLEdgeFunc::CROSSING);
+    for (const NBNode::Crossing* c : n.getCrossings()) {
+        into.openTag(SUMO_TAG_EDGE).writeAttr(SUMO_ATTR_ID, c->id).writeAttr(SUMO_ATTR_FUNCTION, SumoXMLEdgeFunc::CROSSING);
         into.writeAttr(SUMO_ATTR_CROSSING_EDGES, c->edges);
         writeLane(into, c->id + "_0", crossingSpeed, NBEdge::UNSPECIFIED_FRICTION, SVC_PEDESTRIAN, 0, SVCAll, SVCAll,
                   NBEdge::UNSPECIFIED_OFFSET, NBEdge::UNSPECIFIED_OFFSET,
@@ -436,12 +433,8 @@ NWWriter_SUMO::writeInternalEdges(OutputDevice& into, const NBEdgeCont& ec, cons
     }
     // write pedestrian walking areas
     const double walkingareaSpeed = OptionsCont::getOptions().getFloat("default.walkingarea-speed");
-    const std::vector<NBNode::WalkingArea>& WalkingAreas = n.getWalkingAreas();
-    for (std::vector<NBNode::WalkingArea>::const_iterator it = WalkingAreas.begin(); it != WalkingAreas.end(); it++) {
-        const NBNode::WalkingArea& wa = *it;
-        into.openTag(SUMO_TAG_EDGE);
-        into.writeAttr(SUMO_ATTR_ID, wa.id);
-        into.writeAttr(SUMO_ATTR_FUNCTION, SumoXMLEdgeFunc::WALKINGAREA);
+    for (const NBNode::WalkingArea& wa : n.getWalkingAreas()) {
+        into.openTag(SUMO_TAG_EDGE).writeAttr(SUMO_ATTR_ID, wa.id).writeAttr(SUMO_ATTR_FUNCTION, SumoXMLEdgeFunc::WALKINGAREA);
         writeLane(into, wa.id + "_0", walkingareaSpeed, NBEdge::UNSPECIFIED_FRICTION, SVC_PEDESTRIAN, 0, SVCAll, SVCAll,
                   NBEdge::UNSPECIFIED_OFFSET, NBEdge::UNSPECIFIED_OFFSET,
                   StopOffset(), wa.width, wa.shape, nullptr, wa.length, 0, "", "", false, wa.hasCustomShape);
@@ -481,7 +474,7 @@ NWWriter_SUMO::getInternalBidi(const NBEdge* e, const NBEdge::Connection& k, dou
 }
 
 void
-NWWriter_SUMO::writeEdge(OutputDevice& into, const NBEdge& e, bool noNames) {
+NWWriter_SUMO::writeEdge(OutputDevice& into, const NBEdge& e, bool noNames, LaneSpreadFunction defaultSpread) {
     // write the edge's begin
     into.openTag(SUMO_TAG_EDGE).writeAttr(SUMO_ATTR_ID, e.getID());
     into.writeAttr(SUMO_ATTR_FROM, e.getFromNode()->getID());
@@ -493,11 +486,14 @@ NWWriter_SUMO::writeEdge(OutputDevice& into, const NBEdge& e, bool noNames) {
     if (e.getTypeID() != "") {
         into.writeAttr(SUMO_ATTR_TYPE, e.getTypeID());
     }
+    if (e.getRoutingType() != "") {
+        into.writeAttr(SUMO_ATTR_ROUTINGTYPE, e.getRoutingType());
+    }
     if (e.isMacroscopicConnector()) {
         into.writeAttr(SUMO_ATTR_FUNCTION, SumoXMLEdgeFunc::CONNECTOR);
     }
     // write the spread type if not default ("right")
-    if (e.getLaneSpreadFunction() != LaneSpreadFunction::RIGHT) {
+    if (e.getLaneSpreadFunction() != defaultSpread) {
         into.writeAttr(SUMO_ATTR_SPREADTYPE, e.getLaneSpreadFunction());
     }
     if (e.hasLoadedLength()) {
@@ -683,6 +679,9 @@ NWWriter_SUMO::writeJunction(OutputDevice& into, const NBNode& n) {
     if (n.getFringeType() != FringeType::DEFAULT) {
         into.writeAttr<std::string>(SUMO_ATTR_FRINGE, toString(n.getFringeType()));
     }
+    if (n.getRoundaboutType() != RoundaboutType::DEFAULT) {
+        into.writeAttr<std::string>(SUMO_ATTR_ROUNDABOUT, toString(n.getRoundaboutType()));
+    }
     if (n.getName() != "") {
         into.writeAttr<std::string>(SUMO_ATTR_NAME, StringUtils::escapeXML(n.getName()));
     }
@@ -754,58 +753,30 @@ NWWriter_SUMO::writeInternalNodes(OutputDevice& into, const NBNode& n) {
 
 void
 NWWriter_SUMO::writeConnection(OutputDevice& into, const NBEdge& from, const NBEdge::Connection& c,
-                               bool includeInternal, ConnectionStyle style, bool geoAccuracy) {
-    assert(c.toEdge != 0);
+                               bool includeInternal, ConnectionStyle style, bool useGeo, bool geoAccuracy) {
+    assert(c.toEdge != nullptr);
     into.openTag(SUMO_TAG_CONNECTION);
     into.writeAttr(SUMO_ATTR_FROM, from.getID());
     into.writeAttr(SUMO_ATTR_TO, c.toEdge->getID());
     into.writeAttr(SUMO_ATTR_FROM_LANE, c.fromLane);
     into.writeAttr(SUMO_ATTR_TO_LANE, c.toLane);
     if (style != TLL) {
-        if (c.mayDefinitelyPass) {
-            into.writeAttr(SUMO_ATTR_PASS, c.mayDefinitelyPass);
-        }
-        if (c.keepClear == KEEPCLEAR_FALSE) {
-            into.writeAttr<bool>(SUMO_ATTR_KEEP_CLEAR, false);
-        }
-        if (c.contPos != NBEdge::UNSPECIFIED_CONTPOS) {
-            into.writeAttr(SUMO_ATTR_CONTPOS, c.contPos);
-        }
-        if (c.permissions != SVC_UNSPECIFIED) {
-            writePermissions(into, c.permissions);
-        }
-        if (c.changeLeft != SVC_UNSPECIFIED && c.changeLeft != SVCAll && c.changeLeft != SVC_IGNORING) {
-            into.writeAttr(SUMO_ATTR_CHANGE_LEFT, getVehicleClassNames(c.changeLeft));
-        }
-        if (c.changeRight != SVC_UNSPECIFIED && c.changeRight != SVCAll && c.changeRight != SVC_IGNORING) {
-            into.writeAttr(SUMO_ATTR_CHANGE_RIGHT, getVehicleClassNames(c.changeRight));
-        }
-        if (c.speed != NBEdge::UNSPECIFIED_SPEED) {
-            into.writeAttr(SUMO_ATTR_SPEED, c.speed);
-        }
-        if (c.customLength != NBEdge::UNSPECIFIED_LOADED_LENGTH) {
-            into.writeAttr(SUMO_ATTR_LENGTH, c.customLength);
-        }
-        if (c.customShape.size() != 0) {
-            if (geoAccuracy) {
-                into.setPrecision(gPrecisionGeo);
-            }
-            into.writeAttr(SUMO_ATTR_SHAPE, c.customShape);
-            if (geoAccuracy) {
-                into.setPrecision();
-            }
-        }
-        if (c.uncontrolled != false) {
-            into.writeAttr(SUMO_ATTR_UNCONTROLLED, c.uncontrolled);
-        }
-        if (c.indirectLeft != false) {
-            into.writeAttr(SUMO_ATTR_INDIRECT, c.indirectLeft);
-        }
-        if (c.edgeType != "") {
-            into.writeAttr(SUMO_ATTR_TYPE, c.edgeType);
-        }
+        into.writeOptionalAttr(SUMO_ATTR_PASS, c.mayDefinitelyPass, !c.mayDefinitelyPass);
+        into.writeOptionalAttr<bool>(SUMO_ATTR_KEEP_CLEAR, false, c.keepClear != KEEPCLEAR_FALSE);
+        into.writeOptionalAttr(SUMO_ATTR_CONTPOS, c.contPos, c.contPos == NBEdge::UNSPECIFIED_CONTPOS);
+        writePermissions(into, c.permissions);
+        const bool changeLeft = (c.changeLeft != SVC_UNSPECIFIED && c.changeLeft != SVCAll && c.changeLeft != SVC_IGNORING);
+        into.writeOptionalAttr(SUMO_ATTR_CHANGE_LEFT, getVehicleClassNames(c.changeLeft), !changeLeft);
+        const bool changeRight = (c.changeRight != SVC_UNSPECIFIED && c.changeRight != SVCAll && c.changeRight != SVC_IGNORING);
+        into.writeOptionalAttr(SUMO_ATTR_CHANGE_RIGHT, getVehicleClassNames(c.changeRight), !changeRight);
+        into.writeOptionalAttr(SUMO_ATTR_SPEED, c.speed, c.speed == NBEdge::UNSPECIFIED_SPEED);
+        into.writeOptionalAttr(SUMO_ATTR_LENGTH, c.customLength, c.customLength == NBEdge::UNSPECIFIED_LOADED_LENGTH);
+        writeShape(into, GeoConvHelper::getFinal(), c.customShape, SUMO_ATTR_SHAPE, useGeo, geoAccuracy, c.customShape.size() != 0);
+        into.writeOptionalAttr(SUMO_ATTR_UNCONTROLLED, c.uncontrolled, !c.uncontrolled);
+        into.writeOptionalAttr(SUMO_ATTR_INDIRECT, c.indirectLeft, !c.indirectLeft);
+        into.writeOptionalAttr(SUMO_ATTR_TYPE, c.edgeType, c.edgeType == "");
     }
-    if (style != PLAIN) {
+    if (style != PLAIN && style != PLAIN_NAVTEQ) {
         if (includeInternal) {
             into.writeAttr(SUMO_ATTR_VIA, c.getInternalLaneID());
         }
@@ -841,6 +812,9 @@ NWWriter_SUMO::writeConnection(OutputDevice& into, const NBEdge& from, const NBE
             into.writeAttr(SUMO_ATTR_VISIBILITY_DISTANCE, c.visibility);
         }
     }
+    if (style == PLAIN_NAVTEQ) {
+        NWWriter_DlrNavteq::writeConnectionAttrs(into, c);
+    }
     c.writeParams(into);
     into.closeTag();
 }
@@ -864,7 +838,7 @@ NWWriter_SUMO::writeInternalConnections(OutputDevice& into, const NBNode& n) {
                 }
                 writeInternalConnection(into, c.id, c.toEdge->getID(), c.internalLaneIndex, c.toLane, c.getInternalViaLaneID(), dir, tlID, linkIndex2, false, c.visibility);
                 writeInternalConnection(into, c.viaID, c.toEdge->getID(), c.internalViaLaneIndex, c.toLane, "", dir, "", NBConnection::InvalidTlIndex,
-                        n.brakeForCrossingOnExit(c.toEdge, dir, c.indirectLeft));
+                                        n.brakeForCrossingOnExit(c.toEdge, dir, c.indirectLeft));
             } else {
                 // no internal split
                 writeInternalConnection(into, c.id, c.toEdge->getID(), c.internalLaneIndex, c.toLane, "", dir);
@@ -1002,12 +976,21 @@ NWWriter_SUMO::writeSUMOTime(SUMOTime steps) {
 }
 
 void
-NWWriter_SUMO::writeProhibitions(OutputDevice& into, const NBConnectionProhibits& prohibitions) {
+NWWriter_SUMO::writeProhibitions(OutputDevice& into, const NBConnectionProhibits& prohibitions, const NBEdgeCont& ec) {
+    // the edges may have been erased from NBEdgeCont but their pointers are still valid so we need to check
     for (NBConnectionProhibits::const_iterator j = prohibitions.begin(); j != prohibitions.end(); j++) {
         NBConnection prohibited = (*j).first;
+        if (ec.retrieve(prohibited.getFrom()->getID()) == nullptr
+                || ec.retrieve(prohibited.getTo()->getID()) == nullptr) {
+            continue;
+        }
         const NBConnectionVector& prohibiting = (*j).second;
         for (NBConnectionVector::const_iterator k = prohibiting.begin(); k != prohibiting.end(); k++) {
             NBConnection prohibitor = *k;
+            if (ec.retrieve(prohibitor.getFrom()->getID()) == nullptr
+                    || ec.retrieve(prohibitor.getTo()->getID()) == nullptr) {
+                continue;
+            }
             into.openTag(SUMO_TAG_PROHIBITION);
             into.writeAttr(SUMO_ATTR_PROHIBITOR, prohibitionConnection(prohibitor));
             into.writeAttr(SUMO_ATTR_PROHIBITED, prohibitionConnection(prohibited));
@@ -1024,12 +1007,12 @@ NWWriter_SUMO::prohibitionConnection(const NBConnection& c) {
 
 
 void
-NWWriter_SUMO::writeTrafficLights(OutputDevice& into, const NBTrafficLightLogicCont& tllCont) {
+NWWriter_SUMO::writeTrafficLights(OutputDevice& into, const NBTrafficLightLogicCont& tllCont, ConnectionStyle style) {
     std::vector<NBTrafficLightLogic*> logics = tllCont.getComputed();
     for (NBTrafficLightLogic* logic : logics) {
-        writeTrafficLight(into, logic);
-        // only raise warnings on write instead of on compute (to avoid cluttering netedit)
         NBTrafficLightDefinition* def = tllCont.getDefinition(logic->getID(), logic->getProgramID());
+        writeTrafficLight(into, logic, def, style);
+        // only raise warnings on write instead of on compute (to avoid cluttering netedit)
         assert(def != nullptr);
         def->finalChecks();
     }
@@ -1040,12 +1023,24 @@ NWWriter_SUMO::writeTrafficLights(OutputDevice& into, const NBTrafficLightLogicC
 
 
 void
-NWWriter_SUMO::writeTrafficLight(OutputDevice& into, const NBTrafficLightLogic* logic) {
+NWWriter_SUMO::writeTrafficLight(OutputDevice& into, const NBTrafficLightLogic* logic, const NBTrafficLightDefinition* def, ConnectionStyle style) {
     into.openTag(SUMO_TAG_TLLOGIC);
     into.writeAttr(SUMO_ATTR_ID, logic->getID());
     into.writeAttr(SUMO_ATTR_TYPE, logic->getType());
     into.writeAttr(SUMO_ATTR_PROGRAMID, logic->getProgramID());
     into.writeAttr(SUMO_ATTR_OFFSET, logic->getOffset() == SUMOTime_MAX ? "begin" : writeSUMOTime(logic->getOffset()));
+    if (style == PLAIN_NAVTEQ) {
+        into.writeAttr(SUMO_ATTR_NODES, toString(def->getNodes()));
+        PositionVector nodePos;
+        for (const NBNode* n : def->getNodes()) {
+            Position pos = n->getPosition();
+            GeoConvHelper::getFinal().cartesian2geo(pos);
+            nodePos.push_back(pos);
+        }
+        into.setPrecision(gPrecisionGeo);
+        into.writeAttr(SUMO_ATTR_POSITION, nodePos);
+        into.setPrecision();
+    }
     // write the phases
     const bool varPhaseLength = logic->getType() != TrafficLightType::STATIC;
     for (const NBTrafficLightLogic::PhaseDefinition& phase : logic->getPhases()) {
@@ -1055,36 +1050,17 @@ NWWriter_SUMO::writeTrafficLight(OutputDevice& into, const NBTrafficLightLogic* 
             into.writePadding(" ");
         }
         into.writeAttr(SUMO_ATTR_STATE, phase.state);
-        if (varPhaseLength) {
-            if (phase.minDur != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_MINDURATION, writeSUMOTime(phase.minDur));
-            }
-            if (phase.maxDur != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_MAXDURATION, writeSUMOTime(phase.maxDur));
-            }
-            if (phase.earliestEnd != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_EARLIEST_END, writeSUMOTime(phase.earliestEnd));
-            }
-            if (phase.latestEnd != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_LATEST_END, writeSUMOTime(phase.latestEnd));
-            }
-            // NEMA attributes
-            if (phase.vehExt != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_VEHICLEEXTENSION, writeSUMOTime(phase.vehExt));
-            }
-            if (phase.yellow != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_YELLOW, writeSUMOTime(phase.yellow));
-            }
-            if (phase.red != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
-                into.writeAttr(SUMO_ATTR_RED, writeSUMOTime(phase.red));
-            }
-        }
-        if (phase.name != "") {
-            into.writeAttr(SUMO_ATTR_NAME, StringUtils::escapeXML(phase.name));
-        }
-        if (phase.next.size() > 0) {
-            into.writeAttr(SUMO_ATTR_NEXT, phase.next);
-        }
+        into.writeOptionalAttr(SUMO_ATTR_MINDURATION, writeSUMOTime(phase.minDur), !varPhaseLength || phase.minDur == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+        into.writeOptionalAttr(SUMO_ATTR_MAXDURATION, writeSUMOTime(phase.maxDur), !varPhaseLength || phase.maxDur == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+        into.writeOptionalAttr(SUMO_ATTR_EARLIEST_END, writeSUMOTime(phase.earliestEnd), !varPhaseLength || phase.earliestEnd == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+        into.writeOptionalAttr(SUMO_ATTR_LATEST_END, writeSUMOTime(phase.latestEnd), !varPhaseLength || phase.latestEnd == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+        // NEMA attributes
+        into.writeOptionalAttr(SUMO_ATTR_VEHICLEEXTENSION, writeSUMOTime(phase.vehExt), !varPhaseLength || phase.vehExt == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+        into.writeOptionalAttr(SUMO_ATTR_YELLOW, writeSUMOTime(phase.yellow), !varPhaseLength || phase.yellow == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+        into.writeOptionalAttr(SUMO_ATTR_RED, writeSUMOTime(phase.red), !varPhaseLength || phase.red == NBTrafficLightDefinition::UNSPECIFIED_DURATION);
+
+        into.writeOptionalAttr(SUMO_ATTR_NAME, phase.name, phase.name == "", true);
+        into.writeOptionalAttr(SUMO_ATTR_NEXT, phase.next, phase.next.empty());
         into.closeTag();
     }
     // write params
@@ -1114,6 +1090,27 @@ NWWriter_SUMO::writeStopOffsets(OutputDevice& into, const StopOffset& stopOffset
         }
         into.writeAttr(SUMO_ATTR_VALUE, stopOffset.getOffset());
         into.closeTag();
+    }
+}
+
+
+void
+NWWriter_SUMO::writeShape(OutputDevice& out, const GeoConvHelper& gch, PositionVector shape, SumoXMLAttr attr, bool useGeo, bool geoAccuracy, bool needsWrite) {
+    if (!needsWrite) {
+        out.writeOptionalAttr(attr, shape, true);
+        return;
+    }
+    if (useGeo) {
+        for (int i = 0; i < (int) shape.size(); i++) {
+            gch.cartesian2geo(shape[i]);
+        }
+    }
+    if (geoAccuracy) {
+        out.setPrecision(gPrecisionGeo);
+    }
+    out.writeAttr(attr, shape);
+    if (geoAccuracy) {
+        out.setPrecision();
     }
 }
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2004-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2004-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -23,7 +23,6 @@
 
 #include <iostream>
 #include "OutputDevice.h"
-#include "StreamDevices.h"
 
 
 // ===========================================================================
@@ -40,10 +39,13 @@ class OutputDevice_File : public OutputDevice {
 public:
     /** @brief Constructor
      * @param[in] fullName The name of the output file to use
-     * @param[in] compressed whether to apply gzip compression
+     * @param[in] binary whether the output steam needs to be opened in binary mode
      * @exception IOError Should not be thrown by this implementation
      */
-    OutputDevice_File(const std::string& fullName, const bool compressed = false);
+    OutputDevice_File(const std::string& fullName, const bool binary = false);
+
+    /// @brief Destructor
+    ~OutputDevice_File();
 
     /** @brief returns the information whether the device will discard all output
      * @return Whether the device redirects to /dev/null
@@ -52,7 +54,22 @@ public:
         return myAmNull;
     }
 
+protected:
+    /// @name Methods that override/implement OutputDevice-methods
+    /// @{
+
+    /** @brief Returns the associated ostream
+     * @return The used stream
+     */
+    inline std::ostream& getOStream() override {
+        return *myFileStream;
+    }
+    /// @}
+
 private:
+    /// The wrapped ofstream
+    std::ostream* myFileStream = nullptr;
+
     /// am I redirecting to /dev/null
     bool myAmNull = false;
 

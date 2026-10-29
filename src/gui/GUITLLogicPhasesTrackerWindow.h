@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -27,14 +27,7 @@
 #include <bitset>
 #include <utility>
 #include <utils/foxtools/fxheader.h>
-// fx3d includes windows.h so we need to guard against macro pollution
-#ifdef WIN32
-#define NOMINMAX
-#endif
 #include <fx3d.h>
-#ifdef WIN32
-#undef NOMINMAX
-#endif
 #include <microsim/traffic_lights/MSSimpleTrafficLightLogic.h>
 #include <microsim/traffic_lights/MSTLLogicControl.h>
 #include <utils/common/ValueRetriever.h>

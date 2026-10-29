@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -31,61 +31,54 @@ netedit.changeSupermode("demand")
 # go to vehicle mode
 netedit.changeMode("vehicle")
 
-# select flow with embedded route
+# select flow
 netedit.changeElement("vehicleFrame", "flow (embedded route)")
+netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.terminateOption, "36")
 
-# create other
+# try to create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
-# press enter to create flow with embedded route
-netedit.typeKey('enter')
+# press enter to create flow
+netedit.typeKey("enter")
 
 # set invalid id
 netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.id, ";;;;;;%%")
 
-# try to create flow with embedded route
+# try to create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
-# press enter to create flow with embedded route
-netedit.typeKey('enter')
+# press enter to create flow
+netedit.typeKey("enter")
 
 # set valid id
 netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.id, "")
 
-# create flow with embedded route
-netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
-netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
+# press enter to create flow
+netedit.typeKey("enter")
 
-# press enter to create flow with embedded route
-netedit.typeKey('enter')
-
-# set valid id
+# set empty id
 netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.id, "f_0")
 
-# create flow with embedded route
+# create flow
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
 
-# press enter to create flow with embedded route
-netedit.typeKey('enter')
+# press enter to create flow
+netedit.typeKey("enter")
 
 # set empty id
 netedit.modifyAttribute(netedit.attrs.flowEmbedded.create.id, "customID")
 
-# create flow with embedded route
-netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
-netedit.leftClick(referencePosition, netedit.positions.elements.edge2)
-
-# press enter to create flow with embedded route
-netedit.typeKey('enter')
+# press enter to create flow
+netedit.typeKey("enter")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -20,7 +20,7 @@ netedit.positions.elements.additionals.geometryPointDestinyA 574 238
 netedit.positions.elements.additionals.geometryPointDestinyB 498 332
 netedit.positions.elements.additionals.geometryPointExistent 362 138
 netedit.positions.elements.additionals.geometryPointNew 400 138
-netedit.positions.elements.additionals.parkingArea 340 185
+netedit.positions.elements.additionals.parkingArea 340 210
 netedit.positions.elements.additionals.parkingSpace 437 120
 netedit.positions.elements.additionals.routeProbe 488 168
 netedit.positions.elements.additionals.shapeA 304 133
@@ -31,8 +31,8 @@ netedit.positions.elements.additionals.squaredA 437 137
 netedit.positions.elements.additionals.squaredB 534 137
 netedit.positions.elements.additionals.trainStop 343 204
 netedit.positions.elements.additionals.vaporizer 467 168
-netedit.positions.elements.data.TAZRelBot 650 255
-netedit.positions.elements.data.TAZRelTop 630 238
+netedit.positions.elements.data.TAZRelBot 630 225
+netedit.positions.elements.data.TAZRelTop 630 215
 netedit.positions.elements.demands.TAZGreen 557 231
 netedit.positions.elements.demands.TAZRed 708 232
 netedit.positions.elements.demands.busStop 296 11
@@ -56,7 +56,7 @@ netedit.positions.elements.demands.planStopBusStop 250 -5
 netedit.positions.elements.demands.planStopEdge 493 -15
 netedit.positions.elements.demands.route 420 439
 netedit.positions.elements.demands.routeB 536 409
-netedit.positions.elements.demands.stopLane 415 30
+netedit.positions.elements.demands.stopLane 499 26
 netedit.positions.elements.demands.trainStop 718 13
 netedit.positions.elements.demands.trainStopB 284 265
 netedit.positions.elements.demands.vehicleEdge 185 440
@@ -64,10 +64,8 @@ netedit.positions.elements.demands.vehicleJunction 159 405
 netedit.positions.elements.demands.vehicleTAZ 565 230
 netedit.positions.elements.edge0 381 443
 netedit.positions.elements.edge0Ped 402 470
-netedit.positions.elements.edge0_dataMode 381 473
 netedit.positions.elements.edge1 850 222
 netedit.positions.elements.edge1Ped 874 238
-netedit.positions.elements.edge1_dataMode 850 252
 netedit.positions.elements.edge2 494 26
 netedit.positions.elements.edge2Ped 463 -3
 netedit.positions.elements.edge3 477 56
@@ -148,8 +146,8 @@ netedit.positions.reference 0 0
 netedit.positions.selection.edge 513 92
 netedit.positions.selection.junction 498 236
 netedit.positions.selection.lane 586 213
-netedit.positions.selection.rectangleLargeA 129 4
-netedit.positions.selection.rectangleLargeB 867 463
+netedit.positions.selection.rectangleLargeA 252 75
+netedit.positions.selection.rectangleLargeB 744 394
 netedit.positions.selection.rectangleMediumA 304 94
 netedit.positions.selection.rectangleMediumB 694 373
 netedit.positions.selection.rectangleSmallA 410 147

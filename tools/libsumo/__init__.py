@@ -1,5 +1,5 @@
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2018-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2018-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,26 +16,48 @@
 # @date    2018-06-05
 
 import os
+import sys
 import warnings
-SUMO_WHEEL_HOME = None
+
+SUMO_DATA_HOME = None
 try:
-    import sumo
-    if not hasattr(sumo, "SUMO_HOME"):  # maybe it is not the correct module
-        raise ImportError()
-    SUMO_WHEEL_HOME = sumo.SUMO_HOME
-    if "SUMO_HOME" not in os.environ:
-        os.environ["SUMO_HOME"] = SUMO_WHEEL_HOME
+    import sumo_data
+    SUMO_DATA_HOME = sumo_data.__path__[0]
+    if not os.environ.get("SUMO_HOME"):
+        os.environ["SUMO_HOME"] = SUMO_DATA_HOME
+    if not os.environ.get("PROJ_LIB") and not os.environ.get("PROJ_DATA"):
+        os.environ["PROJ_LIB"] = os.environ["PROJ_DATA"] = os.path.join(SUMO_DATA_HOME, "data", "proj")
 except ImportError:
-    if "SUMO_HOME" not in os.environ:
-        warnings.warn("SUMO_HOME is not set and the eclipse-sumo wheel is not installed!")
+    # fall back to the eclipse-sumo wheel
+    try:
+        import sumo
+        if not hasattr(sumo, "SUMO_HOME"):  # maybe it is not the correct module
+            raise ImportError()
+        SUMO_DATA_HOME = sumo.SUMO_HOME
+        if not os.environ.get("SUMO_HOME"):
+            os.environ["SUMO_HOME"] = SUMO_DATA_HOME
+    except ImportError:
+        if not os.environ.get("SUMO_HOME"):
+            warnings.warn("SUMO_HOME is not set and neither sumo-data nor the eclipse-sumo wheel are installed!")
+
+if hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled():
+    warnings.warn("This package has not been validated in free-threaded Python (no-GIL mode).")
 if hasattr(os, "add_dll_directory"):
     # since Python 3.8 the DLL search path has to be set explicitly see https://bugs.python.org/issue43173
-    if SUMO_WHEEL_HOME and os.path.exists(os.path.join(SUMO_WHEEL_HOME, "bin", "zlib.dll")):
-        os.add_dll_directory(os.path.abspath(os.path.join(SUMO_WHEEL_HOME, "bin")))
-    elif "SUMO_HOME" in os.environ and os.path.exists(os.path.join(os.environ["SUMO_HOME"], "bin", "zlib.dll")):
+    if SUMO_DATA_HOME and os.path.exists(os.path.join(SUMO_DATA_HOME, "bin", "z.dll")):
+        os.add_dll_directory(os.path.abspath(os.path.join(SUMO_DATA_HOME, "bin")))
+    elif "SUMO_HOME" in os.environ and os.path.exists(os.path.join(os.environ["SUMO_HOME"], "bin", "z.dll")):
         os.add_dll_directory(os.path.join(os.environ["SUMO_HOME"], "bin"))
-    elif os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "bin", "zlib.dll")):
+    elif os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "bin", "z.dll")):
         os.add_dll_directory(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
+
+try:
+    # this tries to determine the version number of an installed wheel
+    import importlib.metadata  # noqa
+    __version__ = importlib.metadata.version(__name__)
+except ImportError:
+    # this is the fallback version, it gets replaced with the current version on "make install" or "make dist"
+    __version__ = "0.0.0"
 
 from traci import connection, constants, exceptions, _vehicle, _person, _trafficlight, _simulation  # noqa
 from traci.step import StepManager, StepListener  # noqa
@@ -44,6 +66,21 @@ from .libsumo import TraCIStage, TraCINextStopData, TraCIReservation, TraCILogic
 from .libsumo import TraCICollision, TraCISignalConstraint  # noqa
 from ._libsumo import TraCILogic_phases_get, TraCILogic_phases_set, TraCILogic_swiginit, new_TraCILogic  # noqa
 from .libsumo import *  # noqa
+
+if os.environ.get('LIBSUMO_AS_TRACI') != "quiet":
+    try:
+        import importlib.metadata  # noqa
+        pyarrow_version = importlib.metadata.version("pyarrow")
+        pyarrow_so_version = "%s%02i" % tuple(map(int, pyarrow_version.split(".")[:2]))
+        sumo_arrow_so_version = simulation.getParameter("", "buildConfig.ARROW_SO_VERSION")
+        if sumo_arrow_so_version and pyarrow_so_version != sumo_arrow_so_version:
+            print("Warning! pyarrow is installed with version %s which might be incompatible with libsumo "
+                  "which is compiled against libarrow%s." % (pyarrow_version, sumo_arrow_so_version))
+            print(" Try to uninstall pyarrow or install a matching pyarrow version, if you encounter problems.")
+    except (ImportError, ValueError, TypeError):
+        # either pyarrow is not installed (fine) or importlib is not available (not great, but we cannot do much)
+        # the ValueError / TypeError occur if we could not parse the pyarrow version
+        pass
 
 DOMAINS = [
     busstop,  # noqa

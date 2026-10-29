@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -164,7 +164,12 @@ public:
 /// @{
 
 struct TraCIResult {
+    TraCIResult() {}
     virtual ~TraCIResult() {}
+#ifndef SWIG
+    TraCIResult(const TraCIResult&) = default;
+    TraCIResult& operator=(const TraCIResult&) = default;
+#endif
     virtual std::string getString() const {
         return "";
     }
@@ -177,7 +182,7 @@ struct TraCIResult {
  * @brief A 2D or 3D-position, for 2D positions z == INVALID_DOUBLE_VALUE
  */
 struct TraCIPosition : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIPosition(" << x << "," << y;
         if (z != INVALID_DOUBLE_VALUE) {
@@ -186,7 +191,7 @@ struct TraCIPosition : TraCIResult {
         os << ")";
         return os.str();
     }
-    int getType() const {
+    int getType() const override {
         return z != INVALID_DOUBLE_VALUE ? POSITION_3D : POSITION_2D;
     }
     double x = INVALID_DOUBLE_VALUE, y = INVALID_DOUBLE_VALUE, z = INVALID_DOUBLE_VALUE;
@@ -200,12 +205,12 @@ struct TraCIPosition : TraCIResult {
  */
 struct TraCIRoadPosition : TraCIResult {
     TraCIRoadPosition(const std::string e = "", const double p = INVALID_DOUBLE_VALUE, const int li = INVALID_INT_VALUE) : edgeID(e), pos(p), laneIndex(li) {}
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIRoadPosition(" << edgeID << "_" << laneIndex << "," << pos << ")";
         return os.str();
     }
-    int getType() const {
+    int getType() const override {
         return POSITION_ROADMAP;
     }
     std::string edgeID;
@@ -222,7 +227,7 @@ struct TraCIRoadPosition : TraCIResult {
 struct TraCIColor : TraCIResult {
     TraCIColor() : r(0), g(0), b(0), a(255) {}
     TraCIColor(int r, int g, int b, int a = 255) : r(r), g(g), b(b), a(a) {}
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIColor(" << r << "," << g << "," << b << "," << a << ")";
         return os.str();
@@ -238,7 +243,7 @@ struct TraCIColor : TraCIResult {
  * @brief A list of positions
  */
 struct TraCIPositionVector : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "[";
         for (const TraCIPosition& v : value) {
@@ -256,12 +261,12 @@ struct TraCIPositionVector : TraCIResult {
 
 struct TraCIInt : TraCIResult {
     TraCIInt(int v = 0, int t = libsumo::TYPE_INTEGER) : value(v), traciType(t) {}
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << value;
         return os.str();
     }
-    int getType() const {
+    int getType() const override {
         return traciType;
     }
     int value;
@@ -274,12 +279,12 @@ struct TraCIInt : TraCIResult {
 
 struct TraCIDouble : TraCIResult {
     TraCIDouble(double v = 0.) : value(v) {}
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << value;
         return os.str();
     }
-    int getType() const {
+    int getType() const override {
         return libsumo::TYPE_DOUBLE;
     }
     double value;
@@ -291,10 +296,10 @@ struct TraCIDouble : TraCIResult {
 
 struct TraCIString : TraCIResult {
     TraCIString(std::string v = "") : value(v) {}
-    std::string getString() const {
+    std::string getString() const override {
         return value;
     }
-    int getType() const {
+    int getType() const override {
         return libsumo::TYPE_STRING;
     }
     std::string value;
@@ -305,7 +310,7 @@ struct TraCIString : TraCIResult {
 
 
 struct TraCIStringList : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "[";
         for (std::string v : value) {
@@ -322,7 +327,7 @@ struct TraCIStringList : TraCIResult {
 
 
 struct TraCIDoubleList : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "[";
         for (double v : value) {
@@ -339,7 +344,7 @@ struct TraCIDoubleList : TraCIResult {
 
 
 struct TraCIIntList : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "[";
         for (int v : value) {
@@ -356,7 +361,7 @@ struct TraCIIntList : TraCIResult {
 
 
 struct TraCIStringDoublePairList : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "[";
         for (const auto& v : value) {
@@ -387,7 +392,6 @@ struct TraCIPhase {
                const std::string& _name = "",
                const std::string& _earlyTarget = "") :
         duration(_duration), state(_state), minDur(_minDur), maxDur(_maxDur), next(_next), name(_name), earlyTarget(_earlyTarget) {}
-    ~TraCIPhase() {}
 
     double duration;
     std::string state;
@@ -410,7 +414,6 @@ struct TraCILogic {
     TraCILogic(const std::string& _programID, const int _type, const int _currentPhaseIndex,
                const std::vector<std::shared_ptr<libsumo::TraCIPhase> >& _phases = std::vector<std::shared_ptr<libsumo::TraCIPhase> >())
         : programID(_programID), type(_type), currentPhaseIndex(_currentPhaseIndex), phases(_phases) {}
-    ~TraCILogic() {}
 
     std::string getString() const {
         std::ostringstream os;
@@ -427,7 +430,7 @@ struct TraCILogic {
 
 
 struct TraCILogicVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCILogicVectorWrapped[";
         for (const TraCILogic& v : value) {
@@ -445,7 +448,6 @@ struct TraCILink {
     TraCILink() {}
     TraCILink(const std::string& _from, const std::string& _via, const std::string& _to)
         : fromLane(_from), viaLane(_via), toLane(_to) {}
-    ~TraCILink() {}
 
     std::string getString() const {
         std::ostringstream os;
@@ -460,7 +462,7 @@ struct TraCILink {
 
 
 struct TraCILinkVectorVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCILinkVectorVectorWrapped[";
         for (const std::vector<TraCILink>& v : value) {
@@ -483,7 +485,6 @@ struct TraCIConnection {
                     const std::string _approachedInternal, const std::string _state, const std::string _direction, const double _length)
         : approachedLane(_approachedLane), hasPrio(_hasPrio), isOpen(_isOpen), hasFoe(_hasFoe),
           approachedInternal(_approachedInternal), state(_state), direction(_direction), length(_length) {}
-    ~TraCIConnection() {}
 
     std::string getString() const {
         std::ostringstream os;
@@ -504,7 +505,7 @@ struct TraCIConnection {
 
 
 struct TraCIConnectionVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIConnectionVectorWrapped[";
         for (const TraCIConnection& v : value) {
@@ -541,7 +542,7 @@ struct TraCIVehicleData {
 
 
 struct TraCIVehicleDataVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIVehicleDataVectorWrapped[";
         for (const TraCIVehicleData& v : value) {
@@ -575,7 +576,7 @@ struct TraCINextTLSData {
 
 
 struct TraCINextTLSDataVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCINextTLSDataVectorWrapped[";
         for (const TraCINextTLSData& v : value) {
@@ -673,7 +674,7 @@ struct TraCINextStopData {
  * @see TraCINextStopData
  */
 struct TraCINextStopDataVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCINextStopDataVectorWrapped[";
         for (const TraCINextStopData& v : value) {
@@ -715,7 +716,7 @@ struct TraCIBestLanesData {
 
 
 struct TraCIBestLanesDataVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIBestLanesDataVectorWrapped[";
         for (const TraCIBestLanesData& v : value) {
@@ -812,7 +813,7 @@ struct TraCIReservation {
 
 
 struct TraCIReservationVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIReservationVectorWrapped[";
         for (const TraCIReservation& v : value) {
@@ -850,7 +851,7 @@ struct TraCICollision {
 
 
 struct TraCICollisionVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCICollisionVectorWrapped[";
         for (const TraCICollision& v : value) {
@@ -893,7 +894,7 @@ struct TraCISignalConstraint {
 
 
 struct TraCISignalConstraintVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCISignalConstraintVectorWrapped[";
         for (const TraCISignalConstraint& v : value) {
@@ -928,7 +929,7 @@ struct TraCIJunctionFoe {
 
 
 struct TraCIJunctionFoeVectorWrapped : TraCIResult {
-    std::string getString() const {
+    std::string getString() const override {
         std::ostringstream os;
         os << "TraCIJunctionFoeVectorWrapped[";
         for (const TraCIJunctionFoe& v : value) {

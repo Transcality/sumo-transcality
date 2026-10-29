@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,12 +30,16 @@
 #include <microsim/transportables/MSPerson.h>
 #include <microsim/transportables/MSStageDriving.h>
 #include <microsim/transportables/MSPModel_NonInteracting.h>
-#ifdef JPS_VERSION
+#ifdef HAVE_JUPEDSIM_GRPC
 #include <microsim/transportables/MSPModel_JuPedSim.h>
+#endif
+#ifdef HAVE_JUPEDSIM_LEGACY
+#include <microsim/transportables/MSPModel_JuPedSim_legacy.h>
 #endif
 #include <microsim/transportables/MSPModel_Striping.h>
 #include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/devices/MSDevice_Vehroutes.h>
+#include <microsim/devices/MSDevice_Taxi.h>
 #include <microsim/MSNet.h>
 #include <microsim/MSEdge.h>
 #include <microsim/MSVehicle.h>
@@ -66,9 +70,13 @@ MSTransportableControl::MSTransportableControl(const bool isPerson):
         const std::string& model = oc.getString("pedestrian.model");
         if (model == "striping") {
             myMovementModel = new MSPModel_Striping(oc, net);
-#ifdef JPS_VERSION
+#ifdef HAVE_JUPEDSIM_GRPC
         } else if (model == "jupedsim") {
             myMovementModel = new MSPModel_JuPedSim(oc, net);
+#endif
+#ifdef HAVE_JUPEDSIM_LEGACY
+        } else if (model == "jupedsim_legacy") {
+            myMovementModel = new MSPModel_JuPedSim_legacy(oc, net);
 #endif
         } else if (model != "nonInteracting") {
             delete myNonInteractingModel;
@@ -156,14 +164,17 @@ MSTransportableControl::erase(MSTransportable* transportable) {
     }
     if (oc.isSet("vehroute-output") || oc.isSet("personroute-output")) {
         if (transportable->hasArrived() || oc.getBool("vehroute-output.write-unfinished")) {
-            if (oc.getBool("vehroute-output.sorted")) {
-                const SUMOTime departure = oc.getBool("vehroute-output.intended-depart") ? transportable->getParameter().depart : transportable->getDeparture();
-                OutputDevice_String od(1);
-                transportable->routeOutput(od, oc.getBool("vehroute-output.route-length"));
-                MSDevice_Vehroutes::writeSortedOutput(&myRouteInfos,
-                                                      departure, transportable->getID(), od.getString());
-            } else {
-                transportable->routeOutput(*myRouteInfos.routeOut, oc.getBool("vehroute-output.route-length"));
+            // @todo: adapt this if we ever introduce person-device.vehroute
+            if (transportable->getBoolParam("has.vehroute.person-device", false, true)) {
+                if (oc.getBool("vehroute-output.sorted")) {
+                    const SUMOTime departure = oc.getBool("vehroute-output.intended-depart") ? transportable->getParameter().depart : transportable->getDeparture();
+                    OutputDevice_String od(1);
+                    transportable->routeOutput(od, oc.getBool("vehroute-output.route-length"));
+                    MSDevice_Vehroutes::writeSortedOutput(&myRouteInfos,
+                                                          departure, transportable->getNumericalID(), od.getString());
+                } else {
+                    transportable->routeOutput(*myRouteInfos.routeOut, oc.getBool("vehroute-output.route-length"));
+                }
             }
         }
     }
@@ -177,6 +188,16 @@ MSTransportableControl::erase(MSTransportable* transportable) {
                 transportable->isPerson() ? MSNet::TransportableState::PERSON_ARRIVED : MSNet::TransportableState::CONTAINER_ARRIVED);
         delete i->second;
         myTransportables.erase(i);
+    }
+}
+
+
+void
+MSTransportableControl::eraseAll() {
+    // avoid taxi device having dangling references to erased customers
+    MSDevice_Taxi::allCustomersErased();
+    while (loadedBegin() != loadedEnd()) {
+        erase(loadedBegin()->second);
     }
 }
 
@@ -206,6 +227,10 @@ MSTransportableControl::checkWaiting(MSNet* net, const SUMOTime time) {
                 nextStep.insert(nextStep.begin(), transportables.begin(), transportables.end());
                 transportables.clear();
                 break;
+            } else if (myMaxTransportableNumber == 0) {
+                erase(t);
+                it = transportables.erase(it);
+                continue;
             }
             it = transportables.erase(it);
             myWaitingForDepartureNumber--;
@@ -242,6 +267,27 @@ MSTransportableControl::checkWaiting(MSNet* net, const SUMOTime time) {
         }
     }
 }
+
+
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+void
+MSTransportableControl::addPendingRouting(MSTransportable* transportable) {
+    myPendingRouting.push_back(transportable);
+}
+
+
+void
+MSTransportableControl::processPendingRouting(MSNet* net, const SUMOTime time) {
+    for (MSTransportable* t : myPendingRouting) {
+        if (!t->proceed(net, time)) {
+            erase(t);
+        }
+    }
+    myPendingRouting.clear();
+}
+#endif
+#endif
 
 
 void
@@ -421,7 +467,7 @@ MSTransportableControl::abortWaiting(MSTransportable* t) {
 MSTransportable*
 MSTransportableControl::buildPerson(const SUMOVehicleParameter* pars, MSVehicleType* vtype, MSTransportable::MSTransportablePlan* plan,
                                     SumoRNG* rng) const {
-    const double speedFactor = vtype->computeChosenSpeedDeviation(rng);
+    const double speedFactor = vtype->computeChosenSpeedDeviation(pars->speedFactor, rng);
     return new MSPerson(pars, vtype, plan, speedFactor);
 }
 
@@ -436,7 +482,7 @@ void
 MSTransportableControl::saveState(OutputDevice& out) {
     std::ostringstream oss;
     oss << myRunningNumber << " " << myLoadedNumber << " " << myEndedNumber << " " << myWaitingForDepartureNumber << " " << myArrivedNumber << " " << myDiscardedNumber;
-    oss << " " << myJammedNumber << " " << myWaitingForVehicleNumber << " " << myWaitingUntilNumber << " " << myHaveNewWaiting;
+    oss << " " << myJammedNumber << " " << myWaitingForVehicleNumber << " " << myHaveNewWaiting;
     out.writeAttr(SUMO_ATTR_STATE, oss.str());
     for (const auto& it : myTransportables) {
         it.second->saveState(out);
@@ -448,7 +494,7 @@ void
 MSTransportableControl::loadState(const std::string& state) {
     std::istringstream iss(state);
     iss >> myRunningNumber >> myLoadedNumber >> myEndedNumber >> myWaitingForDepartureNumber >> myArrivedNumber >> myDiscardedNumber;
-    iss >> myJammedNumber >> myWaitingForVehicleNumber >> myWaitingUntilNumber >> myHaveNewWaiting;
+    iss >> myJammedNumber >> myWaitingForVehicleNumber >> myHaveNewWaiting;
 }
 
 void

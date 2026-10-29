@@ -53,11 +53,11 @@ Additional options:
 ## Retrieving parameters from measurements of individual vehicles
 
 To obtain mean and deviation a number of values must be obtained from
-the data set. The following is recommenced:
+the data set. The following is recommended:
 
 - **accel**: the maximum (or high percentile) acceleration for each
   vehicle
-- **deccel**: the maximum (or high percentile) deceleration for each
+- **decel**: the maximum (or high percentile) deceleration for each
   vehicle
 - **speedFactor**: the maximum (or high percentile) quotient of
   speed/speedLimit for each vehicle
@@ -83,6 +83,8 @@ The available attributes to animate are:
 - Zoom using the **--zoom** option. The option value consists of pairs of time and zoom values (separator: colon) joined by semicolon.
 - Angle using the **--rotate** option. The option value consists of pairs of time and angle values (in degrees, separator: colon) joined by semicolon.
 - Offset/center position using the **--translate** option. The option value consists of pairs of time and position values (separator: colon, position dimensions separated by comma) joined by semicolon.
+
+Set the option **--relative** for zoom/rotate/offset values to be interpreted relatively to the previous state (either the initial view or the result of the previous animation result).
 
 # distributeChargingStations.py
 
@@ -245,7 +247,7 @@ This script generates a landmark file for use with duarouter options **--astar.l
 ```
 python tools/generateLandmarks.py -n <net-file> -o <output-file>
 ```
-See [Routing algorithm ALT](../Simulation/Routing.md#alt).
+See [Routing algorithm ALT](../Routing_Algorithms.md#alt).
 
 # averageTripStatistics.py
 
@@ -283,7 +285,7 @@ A *ptlines-file* is typically created by [netconvert](../netconvert.md) option *
 However it can also be customized or created from scratch for a non OSM network.
 
 !!! note
-    A [tutorial](../Tutorials/PT_from_OpenStreetMap.md) for using this tool with OSM data is also availabe
+    A [tutorial](../Tutorials/PT_from_OpenStreetMap.md) for using this tool with OSM data is also available
 
 ## Example Input
 
@@ -319,11 +321,11 @@ The resulting bus definition may look like this:
 ## Further Options
 
 - **--types**: only export lines with the given list of types
-- **--bus.parking**: let busses clear the road while stopping
+- **--bus.parking**: let buses clear the road while stopping
 - **--vtype-prefix**: prefix for generated vehicle types (to allow combining multiple runs in the same simulation)
 - **--stop-duration**: minimum duration for stops (default 20)
 - **--stop-duration.slack**: time to reserve in the schedule per stop (default 10)
-- **--speedfactor.bus**: assumed relative travel speed of busses (default 0.95)
+- **--speedfactor.bus**: assumed relative travel speed of buses (default 0.95)
 - **--speedfactor.tram**: assumed relative travel speed of trams (default 1)
 - **--night**: only export lines that run during the night (by default, only lines running during the day are used)
 - **--begin**: flow begin time in output (default 0)
@@ -361,7 +363,7 @@ These values have the following meanings:
 This script retrieves background images from ESRI ArcGIS tile servers and other imaging APIs
 such as Google Maps and MapQuest. The simplest usage is to call it with a SUMO
 network file only. It will generate a visualization settings file containing the coordinates which
-can be loaded with sumo-gui or netedit. The most useful options are -t for the
+can be loaded with sumo-gui or netedit. The most useful options are `--reproject` (see below) and `-t` for the
 (maximum) number of tiles to retrieve and -u to give the URL of the tile server. Examples:
 
 - Retrieving data from the public ArcGIS online instance:
@@ -379,6 +381,17 @@ The generated setting file can be loaded in sumo-gui with:
 ```
 sumo-gui -n test.net.xml -g settings.xml
 ```
+
+## Projection Mismatch
+
+!!! caution
+    Many tile providers use the common [web-mercator projection](https://en.wikipedia.org/wiki/Web_Mercator_projection). In contrast, netconvert uses the [UTM projection](https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system) which is a lot more accurate for typical network sizes. This creates an incompatibility between the network and the tiles. See below for details.
+
+There are several ways to deal with the incompatibility:
+
+- use `--reproject` to convert the web-mercator tiles to UTM-tiles (recommended, this requires the gdal binaries which are part of SUMO under windows and can be install on ubuntu using `apt install gdal-bin`)
+- build your network in web-mercator projection (not recommended because this is a lousy projection and roads will have the wrong lengths!)
+- accept some gaps in your tiles
 
 # stateReplay.py
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include <cmath>
 #include <utils/common/StdDefs.h>
 #include <utils/common/SUMOTime.h>
@@ -48,10 +49,10 @@ public:
         myInstance = 0;
     }
 
-    virtual void setCosts(R* route, const double costs, const bool isActive = false) const = 0;
+    virtual void setCosts(std::shared_ptr<R> route, const double costs, const bool isActive = false) const = 0;
 
     /** @brief calculate the probabilities in the logit model */
-    virtual void calculateProbabilities(std::vector<R*> alternatives, const V* const veh, const SUMOTime time) = 0;
+    virtual void calculateProbabilities(const std::vector<std::shared_ptr<R> >& alternatives, const V* const veh, const SUMOTime time) = 0;
 
     int getMaxRouteNumber() const {
         return myMaxRouteNumber;

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -35,7 +35,7 @@ netedit.changeEditMode(netedit.attrs.modes.network.showConnections)
 netedit.changeMode("select")
 
 # select all connections
-netedit.selectItems("Network elements", "connection", "speed", "")
+netedit.selectNetworkItems("connection", "speed", "")
 
 # set delete mode
 netedit.changeMode("delete")
@@ -56,13 +56,13 @@ netedit.computeJunctions()
 netedit.redo(referencePosition, 1)
 
 # save routes
-netedit.saveExistentShortcut("demands")
+netedit.saveExistentFile("demands")
 
 # remove invalid trips
-netedit.typeKey('space')
+netedit.typeKey("space")
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

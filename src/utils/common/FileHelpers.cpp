@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,6 +19,7 @@
 // Functions for an easier usage of files
 /****************************************************************************/
 #include <config.h>
+#include <utils/xml/XMLSubSys.h>
 
 #include <string>
 #ifdef WIN32
@@ -58,17 +59,17 @@ FileHelpers::isReadable(std::string path) {
     if (path.length() == 0) {
         return false;
     }
-    return access(StringUtils::transcodeToLocal(path).c_str(), R_OK) == 0;
+    return access(XMLSubSys::transcodeToLocal(path).c_str(), R_OK) == 0;
 }
 
 bool
 FileHelpers::isDirectory(std::string path) {
 #ifdef _MSC_VER
     struct _stat64 fileInfo;
-    if (_stat64(StringUtils::transcodeToLocal(path).c_str(), &fileInfo) != 0) {
+    if (_stat64(XMLSubSys::transcodeToLocal(path).c_str(), &fileInfo) != 0) {
 #else
     struct stat fileInfo;
-    if (stat(StringUtils::transcodeToLocal(path).c_str(), &fileInfo) != 0) {
+    if (stat(XMLSubSys::transcodeToLocal(path).c_str(), &fileInfo) != 0) {
 #endif
         throw ProcessError(TLF("Cannot get file attributes for file '%'!", path));
     }
@@ -133,15 +134,6 @@ FileHelpers::addExtension(const std::string& path, const std::string& extension)
         // if comparison was successful, then the path has already the extension
         return path;
     }
-}
-
-std::string
-FileHelpers::getExtension(const std::string& path) {
-    const auto beg = path.find_last_of(".");
-    if (beg == std::string::npos) {
-        return "";
-    }
-    return path.substr(beg, path.size());
 }
 
 
@@ -278,6 +270,29 @@ FileHelpers::prependToLastPathComponent(const std::string& prefix, const std::st
         return path.substr(0, sep_index + 1) + prefix + path.substr(sep_index + 1);
     }
 }
+
+
+std::string
+FileHelpers::appendBeforeExtension(const std::string& path, const std::string& suffix, bool checkSep) {
+    if (checkSep) {
+        const std::string::size_type sep_index = path.find_last_of("\\/");
+        if (sep_index == std::string::npos) {
+            return appendBeforeExtension(path, suffix, false);
+        } else {
+            return path.substr(0, sep_index + 1) + appendBeforeExtension(path.substr(sep_index + 1), suffix, false);
+        }
+    }
+    auto components = StringTokenizer(path, ".").getVector();
+    for (int i = (int)components.size() - 1; i >= 0; i--) {
+        // assume anything after a dot with less then 5 letters is part of the extension
+        if (i == 0 || components[i].size() > 4) {
+            components[i] += suffix;
+            break;
+        }
+    }
+    return joinToString(components, ".");
+}
+
 
 // ---------------------------------------------------------------------------
 // binary reading/writing functions

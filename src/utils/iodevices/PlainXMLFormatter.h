@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,12 +21,7 @@
 #pragma once
 #include <config.h>
 
-#ifdef HAVE_FMT
-#include <fmt/ostream.h>
-#endif
-
 #include "OutputFormatter.h"
-#include "StreamDevices.h"
 
 
 // ===========================================================================
@@ -43,10 +38,8 @@ public:
     /// @brief Constructor
     PlainXMLFormatter(const int defaultIndentation = 0);
 
-
     /// @brief Destructor
-    virtual ~PlainXMLFormatter() = default;
-
+    virtual ~PlainXMLFormatter() { }
 
     /** @brief Writes an XML header with optional configuration
      *
@@ -56,23 +49,13 @@ public:
      * @param[in] into The output stream to use
      * @param[in] rootElement The root element to use
      * @param[in] attrs Additional attributes to save within the rootElement
+     * @param[in] includeConfig whether the current config should be included as XML comment
+     * @return whether something has been written
      * @todo Describe what is saved
      */
-    bool writeXMLHeader(StreamDevice& into, const std::string& rootElement,
-                        const std::map<SumoXMLAttr, std::string>& attrs,
-                        bool includeConfig = true);
-
-
-    /** @brief Writes an XML header with optional configuration
-     *
-     * If something has been written (myXMLStack is not empty), nothing
-     *  is written and false returned.
-     *
-     * @param[in] into The output stream to use
-     * @param[in] rootElement The root element to use
-     */
-    bool writeHeader(StreamDevice& into, const SumoXMLTag& rootElement);
-
+    bool writeXMLHeader(std::ostream& into, const std::string& rootElement,
+                        const std::map<SumoXMLAttr, std::string>& attrs, bool writeMetadata,
+                        bool includeConfig);
 
     /** @brief Opens an XML tag
      *
@@ -82,10 +65,8 @@ public:
      *
      * @param[in] into The output stream to use
      * @param[in] xmlElement Name of element to open
-     * @return The OutputDevice for further processing
      */
-    void openTag(StreamDevice& into, const std::string& xmlElement);
-
+    void openTag(std::ostream& into, const std::string& xmlElement);
 
     /** @brief Opens an XML tag
      *
@@ -94,53 +75,63 @@ public:
      * @param[in] into The output stream to use
      * @param[in] xmlElement Id of the element to open
      */
-    void openTag(StreamDevice& into, const SumoXMLTag& xmlElement);
-
+    void openTag(std::ostream& into, const SumoXMLTag& xmlElement);
 
     /** @brief Closes the most recently opened tag
      *
      * @param[in] into The output stream to use
      * @return Whether a further element existed in the stack and could be closed
-     * @todo it is not verified that the topmost element was closed
      */
-    bool closeTag(StreamDevice& into, const std::string& comment = "");
-
+    bool closeTag(std::ostream& into, const std::string& comment = "");
 
     /** @brief writes a preformatted tag to the device but ensures that any
      * pending tags are closed
      * @param[in] into The output stream to use
      * @param[in] val The preformatted data
      */
-    void writePreformattedTag(StreamDevice& into, const std::string& val);
+    void writePreformattedTag(std::ostream& into, const std::string& val);
 
     /** @brief writes arbitrary padding
      */
-    void writePadding(StreamDevice& into, const std::string& val);
+    void writePadding(std::ostream& into, const std::string& val);
+
+    /** @brief writes an arbitrary attribute
+     *
+     * @param[in] into The output stream to use
+     * @param[in] attr The attribute (name)
+     * @param[in] val The attribute value
+     * @param[in] escape Whether the value should be processed by StringUtils::escapeXML (only used in the string variant below)
+     */
+    template <class T>
+    static void writeAttr(std::ostream& into, const std::string& attr, const T& val, const bool escape) {
+        UNUSED_PARAMETER(escape);
+        into << " " << attr << "=\"" << toString(val, into.precision()) << "\"";
+    }
 
     /** @brief writes a named attribute
      *
      * @param[in] into The output stream to use
      * @param[in] attr The attribute (name)
      * @param[in] val The attribute value
+     * @param[in] escape Whether the value should be processed by StringUtils::escapeXML (only used in the string variant below)
      */
     template <class T>
-    void writeAttr(StreamDevice& into, const std::string& attr, const T& val) {
-        into << " " << attr << "=\"" << toString(val, into.precision()) << "\"";
+    static void writeAttr(std::ostream& into, const SumoXMLAttr attr, const T& val, const bool escape) {
+        UNUSED_PARAMETER(escape);
+        into << " " << toString(attr) << "=\"" << toString(val, into.precision()) << "\"";
     }
 
-    void writeAttr(StreamDevice& into, const std::string& attr, const double& val){
-#ifdef HAVE_FMT
-        fmt::print(into.getOStream(), " {}=\"{:.{}f}\"", attr, val, into.precision());
-#else
-        into << " " << attr << "=\"" << val << "\"";
-#endif
+    /// @brief typed overloads (non-template) -- picked by overload resolution over the template
+    static void writeAttr(std::ostream& into, const std::string& attr, const std::string& val, const bool escape);
+    static void writeAttr(std::ostream& into, const SumoXMLAttr attr, const std::string& val, const bool escape);
+
+    void writeTime(std::ostream& into, const SumoXMLAttr attr, const SUMOTime val) {
+        into << " " << toString(attr) << "=\"" << time2string(val) << "\"";
     }
 
     bool wroteHeader() const {
         return !myXMLStack.empty();
     }
-
-
 
 private:
     /// @brief The stack of begun xml elements
@@ -152,24 +143,3 @@ private:
     /// @brief whether a closing ">" might be missing
     bool myHavePendingOpener;
 };
-
-
-
-// // ===========================================================================
-// // specialized template implementations (for speedup)
-// // ===========================================================================
-// template <>
-// inline void PlainXMLFormatter::writeAttr(std::ostream& into, const SumoXMLAttr attr, const double& val) {
-// #ifdef HAVE_FMT
-//     fmt::print(into, " {}=\"{:.{}f}\"", toString(attr), val, into.precision());
-// #else
-//     into << " " << toString(attr) << "=\"" << val << "\"";
-// #endif
-// }
-
-
-
-// template <>
-// inline void PlainXMLFormatter::writeAttr(std::ostream& into, const SumoXMLAttr attr, const std::string& val) {
-//     into << " " << toString(attr) << "=\"" << val << "\"";
-// }

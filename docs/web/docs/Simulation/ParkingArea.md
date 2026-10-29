@@ -60,6 +60,8 @@ The parkingArea supports the following attributes:
 | angle            | float (degree) |                                                                                              | 0                                          | The angle of the road-side parking spaces relative to the lane angle, positive means clockwise                             |
 | lefthand         | bool           |     | *false*    | Whether road-side parking spaces should be drawn on the left side of the lane   |
 | acceptedBadges   | string list |     |  | The set of keywords which give access to the parking area (an empty value means free access to all) |
+| reservable       | bool |               | *false* | Whether vehicles that are [cruising for parking](Rerouter.md#rerouting_to_an_alternative_parking_area) can reserve a parking space |
+| departPos        | float | [0, laneLength]   | undefined | When set, the vehicle will exit the parkingArea at that position instead of the location where it stopped |
 
 ## Custom parking spaces
 
@@ -98,7 +100,7 @@ For a complete list of attributes for the "stop"-element of a vehicle
 see
 [Definition_of_Vehicles,_Vehicle_Types,_and_Routes\#Stops](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#stops_and_waypoints).
 
-# Modelling Maneuvering Times when Entering and Leaving the Parking Space
+# Modeling Maneuvering Times when Entering and Leaving the Parking Space
 
 When setting the (boolean) option **--parking.maneuver**, vehicles will spend extra time on the road when leaving and entering a parkingArea. This time depends on the angle of the parking lot relative to the road lane and can be configured with the vType attribute *maneuverAngleTimes*. This is a comma-separated list of number-triplets of the form *ANGLE ENTERINGTIME LEAVINGTIME*:
 

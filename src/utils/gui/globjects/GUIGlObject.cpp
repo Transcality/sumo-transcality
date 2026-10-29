@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -191,13 +191,19 @@ GUIGlObject::GUIGlObject(GUIGlObjectType type, const std::string& microsimID, FX
 
 
 GUIGlObject::~GUIGlObject() {
+    cleanupOnDestruction();
+    GUIGlObjectStorage::gIDStorage.remove(getGlID());
+}
+
+
+void
+GUIGlObject::cleanupOnDestruction() {
     // remove all paramWindow related with this object
     for (const auto& paramWindow : myParamWindows) {
         paramWindow->removeObject(this);
     }
     // remove object from GLObjectValuePassConnector and GUIGlObjectStorage
     GLObjectValuePassConnector<double>::removeObject(*this);
-    GUIGlObjectStorage::gIDStorage.remove(getGlID());
 }
 
 
@@ -210,6 +216,18 @@ GUIGlObject::getParentName() const {
 FXIcon*
 GUIGlObject::getGLIcon() const {
     return myIcon;
+}
+
+
+GUIGlObject*
+GUIGlObject::getGLObjectParent() {
+    return myParent;
+}
+
+
+void
+GUIGlObject::setGLObjectParent(GUIGlObject* parent) {
+    myParent = parent;
 }
 
 
@@ -289,7 +307,7 @@ GUIGlObject::setNode(osg::Node* node) {
 
 void
 GUIGlObject::buildPopUpMenuCommonOptions(GUIGLObjectPopupMenu* ret, GUIMainWindow& app, GUISUMOAbstractView* parent,
-        const SumoXMLTag tag, const bool selected, bool addSeparator) {
+        const SumoXMLTag tag, const bool selected, const bool allowDelete, const bool addSeparator) {
     // build header
     buildPopupHeader(ret, app);
     // build menu command for center button and copy cursor position to clipboard
@@ -304,6 +322,11 @@ GUIGlObject::buildPopUpMenuCommonOptions(GUIGLObjectPopupMenu* ret, GUIMainWindo
         GUIDesigns::buildFXMenuCommand(ret, TL("Add to Selected"), GUIIconSubSys::getIcon(GUIIcon::FLAG_PLUS), parent, MID_ADDSELECT);
     }
     new FXMenuSeparator(ret);
+    // add delete
+    if (allowDelete) {
+        GUIDesigns::buildFXMenuCommand(ret, TL("Delete"), GUIIconSubSys::getIcon(GUIIcon::MODEDELETE), parent, MID_DELETE);
+        new FXMenuSeparator(ret);
+    }
     buildShowParamsPopupEntry(ret, true);
     buildPositionCopyEntry(ret, app, addSeparator);
 }

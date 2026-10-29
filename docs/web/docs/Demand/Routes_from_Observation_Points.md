@@ -69,6 +69,9 @@ short). A detector file should look as follows:
 </detectors>
 ```
 
+!!! note
+    it is also possible to load [inductionLoop definitions](../Simulation/Output/Induction_Loops_Detectors_(E1).md) with option **--detector-files**. This may be more convenient since they can be created with [netedit](../Netedit/index.md).
+
 This means that each detector is initially described using its id, a
 lane it is placed on, and a position on the lane. To be exact:
 
@@ -120,8 +123,8 @@ with induction loops.
 ## Computing Flows
 
 The next step is to use the computed routes and flow amounts from the
-real-world detectors to compute flows across the modelled network. The
-flows are given to dfrouter using **--measure-files** {{DT_STR}} (or **-f <DETECTOR_FLOWS\>[,<DETECTOR_FLOWS\>]+**. They are assumed to be stored
+real-world detectors to compute flows across the modeled network. The
+flows are given to dfrouter using **--measure-files** {{DT_STR}} (or **-f <DETECTOR_FLOWS\>[,<DETECTOR_FLOWS\>]+**). They are assumed to be stored
 in CSV-format using ';' as dividing character. The file should look as
 follows:
 

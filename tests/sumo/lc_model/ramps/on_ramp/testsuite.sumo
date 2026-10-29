@@ -16,8 +16,29 @@ blocker_on_main_brakes2
 blocker_on_main_brakes3
 
 # This test shows undesireable dynamics:
+# This is an expanded case of test 'blocker_on_main_brakes2'
+# A flow of vehicles on the main road tries to help a vehicle merge from the ramp.
+# Everyone brakes only a little but this accumulates into a standstill on the main highway.
+blocker_on_main_brakes3_noHelp
+
+# This test shows undesireable dynamics:
 # This is similar to test 'blocker_on_main_brakes3' but now the main road has two lanes with parallel flows.
 # The right flow of vehicles brakes to help a vehicle merge from the ramp. 
 # The reason here is that they all try to help with merging by changing lanes themselves which causes them to brake until standstill.
 # 
 blocker_on_main_brakes4
+
+# Everyone brakes only a little but this accumulates into a standstill on the main highway.
+blocker_on_main_brakes_slightly
+
+# slight braking for a much slower vehicle is disabled
+blocker_on_main_brakes_slightly2
+
+# break-down of the flow due to incremental yielding
+fastRamp_breakdown
+
+# break-down of the flow should be avoided
+fastRamp_someHelp
+
+# break-down of the flow should be avoided
+fastRamp_noHelp

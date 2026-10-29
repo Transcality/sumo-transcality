@@ -25,6 +25,7 @@
 |stopOffset|non-negative float|The stop offset as positive value in meters *default:* **0.00**|
 |stopOException|list of vClasses|Specifies, for which vehicle classes the stopOffset does NOT apply.|
 |isRoundabout|unique boolean|Whether this edge is part of a roundabout *default:* **0**|
+|routingType|string|The name of a routingType|
 
 ## lane
 | Attribute | Type | Description |
@@ -58,6 +59,7 @@
 |type|string|A typename for the polygon|
 |imgFile|filename(Existent)|A bitmap to use for rendering this poly|
 |angle|angle[0, 360]|Angle of rendered image in degree *default:* **0.00**|
+|height|non-negative float|Height of polygon in meters *default:* **0.00**|
 |geo|boolean|Enable or disable GEO attributes *default:* **0**|
 |geoShape|list of unique positions|A custom geo shape for this polygon|
 
@@ -87,6 +89,7 @@
 |keepClear|boolean|Whether the junction-blocking-heuristic should be activated at this node *default:* **1**|
 |rightOfWay|discrete string|How to compute right of way rules at this node *default:* **default**|
 |fringe|discrete string|Whether this junction is at the fringe of the network *default:* **default**|
+|roundabout|discrete string|Whether this junction may be considered when guessing roundabouts *default:* **default**|
 |name|string|Optional name for junction|
 |tlType|discrete string|An optional type for the traffic light algorithm|
 |tlLayout|discrete string|An optional layout for the traffic light plan *default:* **default**|
@@ -103,6 +106,7 @@
 |friendlyPos|boolean|If set, no error will be reported if element is placed behind the lane. Instead, it will be placed 0.1 meters from the lanes end or at position 0.1, if the position was negative and larger than the lanes length after multiplication with - 1 *default:* **0**|
 |name|string|Optional name for busStop|
 |color|color|The RGBA color with which the busStop shall be displayed *default:* **invisible**|
+|angle|angle[0, 360]|Angle of waiting persons relative to lane angle *default:* **0.00**|
 |lines|list of strings|Meant to be the names of the bus lines that stop at this bus stop. This is only used for visualization purposes|
 |personCapacity|non-negative integer|Larger numbers of persons trying to enter will create an upstream jam on the sidewalk *default:* **6**|
 |parkingLength|float|Optional space definition for vehicles that park at this stop *default:* **0.00**|
@@ -117,12 +121,13 @@
 |friendlyPos|boolean|If set, no error will be reported if element is placed behind the lane. Instead, it will be placed 0.1 meters from the lanes end or at position 0.1, if the position was negative and larger than the lanes length after multiplication with - 1 *default:* **0**|
 |name|string|Optional name for trainStop|
 |color|color|The RGBA color with which the trainStop shall be displayed *default:* **invisible**|
+|angle|angle[0, 360]|Angle of waiting persons relative to lane angle *default:* **0.00**|
 |lines|list of strings|Meant to be the names of the train lines that stop at this train stop. This is only used for visualization purposes|
 |personCapacity|non-negative integer|Larger numbers of persons trying to enter will create an upstream jam on the sidewalk *default:* **6**|
 |parkingLength|float|Optional space definition for vehicles that park at this stop *default:* **0.00**|
 
 ### access
-child element of [busStop](#busstop), [trainStop](#trainstop)
+child element of [busStop](#busstop), [trainStop](#trainstop), [containerStop](#containerstop)
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -141,6 +146,7 @@ child element of [busStop](#busstop), [trainStop](#trainstop)
 |friendlyPos|boolean|If set, no error will be reported if element is placed behind the lane. Instead, it will be placed 0.1 meters from the lanes end or at position 0.1, if the position was negative and larger than the lanes length after multiplication with - 1 *default:* **0**|
 |name|string|Optional name for containerStop|
 |color|color|The RGBA color with which the containerStop shall be displayed *default:* **invisible**|
+|angle|angle[0, 360]|Angle of waiting containers relative to lane angle *default:* **0.00**|
 |lines|list of strings|meant to be the names of the bus lines that stop at this container stop. This is only used for visualization purposes|
 |containerCapacity|non-negative integer|Larger numbers of container trying to enter will create an upstream jam on the sidewalk *default:* **6**|
 |parkingLength|float|Optional space definition for vehicles that park at this stop|
@@ -154,7 +160,9 @@ child element of [busStop](#busstop), [trainStop](#trainstop)
 |endPos|unique float|The end position on the lane (the higher position on the lane) in meters, must be larger than startPos by more than 0.1m *default:* **lane end**|
 |friendlyPos|boolean|If set, no error will be reported if element is placed behind the lane. Instead, it will be placed 0.1 meters from the lanes end or at position 0.1, if the position was negative and larger than the lanes length after multiplication with - 1 *default:* **0**|
 |name|string|Optional name for chargingStation|
+|angle|angle[0, 360]|Angle of waiting persons relative to lane angle *default:* **0.00**|
 |power|non-negative float|Charging power in W *default:* **22000.00**|
+|totalPower|non-negative float|Total power in W *default:* **0.00**|
 |efficiency|float|Charging efficiency [0,1] *default:* **0.95**|
 |chargeInTransit|boolean|Enable or disable charge in transit, i.e. vehicle must or must not to stop for charging *default:* **0**|
 |chargeDelay|SUMOTime|Time delay after the vehicles has reached / stopped on the charging station, before the energy transfer (charging) begins *default:* **0.00**|
@@ -171,14 +179,14 @@ child element of [busStop](#busstop), [trainStop](#trainstop)
 |endPos|unique float|The end position on the lane (the higher position on the lane) in meters, must be larger than startPos by more than 0.1m *default:* **lane end**|
 |friendlyPos|boolean|If set, no error will be reported if element is placed behind the lane. Instead, it will be placed 0.1 meters from the lanes end or at position 0.1, if the position was negative and larger than the lanes length after multiplication with - 1 *default:* **0**|
 |name|string|Optional name for parkingArea|
+|angle|angle[0, 360]|The angle of the road-side parking spaces relative to the lane angle, positive means clockwise *default:* **0.00**|
 |departPos|string|Lane position in that vehicle must depart when leaves parkingArea|
 |acceptedBadges|list of strings|Accepted badges to access this parkingArea|
 |roadsideCapacity|non-negative integer| The number of parking spaces for road-side parking *default:* **0**|
 |onRoad|boolean|If set, vehicles will park on the road lane and thereby reducing capacity *default:* **0**|
 |width|non-negative float|The width of the road-side parking spaces *default:* **3.20**|
 |length|non-negative float|The length of the road-side parking spaces. By default (endPos - startPos) / roadsideCapacity|
-|angle|angle[0, 360]|The angle of the road-side parking spaces relative to the lane angle, positive means clockwise *default:* **0.00**|
-|lefthand|boolean|Enable or disable lefthand position *default:* **0**|
+|lefthand|boolean|Visual placement to the left of the lane (in righthand networks) *default:* **0**|
 
 ### space
 child element of [parkingArea](#parkingarea)
@@ -212,6 +220,7 @@ child element of [parkingArea](#parkingarea)
 |id|unique string|ID of laneAreaDetector|
 |lane|unique string|The name of the lane the laneAreaDetector shall be located at|
 |pos|unique float|The position on the lane the laneAreaDetector shall be laid on in meters *default:* **0.00**|
+|endPos|unique float|The end position on the lane the detector shall be laid on in meters|
 |friendlyPos|boolean|If set, no error will be reported if element is placed behind the lane. Instead, it will be placed 0.1 meters from the lanes end or at position 0.1, if the position was negative and larger than the lanes length after multiplication with - 1 *default:* **0**|
 |length|non-negative float|The length of the detector in meters *default:* **10.00**|
 |name|string|Optional name for laneAreaDetector|
@@ -285,6 +294,7 @@ child element of [entryExitDetector](#entryexitdetector)
 |-----------|------|-------------|
 |id|unique string|ID of edgeData|
 |file|filename|The path to the output file|
+|type|discrete string|Type of data generated by this mean data|
 |period|SUMOTime|The aggregation period the values the detector collects shall be summed up *default:* **-1.00**|
 |begin|SUMOTime|The time to start writing. If not given, the simulation's begin is used. *default:* **-1.00**|
 |end|SUMOTime|The time to end writing. If not given the simulation's end is used. *default:* **-1.00**|
@@ -299,13 +309,14 @@ child element of [entryExitDetector](#entryexitdetector)
 |writeAttributes|list of strings|List of attribute names that shall be written|
 |edges|list of strings|Restrict output to the given list of edge ids|
 |edgesFile|filename(Existent)|Restrict output to the given list of edges given in file|
-|aggregate|boolean|Whether the traffic statistic of all edges shall be aggregated into a single value *default:* **0**|
+|aggregate|discrete |Whether the traffic statistic of all edges shall be aggregated into a single value *default:* **false**|
 
 ## laneData
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of laneData|
 |file|filename|The path to the output file|
+|type|discrete string|Type of data generated by this mean data|
 |period|SUMOTime|The aggregation period the values the detector collects shall be summed up *default:* **-1.00**|
 |begin|SUMOTime|The time to start writing. If not given, the simulation's begin is used. *default:* **-1.00**|
 |end|SUMOTime|The time to end writing. If not given the simulation's end is used. *default:* **-1.00**|
@@ -320,7 +331,7 @@ child element of [entryExitDetector](#entryexitdetector)
 |writeAttributes|list of strings|List of attribute names that shall be written|
 |edges|list of strings|Restrict output to the given list of edge ids|
 |edgesFile|filename(Existent)|Restrict output to the given list of edges given in file|
-|aggregate|boolean|Whether the traffic statistic of all edges shall be aggregated into a single value *default:* **0**|
+|aggregate|discrete |Whether the traffic statistic of all edges shall be aggregated into a single value *default:* **false**|
 
 ## instantInductionLoop
 | Attribute | Type | Description |
@@ -375,13 +386,17 @@ child element of [entryExitDetector](#entryexitdetector)
 ## flow (calibratorFlow)
 | Attribute | Type | Description |
 |-----------|------|-------------|
-|route|unique string|The id of the route the vehicle shall drive along|
 |begin|SUMOTime|First calibrator flow departure time *default:* **0.00**|
 |end|SUMOTime|End of departure interval *default:* **3600.00**|
+|type|string|The id of the vehicle type to use for this calibrator flow *default:* **DEFAULT_VEHTYPE**|
+|route|unique string|The id of the route the vehicle shall drive along|
+|routeProbe|string|The id of the routeProbe element from which to determine the route distribution for generated vehicles|
+|vehsPerHour|integer|Number of vehicles per hour, equally spaced *default:* **1800**|
+|speed|float|Vehicle's speed *default:* **15.00**|
 |color|color|The RGBA color with which the calibratorFlow shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -391,9 +406,6 @@ child element of [entryExitDetector](#entryexitdetector)
 |departPosLat|string|The lateral position on the departure lane at which the vehicle shall enter the net *default:* **center**|
 |arrivalPosLat|string|The lateral position on the arrival lane at which the vehicle shall arrive *default:* **center**|
 |insertionChecks|string|Insertion checks *default:* **all**|
-|type|string|The id of the vehicle type to use for this calibrator flow *default:* **DEFAULT_VEHTYPE**|
-|vehsPerHour|integer|Number of vehicles per hour, equally spaced *default:* **1800**|
-|speed|float|Vehicle's speed *default:* **15.00**|
 
 ## rerouter
 | Attribute | Type | Description |
@@ -528,14 +540,16 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of trip|
-|type|string|The id of the vehicle type to use for this trip *default:* **DEFAULT_VEHTYPE**|
 |from|unique string|The ID of the edge the trip starts at|
 |to|unique string|The ID of the edge the trip ends at|
 |via|list of unique strings|List of intermediate edge ids which shall be part of the trip|
 |color|color|The RGBA color with which the trip shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -551,13 +565,15 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of tripJunctions|
-|type|string|The id of the vehicle type to use for this trip *default:* **DEFAULT_VEHTYPE**|
 |fromJunction|unique string|The name of the junction the trip starts at|
 |toJunction|unique string|The name of the junction the trip ends at|
 |color|color|The RGBA color with which the tripJunctions shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -573,13 +589,15 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of tripTAZs|
-|type|string|The id of the vehicle type to use for this trip *default:* **DEFAULT_VEHTYPE**|
 |fromTaz|unique string|The name of the TAZ the trip starts at|
 |toTaz|unique string|The name of the TAZ the trip ends at|
 |color|color|The RGBA color with which the tripTAZs shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -595,14 +613,14 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of vehicle|
-|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
 |route|unique string|The id of the route the vehicle shall drive along|
-|departEdge|unique string|The index of the edge within route the vehicle starts at|
-|arrivalEdge|unique string|The index of the edge within route the vehicle ends at|
 |color|color|The RGBA color with which the vehicle shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -618,13 +636,13 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of vehicleWithRoute|
-|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
-|departEdge|unique string|The index of the edge within route the vehicle starts at|
-|arrivalEdge|unique string|The index of the edge within route the vehicle ends at|
 |color|color|The RGBA color with which the vehicleWithRoute shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -640,14 +658,16 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of flow|
-|type|string|The id of the flow type to use for this flow *default:* **DEFAULT_VEHTYPE**|
 |from|unique string|The ID of the edge the flow starts at|
 |to|unique string|The ID of the edge the flow ends at|
 |via|list of unique strings|List of intermediate edge ids which shall be part of the flow|
 |color|color|The RGBA color with which the flow shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -671,13 +691,15 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of flowJunctions|
-|type|string|The id of the flow type to use for this flow *default:* **DEFAULT_VEHTYPE**|
 |fromJunction|unique string|The name of the junction the flow starts at|
 |toJunction|unique string|The name of the junction the flow ends at|
 |color|color|The RGBA color with which the flowJunctions shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -701,13 +723,15 @@ child element of [variableSpeedSign](#variablespeedsign)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of flowTAZs|
-|type|string|The id of the flow type to use for this flow *default:* **DEFAULT_VEHTYPE**|
 |fromTaz|unique string|The name of the TAZ the flow starts at|
 |toTaz|unique string|The name of the TAZ the flow ends at|
 |color|color|The RGBA color with which the flowTAZs shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -754,7 +778,7 @@ child element of [variableSpeedSign](#variablespeedsign)
 |minGapLat|non-negative float|The minimum lateral gap at a speed difference of 50km/h when using the sublane-model *default:* **0.12**|
 |maxSpeedLat|non-negative float|The maximum lateral speed when using the sublane-model *default:* **1.00**|
 |actionStepLength|non-negative SUMOTime|The interval length for which vehicle performs its decision logic (acceleration and lane-changing) *default:* **0.00**|
-|probability|non-negative float|The probability when being added to a distribution without an explicit probability *default:* **1.00**|
+|probability|non-negative float|The probability when being added to a distribution *default:* **1.00**|
 |osgFile|string|3D model file for this class|
 |accel|non-negative float|The acceleration ability of vehicles of this type [m/s^2] *default:* **2.60**|
 |decel|non-negative float|The deceleration ability of vehicles of this type [m/s^2] *default:* **4.50**|
@@ -839,9 +863,8 @@ child element of [vTypeDistribution](#vtypedistribution)
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-|typeDist.|unique string|VType distribution in which this vTypeRef is defined|
 |refId|unique string|Reference ID of vType|
-|probability|non-negative float|The probability when being added to a distribution without an explicit probability *default:* **1.00**|
+|probability|non-negative float|The probability when being added to a distribution|
 
 ## route
 | Attribute | Type | Description |
@@ -851,15 +874,15 @@ child element of [vTypeDistribution](#vtypedistribution)
 |color|color|The RGBA color with which the route shall be displayed *default:* **invisible**|
 |repeat|non-negative integer|The number of times that the edges of this route shall be repeated *default:* **0**|
 |cycleTime|SUMOTime|When defining a repeating route with stops and those stops use the until attribute, the times will be shifted forward by 'cycleTime' on each repeat *default:* **0.00**|
+|probability|non-negative float|The probability when being added to a distribution *default:* **1.00**|
 
 ### routeRef
 child element of [routeDistribution](#routedistribution)
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-|routeDist.|unique string|Route distribution in which this routeRef is defined|
 |refId|unique string|Reference ID of route|
-|probability|non-negative float|The probability when being added to a distribution without an explicit probability *default:* **1.00**|
+|probability|non-negative float|The probability when being added to a distribution|
 
 ## route (routeEmbedded)
 | Attribute | Type | Description |
@@ -1235,14 +1258,14 @@ child element of [dataSet](#dataset)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of flowRoute|
-|type|string|The id of the flow type to use for this flow *default:* **DEFAULT_VEHTYPE**|
 |route|unique string|The id of the route the flow shall drive along|
-|departEdge|unique string|The index of the edge within route the flow starts at|
-|arrivalEdge|unique string|The index of the edge within route the flow ends at|
 |color|color|The RGBA color with which the flowRoute shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -1266,13 +1289,13 @@ child element of [dataSet](#dataset)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |id|unique string|ID of flowWithRoute|
-|type|string|The id of the flow type to use for this flow *default:* **DEFAULT_VEHTYPE**|
-|departEdge|unique string|The index of the edge within route the flow starts at|
-|arrivalEdge|unique string|The index of the edge within route the flow ends at|
 |color|color|The RGBA color with which the flowWithRoute shall be displayed *default:* **yellow**|
-|departLane|string|The lane on which the vehicle shall be inserted *default:* **first**|
+|type|string|The id of the vehicle type to use for this vehicle *default:* **DEFAULT_VEHTYPE**|
+|departEdge|string|The index of the edge within route the vehicle starts at|
+|arrivalEdge|string|The index of the edge within route the vehicle ends at|
+|departLane|string|The lane on which the vehicle shall be inserted *default:* **best_prob**|
 |departPos|string|The position at which the vehicle shall enter the net *default:* **base**|
-|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **0**|
+|departSpeed|string|The speed with which the vehicle shall enter the network *default:* **avg**|
 |arrivalLane|string|The lane at which the vehicle shall leave the network *default:* **current**|
 |arrivalPos|string|The position at which the vehicle shall leave the network *default:* **max**|
 |arrivalSpeed|string|The speed with which the vehicle shall leave the network *default:* **current**|
@@ -2649,22 +2672,6 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## ride (ride: edge->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|from|unique string|Edge start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: edge->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|from|unique string|Edge start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## ride (ride: edge->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -2705,158 +2712,12 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## ride (ride: taz->edge)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|to|unique string|Edge end ID|
-|arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->busstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|busStop|unique string|BusStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->trainstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|trainStop|unique string|TrainStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->containerstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|containerStop|unique string|ContainerStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->chargingstation)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|chargingStation|unique string|ChargingStation end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: taz->parkingarea)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|parkingArea|unique string|ParkingArea end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->edge)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|to|unique string|Edge end ID|
-|arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->busstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|busStop|unique string|BusStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->trainstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|trainStop|unique string|TrainStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->containerstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|containerStop|unique string|ContainerStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->chargingstation)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|chargingStation|unique string|ChargingStation end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: junction->parkingarea)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|parkingArea|unique string|ParkingArea end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## ride (ride: busstop->edge)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |fromBusStop|unique string|BusStop start ID|
 |to|unique string|Edge end ID|
 |arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: busstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromBusStop|unique string|BusStop start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: busstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromBusStop|unique string|BusStop start ID|
-|toJunction|unique string|Junction end ID|
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
@@ -2909,22 +2770,6 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## ride (ride: trainstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTrainStop|unique string|TrainStop start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: trainstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTrainStop|unique string|TrainStop start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## ride (ride: trainstop->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -2971,22 +2816,6 @@ child element of [dataSet](#dataset)
 |fromContainerStop|unique string|ContainerStop start ID|
 |to|unique string|Edge end ID|
 |arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: containerstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromContainerStop|unique string|ContainerStop start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: containerstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromContainerStop|unique string|ContainerStop start ID|
-|toJunction|unique string|Junction end ID|
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
@@ -3039,22 +2868,6 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## ride (ride: chargingstation->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ChargingStation start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: chargingstation->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ChargingStation start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## ride (ride: chargingstation->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -3101,22 +2914,6 @@ child element of [dataSet](#dataset)
 |fromChargingStation|unique string|ParkingArea start ID|
 |to|unique string|Edge end ID|
 |arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: parkingarea->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ParkingArea start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the ride|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## ride (ride: parkingarea->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ParkingArea start ID|
-|toJunction|unique string|Junction end ID|
 |lines|list of strings|list of vehicle alternatives to take for the ride|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
@@ -3219,22 +3016,6 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## transport (transport: edge->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|from|unique string|Edge start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: edge->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|from|unique string|Edge start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## transport (transport: edge->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -3275,158 +3056,12 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## transport (transport: taz->edge)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|to|unique string|Edge end ID|
-|arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->busstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|busStop|unique string|BusStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->trainstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|trainStop|unique string|TrainStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->containerstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|containerStop|unique string|ContainerStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->chargingstation)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|chargingStation|unique string|ChargingStation end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: taz->parkingarea)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|parkingArea|unique string|ParkingArea end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->edge)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|to|unique string|Edge end ID|
-|arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->busstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|busStop|unique string|BusStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->trainstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|trainStop|unique string|TrainStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->containerstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|containerStop|unique string|ContainerStop end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->chargingstation)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|chargingStation|unique string|ChargingStation end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: junction->parkingarea)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|parkingArea|unique string|ParkingArea end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## transport (transport: busstop->edge)
 | Attribute | Type | Description |
 |-----------|------|-------------|
 |fromBusStop|unique string|BusStop start ID|
 |to|unique string|Edge end ID|
 |arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: busstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromBusStop|unique string|BusStop start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: busstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromBusStop|unique string|BusStop start ID|
-|toJunction|unique string|Junction end ID|
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
@@ -3479,22 +3114,6 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## transport (transport: trainstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTrainStop|unique string|TrainStop start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: trainstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTrainStop|unique string|TrainStop start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## transport (transport: trainstop->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -3541,22 +3160,6 @@ child element of [dataSet](#dataset)
 |fromContainerStop|unique string|ContainerStop start ID|
 |to|unique string|Edge end ID|
 |arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: containerstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromContainerStop|unique string|ContainerStop start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: containerstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromContainerStop|unique string|ContainerStop start ID|
-|toJunction|unique string|Junction end ID|
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
@@ -3609,22 +3212,6 @@ child element of [dataSet](#dataset)
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
-## transport (transport: chargingstation->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ChargingStation start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: chargingstation->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ChargingStation start ID|
-|toJunction|unique string|Junction end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
 ## transport (transport: chargingstation->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -3671,22 +3258,6 @@ child element of [dataSet](#dataset)
 |fromChargingStation|unique string|ParkingArea start ID|
 |to|unique string|Edge end ID|
 |arrivalPos|float|arrival position on the destination edge|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: parkingarea->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ParkingArea start ID|
-|toTaz|unique string|TAZ end ID|
-|lines|list of strings|list of vehicle alternatives to take for the transport|
-|group|string|id of the travel group. Persons with the same group may share a taxi ride|
-
-## transport (transport: parkingarea->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ParkingArea start ID|
-|toJunction|unique string|Junction end ID|
 |lines|list of strings|list of vehicle alternatives to take for the transport|
 |group|string|id of the travel group. Persons with the same group may share a taxi ride|
 
@@ -3740,22 +3311,6 @@ child element of [dataSet](#dataset)
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 
-## tranship (tranship: edge->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|from|unique string|Edge start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: edge->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|from|unique string|Edge start ID|
-|toJunction|unique string|Junction end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
 ## tranship (tranship: edge->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -3796,138 +3351,6 @@ child element of [dataSet](#dataset)
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 
-## tranship (tranship: taz->edge)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|to|unique string|Edge end ID|
-|departPos|non-negative float|The position at which the tranship shall enter the net *default:* **0.00**|
-|arrivalPos|float|arrival position on the destination edge|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|toJunction|unique string|Junction end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->busstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|busStop|unique string|BusStop end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->trainstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|trainStop|unique string|TrainStop end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->containerstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|containerStop|unique string|ContainerStop end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->chargingstation)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|chargingStation|unique string|ChargingStation end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: taz->parkingarea)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTaz|unique string|TAZ start ID|
-|parkingArea|unique string|ParkingArea end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->edge)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|to|unique string|Edge end ID|
-|departPos|non-negative float|The position at which the tranship shall enter the net *default:* **0.00**|
-|arrivalPos|float|arrival position on the destination edge|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|toJunction|unique string|Junction end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->busstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|busStop|unique string|BusStop end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->trainstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|trainStop|unique string|TrainStop end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->containerstop)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|containerStop|unique string|ContainerStop end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->chargingstation)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|chargingStation|unique string|ChargingStation end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: junction->parkingarea)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromJunction|unique string|Junction start ID|
-|parkingArea|unique string|ParkingArea end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
 ## tranship (tranship: busstop->edge)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -3935,22 +3358,6 @@ child element of [dataSet](#dataset)
 |to|unique string|Edge end ID|
 |departPos|non-negative float|The position at which the tranship shall enter the net *default:* **0.00**|
 |arrivalPos|float|arrival position on the destination edge|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: busstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromBusStop|unique string|BusStop start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: busstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromBusStop|unique string|BusStop start ID|
-|toJunction|unique string|Junction end ID|
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 
@@ -4004,22 +3411,6 @@ child element of [dataSet](#dataset)
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 
-## tranship (tranship: trainstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTrainStop|unique string|TrainStop start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: trainstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromTrainStop|unique string|TrainStop start ID|
-|toJunction|unique string|Junction end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
 ## tranship (tranship: trainstop->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -4067,22 +3458,6 @@ child element of [dataSet](#dataset)
 |to|unique string|Edge end ID|
 |departPos|non-negative float|The position at which the tranship shall enter the net *default:* **0.00**|
 |arrivalPos|float|arrival position on the destination edge|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: containerstop->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromContainerStop|unique string|ContainerStop start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: containerstop->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromContainerStop|unique string|ContainerStop start ID|
-|toJunction|unique string|Junction end ID|
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 
@@ -4136,22 +3511,6 @@ child element of [dataSet](#dataset)
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 
-## tranship (tranship: chargingstation->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ChargingStation start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: chargingstation->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ChargingStation start ID|
-|toJunction|unique string|Junction end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
 ## tranship (tranship: chargingstation->busstop)
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -4199,22 +3558,6 @@ child element of [dataSet](#dataset)
 |to|unique string|Edge end ID|
 |departPos|non-negative float|The position at which the tranship shall enter the net *default:* **0.00**|
 |arrivalPos|float|arrival position on the destination edge|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: parkingarea->taz)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ParkingArea start ID|
-|toTaz|unique string|TAZ end ID|
-|speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
-|duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
-
-## tranship (tranship: parkingarea->junction)
-| Attribute | Type | Description |
-|-----------|------|-------------|
-|fromChargingStation|unique string|ParkingArea start ID|
-|toJunction|unique string|Junction end ID|
 |speed|non-negative float|speed of the person for this tranship in m/s (not together with duration) *default:* **1.39**|
 |duration|non-negative SUMOTime|duration of the plan in second (not together with speed) *default:* **0.00**|
 

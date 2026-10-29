@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -26,6 +26,9 @@ if "SUMO_HOME" in os.environ:
     sys.path.append(os.path.join(os.environ["SUMO_HOME"], "tools"))
 import sumolib  # noqa
 import traci  # noqa
+useDefaults = "--defaults" in sys.argv
+sumoOptions = [a for a in sys.argv[1:] if a.startswith('--') and a != '--defaults']
+positionalArgs = [a for a in sys.argv[1:] if not a.startswith('--')]
 
 
 def runSingle(viewRange, domain, domain2, varIDs):
@@ -58,12 +61,12 @@ def runSingle(viewRange, domain, domain2, varIDs):
 
 #  main
 try:
-    traci.start([sumolib.checkBinary(sys.argv[1]),
+    traci.start([sumolib.checkBinary(positionalArgs[0]),
                 '-Q', "-c", "sumo.sumocfg",
-                 '-a', 'input_additional.add.xml'])
+                 '-a', 'input_additional.add.xml'] + sumoOptions)
     traci.simulationStep()
 
-    varIDs = None if "--defaults" in sys.argv else [traci.constants.TRACI_ID_LIST]
+    varIDs = None if useDefaults else [traci.constants.TRACI_ID_LIST]
     for domain in traci.DOMAINS:
         for domain2 in traci.DOMAINS:
             try:

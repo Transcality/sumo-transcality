@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2021-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2021-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -61,7 +61,7 @@ def main(args=None):
     df["density"] = df["density"].astype(float)
     df["laneDensity"] = df["laneDensity"].astype(float)
     df["speed"] = df["speed"].astype(float)
-    df = df.replace(np.NaN, 0)
+    df = df.replace(np.nan, 0)
     df['begin'] = df['begin'].astype(int)
 
     # calculation time interval
@@ -82,7 +82,7 @@ def main(args=None):
 
     # calculating total length of network
     length = df['sampledSeconds'] / (df['end']-df['begin']) / df['density']
-    df['Length'] = length.replace(np.NaN, 0).replace(np.inf, 0)
+    df['Length'] = length.replace(np.nan, 0).replace(np.inf, 0)
     i = 0
     j = 0
     __net = []

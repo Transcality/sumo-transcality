@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -56,16 +56,10 @@
 // ===========================================================================
 GUIBusStop::GUIBusStop(const std::string& id, SumoXMLTag element, const std::vector<std::string>& lines, MSLane& lane,
                        double frompos, double topos, const std::string name, int personCapacity,
-                       double parkingLength, const RGBColor& color) :
-    MSStoppingPlace(id, element, lines, lane, frompos, topos, name, personCapacity, parkingLength, color),
+                       double parkingLength, const RGBColor& color, double angle) :
+    MSStoppingPlace(id, element, lines, lane, frompos, topos, name, personCapacity, parkingLength, color, angle),
     GUIGlObject_AbstractAdd(GLO_BUS_STOP, id, GUIIconSubSys::getIcon(GUIIcon::BUSSTOP)),
     myEmptyColor(RGBColor::INVISIBLE) {
-    // see MSVehicleControl defContainerType
-    myWidth = MAX2(1.0, ceil((double)myTransportableCapacity / getTransportablesAbreast()) * myTransportableDepth);
-    initShape(myFGShape, myFGShapeRotations, myFGShapeLengths, myFGSignPos, myFGSignRot);
-    if (myLane.getShape(true).size() > 0) {
-        initShape(myFGShape2, myFGShapeRotations2, myFGShapeLengths2, myFGSignPos2, myFGSignRot2, true);
-    }
 }
 
 
@@ -112,6 +106,12 @@ GUIBusStop::finishedLoading() {
         } catch (ProcessError& e) {
             WRITE_WARNINGF("Could not parse color '%' (%)", getParameter("emptyColor"), e.what());
         }
+    }
+    // see MSVehicleControl defContainerType
+    myWidth = MAX2(1.0, ceil((double)myTransportableCapacity / getTransportablesAbreast()) * myTransportableDepth);
+    initShape(myFGShape, myFGShapeRotations, myFGShapeLengths, myFGSignPos, myFGSignRot);
+    if (myLane.getShape(true).size() > 0) {
+        initShape(myFGShape2, myFGShapeRotations2, myFGShapeLengths2, myFGSignPos2, myFGSignRot2, true);
     }
 }
 
@@ -232,7 +232,7 @@ GUIBusStop::drawGL(const GUIVisualizationSettings& s) const {
             for (int i = 0; i < (int)myLines.size(); ++i) {
                 // push a new matrix for every line
                 GLHelper::pushMatrix();
-                // traslate and rotate
+                // translate and rotate
                 glTranslated(signPos.x(), signPos.y(), 0);
                 glRotated(-lineAngle, 0, 0, 1);
                 // draw line

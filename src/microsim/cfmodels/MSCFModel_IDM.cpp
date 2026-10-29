@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -23,6 +23,7 @@
 
 #include "MSCFModel_IDM.h"
 #include <microsim/MSVehicle.h>
+#include <utils/xml/SUMOSAXAttributes.h>
 
 //#define DEBUG_V
 //#define DEBUG_INSERTION_SPEED
@@ -50,6 +51,29 @@ MSCFModel_IDM::MSCFModel_IDM(const MSVehicleType* vtype, bool idmm) :
 }
 
 MSCFModel_IDM::~MSCFModel_IDM() {}
+
+
+void
+MSCFModel_IDM::VehicleVariables::saveState(OutputDevice& out, const MSCFModel& /*cfm*/) const {
+    out.openTag(SUMO_TAG_CFM_VARIABLES);
+    out.writeAttr(SUMO_ATTR_ID, "IDMM");
+    std::ostringstream internals;
+    internals << levelOfService;
+    out.writeAttr(SUMO_ATTR_STATE, internals.str());
+    out.closeTag();
+}
+
+
+void
+MSCFModel_IDM::VehicleVariables::loadState(const SUMOSAXAttributes& attrs) {
+    bool ok = true;
+    const std::string cfmID = attrs.get<std::string>(SUMO_ATTR_ID, nullptr, ok);
+    if (cfmID != "IDMM") {
+        throw ProcessError(TLF("incompatible carFollowModel '%' when loading state for IDMM", cfmID));
+    }
+    std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
+    bis >> levelOfService;
+}
 
 
 double

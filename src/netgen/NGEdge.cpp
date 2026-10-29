@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2003-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2003-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -78,7 +78,10 @@ NGEdge::buildNBEdge(NBNetBuilder& nb, std::string type, const bool reversed) con
 
     SVCPermissions permissions = nb.getTypeCont().getEdgeTypePermissions(type);
     LaneSpreadFunction lsf = nb.getTypeCont().getEdgeTypeSpreadType(type);
-    if (isRailway(permissions) &&  nb.getTypeCont().getEdgeTypeIsOneWay(type)) {
+    if (lsf == LaneSpreadFunction::SPREAD_UNKNOWN) {
+        lsf = SUMOXMLDefinitions::LaneSpreadFunctions.get(oc.getString("default.spreadtype"));
+    }
+    if (isRailway(permissions) && nb.getTypeCont().getEdgeTypeIsOneWay(type)) {
         lsf = LaneSpreadFunction::CENTER;
     }
     const double maxSegmentLength = oc.getFloat("geometry.max-segment-length");

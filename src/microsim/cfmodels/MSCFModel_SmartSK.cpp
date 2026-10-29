@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@
 #include "MSCFModel_SmartSK.h"
 #include <microsim/lcmodels/MSAbstractLaneChangeModel.h>
 #include <utils/common/RandHelper.h>
+#include <utils/xml/SUMOSAXAttributes.h>
 
 //#define SmartSK_DEBUG
 
@@ -69,6 +70,44 @@ MSCFModel_SmartSK::MSCFModel_SmartSK(const MSVehicleType* vtype) :
 
 
 MSCFModel_SmartSK::~MSCFModel_SmartSK() {}
+
+
+void
+MSCFModel_SmartSK::SSKVehicleVariables::saveState(OutputDevice& out, const MSCFModel& /*cfm*/) const {
+    out.openTag(SUMO_TAG_CFM_VARIABLES);
+    out.writeAttr(SUMO_ATTR_ID, "SmartSK");
+    std::ostringstream internals;
+    internals << gOld << " ";
+    internals << myHeadway << " ";
+    internals << ggOld.size() << " ";
+    for (auto item : ggOld) {
+        internals << item.first << " " << item.second << " ";
+    }
+    out.writeAttr(SUMO_ATTR_STATE, internals.str());
+    out.closeTag();
+}
+
+
+void
+MSCFModel_SmartSK::SSKVehicleVariables::loadState(const SUMOSAXAttributes& attrs) {
+    bool ok = true;
+    const std::string cfmID = attrs.get<std::string>(SUMO_ATTR_ID, nullptr, ok);
+    if (cfmID != "SmartSK") {
+        throw ProcessError(TLF("incompatible carFollowModel '%' when loading state for SmartSK", cfmID));
+    }
+    std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
+    bis >> gOld;
+    bis >> myHeadway;
+    int ggOldSize;
+    bis >> ggOldSize;
+    for (int i = 0; i < ggOldSize; i++) {
+        int k;
+        double v;
+        bis >> k;
+        bis >> v;
+        ggOld[k] = v;
+    }
+}
 
 
 double

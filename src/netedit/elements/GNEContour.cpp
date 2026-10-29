@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -80,7 +80,7 @@ GNEContour::calculateContourClosedShape(const GUIVisualizationSettings& s, const
         buildContourClosedShape(s, d, shape, scale);
         // check if position or bondary is within closed shape
         if (addToSelectedObjects) {
-            gViewObjectsHandler.checkShapeObject(glObject, *myCalculatedShape, *myContourBoundary, layer, nullptr);
+            gViewObjectsHandler.checkShapeObject(s, glObject, *myCalculatedShape, *myContourBoundary, layer, nullptr);
         }
     }
 }
@@ -97,7 +97,7 @@ GNEContour::calculateContourExtrudedShape(const GUIVisualizationSettings& s, con
         buildContourExtrudedShape(s, d, shape, extrusionWidth, scale, closeFirstExtrem, closeLastExtrem, offset);
         // check if position or bondary is within extruded shape
         if (addToSelectedObjects) {
-            gViewObjectsHandler.checkShapeObject(glObject, *myCalculatedShape, *myContourBoundary, layer, segment);
+            gViewObjectsHandler.checkShapeObject(s, glObject, *myCalculatedShape, *myContourBoundary, layer, segment);
         }
     }
 }
@@ -112,7 +112,7 @@ GNEContour::calculateContourRectangleShape(const GUIVisualizationSettings& s, co
         // calculate rectangle shape
         buildContourRectangle(s, d, pos, width, height, offsetX, offsetY, rot, scale);
         // check if position or bondary is within rectangle shape
-        gViewObjectsHandler.checkShapeObject(glObject, *myCalculatedShape, *myContourBoundary, layer, nullptr);
+        gViewObjectsHandler.checkShapeObject(s, glObject, *myCalculatedShape, *myContourBoundary, layer, nullptr);
     }
 }
 
@@ -126,7 +126,7 @@ GNEContour::calculateContourCircleShape(const GUIVisualizationSettings& s, const
         // calculate circle shape
         buildContourCircle(s, d, pos, radius, scale);
         // check if position or bondary is within circle shape
-        gViewObjectsHandler.checkCircleObject(d, glObject, pos, (radius * scale), layer);
+        gViewObjectsHandler.checkCircleObject(s, d, glObject, pos, (radius * scale), layer);
     }
 }
 
@@ -140,7 +140,7 @@ GNEContour::calculateContourEdge(const GUIVisualizationSettings& s, const GUIVis
         // calculate contour edge shape
         buildContourEdge(s, d, edge, closeFirstExtrem, closeLastExtrem);
         // check if position or bondary is within contour shape
-        gViewObjectsHandler.checkShapeObject(elementToRegister, *myCalculatedShape, *myContourBoundary, layer, nullptr);
+        gViewObjectsHandler.checkShapeObject(s, elementToRegister, *myCalculatedShape, *myContourBoundary, layer, nullptr);
     }
 }
 
@@ -155,22 +155,24 @@ GNEContour::calculateContourEdges(const GUIVisualizationSettings& s, const GUIVi
 
 void
 GNEContour::calculateContourFirstGeometryPoint(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
-        const GUIGlObject* glObject, const PositionVector& shape, const double layer, double radius, const double scale) const {
+        const GUIGlObject* glObject, const PositionVector& shape, const double layer, double radius, const double scale,
+        const bool forceCalculation) const {
     // check if we're in drawForObjectUnderCursor
-    if (s.drawForViewObjectsHandler && (shape.size() > 0)) {
+    if ((s.drawForViewObjectsHandler || forceCalculation) && (shape.size() > 0)) {
         // check position within geometry of first geometry point
-        gViewObjectsHandler.checkGeometryPoint(d, glObject, shape, 0, layer, (radius * scale));
+        gViewObjectsHandler.checkGeometryPoint(s, d, glObject, shape, 0, layer, (radius * scale));
     }
 }
 
 
 void
 GNEContour::calculateContourLastGeometryPoint(const GUIVisualizationSettings& s, const GUIVisualizationSettings::Detail d,
-        const GUIGlObject* glObject, const PositionVector& shape, const double layer, double radius, const double scale) const {
+        const GUIGlObject* glObject, const PositionVector& shape, const double layer, double radius, const double scale,
+        const bool forceCalculation) const {
     // check if we're in drawForObjectUnderCursor
-    if (s.drawForViewObjectsHandler && (shape.size() > 0)) {
+    if ((s.drawForViewObjectsHandler || forceCalculation) && (shape.size() > 0)) {
         // check position within geometry of last geometry point
-        gViewObjectsHandler.checkGeometryPoint(d, glObject, shape, (int)shape.size() - 1, layer, (radius * scale));
+        gViewObjectsHandler.checkGeometryPoint(s, d, glObject, shape, (int)shape.size() - 1, layer, (radius * scale));
     }
 }
 
@@ -182,7 +184,7 @@ GNEContour::calculateContourMiddleGeometryPoints(const GUIVisualizationSettings&
     if (s.drawForViewObjectsHandler) {
         // check position within geometry of middle geometry points
         for (int i = 1; i < (int)shape.size() - 1; i++) {
-            gViewObjectsHandler.checkGeometryPoint(d, glObject, shape, i, layer, (radius * scale));
+            gViewObjectsHandler.checkGeometryPoint(s, d, glObject, shape, i, layer, (radius * scale));
         }
         // also calculate position over shape
         gViewObjectsHandler.checkPositionOverShape(d, glObject, shape, layer, (radius * scale));
@@ -198,7 +200,7 @@ GNEContour::calculateContourAllGeometryPoints(const GUIVisualizationSettings& s,
     if (s.drawForViewObjectsHandler) {
         // check position within geometry of middle geometry points
         for (int i = 0; i < (int)shape.size(); i++) {
-            gViewObjectsHandler.checkGeometryPoint(d, glObject, shape, i, layer, (radius * scale));
+            gViewObjectsHandler.checkGeometryPoint(s, d, glObject, shape, i, layer, (radius * scale));
         }
         // check if calculate position over shape
         if (calculatePosOverShape) {
@@ -227,18 +229,18 @@ GNEContour::calculateContourEdgeGeometryPoints(const GUIVisualizationSettings& s
             // check position within geometry of middle geometry points
             for (int i = 1; i < lastGeometryPointIndex; i++) {
                 if (edgeGeometry[i].distanceSquaredTo2D(nearestPos) <= squaredRadius) {
-                    gViewObjectsHandler.checkGeometryPoint(d, edge, edgeGeometry, i, edge->getType(), radius);
+                    gViewObjectsHandler.checkGeometryPoint(s, d, edge, edgeGeometry, i, edge->getType(), radius);
                 }
             }
             // check extrems
             if (firstExtrem) {
                 if (edgeGeometry[0].distanceSquaredTo2D(nearestPos) <= squaredRadius) {
-                    gViewObjectsHandler.checkGeometryPoint(d, edge, edgeGeometry, 0, edge->getType(), radius);
+                    gViewObjectsHandler.checkGeometryPoint(s, d, edge, edgeGeometry, 0, edge->getType(), radius);
                 }
             }
             if (lastExtrem) {
                 if (edgeGeometry[lastGeometryPointIndex].distanceSquaredTo2D(nearestPos) <= squaredRadius) {
-                    gViewObjectsHandler.checkGeometryPoint(d, edge, edgeGeometry, lastGeometryPointIndex, edge->getType(), radius);
+                    gViewObjectsHandler.checkGeometryPoint(s, d, edge, edgeGeometry, lastGeometryPointIndex, edge->getType(), radius);
                 }
             }
             // if list of index is emprt, use nearestPos as pos over shape
@@ -248,14 +250,14 @@ GNEContour::calculateContourEdgeGeometryPoints(const GUIVisualizationSettings& s
         } else {
             // check position within geometry of middle geometry points
             for (int i = 1; i < lastGeometryPointIndex; i++) {
-                gViewObjectsHandler.checkGeometryPoint(d, edge, edgeGeometry, i, edge->getType(), radius);
+                gViewObjectsHandler.checkGeometryPoint(s, d, edge, edgeGeometry, i, edge->getType(), radius);
             }
             // check extrems
             if (firstExtrem) {
-                gViewObjectsHandler.checkGeometryPoint(d, edge, edgeGeometry, 0, edge->getType(), radius);
+                gViewObjectsHandler.checkGeometryPoint(s, d, edge, edgeGeometry, 0, edge->getType(), radius);
             }
             if (lastExtrem) {
-                gViewObjectsHandler.checkGeometryPoint(d, edge, edgeGeometry, lastGeometryPointIndex, edge->getType(), radius);
+                gViewObjectsHandler.checkGeometryPoint(s, d, edge, edgeGeometry, lastGeometryPointIndex, edge->getType(), radius);
             }
         }
     }
@@ -330,7 +332,11 @@ GNEContour::drawDottedContours(const GUIVisualizationSettings& s, const GUIVisua
         }
         // inspect contour
         if (AC->checkDrawInspectContour()) {
-            return drawDottedContour(s, GUIDottedGeometry::DottedContourType::INSPECT, lineWidth, addOffset);
+            drawDottedContour(s, GUIDottedGeometry::DottedContourType::INSPECT, lineWidth, addOffset);
+            if (AC->checkDrawFrontContour()) {
+                drawDottedContour(s, GUIDottedGeometry::DottedContourType::FRONT, s.dottedContourSettings.segmentWidthSmall * 0.5, addOffset, 0.1);
+            }
+            return true;
         }
         // front contour
         if (AC->checkDrawFrontContour()) {
@@ -434,13 +440,13 @@ GNEContour::drawInnenContourClosed(const GUIVisualizationSettings& s, const GUIV
 
 bool
 GNEContour::drawDottedContour(const GUIVisualizationSettings& s, GUIDottedGeometry::DottedContourType type,
-                              const double lineWidth, const bool addOffset) const {
+                              const double lineWidth, const bool addOffset,  double extraZOffset) const {
     // reset dotted geometry color
     myDottedGeometryColor.reset();
     // Push draw matrix
     GLHelper::pushMatrix();
     // translate to front
-    glTranslated(0, 0, GLO_DOTTEDCONTOUR);
+    glTranslated(0, 0, GLO_DOTTEDCONTOUR + extraZOffset);
     // draw dotted geometries
     for (const auto& dottedGeometry : *myDottedGeometries) {
         dottedGeometry.drawDottedGeometry(s, type, myDottedGeometryColor, lineWidth, addOffset);

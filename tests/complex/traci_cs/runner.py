@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2019-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2019-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -48,7 +48,7 @@ files += [f[5:].replace("\\", "/") for f in glob.glob("data/*/*.cs")]
 os.environ["PATH"] += os.pathsep + os.path.join(os.environ['SUMO_HOME'], "bin")
 if os.name == "nt":
     with open("data/CMakeLists.txt", "w") as cmakelists:
-        print("""cmake_minimum_required(VERSION 3.8)
+        print("""cmake_minimum_required(VERSION 3.8...3.21)
     project(TraCITestCS LANGUAGES CSharp)
     add_executable(TraCITestCS
         %s)""" % "\n        ".join(files), file=cmakelists)

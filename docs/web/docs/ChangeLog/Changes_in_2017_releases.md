@@ -269,7 +269,7 @@ also helper scripts in preparation at [{{SUMO}}/tools/build_config]({{Source}}to
 
 - sumo-gui
   - default font changed to [Roboto](https://fonts.google.com/specimen/Roboto)
-  - Removed OpenGL visualisation option *Antialias*
+  - Removed OpenGL visualization option *Antialias*
   - E3-Entry and -Exit detectors are now drawn in darker color to better distinguish them from traffic lights. #3378
 
 - netconvert
@@ -670,7 +670,7 @@ model](../Simulation/SublaneModel.md) is now 0.6m (down from
     that are part of the loaded state (i.e. due to having been
     loaded from an additional file before saving). This was a
     regression in version 0.29.0. #2949
-  - Simulation behaviour is no longer affected by randomly equipping
+  - Simulation behavior is no longer affected by randomly equipping
     vehicles with devices that only generate outputs. #2977
   - vType-attribute `laneChangeModel` is no longer ignored (was silently replaced
     with "default", since version 0.28.0)
@@ -873,7 +873,7 @@ model](../Simulation/SublaneModel.md) is now 0.6m (down from
 ### Other
 
 - Documentation
-  - The [TraCI command documentation](../TraCI.md#traci_commands) now includes
+  - The [TraCI command documentation](../TraCI/index.md#traci_commands) now includes
     links to the corresponding python functions for each command.
   - New [overview page on safety-related behavior](../Simulation/Safety.md)
   - The [Quick Start tutorial](../Tutorials/quick_start.md) now
@@ -959,7 +959,7 @@ model](../Simulation/SublaneModel.md) is now 0.6m (down from
 - sumo-gui
   - Fixed bug that was causing interface lag when right-clicking in
     networks with detailed geometry.
-  - Configuring the visualisation of generated induction loops for
+  - Configuring the visualization of generated induction loops for
     [actuated traffic lights](../Simulation/Traffic_Lights.md#type_actuated)
     is now working. #2639
   - Fixed crash when coloring lanes by occupancy. #2850
@@ -996,7 +996,7 @@ model](../Simulation/SublaneModel.md) is now 0.6m (down from
     *close()*
   - Subscriptions to 2D-Positions are now working in the C++ client
   - Deleting vehicles that have not yet departed is now working. #2803
-  - [Brake lights and blinkers](../TraCI/Vehicle_Signalling.md)
+  - [Brake lights and blinkers](../TraCI/Vehicle_Signaling.md)
     can now be set for the current simulation step. #2804
   - Vehicle function *move to XY* now works for edges with custom
     length. #2809
@@ -1168,9 +1168,9 @@ model](../Simulation/SublaneModel.md) is now 0.6m (down from
   - Added documentation of [crossings](../Netedit/editModesNetwork.md#crossings) in netedit
   - Added documentation for the [MESO-model](../Simulation/Meso.md#model_description)
   - Extended documentation of the [sublane-model](../Simulation/SublaneModel.md)
-  - Added [TraCI performance information](../TraCI.md#performance)
-  - The [TraCI command reference](../TraCI.md#traci_commands) now includes links to the corresponding python method(s).
-  - Fixed inconsistencies in [TraCI command reference](../TraCI.md#traci_commands) (mostly methods that
+  - Added [TraCI performance information](../TraCI/index.md#performance)
+  - The [TraCI command reference](../TraCI/index.md#traci_commands) now includes links to the corresponding python method(s).
+  - Fixed inconsistencies in [TraCI command reference](../TraCI/index.md#traci_commands) (mostly methods that
     were available in the python client but not yet documented in
     the wiki).
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -558,6 +558,11 @@ TraCIAPI::EdgeScope::getElectricityConsumption(const std::string& edgeID) const 
 double
 TraCIAPI::EdgeScope::getLastStepMeanSpeed(const std::string& edgeID) const {
     return getDouble(libsumo::LAST_STEP_MEAN_SPEED, edgeID);
+}
+
+double
+TraCIAPI::EdgeScope::getMaxSpeed(const std::string& edgeID) const {
+    return getDouble(libsumo::VAR_MAXSPEED, edgeID);
 }
 
 double
@@ -1223,6 +1228,11 @@ TraCIAPI::PolygonScope::getLineWidth(const std::string& polygonID) const {
     return getDouble(libsumo::VAR_WIDTH, polygonID);
 }
 
+double
+TraCIAPI::PolygonScope::getHeight(const std::string& polygonID) const {
+    return getDouble(libsumo::VAR_HEIGHT, polygonID);
+}
+
 bool
 TraCIAPI::PolygonScope::getFilled(const std::string& polygonID) const {
     return getInt(libsumo::VAR_FILL, polygonID) != 0;
@@ -1249,6 +1259,15 @@ TraCIAPI::PolygonScope::setLineWidth(const std::string& polygonID, const double 
     content.writeUnsignedByte(libsumo::TYPE_DOUBLE);
     content.writeDouble(lineWidth);
     myParent.createCommand(libsumo::CMD_SET_POLYGON_VARIABLE, libsumo::VAR_WIDTH, polygonID, &content);
+    myParent.processSet(libsumo::CMD_SET_POLYGON_VARIABLE);
+}
+
+void
+TraCIAPI::PolygonScope::setHeight(const std::string& polygonID, const double height) const {
+    tcpip::Storage content;
+    content.writeUnsignedByte(libsumo::TYPE_DOUBLE);
+    content.writeDouble(height);
+    myParent.createCommand(libsumo::CMD_SET_POLYGON_VARIABLE, libsumo::VAR_HEIGHT, polygonID, &content);
     myParent.processSet(libsumo::CMD_SET_POLYGON_VARIABLE);
 }
 
@@ -2260,6 +2279,11 @@ TraCIAPI::VehicleScope::getRoadID(const std::string& vehicleID) const {
 std::string
 TraCIAPI::VehicleScope::getLaneID(const std::string& vehicleID) const {
     return getString(libsumo::VAR_LANE_ID, vehicleID);
+}
+
+std::string
+TraCIAPI::VehicleScope::getShadowLaneID(const std::string& vehicleID) const {
+    return getString(libsumo::VAR_SHADOW_LANE_ID, vehicleID);
 }
 
 int

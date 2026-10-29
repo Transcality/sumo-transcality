@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -117,6 +117,12 @@ Vehicle::getDepartDelay(const std::string& vehID) {
 std::string
 Vehicle::getLaneID(const std::string& vehID) {
     return Dom::getString(libsumo::VAR_LANE_ID, vehID);
+}
+
+
+std::string
+Vehicle::getShadowLaneID(const std::string& vehID) {
+    return Dom::getString(libsumo::VAR_SHADOW_LANE_ID, vehID);
 }
 
 
@@ -427,6 +433,12 @@ Vehicle::getDrivingDistance2D(const std::string& vehID, double x, double y) {
     content.writeDouble(y);
     content.writeUnsignedByte(libsumo::REQUEST_DRIVINGDIST);
     return Dom::getDouble(libsumo::DISTANCE_REQUEST, vehID, &content);
+}
+
+
+double
+Vehicle::getReferenceDistance(const std::string& vehID) {
+    return Dom::getDouble(libsumo::VAR_REFERENCE_DISTANCE, vehID);
 }
 
 

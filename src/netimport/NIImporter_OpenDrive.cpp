@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -268,12 +268,38 @@ NIImporter_OpenDrive::loadNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
         if (posMap.find(e->junction) == posMap.end()) {
             posMap[e->junction] = Boundary();
         }
-        posMap[e->junction].add(e->geom.getBoxBoundary());
+        // Check if geometry is valid before adding to boundary
+        if (e->geom.size() > 0) {
+            Boundary geomBoundary = e->geom.getBoxBoundary();
+            // Only add if the boundary doesn't contain NaN values
+            if (geomBoundary.isInitialised() &&
+                    !std::isnan(geomBoundary.xmin()) && !std::isnan(geomBoundary.xmax()) &&
+                    !std::isnan(geomBoundary.ymin()) && !std::isnan(geomBoundary.ymax())) {
+                posMap[e->junction].add(geomBoundary);
+            } else {
+                WRITE_WARNINGF(TL("Ignoring invalid geometry for inner edge '%' (xodr road '%') in junction '%'."),
+                               e->id, e->id, e->junction);
+            }
+        } else {
+            WRITE_WARNINGF(TL("Inner edge '%' (xodr road '%') in junction '%' has no geometry."),
+                           e->id, e->id, e->junction);
+        }
     }
     //   build nodes
     for (std::map<std::string, Boundary>::iterator i = posMap.begin(); i != posMap.end(); ++i) {
         //std::cout << " import node=" << (*i).first << " z=" << (*i).second.getCenter() << " boundary=" << (*i).second << "\n";
-        if (!nb.getNodeCont().insert((*i).first, (*i).second.getCenter())) {
+        // Check if the boundary was properly initialized
+        if (!(*i).second.isInitialised()) {
+            WRITE_ERRORF(TL("Junction '%' has no valid inner edges to determine its position."), (*i).first);
+            throw ProcessError(TLF("Could not determine position for junction '%'.", (*i).first));
+        }
+        Position center = (*i).second.getCenter();
+        // Double-check that the center position is valid
+        if (center.isNAN()) {
+            WRITE_ERRORF(TL("Junction '%' resulted in invalid (NaN) position."), (*i).first);
+            throw ProcessError(TLF("Could not compute valid position for junction '%'.", (*i).first));
+        }
+        if (!nb.getNodeCont().insert((*i).first, center)) {
             throw ProcessError(TLF("Could not add node '%'.", (*i).first));
         }
     }
@@ -1632,7 +1658,7 @@ NIImporter_OpenDrive::discretizeOffsets(PositionVector& geom, const std::vector<
     std::vector<double> laneOffsets;
     // make sure there are intermediate points for each offset-section
     for (const OpenDriveLaneOffset& el : offsets) {
-        // check wether we need to insert a new point at dist
+        // check whether we need to insert a new point at dist
         Position pS = geom.positionAtOffset2D(el.s);
         int iS = geom.indexOfClosest(pS);
         // prevent close spacing to reduce impact of rounding errors in z-axis
@@ -1653,7 +1679,7 @@ NIImporter_OpenDrive::discretizeOffsets(PositionVector& geom, const std::vector<
             laneOffsets.push_back(fabs(offset) > POSITION_EPS ? -offset : 0);
             kk++;
             if (kk < (int)geom.size()) {
-                // XXX pos understimates the actual position since the
+                // XXX pos underestimates the actual position since the
                 // actual geometry between k-1 and k could be curved
                 ppos += geom[kk - 1].distanceTo2D(geom[kk]);
             }
@@ -1668,7 +1694,7 @@ NIImporter_OpenDrive::addOffsets(bool left, PositionVector& geom, const std::vec
     UNUSED_PARAMETER(id);
     // make sure there are intermediate points for each offset-section
     for (const OpenDriveLaneOffset& el : offsets) {
-        // check wether we need to insert a new point at dist
+        // check whether we need to insert a new point at dist
         Position pS = geom.positionAtOffset2D(el.s);
         int iS = geom.indexOfClosest(pS);
         // prevent close spacing to reduce impact of rounding errors in z-axis
@@ -2379,6 +2405,10 @@ NIImporter_OpenDrive::myStartElement(int element,
         }
         break;
         case OPENDRIVE_TAG_ELEVATION: {
+            if (myCurrentJunctionID != "") {
+                // <elevationGrid> not yet supported
+                break;
+            }
             double s = attrs.get<double>(OPENDRIVE_ATTR_S, myCurrentEdge.id.c_str(), ok);
             double a = attrs.get<double>(OPENDRIVE_ATTR_A, myCurrentEdge.id.c_str(), ok);
             double b = attrs.get<double>(OPENDRIVE_ATTR_B, myCurrentEdge.id.c_str(), ok);
@@ -2749,6 +2779,9 @@ void
 NIImporter_OpenDrive::myEndElement(int element) {
     myElementStack.pop_back();
     switch (element) {
+        case OPENDRIVE_TAG_JUNCTION:
+            myCurrentJunctionID = "";
+            break;
         case OPENDRIVE_TAG_ROAD:
             myEdges[myCurrentEdge.id] = new OpenDriveEdge(myCurrentEdge);
             break;

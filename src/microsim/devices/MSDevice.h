@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2007-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2007-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -86,6 +86,9 @@ public:
     */
     static void buildTransportableDevices(MSTransportable& p, std::vector<MSTransportableDevice*>& into);
 
+    /// @brief extracts the deviceName from the id (which includes holder id) and is subject to special cases
+    static std::string getDeviceName(const std::string& id);
+
     static SumoRNG* getEquipmentRNG() {
         return &myEquipmentRNG;
     }
@@ -95,6 +98,8 @@ public:
 
     /// @brief perform cleanup for all devices
     static void cleanupAll();
+
+    static const std::string LOADSTATE_DEVICENAMES;
 
 public:
     /** @brief Constructor
@@ -177,6 +182,19 @@ private:
     /// @brief vehicles which explicitly carry a device, sorted by device, first
     static std::map<std::string, std::set<std::string> > myExplicitIDs;
 
+    /// @brief the option values of a device's default assignment (all callers pass the global options, which do not change during a run)
+    struct DefaultAssignment {
+        std::string prefix;
+        std::string parameterKey;
+        std::string probabilityKey;
+        bool deterministic = false;
+        bool numberGiven = false;
+        double probability = 0;
+        bool nameGiven = false;
+    };
+    static const DefaultAssignment& getDefaultAssignment(const OptionsCont& oc, const std::string& deviceName, const bool isPerson);
+    static std::map<std::string, DefaultAssignment> myDefaultAssignments[2];
+
     /// @brief A random number generator used to choose from vtype/route distributions and computing the speed factors
     static SumoRNG myEquipmentRNG;
 
@@ -193,16 +211,15 @@ private:
 
 template<class DEVICEHOLDER> bool
 MSDevice::equippedByDefaultAssignmentOptions(const OptionsCont& oc, const std::string& deviceName, DEVICEHOLDER& v, bool outputOptionSet, const bool isPerson) {
-    const std::string prefix = (isPerson ? "person-device." : "device.") + deviceName;
+    const DefaultAssignment& defaults = getDefaultAssignment(oc, deviceName, isPerson);
+    const std::string& prefix = defaults.prefix;
     // assignment by number
-    bool numberGiven = ((oc.exists(prefix + ".deterministic") && oc.getBool(prefix + ".deterministic"))
-            || (oc.exists(prefix + ".probability") && oc.getFloat(prefix + ".probability") >= 0.));
-    double probability = numberGiven ? oc.getFloat(prefix + ".probability") : 0;
+    bool numberGiven = defaults.numberGiven;
+    double probability = defaults.probability;
     // assignment by name
     bool haveByName = false;
-    bool nameGiven = false;
-    if (oc.exists(prefix + ".explicit") && oc.isSet(prefix + ".explicit")) {
-        nameGiven = true;
+    const bool nameGiven = defaults.nameGiven;
+    if (nameGiven) {
         if (myExplicitIDs.find(deviceName) == myExplicitIDs.end()) {
             myExplicitIDs[deviceName] = std::set<std::string>();
             const std::vector<std::string> idList = OptionsCont::getOptions().getStringVector(prefix + ".explicit");
@@ -213,17 +230,17 @@ MSDevice::equippedByDefaultAssignmentOptions(const OptionsCont& oc, const std::s
     // assignment by abstract parameters
     bool haveByParameter = false;
     bool parameterGiven = false;
-    const std::string key = "has." + deviceName + ".device";
+    const std::string& key = defaults.parameterKey;
     if (v.getParameter().hasParameter(key)) {
         parameterGiven = true;
         haveByParameter = StringUtils::toBool(v.getParameter().getParameter(key, "false"));
     } else if (v.getVehicleType().getParameter().hasParameter(key)) {
         parameterGiven = true;
         haveByParameter = StringUtils::toBool(v.getVehicleType().getParameter().getParameter(key, "false"));
-    } else if (v.getVehicleType().getParameter().hasParameter(prefix + ".probability")) {
+    } else if (v.getVehicleType().getParameter().hasParameter(defaults.probabilityKey)) {
         // override global options
         numberGiven = true;
-        probability = StringUtils::toDouble(v.getVehicleType().getParameter().getParameter(prefix + ".probability", "0"));
+        probability = StringUtils::toDouble(v.getVehicleType().getParameter().getParameter(defaults.probabilityKey, "0"));
     }
     //std::cout << " deviceName=" << deviceName << " holder=" << v.getID()
     //    << " nameGiven=" << nameGiven << " haveByName=" << haveByName
@@ -235,10 +252,16 @@ MSDevice::equippedByDefaultAssignmentOptions(const OptionsCont& oc, const std::s
     } else if (parameterGiven) {
         return haveByParameter;
     } else if (numberGiven) {
-        if (oc.exists(prefix + ".deterministic") && oc.getBool(prefix + ".deterministic")) {
+        if (defaults.deterministic) {
             return MSNet::getInstance()->getVehicleControl().getQuota(probability) == 1;
         } else if (probability > 0) {
-            return RandHelper::rand(&myEquipmentRNG) < probability;
+            if (v.getParameter().hasParameter(LOADSTATE_DEVICENAMES)) {
+                // replicate probabilistic assignment
+                const std::vector<std::string> lsdn = StringTokenizer(v.getParameter().getParameter(LOADSTATE_DEVICENAMES)).getVector();
+                return std::find(lsdn.begin(), lsdn.end(), deviceName) != lsdn.end();
+            } else {
+                return RandHelper::rand(&myEquipmentRNG) < probability;
+            }
         } else {
             return false;
         }

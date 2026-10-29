@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -38,8 +38,8 @@ netedit.leftClick(referencePosition, netedit.positions.network.edge.leftBot)
 netedit.modifyAttribute(netedit.attrs.lane.inspect.stopOffset, "4")
 
 # Change parameter 8 with a valid value (empty)
-netedit.modifyAttributeVClassDialog(netedit.attrs.lane.inspect.stopOffsetExceptionButton,
-                                    netedit.attrs.dialog.allowVClass.wheelchair)
+netedit.modifyVClassDialog_DisallowAll(netedit.attrs.lane.inspect.stopOffsetExceptionButton,
+                                       netedit.attrs.dialog.allowVClass.wheelchair)
 
 # Check undos
 netedit.undo(referencePosition, 4)
@@ -48,7 +48,7 @@ netedit.undo(referencePosition, 4)
 netedit.redo(referencePosition, 4)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

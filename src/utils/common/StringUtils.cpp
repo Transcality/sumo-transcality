@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,14 +28,10 @@
 #include <cstring>
 #include <regex>
 #ifdef WIN32
-#define NOMINMAX
 #include <windows.h>
-#undef NOMINMAX
 #else
 #include <unistd.h>
 #endif
-#include <xercesc/util/TransService.hpp>
-#include <xercesc/util/TranscodingException.hpp>
 #include <utils/common/UtilExceptions.h>
 #include <utils/common/ToString.h>
 #include <utils/common/StringTokenizer.h>
@@ -48,7 +44,6 @@
 // static member definitions
 // ===========================================================================
 std::string StringUtils::emptyString;
-XERCES_CPP_NAMESPACE::XMLLCPTranscoder* StringUtils::myLCPTranscoder = nullptr;
 
 
 // ===========================================================================
@@ -80,6 +75,16 @@ StringUtils::to_lower_case(const std::string& str) {
     std::string s = str;
     std::transform(s.begin(), s.end(), s.begin(), [](char c) {
         return (char)::tolower(c);
+    });
+    return s;
+}
+
+
+std::string
+StringUtils::to_upper_case(const std::string& str) {
+    std::string s = str;
+    std::transform(s.begin(), s.end(), s.begin(), [](char c) {
+        return (char)::toupper(c);
     });
     return s;
 }
@@ -208,6 +213,34 @@ StringUtils::substituteEnvironment(const std::string& str, const std::chrono::ti
 }
 
 
+std::string
+StringUtils::isoTimeString(const std::chrono::time_point<std::chrono::system_clock>* const timeRef) {
+    const std::chrono::system_clock::time_point now = timeRef == nullptr ? std::chrono::system_clock::now() : *timeRef;
+    const auto now_seconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
+    const std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    const auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now - now_seconds).count();
+    std::tm local_tm = *std::localtime(&now_c);
+
+    // Get the time zone offset
+    std::time_t utc_time = std::time(nullptr);
+    std::tm utc_tm = *std::gmtime(&utc_time);
+    const double offset = std::difftime(std::mktime(&local_tm), std::mktime(&utc_tm)) / 3600.0;
+    const int hours_offset = static_cast<int>(offset);
+    const int minutes_offset = static_cast<int>((offset - hours_offset) * 60);
+
+    // Format the time
+    std::ostringstream oss;
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &local_tm);
+    oss << buf << "."
+        << std::setw(6) << std::setfill('0') << std::abs(microseconds)
+        << (hours_offset >= 0 ? "+" : "-")
+        << std::setw(2) << std::setfill('0') << std::abs(hours_offset) << ":"
+        << std::setw(2) << std::setfill('0') << std::abs(minutes_offset);
+    return oss.str();
+}
+
+
 bool
 StringUtils::startsWith(const std::string& str, const std::string prefix) {
     return str.compare(0, prefix.length(), prefix) == 0;
@@ -248,8 +281,18 @@ StringUtils::escapeXML(const std::string& orig, const bool maskDoubleHyphen) {
 
 std::string
 StringUtils::escapeShell(const std::string& orig) {
-    std::string result = replace(orig, "\"", "\\\"");
-    return result;
+    return replace(orig, "\"", "\\\"");
+}
+
+
+std::string
+StringUtils::escapeCSV(const std::string& orig, const char separator, const char quote) {
+    const std::string chars{separator, quote};
+    if (orig.find_first_of(chars) == std::string::npos) {
+        return orig;
+    }
+    const std::string quoteStr{quote};
+    return quoteStr + replace(orig, quoteStr, {'\\', quote}) + quoteStr;
 }
 
 
@@ -395,7 +438,7 @@ StringUtils::isLong(const std::string& sData) {
     if (errno == ERANGE) {
         return false;
     }
-    // check lenght of converted data
+    // check length of converted data
     if ((int)(end - data) != (int)strlen(data)) {
         return false;
     }
@@ -513,6 +556,16 @@ StringUtils::toDoubleSecure(const std::string& sData, const double def) {
     return toDouble(sData);
 }
 
+
+double
+StringUtils::toDoubleAllowTime(const std::string& sData) {
+    if (sData.find(":") == std::string::npos) {
+        return toDouble(sData);
+    } else if (isTime(sData)) {
+        return STEPS2TIME(string2time(sData));
+    }
+    throw NumberFormatException("(double) " + sData);
+}
 
 bool
 StringUtils::toBool(const std::string& sData) {
@@ -637,62 +690,6 @@ StringUtils::parseSpeed(const std::string& sData, const bool defaultKmph) {
 }
 
 
-std::string
-StringUtils::transcode(const XMLCh* const data, int length) {
-    if (data == 0) {
-        throw EmptyData();
-    }
-    if (length == 0) {
-        return "";
-    }
-#if _XERCES_VERSION < 30100
-    char* t = XERCES_CPP_NAMESPACE::XMLString::transcode(data);
-    std::string result(t);
-    XERCES_CPP_NAMESPACE::XMLString::release(&t);
-    return result;
-#else
-    try {
-        XERCES_CPP_NAMESPACE::TranscodeToStr utf8(data, "UTF-8");
-        return reinterpret_cast<const char*>(utf8.str());
-    } catch (XERCES_CPP_NAMESPACE::TranscodingException&) {
-        return "?";
-    }
-#endif
-}
-
-
-std::string
-StringUtils::transcodeFromLocal(const std::string& localString) {
-#if _XERCES_VERSION > 30100
-    try {
-        if (myLCPTranscoder == nullptr) {
-            myLCPTranscoder = XERCES_CPP_NAMESPACE::XMLPlatformUtils::fgTransService->makeNewLCPTranscoder(XERCES_CPP_NAMESPACE::XMLPlatformUtils::fgMemoryManager);
-        }
-        if (myLCPTranscoder != nullptr) {
-            return transcode(myLCPTranscoder->transcode(localString.c_str()));
-        }
-    } catch (XERCES_CPP_NAMESPACE::TranscodingException&) {}
-#endif
-    return localString;
-}
-
-
-std::string
-StringUtils::transcodeToLocal(const std::string& utf8String) {
-#if _XERCES_VERSION > 30100
-    try {
-        if (myLCPTranscoder == nullptr) {
-            myLCPTranscoder = XERCES_CPP_NAMESPACE::XMLPlatformUtils::fgTransService->makeNewLCPTranscoder(XERCES_CPP_NAMESPACE::XMLPlatformUtils::fgMemoryManager);
-        }
-        if (myLCPTranscoder != nullptr) {
-            XERCES_CPP_NAMESPACE::TranscodeFromStr utf8(reinterpret_cast<const XMLByte*>(utf8String.c_str()), utf8String.size(), "UTF-8");
-            return myLCPTranscoder->transcode(utf8.str());
-        }
-    } catch (XERCES_CPP_NAMESPACE::TranscodingException&) {}
-#endif
-    return utf8String;
-}
-
 
 std::string
 StringUtils::trim_left(const std::string s, const std::string& t) {
@@ -728,16 +725,16 @@ StringUtils::wrapText(const std::string s, int width) {
             } else {
                 line += " ";
             }
-            line = line + p;
+            line += p;
         } else {
             if (firstLine) {
                 firstLine = false;
             } else {
                 result += "\n";
             }
-            result = result + line;
+            result += line;
             line.clear();
-            firstWord = true;
+            line += p;
         }
     }
     if (line.size() > 0) {
@@ -746,15 +743,29 @@ StringUtils::wrapText(const std::string s, int width) {
         } else {
             result += "\n";
         }
-        result = result + line;
+        result += line;
     }
     return result;
 }
 
 
-void
-StringUtils::resetTranscoder() {
-    myLCPTranscoder = nullptr;
+std::string
+StringUtils::adjustDecimalValue(double value, int precision) {
+    // obtain value in string format with 20 decimals precision
+    auto valueStr = toString(value, precision);
+    // now clear all zeros
+    while (valueStr.size() > 1) {
+        if (valueStr.back() == '0') {
+            valueStr.pop_back();
+        } else if (valueStr.back() == '.') {
+            valueStr.pop_back();
+            return valueStr;
+        } else {
+            return valueStr;
+        }
+    }
+    return valueStr;
 }
+
 
 /****************************************************************************/

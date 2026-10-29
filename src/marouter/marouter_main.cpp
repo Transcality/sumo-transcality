@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -51,12 +51,14 @@
 #include <utils/router/AStarRouter.h>
 #include <utils/router/CHRouter.h>
 #include <utils/router/CHRouterWrapper.h>
+#include <utils/router/CCHRouter.h>
 #include <utils/xml/XMLSubSys.h>
 #include <od/ODCell.h>
 #include <od/ODDistrict.h>
 #include <od/ODDistrictCont.h>
 #include <od/ODDistrictHandler.h>
 #include <od/ODMatrix.h>
+#include <router/ROCCHMetrics.h>
 #include <router/ROEdge.h>
 #include <router/ROLoader.h>
 #include <router/RONet.h>
@@ -176,6 +178,23 @@ computeRoutes(RONet& net, OptionsCont& oc, ODMatrix& matrix) {
             router = new CHRouterWrapper<ROEdge, ROVehicle>(
                 ROEdge::getAllEdges(), oc.getBool("ignore-errors"), &ROEdge::getTravelTimeStatic,
                 begin, end, weightPeriod, net.hasPermissions(), oc.getInt("routing-threads"));
+        } else if (routingAlgorithm == "CCH") {
+            // One weight-independent hierarchy over the union graph and one
+            // customized metric for the default vehicle's type, filled from
+            // the travel times of the current assignment iteration.
+            // ROMAAssignments resets the router after every iteration (where
+            // CH rebuilds its whole hierarchy); the reset hook flags the
+            // metric for re-customization at the next query, so every
+            // iteration routes on exactly the travel times a Dijkstra query
+            // would see. Like CH, the metric cannot follow the k shortest
+            // path penalties (see ROMAFrame::checkOptions).
+            ROCCHGraph* cchGraph = new ROCCHGraph(ROEdge::getAllEdges());
+            ROCCHMetrics::init(cchGraph, &ROEdge::getTravelTimeStatic, begin, SUMOTime_MAX);
+            SUMOAbstractRouter<ROEdge, ROVehicle>* fallback = new AStarRouter<ROEdge, ROVehicle, ROMapMatcher>(
+                ROEdge::getAllEdges(), oc.getBool("ignore-errors"), &ROEdge::getTravelTimeStatic, nullptr, net.hasPermissions());
+            router = new CCHRouter<ROEdge, ROVehicle, ROCCHGraph>(
+                cchGraph, &ROCCHMetrics::get, &ROEdge::getTravelTimeStatic,
+                oc.getBool("ignore-errors"), fallback, nullptr, &ROCCHMetrics::reset);
         } else {
             throw ProcessError(TLF("Unknown routing Algorithm '%'!", routingAlgorithm));
         }
@@ -276,7 +295,7 @@ computeRoutes(RONet& net, OptionsCont& oc, ODMatrix& matrix) {
                     od.writeAttr(SUMO_ATTR_NUMBER, numVehs);
                     matrix.writeDefaultAttrs(od, oc.getBool("ignore-vehicle-type"), c);
                     od.openTag(SUMO_TAG_ROUTE_DISTRIBUTION);
-                    for (RORoute* const r : c->pathsVector) {
+                    for (const std::shared_ptr<RORoute>& r : c->pathsVector) {
                         r->setCosts(router->recomputeCosts(r->getEdgeVector(), &defaultVehicle, begin));
                         r->writeXMLDefinition(od, nullptr, true, true, false, false);
                     }
@@ -295,7 +314,7 @@ computeRoutes(RONet& net, OptionsCont& oc, ODMatrix& matrix) {
 
                             veh.write(od, OptionsCont::getOptions(), SUMO_TAG_VEHICLE, ignoreType || veh.vtypeid == DEFAULT_VTYPE_ID ? "" : veh.vtypeid);
                             od.openTag(SUMO_TAG_ROUTE_DISTRIBUTION);
-                            for (RORoute* const r : c->pathsVector) {
+                            for (const std::shared_ptr<RORoute>& r : c->pathsVector) {
                                 r->setCosts(router->recomputeCosts(r->getEdgeVector(), &defaultVehicle, begin));
                                 r->writeXMLDefinition(od, nullptr, true, true, false, false);
                             }
@@ -339,7 +358,7 @@ int
 main(int argc, char** argv) {
     OptionsCont& oc = OptionsCont::getOptions();
     oc.setApplicationDescription(TL("Import O/D-matrices for macroscopic traffic assignment to generate SUMO routes."));
-    oc.setApplicationName("marouter", "Eclipse SUMO marouter Version " VERSION_STRING);
+    oc.setApplicationName("marouter", "Eclipse SUMO marouter " VERSION_STRING);
     int ret = 0;
     RONet* net = nullptr;
     try {
@@ -400,7 +419,7 @@ main(int argc, char** argv) {
             WRITE_ERROR(toString(e.getLineNumber()));
             ret = 1;
         } catch (XERCES_CPP_NAMESPACE::SAXException& e) {
-            WRITE_ERROR(StringUtils::transcode(e.getMessage()));
+            WRITE_ERROR(XMLSubSys::transcode(e.getMessage()));
             ret = 1;
         }
         if (MsgHandler::getErrorInstance()->wasInformed() || ret != 0) {

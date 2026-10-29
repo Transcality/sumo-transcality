@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -154,6 +154,7 @@ private:
 
     /// @brief whether the current stop should be discarded
     bool myCurrentStopWasIgnored;
+    bool myWarnOnly;
 
     int myMissingBefore;
     int myMissingAfter;
@@ -163,7 +164,7 @@ private:
     /** @brief Parses an public transport stop
      * @param[in] attrs The attributes to get the stops's values from
      */
-    void addPTStop(const SUMOSAXAttributes& attrs);
+    void addPTStop(int element, const SUMOSAXAttributes& attrs);
 
     /** @brief Parses a route as port of a public transport line
      * @param[in] attrs The attributes to get the routes's values from
@@ -201,6 +202,8 @@ private:
      */
     void addPTLineFromFlow(const SUMOSAXAttributes& attrs);
 
+    /// @brief reprot error or warning depending on options and explicit edge removal
+    bool reportError(const std::string& msg, const std::string& edgeID, const std::string& id);
 
 private:
     /** @brief invalid copy constructor */

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -52,7 +52,8 @@ MSTransportable::MSTransportable(const SUMOVehicleParameter* pars, MSVehicleType
     SUMOTrafficObject(pars->id),
     myParameter(pars), myVType(vtype), myPlan(plan),
     myAmPerson(isPerson),
-    myNumericalID(myCurrentNumericalIndex++) {
+    myNumericalID(myCurrentNumericalIndex++),
+    myRandomSeed(RandHelper::murmur3_32(pars->id, RandHelper::getSeed())) {
     myStep = myPlan->begin();
     // init devices
     MSDevice::buildTransportableDevices(*this, myDevices);
@@ -94,7 +95,8 @@ MSTransportable::getRNG() const {
 
 int
 MSTransportable::getRNGIndex() const {
-    return getEdge()->getLanes()[0]->getRNGIndex();
+    const std::vector<MSLane*>& lanes = getEdge()->getLanes();
+    return lanes.empty() ? 0 : lanes[0]->getRNGIndex();
 }
 
 bool
@@ -172,6 +174,11 @@ MSTransportable::getDeparture() const {
     return -1;
 }
 
+const MSEdge*
+MSTransportable::getCurrentEdge() const {
+    const MSLane* lane = getLane();
+    return lane == nullptr ? getEdge() : &lane->getEdge();
+}
 
 double
 MSTransportable::getEdgePos() const {
@@ -274,8 +281,9 @@ MSTransportable::routeOutput(OutputDevice& os, const bool withRouteLength) const
         os.writeAttr("arrival", time2string(MSNet::getInstance()->getCurrentTimeStep()));
     }
     const MSStage* previous = nullptr;
+    const bool withTiming = OptionsCont::getOptions().getBool("vehroute-output.exit-times");
     for (const MSStage* const stage : *myPlan) {
-        stage->routeOutput(myAmPerson, os, withRouteLength, previous);
+        stage->routeOutput(myAmPerson, os, withRouteLength, previous, withTiming);
         previous = stage;
     }
     myParameter->writeParams(os);
@@ -437,7 +445,7 @@ MSTransportable::reroute(SUMOTime t, const std::string& /* info */, MSTransporta
 
 
 void
-MSTransportable::replaceVehicleType(MSVehicleType* type) {
+MSTransportable::replaceVehicleType(const MSVehicleType* type) {
     const SUMOVehicleClass oldVClass = myVType->getVehicleClass();
     if (myVType->isVehicleSpecific()) {
         MSNet::getInstance()->getVehicleControl().removeVType(myVType);
@@ -455,7 +463,7 @@ MSTransportable::replaceVehicleType(MSVehicleType* type) {
 MSVehicleType&
 MSTransportable::getSingularType() {
     if (myVType->isVehicleSpecific()) {
-        return *myVType;
+        return *const_cast<MSVehicleType*>(myVType);
     }
     MSVehicleType* type = myVType->buildSingularType(myVType->getID() + "@" + getID());
     replaceVehicleType(type);
@@ -494,7 +502,10 @@ MSTransportable::getUpcomingEdgeIDs() const {
     std::set<SUMOTrafficObject::NumericalID> result;
     for (auto step = myStep; step != myPlan->end(); ++step) {
         for (const MSEdge* const e : (*step)->getEdges()) {
-            result.insert(e->getNumericalID());
+            if (e != nullptr) {
+                // catch incomplete rides
+                result.insert(e->getNumericalID());
+            }
         }
     }
     return result;
@@ -652,6 +663,13 @@ MSTransportable::getRoutingMode() const {
     return libsumo::ROUTING_MODE_DEFAULT;
 }
 
+
+void
+MSTransportable::setRoutingMode(int value) {
+    /// @todo: allow configuring routing mode
+    UNUSED_PARAMETER(value);
+}
+
 void
 MSTransportable::saveState(OutputDevice& out) {
     // this saves lots of departParameters which are only needed for transportables that did not yet depart
@@ -663,7 +681,7 @@ MSTransportable::saveState(OutputDevice& out) {
     }
     myParameter->write(out, OptionsCont::getOptions(), myAmPerson ? SUMO_TAG_PERSON : SUMO_TAG_CONTAINER, getVehicleType().getID());
     const_cast<SUMOVehicleParameter*>(myParameter)->depart = desiredDepart;
-    if (!myParameter->wasSet(VEHPARS_SPEEDFACTOR_SET) && getChosenSpeedFactor() != 1) {
+    if (!myParameter->wasSet(VEHPARS_SPEEDFACTOR_SET)) {
         out.setPrecision(MAX2(gPrecisionRandom, gPrecision));
         out.writeAttr(SUMO_ATTR_SPEEDFACTOR, getChosenSpeedFactor());
         out.setPrecision(gPrecision);
@@ -675,13 +693,16 @@ MSTransportable::saveState(OutputDevice& out) {
             stepIdx--;
         }
     }
+    const bool isAccess = (*myStep)->getStageType() == MSStageType::ACCESS;
     std::ostringstream state;
-    state << myParameter->parametersSet << " " << stepIdx;
-    (*myStep)->saveState(state);
+    state << myParameter->parametersSet << " " << (isAccess ? toString(stepIdx - 0.5, 1) : toString(stepIdx));
+    (*myStep)->saveState(state, this);
     out.writeAttr(SUMO_ATTR_STATE, state.str());
     const MSStage* previous = nullptr;
     for (const MSStage* const stage : *myPlan) {
-        stage->routeOutput(myAmPerson, out, false, previous);
+        const bool routeLength = stage->getDeparted() >= 0 && stage->getStageType() == MSStageType::DRIVING;
+        const bool withTiming = stage->getDeparted() >= 0;
+        stage->routeOutput(myAmPerson, out, routeLength, previous, withTiming, true);
         previous = stage;
     }
     out.closeTag();
@@ -691,11 +712,27 @@ MSTransportable::saveState(OutputDevice& out) {
 void
 MSTransportable::loadState(const std::string& state) {
     std::istringstream iss(state);
-    int step;
+    double step;
     iss >> myParameter->parametersSet >> step;
     myPlan->front()->setDeparted(myParameter->depart);
-    myStep = myPlan->begin() + step;
+    if (step != floor(step)) {
+        // we are in an access stage
+        int priorIndex = (int)(step - 0.5);
+        MSStage* prior = *(myPlan->begin() + priorIndex);
+        myStep = myPlan->begin() + priorIndex + 1;
+        bool waitAtStop = prior->getDestinationStop() != nullptr
+                          && &prior->getDestinationStop()->getLane().getEdge() != prior->getDestination();
+        checkAccess(prior, waitAtStop);
+        //std::cout << " step=" << step << " i=" << getCurrentStageIndex() << " stage=" << getStageSummary(true) << "\n";
+    } else {
+        myStep = myPlan->begin() + (int)step;
+    }
     (*myStep)->loadState(this, iss);
+    for (int i = 1; i < step; i++) {
+        if ((*myPlan)[i]->getStageType() == MSStageType::DRIVING) {
+            dynamic_cast<MSStageDriving*>((*myPlan)[i])->setWaitingSince((*myPlan)[i - 1]->getArrived());
+        }
+    }
 }
 
 

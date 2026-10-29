@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -49,7 +49,6 @@
 // ===========================================================================
 // static members
 // ===========================================================================
-SumoRNG MSRouteHandler::myParsingRNG("routehandler");
 
 
 // ===========================================================================
@@ -312,6 +311,7 @@ void
 MSRouteHandler::closeVehicleTypeDistribution() {
     if (myCurrentVTypeDistribution != nullptr) {
         if (MSGlobals::gStateLoaded && MSNet::getInstance()->getVehicleControl().hasVTypeDistribution(myCurrentVTypeDistributionID)) {
+            myCurrentVTypeDistribution = nullptr;
             delete myCurrentVTypeDistribution;
             return;
         }
@@ -617,7 +617,8 @@ MSRouteHandler::closeVehicle() {
     MSVehicleControl& vehControl = MSNet::getInstance()->getVehicleControl();
     if (myVehicleParameter->departProcedure == DepartDefinition::GIVEN) {
         // let's check whether this vehicle had to depart before the simulation starts
-        if (!(myAddVehiclesDirectly || checkLastDepart()) || (myVehicleParameter->depart < string2time(OptionsCont::getOptions().getString("begin")) && !myAmLoadingState)) {
+        if (!(myAddVehiclesDirectly || checkLastDepart()) || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
+            mySkippedVehicles.insert(myVehicleParameter->id);
             return;
         }
     }
@@ -713,7 +714,7 @@ MSRouteHandler::closeVehicle() {
                     for (int i = 0; i < (int)rDist->getVals().size() - 1; i++) {
                         SUMOTime replacedAt = rDist->getVals()[i]->getReplacedTime();
                         auto* cmd = new Command_RouteReplacement(vehicle->getID(), rDist->getVals()[i + 1]);
-                        if (i == 0 && replacedAt >= 0 && replacedAt == myVehicleParameter->depart) {
+                        if (replacedAt >= 0 && replacedAt == myVehicleParameter->depart) {
                             // routing in the insertion step happens *after* insertion
                             MSNet::getInstance()->getEndOfTimestepEvents()->addEvent(cmd, replacedAt);
                         } else {
@@ -817,7 +818,7 @@ MSRouteHandler::closeTransportable() {
         }
         // let's check whether this transportable had to depart before the simulation starts
         if (!(myAddVehiclesDirectly || checkLastDepart())
-                || (myVehicleParameter->depart < string2time(OptionsCont::getOptions().getString("begin")) && !myAmLoadingState)) {
+                || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
             deleteActivePlanAndVehicleParameter();
             return;
         }
@@ -875,7 +876,7 @@ MSRouteHandler::closeTransportableFlow() {
         }
         // let's check whether this transportable (person/container) had to depart before the simulation starts
         if (!(myAddVehiclesDirectly || checkLastDepart())
-                || (myVehicleParameter->depart < string2time(OptionsCont::getOptions().getString("begin")) && !myAmLoadingState)) {
+                || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
             deleteActivePlanAndVehicleParameter();
             return;
         }
@@ -901,7 +902,7 @@ MSRouteHandler::closeTransportableFlow() {
                 // poisson: randomize first depart
                 myVehicleParameter->incrementFlow(1, &myParsingRNG);
             }
-            for (; i < myVehicleParameter->repetitionNumber && (myVehicleParameter->repetitionNumber != std::numeric_limits<int>::max()
+            for (; i < myVehicleParameter->repetitionNumber && (myVehicleParameter->repetitionNumber != std::numeric_limits<long long int>::max()
                     || depart + myVehicleParameter->repetitionTotalOffset <= myVehicleParameter->repetitionEnd); i++) {
                 // type existence has been checked on opening
                 MSVehicleType* const type = MSNet::getInstance()->getVehicleControl().getVType(myVehicleParameter->vtypeid, &myParsingRNG);
@@ -955,6 +956,9 @@ MSRouteHandler::addFlowTransportable(SUMOTime depart, MSVehicleType* type, const
             myVehicleParameter->id = (baseID
                                       + (i >= 0 ? "." + toString(i) : "")
                                       + (j > 0 ? "." + toString(j) : ""));
+            if (MSGlobals::gStateLoaded && tc.get(myVehicleParameter->id) != nullptr) {
+                return numCreated;
+            }
             myVehicleParameter->depart = depart += net->getInsertionControl().computeRandomDepartOffset();
             MSTransportable* transportable = myActiveType == ObjectTypeEnum::PERSON ?
                                              tc.buildPerson(myVehicleParameter, type, myActiveTransportablePlan, &myParsingRNG) :
@@ -964,9 +968,7 @@ MSRouteHandler::addFlowTransportable(SUMOTime depart, MSVehicleType* type, const
                 std::string error = "Another " + myActiveTypeName + " with the id '" + myVehicleParameter->id + "' exists.";
                 delete transportable;
                 resetActivePlanAndVehicleParameter();
-                if (!MSGlobals::gStateLoaded) {
-                    throw ProcessError(error);
-                }
+                throw ProcessError(error);
             } else if ((net->hasPersons() && net->getPersonControl().get(myVehicleParameter->id) != nullptr)
                        && (net->hasContainers() && net->getContainerControl().get(myVehicleParameter->id) != nullptr)) {
                 WRITE_WARNINGF(TL("There exists a person and a container with the same id '%'. Starting with SUMO 1.9.0 this is an error."), myVehicleParameter->id);
@@ -982,18 +984,35 @@ MSRouteHandler::addFlowTransportable(SUMOTime depart, MSVehicleType* type, const
 
 void
 MSRouteHandler::closeVType() {
-    MSVehicleType* vehType = MSVehicleType::build(*myCurrentVType, getFileName());
-    vehType->check();
-    if (!MSNet::getInstance()->getVehicleControl().addVType(vehType)) {
-        const std::string id = vehType->getID();
-        delete vehType;
-        if (!MSGlobals::gStateLoaded) {
-            throw ProcessError(TLF("Another vehicle type (or distribution) with the id '%' exists.", id));
+    MSVehicleType* vehType = nullptr;
+    if (myCurrentVTypeRef.empty()) {
+        vehType = MSVehicleType::build(*myCurrentVType, getFileName());
+        vehType->check();
+        if (!MSNet::getInstance()->getVehicleControl().addVType(vehType)) {
+            const std::string id = vehType->getID();
+            delete vehType;
+            if (!MSGlobals::gStateLoaded) {
+                throw ProcessError(TLF("Another vehicle type (or distribution) with the id '%' exists.", id));
+            }
         }
-    } else {
-        if (myCurrentVTypeDistribution != nullptr) {
-            myCurrentVTypeDistribution->add(vehType, vehType->getDefaultProbability());
+    }
+    if (myCurrentVTypeDistribution != nullptr) {
+        if (!myCurrentVTypeRef.empty()) {
+            const RandomDistributor<MSVehicleType*>* const dist = MSNet::getInstance()->getVehicleControl().getVTypeDistribution(myCurrentVTypeRef);
+            if (dist != nullptr) {
+                const double distProb = (myCurrentVTypeProbability >= 0 ? myCurrentVTypeProbability : 1) / dist->getOverallProb();
+                std::vector<double>::const_iterator probIt = dist->getProbs().begin();
+                for (MSVehicleType* const type : dist->getVals()) {
+                    myCurrentVTypeDistribution->add(type, distProb * *probIt);
+                    probIt++;
+                }
+                return;
+            } else {
+                vehType = MSNet::getInstance()->getVehicleControl().getVType(myCurrentVTypeRef);
+            }
         }
+        double probability = myCurrentVTypeProbability >= 0 ? myCurrentVTypeProbability : vehType->getDefaultProbability();
+        myCurrentVTypeDistribution->add(vehType, probability);
     }
 }
 
@@ -1148,9 +1167,12 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
                 myVehicleParameter->depart = startVeh->depart;
             }
             if (startVeh == nullptr) {
-                throw ProcessError("Unknown vehicle '" + vehID + "' in triggered departure for " + agent + " '" + aid + "'.");
-            }
-            if (startVeh->departProcedure == DepartDefinition::TRIGGERED) {
+                if (mySkippedVehicles.count(vehID) == 0) {
+                    throw ProcessError("Unknown vehicle '" + vehID + "' in triggered departure for " + agent + " '" + aid + "'.");
+                }
+                // we cannot simply throw here because we need to parse the rest of the person (just to discard it)
+                from = MSEdge::getAllEdges().front();  // a dummy edge to keep parsing active
+            } else if (startVeh->departProcedure == DepartDefinition::TRIGGERED) {
                 throw ProcessError("Cannot use triggered vehicle '" + vehID + "' in triggered departure for " + agent + " '" + aid + "'.");
             }
         }
@@ -1198,8 +1220,14 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
         const std::string intendedVeh = attrs.getOpt<std::string>(SUMO_ATTR_INTENDED, nullptr, ok, "");
         const SUMOTime intendedDepart = attrs.getOptSUMOTimeReporting(SUMO_ATTR_DEPART, nullptr, ok, -1);
         arrivalPos = SUMOVehicleParameter::interpretEdgePos(arrivalPos, to->getLength(), SUMO_ATTR_ARRIVALPOS, agent + " '" + aid + "' takes a " + mode + " to edge '" + to->getID() + "'");
-        myActiveTransportablePlan->push_back(new MSStageDriving(from, to, s, arrivalPos, 0.0, st.getVector(), group, intendedVeh, intendedDepart));
-        myParamStack.push_back(myActiveTransportablePlan->back());
+        MSStageDriving* stage = new MSStageDriving(from, to, s, arrivalPos, 0.0, st.getVector(), group, intendedVeh, intendedDepart);
+        // for loading from saved state
+        stage->setDeparted(attrs.getOptSUMOTimeReporting(SUMO_ATTR_STARTED, nullptr, ok, -1));
+        stage->setEnded(attrs.getOptSUMOTimeReporting(SUMO_ATTR_ENDED, nullptr, ok, -1));
+        stage->setVehicleID(attrs.getOpt<std::string>(SUMO_ATTR_VEHICLE, nullptr, ok, ""));
+        stage->setVehicleDistance(attrs.getOpt<double>(SUMO_ATTR_ROUTELENGTH, nullptr, ok, -1));
+        myActiveTransportablePlan->push_back(stage);
+        myParamStack.push_back(stage);
     } catch (ProcessError&) {
         deleteActivePlanAndVehicleParameter();
         throw;
@@ -1208,51 +1236,15 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
 
 MSStoppingPlace*
 MSRouteHandler::retrieveStoppingPlace(const SUMOSAXAttributes& attrs, const std::string& errorSuffix, SUMOVehicleParameter::Stop* stopParam) {
-    bool ok = true;
-    // dummy stop parameter to hold the attributes
-    SUMOVehicleParameter::Stop stop;
-    if (stopParam != nullptr) {
-        stop = *stopParam;
-    } else {
-        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_BUS_STOP, nullptr, ok, "");
-        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_TRAIN_STOP, nullptr, ok, stop.busstop); // alias
-        stop.chargingStation = attrs.getOpt<std::string>(SUMO_ATTR_CHARGING_STATION, nullptr, ok, "");
-        stop.overheadWireSegment = attrs.getOpt<std::string>(SUMO_ATTR_OVERHEAD_WIRE_SEGMENT, nullptr, ok, "");
-        stop.containerstop = attrs.getOpt<std::string>(SUMO_ATTR_CONTAINER_STOP, nullptr, ok, "");
-        stop.parkingarea = attrs.getOpt<std::string>(SUMO_ATTR_PARKING_AREA, nullptr, ok, "");
-    }
     MSStoppingPlace* toStop = nullptr;
-    if (stop.busstop != "") {
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.busstop, SUMO_TAG_BUS_STOP);
+    SumoXMLTag tag = SUMO_TAG_NOTHING;
+    std::string id;
+    bool ok = SUMOVehicleParserHelper::parseStopTag(attrs, stopParam, tag, id);
+    if (tag != SUMO_TAG_NOTHING) {
+        toStop = MSNet::getInstance()->getStoppingPlace(id, tag);
         if (toStop == nullptr) {
             ok = false;
-            WRITE_ERROR(TLF("The busStop '%' is not known%.", stop.busstop, errorSuffix));
-        }
-    } else if (stop.containerstop != "") {
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.containerstop, SUMO_TAG_CONTAINER_STOP);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The containerStop '%' is not known%.", stop.containerstop, errorSuffix));
-        }
-    } else if (stop.parkingarea != "") {
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.parkingarea, SUMO_TAG_PARKING_AREA);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The parkingArea '%' is not known%.", stop.parkingarea, errorSuffix));
-        }
-    } else if (stop.chargingStation != "") {
-        // ok, we have a charging station
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.chargingStation, SUMO_TAG_CHARGING_STATION);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The chargingStation '%' is not known%.", stop.chargingStation, errorSuffix));
-        }
-    } else if (stop.overheadWireSegment != "") {
-        // ok, we have an overhead wire segment
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.overheadWireSegment, SUMO_TAG_OVERHEAD_WIRE_SEGMENT);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The overhead wire segment '%' is not known%.", stop.overheadWireSegment, errorSuffix));
+            WRITE_ERROR(TLF("The % '%' is not known%.", toString(tag), id, errorSuffix));
         }
     }
     if (!ok && MSGlobals::gCheckRoutes) {
@@ -1390,6 +1382,9 @@ MSRouteHandler::addStop(const SUMOSAXAttributes& attrs) {
             if (attrs.hasAttribute(SUMO_ATTR_POSITION)) {
                 WRITE_WARNINGF(TL("Deprecated attribute 'pos' in description of stop%."), errorSuffix);
                 stop.endPos = attrs.getOpt<double>(SUMO_ATTR_POSITION, nullptr, ok, stop.endPos);
+            }
+            if (stop.endPos < 0) {
+                stop.endPos += edge->getLength();
             }
             stop.startPos = attrs.getOpt<double>(SUMO_ATTR_STARTPOS, nullptr, ok, MAX2(0., stop.endPos - MIN_STOP_LENGTH));
             if (!myAmLoadingState) {
@@ -1673,11 +1668,22 @@ MSRouteHandler::addWalk(const SUMOSAXAttributes& attrs) {
             }
             const int departLane = attrs.getOpt<int>(SUMO_ATTR_DEPARTLANE, nullptr, ok, -1);
             const double departPosLat = interpretDepartPosLat(attrs.getOpt<std::string>(SUMO_ATTR_DEPARTPOS_LAT, nullptr, ok, ""), departLane, "walk");
-            myActiveTransportablePlan->push_back(new MSStageWalking(myVehicleParameter->id, myActiveRoute, bs, duration, speed, departPos, arrivalPos, departPosLat, departLane, myActiveRouteID));
-            myParamStack.push_back(myActiveTransportablePlan->back());
-            if (attrs.hasAttribute(SUMO_ATTR_ARRIVALPOS)) {
-                myActiveTransportablePlan->back()->markSet(VEHPARS_ARRIVALPOS_SET);
+            MSStageWalking* stage = new MSStageWalking(myVehicleParameter->id, myActiveRoute, bs, duration, speed, departPos, arrivalPos, departPosLat, departLane, myActiveRouteID);
+            stage->setDeparted(attrs.getOptSUMOTimeReporting(SUMO_ATTR_STARTED, nullptr, ok, -1));
+            stage->setEnded(attrs.getOptSUMOTimeReporting(SUMO_ATTR_ENDED, nullptr, ok, -1));
+            stage->setTotalWaitingTime(attrs.getOptSUMOTimeReporting(SUMO_ATTR_WAITINGTIME, nullptr, ok, 0));
+            if (attrs.hasAttribute(SUMO_ATTR_EXITTIMES) && OptionsCont::getOptions().getBool("vehroute-output.exit-times")) {
+                std::vector<SUMOTime>* exitTimes = new std::vector<SUMOTime>();
+                for (const std::string& tStr : attrs.get<std::vector<std::string> >(SUMO_ATTR_EXITTIMES, nullptr, ok)) {
+                    exitTimes->push_back(string2time(tStr));
+                }
+                stage->setExitTimes(exitTimes);
             }
+            if (attrs.hasAttribute(SUMO_ATTR_ARRIVALPOS)) {
+                stage->markSet(VEHPARS_ARRIVALPOS_SET);
+            }
+            myActiveTransportablePlan->push_back(stage);
+            myParamStack.push_back(stage);
             myActiveRoute.clear();
         } catch (ProcessError&) {
             deleteActivePlanAndVehicleParameter();
@@ -1851,6 +1857,13 @@ MSRouteHandler::initLaneTree(NamedRTree* tree) {
 SumoRNG*
 MSRouteHandler::getRNG() {
     return &myParsingRNG;
+}
+
+
+const SUMOVTypeParameter*
+MSRouteHandler::getVTypeParameter(const std::string& refid) {
+    const auto t = MSNet::getInstance()->getVehicleControl().getVType(refid);
+    return t != nullptr ? &t->getParameter() : nullptr;
 }
 
 

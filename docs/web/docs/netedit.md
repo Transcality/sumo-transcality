@@ -35,13 +35,17 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 ### Input
 | Option | Description |
 |--------|-------------|
+| **--netecfg-file** {{DT_FILE}} | Load netedit config |
 | **--sumocfg-file** {{DT_FILE}} | Load sumo config |
+| **--netccfg-file** {{DT_FILE}} | Load netconvert config |
 | **-a** {{DT_FILE}}<br> **--additional-files** {{DT_FILE}} | Load additional and shapes descriptions from FILE(s) |
 | **-r** {{DT_FILE}}<br> **--route-files** {{DT_FILE}} | Load demand elements descriptions from FILE(s) |
 | **-d** {{DT_FILE}}<br> **--data-files** {{DT_FILE}} | Load data elements descriptions from FILE(s) |
 | **-m** {{DT_FILE}}<br> **--meandata-files** {{DT_FILE}} | Load meanData descriptions from FILE(s) |
 | **--ignore-missing-inputs** {{DT_BOOL}} | Reset path values (additional, route, data...) after loading netedit config; *default:* **false** |
+| **--autosave-netconvert-file** {{DT_BOOL}} | If enabled, automatically save a netconvert configuration after saving a netedit config; *default:* **false** |
 | **--selection-file** {{DT_FILE}} | Load element selection |
+| **--test-file** {{DT_FILE}} | Test file |
 | **-s** {{DT_FILE}}<br> **--sumo-net-file** {{DT_FILE}} | Read SUMO-net from FILE |
 | **-n** {{DT_FILE}}<br> **--node-files** {{DT_FILE}} | Read XML-node defs from FILE |
 | **-e** {{DT_FILE}}<br> **--edge-files** {{DT_FILE}} | Read XML-edge defs from FILE |
@@ -63,26 +67,36 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 ### Output
 | Option | Description |
 |--------|-------------|
-| **--tls-file** {{DT_STR}} | File in which TLS Programs must be saved |
-| **--edgetypes-file** {{DT_STR}} | File in which edgeTypes must be saved |
+| **--tls-file** {{DT_FILE}} | File in which TLS Programs must be saved |
+| **--edgetypes-file** {{DT_FILE}} | File in which edgeTypes must be saved |
 | **--write-license** {{DT_BOOL}} | Include license info into every output file; *default:* **false** |
+| **--write-metadata** {{DT_BOOL}} | Write parsable metadata (configuration etc.) instead of comments; *default:* **false** |
 | **--output-prefix** {{DT_STR}} | Prefix which is applied to all output files. The special string 'TIME' is replaced by the current time. |
+| **--output-suffix** {{DT_STR}} | Suffix which is applied to all output files. The special string 'TIME' is replaced by the current time. |
 | **--precision** {{DT_INT}} | Defines the number of digits after the comma for floating point output; *default:* **2** |
 | **--precision.geo** {{DT_INT}} | Defines the number of digits after the comma for lon,lat output; *default:* **6** |
+| **--output.compression** {{DT_STR}} | Defines the standard compression algorithm (currently only for parquet output) |
+| **--output.format** {{DT_STR}} | Defines the standard output format if not derivable from the file name ('xml', 'csv', 'parquet'); *default:* **xml** |
+| **--output.column-header** {{DT_STR}} | How to derive column headers from attribute names ('none', 'tag', 'auto', 'plain', 'full'); *default:* **auto** |
+| **--output.column-separator** {{DT_STR}} | Separator in CSV output; *default:* **;** |
 | **-H** {{DT_BOOL}}<br> **--human-readable-time** {{DT_BOOL}} | Write time values as hour:minute:second or day:hour:minute:second rather than seconds; *default:* **false** |
 | **-o** {{DT_FILE}}<br> **--output-file** {{DT_FILE}} | The generated net will be written to FILE |
 | **-p** {{DT_FILE}}<br> **--plain-output-prefix** {{DT_FILE}} | Prefix of files to write plain xml nodes, edges and connections to |
 | **--plain-output.lanes** {{DT_BOOL}} | Write all lanes and their attributes even when they are not customized; *default:* **false** |
 | **--junctions.join-output** {{DT_FILE}} | Writes information about joined junctions to FILE (can be loaded as additional node-file to reproduce joins |
-| **--prefix** {{DT_STR}} | Defines a prefix for edge and junction names |
+| **--prefix** {{DT_STR}} | Defines a prefix for edge and junction IDs |
+| **--prefix.junction** {{DT_STR}} | Defines a prefix for junction IDs |
+| **--prefix.edge** {{DT_STR}} | Defines a prefix for edge IDs |
 | **--amitran-output** {{DT_FILE}} | The generated net will be written to FILE using Amitran format |
 | **--matsim-output** {{DT_FILE}} | The generated net will be written to FILE using MATSim format |
 | **--opendrive-output** {{DT_FILE}} | The generated net will be written to FILE using OpenDRIVE format |
 | **--dlr-navteq-output** {{DT_FILE}} | The generated net will be written to dlr-navteq files with the given PREFIX |
 | **--dlr-navteq.version** {{DT_STR}} | The dlr-navteq output format version to write; *default:* **6.5** |
 | **--dlr-navteq.precision** {{DT_INT}} | The network coordinates are written with the specified level of output precision; *default:* **2** |
+| **--dlr-navteq.plain** {{DT_BOOL}} | Write extra attributes into plain output; *default:* **false** |
 | **--output.street-names** {{DT_BOOL}} | Street names will be included in the output (if available); *default:* **false** |
 | **--output.original-names** {{DT_BOOL}} | Writes original names, if given, as parameter; *default:* **false** |
+| **--output.removed-nodes** {{DT_BOOL}} | Writes IDs of nodes remove with --geometry.remove into edge param; *default:* **false** |
 | **--street-sign-output** {{DT_FILE}} | Writes street signs as POIs to FILE |
 | **--ptstop-output** {{DT_FILE}} | Writes public transport stops to FILE |
 | **--ptline-output** {{DT_FILE}} | Writes public transport lines to FILE |
@@ -120,6 +134,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--numerical-ids.node-start** {{DT_INT}} | Remaps IDs of nodes to integers starting at INT; *default:* **2147483647** |
 | **--numerical-ids.edge-start** {{DT_INT}} | Remaps IDs of edges to integers starting at INT; *default:* **2147483647** |
 | **--reserved-ids** {{DT_FILE}} | Ensures that generated ids do not included any of the typed IDs from FILE (sumo-gui selection file format) |
+| **--kept-ids** {{DT_FILE}} | Ensures that objects with typed IDs from FILE (sumo-gui selection file format) are not renamed |
 | **--dismiss-vclasses** {{DT_BOOL}} | Removes vehicle class restrictions from imported edges; *default:* **false** |
 | **--geometry.split** {{DT_BOOL}} | Splits edges across geometry nodes; *default:* **false** |
 | **-R** {{DT_BOOL}}<br> **--geometry.remove** {{DT_BOOL}} | Replace nodes which only define edge geometry by geometry points (joins edges); *default:* **false** |
@@ -136,7 +151,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--geometry.min-radius** {{DT_FLOAT}} | Warn about edge geometries with a turning radius less than METERS at the start or end; *default:* **9** |
 | **--geometry.min-radius.fix** {{DT_BOOL}} | Straighten edge geometries to avoid turning radii less than geometry.min-radius; *default:* **false** |
 | **--geometry.min-radius.fix.railways** {{DT_BOOL}} | Straighten edge geometries to avoid turning radii less than geometry.min-radius (only railways); *default:* **true** |
-| **--geometry.junction-mismatch-threshold** {{DT_FLOAT}} | Warn if the junction shape is to far away from the original node position; *default:* **20** |
+| **--geometry.junction-mismatch-threshold** {{DT_FLOAT}} | Warn if the junction shape is too far away from the original node position; *default:* **20** |
 | **--geometry.check-overlap** {{DT_FLOAT}} | Warn if edges overlap by more than the given threshold value; *default:* **0** |
 | **--geometry.check-overlap.vertical-threshold** {{DT_FLOAT}} | Ignore overlapping edges if they are separated vertically by the given threshold.; *default:* **4** |
 | **--geometry.avoid-overlap** {{DT_BOOL}} | Modify edge geometries to avoid overlap at junctions; *default:* **true** |
@@ -183,6 +198,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--default.disallow** {{DT_STR}} | The default for disallowed vehicle classes |
 | **--default.junctions.keep-clear** {{DT_BOOL}} | Whether junctions should be kept clear by default; *default:* **true** |
 | **--default.junctions.radius** {{DT_FLOAT}} | The default turning radius of intersections; *default:* **4** |
+| **-j** {{DT_STR}}<br> **--default.junctions.type** {{DT_STR}} | [traffic_light,priority,right_before_left,left_before_right,traffic_light_right_on_red,priority_stop,allway_stop,...] Determines default junction type (see docs/Networks/PlainXML#node_types) |
 | **--default.connection-length** {{DT_FLOAT}} | The default length when overriding connection lengths; *default:* **-1** |
 | **--default.connection.cont-pos** {{DT_FLOAT}} | Whether/where connections should have an internal junction; *default:* **-1** |
 | **--default.right-of-way** {{DT_STR}} | The default algorithm for computing right of way rules ('default', 'edgePriority'); *default:* **default** |
@@ -281,14 +297,16 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--no-turnarounds.tls** {{DT_BOOL}} | Disables building turnarounds at tls-controlled junctions; *default:* **false** |
 | **--no-turnarounds.geometry** {{DT_BOOL}} | Disables building turnarounds at geometry-like junctions; *default:* **true** |
 | **--no-turnarounds.except-deadend** {{DT_BOOL}} | Disables building turnarounds except at dead end junctions; *default:* **false** |
-| **--no-turnarounds.except-turnlane** {{DT_BOOL}} | Disables building turnarounds except at at junctions with a dedicated turning lane; *default:* **false** |
+| **--no-turnarounds.except-turnlane** {{DT_BOOL}} | Disables building turnarounds except at junctions with a dedicated turning lane; *default:* **false** |
 | **--no-turnarounds.fringe** {{DT_BOOL}} | Disables building turnarounds at fringe junctions; *default:* **false** |
 | **--no-left-connections** {{DT_BOOL}} | Disables building connections to left; *default:* **false** |
 | **--junctions.join** {{DT_BOOL}} | Joins junctions that are close to each other (recommended for OSM import); *default:* **false** |
 | **--junctions.join-dist** {{DT_FLOAT}} | Determines the maximal distance for joining junctions (defaults to 10); *default:* **10** |
-| **--junctions.join.parallel-threshold** {{DT_FLOAT}} | The angular threshold in degress for rejection of parallel edges when joining junctions; *default:* **30** |
+| **--junctions.join.parallel-threshold** {{DT_FLOAT}} | The angular threshold in degrees for rejection of parallel edges when joining junctions; *default:* **30** |
 | **--junctions.join-exclude** {{DT_STR_LIST}} | Interprets STR[] as list of junctions to exclude from joining |
-| **--junctions.join-same** {{DT_BOOL}} | Joins junctions that have the same coordinates even if not connected; *default:* **false** |
+| **--junctions.join-same** {{DT_FLOAT}} | Joins junctions that have similar coordinates even if not connected; *default:* **-1** |
+| **--junctions.join-reset** {{DT_BOOL}} | Reset connections for joined junctions; *default:* **false** |
+| **--junctions.attach-removed** {{DT_FLOAT}} | Attach junction to the closest edge within FLOAT distance that has it's id in param removedNodeIDs (for joining networks); *default:* **-1** |
 | **--max-join-ids** {{DT_INT}} | Abbreviate junction or TLS id if it joins more than INT junctions; *default:* **4** |
 | **--junctions.corner-detail** {{DT_INT}} | Generate INT intermediate points to smooth out intersection corners; *default:* **5** |
 | **--junctions.internal-link-detail** {{DT_INT}} | Generate INT intermediate points to smooth out lanes within the intersection; *default:* **5** |
@@ -343,9 +361,11 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--railway.topology.all-bidi** {{DT_BOOL}} | Make all rails usable in both direction; *default:* **false** |
 | **--railway.topology.all-bidi.input-file** {{DT_FILE}} | Make all rails edge ids from FILE usable in both direction |
 | **--railway.topology.direction-priority** {{DT_BOOL}} | Set edge priority values based on estimated main direction; *default:* **false** |
+| **--railway.topology.ptline-priority** {{DT_STR_LIST}} | Set edge priority values based on public transport lines for the given list of vClasses |
 | **--railway.topology.extend-priority** {{DT_BOOL}} | Extend loaded edge priority values based on estimated main direction; *default:* **false** |
 | **--railway.geometry.straighten** {{DT_BOOL}} | Move junctions to straighten a sequence of rail edges; *default:* **false** |
 | **--railway.signal.guess.by-stops** {{DT_BOOL}} | Guess signals that guard public transport stops; *default:* **false** |
+| **--railway.signal.guess.by-stops.split** {{DT_BOOL}} | Split edges to improve positioning of guessed signals and prevent switches as rail_signals; *default:* **false** |
 | **--railway.signal.permit-unsignalized** {{DT_STR_LIST}} | List rail classes that may run without rail signals; *default:* **tram,cable_car** |
 | **--railway.access-distance** {{DT_FLOAT}} | The search radius for finding suitable road accesses for rail stops; *default:* **150** |
 | **--railway.max-accesses** {{DT_INT}} | The maximum road accesses registered per rail stops; *default:* **5** |
@@ -429,7 +449,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--ignore.additionalelements** {{DT_BOOL}} | Ignore additional elements during loading of sumo-configs; *default:* **false** |
 | **--ignore.routeelements** {{DT_BOOL}} | Ignore route elements during loading of sumo-configs; *default:* **false** |
 | **--e2.friendlyPos.automatic** {{DT_BOOL}} | If the lane is shorter than the additional, automatically enable friendlyPos; *default:* **true** |
-| **--force-saving** {{DT_BOOL}} | If enabled, elements will be saved regardless of whether they have been edited or not; *default:* **false** |
+| **--force-saving** {{DT_BOOL}} | If enabled, loaded elements will be saved regardless of whether they have been edited or not (usually used in netedit test); *default:* **false** |
 | **--node-prefix** {{DT_STR}} | Prefix for node naming; *default:* **J** |
 | **--edge-prefix** {{DT_STR}} | Prefix for edge naming; *default:* **E** |
 | **--edge-infix** {{DT_STR}} | Enable edge-infix (<fromNodeID><infix><toNodeID>) |
@@ -467,12 +487,12 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--meanDataEdge-prefix** {{DT_STR}} | Prefix for meanDataEdge naming; *default:* **ed** |
 | **--meanDataLane-prefix** {{DT_STR}} | Prefix for meanDataLane naming; *default:* **ld** |
 
-### Visualisation
+### Visualization
 | Option | Description |
 |--------|-------------|
 | **--disable-laneIcons** {{DT_BOOL}} | Disable icons of special lanes; *default:* **false** |
 | **-T** {{DT_BOOL}}<br> **--disable-textures** {{DT_BOOL}} | Disable textures; *default:* **false** |
-| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualisation settings from FILE |
+| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualization settings from FILE |
 | **--registry-viewport** {{DT_BOOL}} | Load current viewport from registry; *default:* **false** |
 | **--window-size** {{DT_STR_LIST}} | Create initial window with the given x,y size |
 | **--window-pos** {{DT_STR_LIST}} | Create initial window at the given x,y position |
@@ -480,6 +500,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--gui-testing-debug** {{DT_BOOL}} | Enable output messages during GUI-Testing; *default:* **false** |
 | **--gui-testing-debug-gl** {{DT_BOOL}} | Enable output messages during GUI-Testing specific of gl functions; *default:* **false** |
 | **--gui-testing.setting-output** {{DT_FILE}} | Save gui settings in the given settings-output file |
+| **-Q** {{DT_BOOL}}<br> **--quit-on-fail** {{DT_BOOL}} | Quit the app if the initial net/config loading fails; *default:* **false** |
 
 ### Time
 | Option | Description |
@@ -515,4 +536,3 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 |--------|-------------|
 | **--random** {{DT_BOOL}} | Initialises the random number generator with the current system time; *default:* **false** |
 | **--seed** {{DT_INT}} | Initialises the random number generator with the given value; *default:* **23423** |
-

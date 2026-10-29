@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -59,7 +59,7 @@ GNEChange_Lane::GNEChange_Lane(GNEEdge* edge, GNELane* lane, const NBEdge::Lane&
 
 GNEChange_Lane::~GNEChange_Lane() {
     // only continue we have undo-redo mode enabled
-    if (myEdge->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
+    if (myEdge->getNet()->getGNEApplicationWindow()->isUndoRedoAllowed()) {
         myEdge->decRef("GNEChange_Lane");
         if (myEdge->unreferenced()) {
             delete myEdge;
@@ -93,7 +93,7 @@ GNEChange_Lane::undo() {
         myEdge->addLane(myLane, myLaneAttrs, false);
     }
     // enable save networkElements
-    myEdge->getNet()->getSavingStatus()->requireSaveNetwork();
+    myEdge->getNet()->requireRecompute();
 }
 
 
@@ -115,7 +115,7 @@ GNEChange_Lane::redo() {
         myEdge->removeLane(myLane, myRecomputeConnections);
     }
     // enable save networkElements
-    myEdge->getNet()->getSavingStatus()->requireSaveNetwork();
+    myEdge->getNet()->requireRecompute();
 }
 
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -214,7 +214,7 @@ public:
 
     void initDevices();
 
-    /// @brief checks wether the vehicle can depart on the first edge
+    /// @brief checks whether the vehicle can depart on the first edge
     bool hasValidRouteStart(std::string& msg);
 
     /// @name insertion/removal
@@ -235,7 +235,7 @@ public:
     /// @name interaction with the route
     //@{
 
-    /** @brief Returns whether this vehicle has already arived
+    /** @brief Returns whether this vehicle has already arrived
      * (reached the arrivalPosition on its final edge)
      */
     bool hasArrived() const;
@@ -736,6 +736,10 @@ public:
         return myAngle;
     }
 
+    /** @brief Returns the vehicle's current curve radius in m
+     */
+    double getCurveRadius() const;
+
 
     /** @brief Returns the vehicle's direction in radians
      * @return The vehicle's current angle
@@ -1001,6 +1005,9 @@ public:
 
     /// @brief Returns the remaining stop duration for a stopped vehicle or 0
     SUMOTime remainingStopDuration() const;
+
+    /// @brief whether instant stopping is permitted
+    bool instantStopping() const;
 
     /** @brief Returns whether the vehicle will stop on the current edge
      */
@@ -1427,6 +1434,10 @@ public:
          */
         void setSpeedTimeLine(const std::vector<std::pair<SUMOTime, double> >& speedTimeLine);
 
+        bool hasSpeedTimeLine(SUMOTime t) const {
+            return !mySpeedTimeLine.empty() && mySpeedTimeLine.front().first >= t;
+        }
+
         /** @brief Activates the gap control with the given parameters, @see GapControlState
          */
         void activateGapController(double originalTau, double newTimeHeadway, double newSpaceHeadway, double duration, double changeRate, double maxDecel, MSVehicle* refVeh = nullptr);
@@ -1538,6 +1549,11 @@ public:
         bool considerSpeedLimit() const {
             // backward compatibility (when we ignore safe velocity we implicitly ignore speed limits as well)
             return myConsiderSpeedLimit && myConsiderSafeVelocity;
+        }
+
+        /// @brief Returns whether safe velocities shall be considered
+        bool considerMaxDeceleration() const {
+            return myConsiderMaxDeceleration;
         }
 
         /** @brief Sets speed-constraining behaviors
@@ -1716,7 +1732,7 @@ public:
      * @param[in] type The new vehicle type
      * @see MSBaseVehicle::replaceVehicleType
      */
-    void replaceVehicleType(MSVehicleType* type);
+    void replaceVehicleType(const MSVehicleType* type);
 
     /// @brief get distance for coming to a stop (used for rerouting checks)
     double getBrakeGap(bool delayed = false) const;
@@ -1860,6 +1876,9 @@ protected:
      */
     double getDistanceToLeaveJunction() const;
 
+    /// @brief get the change in angle from the last simulation step
+    double getAngleDiff() const;
+
 protected:
 
     /// @brief The time the vehicle waits (is not faster than 0.1m/s) in seconds
@@ -1933,9 +1952,16 @@ protected:
 
     /// @brief the angle in radians (@todo consider moving this into myState)
     double myAngle;
+    /// @brief the angle in radians before lane changing
+    double myRawAngle;
+    /// @brief the angle in radians from the previous simulation step (for computing curve radius)
+    double myLastAngle;
 
     /// @brief distance to the next stop or doubleMax if there is none
     double myStopDist;
+
+    /// @brief the speed that is needed for a scheduled stop or waypoint
+    double myStopSpeed;
 
     /// @brief amount of time for which the vehicle is immune from collisions
     SUMOTime myCollisionImmunity;
@@ -2030,7 +2056,7 @@ protected:
     DriveItemVector::iterator myNextDriveItem;
 
     /// @todo: documentation
-    void planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVector& lfLinks, double& myStopDist, std::pair<double, const MSLink*>& myNextTurn) const;
+    void planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVector& lfLinks, double& myStopDist, double& newStopSpeed, std::pair<double, const MSLink*>& myNextTurn) const;
 
     /// @brief runs heuristic for keeping the intersection clear in case of downstream jamming
     void checkRewindLinkLanes(const double lengthsInFront, DriveItemVector& lfLinks) const;
@@ -2051,7 +2077,7 @@ protected:
                        DriveProcessItem* const lastLink,
                        double& v, double& vLinkPass) const;
 
-    /// @brief handle with transitions
+    /// @brief handle width transitions
     bool brakeForOverlap(const MSLink* link, const MSLane* lane) const;
 
 public:

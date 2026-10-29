@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -110,6 +110,17 @@ public:
     double interactionGap(const MSVehicle* const, double vL) const;
 
 
+    /** @brief Returns the maximum velocity the CF-model wants to achieve in the next step
+     * @param[in] maxSpeed The maximum achievable speed in the next step
+     * @param[in] maxSpeedLane The maximum speed the vehicle wants to drive on this lane (Speedlimit*SpeedFactor)
+     */
+    double maximumLaneSpeedCF(const MSVehicle* const veh, double maxSpeed, double maxSpeedLane) const {
+        double result = MIN2(maxSpeed, maxSpeedLane);
+        if (myApplyDriverstate) {
+            applyOwnSpeedPerceptionError(veh, result);
+        }
+        return result;
+    }
     /** @brief Returns the model's name
     * @return The model's name
     * @see MSCFModel::getModelName
@@ -143,6 +154,16 @@ private:
         /// @brief The vehicle's ACC control mode. 0 for speed control and 1 for gap control
         int ACC_ControlMode;
         SUMOTime lastUpdateTime;
+
+        /** @brief Saves the vehicle variables
+         * @param[in] out The OutputDevice to write the information into
+         */
+        void saveState(OutputDevice& out, const MSCFModel& cfm) const;
+
+        /** @brief Loads the state of the vehicle variables from the given description
+         * @param[in] attrs XML attributes describing the current state
+         */
+        void loadState(const SUMOSAXAttributes& attrs);
     };
 
 
@@ -162,6 +183,7 @@ private:
     double myGapControlGainSpace;
     double myCollisionAvoidanceGainSpeed;
     double myCollisionAvoidanceGainSpace;
+    double myApplyDriverstate;
     double myEmergencyThreshold;
 
 private:

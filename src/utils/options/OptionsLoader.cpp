@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -29,6 +29,7 @@
 #include <xercesc/sax/SAXParseException.hpp>
 #include <xercesc/sax/SAXException.hpp>
 #include <utils/common/StringUtils.h>
+#include <utils/xml/XMLSubSys.h>
 #include <utils/common/StringTokenizer.h>
 #include <utils/common/UtilExceptions.h>
 #include <utils/common/FileHelpers.h>
@@ -54,15 +55,25 @@ OptionsLoader::~OptionsLoader() {}
 
 
 void OptionsLoader::startElement(const XMLCh* const name, XERCES_CPP_NAMESPACE::AttributeList& attributes) {
-    myItem = StringUtils::transcode(name);
+    myFoundValue = false;
+    myItem = XMLSubSys::transcode(name);
     if (!myRootOnly) {
         for (int i = 0; i < (int)attributes.getLength(); i++) {
-            const std::string& key = StringUtils::transcode(attributes.getName(i));
-            const std::string& value = StringUtils::transcode(attributes.getValue(i));
+            const std::string& key = XMLSubSys::transcode(attributes.getName(i));
+            const std::string& value = XMLSubSys::transcode(attributes.getValue(i));
             if (key == "value" || key == "v") {
                 setValue(myItem, value);
+                myFoundValue = true;
+            } else if (key != "xmlns:xsi"
+                       && key != "xsi:noNamespaceSchemaLocation"
+                       && key != "synonymes"
+                       && key != "deprecated"
+                       && key != "type"
+                       && key != "help"
+                       // parsing a network file as single argument
+                       && (key != "version" && myItem != "net")) {
+                WRITE_WARNINGF(TL("Ignoring attribute '%' for option '%'"), key, myItem);
             }
-            // could give a hint here about unsupported attributes in configuration files
         }
         myValue = "";
     }
@@ -86,7 +97,7 @@ void OptionsLoader::setValue(const std::string& key, const std::string& value) {
 
 
 void OptionsLoader::characters(const XMLCh* const chars, const XERCES3_SIZE_t length) {
-    myValue = myValue + StringUtils::transcode(chars, (int) length);
+    myValue = myValue + XMLSubSys::transcode(chars, (int) length);
 }
 
 
@@ -103,6 +114,9 @@ OptionsLoader::setSecure(OptionsCont& options, const std::string& name, const st
 void
 OptionsLoader::endElement(const XMLCh* const /*name*/) {
     if (myItem.length() == 0 || myValue.length() == 0) {
+        if (!myFoundValue) {
+            WRITE_ERRORF(TL("Could not set option '%' because attribute 'value' is missing."), myItem);
+        }
         return;
     }
     if (myValue.find_first_not_of("\n\t \a") == std::string::npos) {
@@ -116,7 +130,7 @@ OptionsLoader::endElement(const XMLCh* const /*name*/) {
 
 void
 OptionsLoader::warning(const XERCES_CPP_NAMESPACE::SAXParseException& exception) {
-    WRITE_WARNING(StringUtils::transcode(exception.getMessage()));
+    WRITE_WARNING(XMLSubSys::transcode(exception.getMessage()));
     WRITE_WARNING(" (At line/column " \
                   + toString(exception.getLineNumber() + 1) + '/' \
                   + toString(exception.getColumnNumber()) + ").");
@@ -126,7 +140,7 @@ OptionsLoader::warning(const XERCES_CPP_NAMESPACE::SAXParseException& exception)
 
 void
 OptionsLoader::error(const XERCES_CPP_NAMESPACE::SAXParseException& exception) {
-    WRITE_ERROR(StringUtils::transcode(exception.getMessage()));
+    WRITE_ERROR(XMLSubSys::transcode(exception.getMessage()));
     WRITE_ERROR(" (At line/column "
                 + toString(exception.getLineNumber() + 1) + '/'
                 + toString(exception.getColumnNumber()) + ").");
@@ -136,7 +150,7 @@ OptionsLoader::error(const XERCES_CPP_NAMESPACE::SAXParseException& exception) {
 
 void
 OptionsLoader::fatalError(const XERCES_CPP_NAMESPACE::SAXParseException& exception) {
-    WRITE_ERROR(StringUtils::transcode(exception.getMessage()));
+    WRITE_ERROR(XMLSubSys::transcode(exception.getMessage()));
     WRITE_ERROR(" (At line/column "
                 + toString(exception.getLineNumber() + 1) + '/'
                 + toString(exception.getColumnNumber()) + ").");

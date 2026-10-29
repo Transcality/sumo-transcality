@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -131,6 +131,7 @@ public:
     typedef std::map<std::string, bool> StoppingPlaceParamSwitchMap_t;
     typedef std::map<MSStoppingPlace*, StoppingPlaceParamMap_t, ComparatorIdLess> StoppingPlaceMap_t;
     typedef std::pair<MSStoppingPlace*, bool> StoppingPlaceVisible;
+    typedef std::map<const MSEdge*, RouterProhibition> Prohibitions;
 
     ///@brief Constructor
     MSStoppingPlaceRerouter(std::string paramPrefix = "", bool checkValidity = false, StoppingPlaceParamMap_t addEvalParams = {}, StoppingPlaceParamSwitchMap_t addInvertParams = {});
@@ -152,8 +153,8 @@ public:
      * @return the best stopping place according to the target function or nullptr
      */
     MSStoppingPlace* rerouteStoppingPlace(MSStoppingPlace* destStoppingPlace, const std::vector<StoppingPlaceVisible>& stoppingPlaceCandidates, const std::vector<double>& probs, SUMOVehicle& veh,
-                             bool& newDestination, ConstMSEdgeVector& newRoute, StoppingPlaceParamMap_t& scores, const MSEdgeVector& closedEdges = {},
-                             const int insertStopIndex = 0, const bool keepCurrentStop = true);
+                                          bool& newDestination, ConstMSEdgeVector& newRoute, StoppingPlaceParamMap_t& scores, const Prohibitions& closedEdges = {},
+                                          const int insertStopIndex = 0, const bool keepCurrentStop = true);
     /** @brief compute the target function for a single alternative
      *
      * @param[in] veh the concerned vehicle
@@ -212,13 +213,13 @@ public:
     virtual bool useStoppingPlace(MSStoppingPlace* stoppingPlace);
 
     /// @brief Provide the router to use (MSNet::getRouterTT or MSRoutingEngine)
-    virtual SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouter(SUMOVehicle& veh, const MSEdgeVector& prohibited = {});
+    virtual SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouter(SUMOVehicle& veh, const Prohibitions& prohibited = {});
 
     /// @brief Return the number of occupied places of the StoppingPlace
-    virtual double getStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace) = 0;
+    virtual double getStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace, const SUMOVehicle* veh) = 0;
 
     /// @brief Return the number of occupied places of the StoppingPlace from the previous time step
-    virtual double getLastStepStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace) = 0;
+    virtual double getLastStepStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace, const SUMOVehicle* veh) = 0;
 
     /// @brief Return the number of places the StoppingPlace provides
     virtual double getStoppingPlaceCapacity(MSStoppingPlace* stoppingPlace) = 0;

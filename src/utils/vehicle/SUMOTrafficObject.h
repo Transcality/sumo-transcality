@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -86,6 +86,8 @@ public:
     //  (especially fast comparison in maps which need vehicles as keys)
     virtual NumericalID getNumericalID() const = 0;
 
+    /// @brief return an object-specific random constant
+    virtual long long int getRandomSeed() const = 0;
 
     /** @brief Returns the object's "vehicle" type
      * @return The vehicle's type
@@ -105,7 +107,7 @@ public:
     * @param[in] type The new vehicle type
     * @see MSTransportable::myVType
     */
-    virtual void replaceVehicleType(MSVehicleType* type) = 0;
+    virtual void replaceVehicleType(const MSVehicleType* type) = 0;
 
 
     /** @brief Returns the vehicle's parameter (including departure definition)
@@ -127,11 +129,17 @@ public:
      */
     virtual bool isStopped() const = 0;
 
-    /** @brief Returns the edge the object is currently at
+    /** @brief Returns the (normal) route edge the object is currently at
      *
      * @return The current edge in the object's route
      */
     virtual const MSEdge* getEdge() const = 0;
+
+    /** @brief Returns the edge (normal or internal) the object is currently at
+     *
+     * @return The edge which the object is currently on
+     */
+    virtual const MSEdge* getCurrentEdge() const = 0;
 
     /// @brief returns the next edge (possibly an internal edge)
     virtual const MSEdge* getNextEdgePtr() const = 0;
@@ -183,7 +191,13 @@ public:
         return false;
     };
 
+    /// @brief return routing mode (configures router choice but also handling of transient permission changes)
     virtual int getRoutingMode() const = 0;
+
+    /** @brief Sets routing behavior
+     * @param[in] value an enum value controlling the different modes
+     */
+    virtual void setRoutingMode(int value) = 0;
 
     /** @brief Returns the object's maximum speed (minimum of technical and desired maximum speed)
      * @return The object's maximum speed
@@ -281,4 +295,7 @@ public:
      */
     SUMOTime getTimeParam(const std::string& paramName, const bool required = false, const SUMOTime deflt = SUMOTime_MIN) const;
     /// @}
+
+    /// @brief return description for suitable for warnings and messages
+    std::string getCategory() const;
 };

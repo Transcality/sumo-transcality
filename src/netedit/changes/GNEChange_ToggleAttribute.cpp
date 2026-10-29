@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -48,7 +48,7 @@ GNEChange_ToggleAttribute::GNEChange_ToggleAttribute(GNEAttributeCarrier* ac, co
 
 GNEChange_ToggleAttribute::~GNEChange_ToggleAttribute() {
     // only continue we have undo-redo mode enabled
-    if (myAC->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
+    if (myAC->getNet()->getGNEApplicationWindow()->isUndoRedoAllowed()) {
         // decrease reference
         myAC->decRef("GNEChange_ToggleAttribute " + myAC->getTagProperty()->getTagStr());
         // remove if is unreferenced
@@ -66,7 +66,9 @@ GNEChange_ToggleAttribute::undo() {
     myAC->toggleAttribute(myKey, myOrigValue);
     // check if networkElements, additional or shapes has to be saved
     if (myAC->getTagProperty()->isNetworkElement()) {
-        myAC->getNet()->getSavingStatus()->requireSaveNetwork();
+        myAC->getNet()->requireRecompute();
+        // any attribute change could impact junction logic and thus requires recompute
+        myAC->getNet()->requireRecompute();
     } else if (myAC->getTagProperty()->isAdditionalElement()) {
         myAC->getNet()->getSavingStatus()->requireSaveAdditionals();
     } else if (myAC->getTagProperty()->isDemandElement()) {
@@ -85,7 +87,9 @@ GNEChange_ToggleAttribute::redo() {
     myAC->toggleAttribute(myKey, myNewValue);
     // check if networkElements, additional or shapes has to be saved
     if (myAC->getTagProperty()->isNetworkElement()) {
-        myAC->getNet()->getSavingStatus()->requireSaveNetwork();
+        myAC->getNet()->requireRecompute();
+        // any attribute change could impact junction logic and thus requires recompute
+        myAC->getNet()->requireRecompute();
     } else if (myAC->getTagProperty()->isAdditionalElement()) {
         myAC->getNet()->getSavingStatus()->requireSaveAdditionals();
     } else if (myAC->getTagProperty()->isDemandElement()) {

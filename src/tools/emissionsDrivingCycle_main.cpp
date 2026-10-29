@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -59,7 +59,7 @@ int
 main(int argc, char** argv) {
     OptionsCont& oc = OptionsCont::getOptions();
     oc.setApplicationDescription(TL("Computes emissions by driving a time line using SUMO's emission models."));
-    oc.setApplicationName("emissionsDrivingCycle", "Eclipse SUMO emissionsDrivingCycle Version " VERSION_STRING);
+    oc.setApplicationName("emissionsDrivingCycle", "Eclipse SUMO emissionsDrivingCycle " VERSION_STRING);
 
     // add options
     SystemFrame::addConfigurationOptions(oc);
@@ -135,7 +135,7 @@ main(int argc, char** argv) {
     oc.addDescription("phemlight-path", "Emissions", TL("Determines where to load PHEMlight definitions from"));
 
     oc.doRegister("phemlight-year", new Option_Integer(0));
-    oc.addDescription("phemlight-year", "Emissions", TL("Enable fleet age modelling with the given reference year in PHEMlight5"));
+    oc.addDescription("phemlight-year", "Emissions", TL("Enable fleet age modeling with the given reference year in PHEMlight5"));
 
     oc.doRegister("phemlight-temperature", new Option_Float(INVALID_DOUBLE));
     oc.addDescription("phemlight-temperature", "Emissions", TL("Set ambient temperature to correct NOx emissions in PHEMlight5"));
@@ -170,9 +170,11 @@ main(int argc, char** argv) {
         if (!oc.isSet("output-file") && (oc.isSet("timeline-file") || !oc.isSet("emission-output"))) {
             throw ProcessError(TL("The output file must be given."));
         }
+        std::unique_ptr<std::ostream> outOwner;
         std::ostream* out = nullptr;
         if (oc.isSet("output-file")) {
-            out = new std::ofstream(oc.getString("output-file").c_str());
+            outOwner.reset(new std::ofstream(oc.getString("output-file").c_str()));
+            out = outOwner.get();
         }
         long long int attributes = 0;
         if (oc.isSet("output.attributes")) {
@@ -199,9 +201,9 @@ main(int argc, char** argv) {
         } else if (out == nullptr) {
             out = &std::cout;
         }
-        std::ostream* sumOut = nullptr;
+        std::unique_ptr<std::ostream> sumOut(nullptr);
         if (oc.isSet("sum-output")) {
-            sumOut = new std::ofstream(oc.getString("sum-output").c_str());
+            sumOut.reset(new std::ofstream(oc.getString("sum-output").c_str()));
             (*sumOut) << "Vehicle,Cycle,Time,Speed,Gradient,Acceleration,FC,FCel,CO2,NOx,CO,HC,PM" << std::endl;
         }
 
@@ -234,6 +236,9 @@ main(int argc, char** argv) {
             energyParams = std::unique_ptr<EnergyParams>(new EnergyParams(vTypeIt->second));
         } else {
             energyParams = std::unique_ptr<EnergyParams>(new EnergyParams());
+        }
+        for (auto& vt : vTypes) {
+            delete vt.second;
         }
 
         const bool computeA = oc.getBool("compute-a") || oc.getBool("compute-a.forward");
@@ -302,10 +307,6 @@ main(int argc, char** argv) {
         }
         if (!quiet) {
             handler.writeSums(std::cout, "");
-        }
-        delete sumOut;
-        if (out != &std::cout) {
-            delete out;
         }
     } catch (InvalidArgument& e) {
         MsgHandler::getErrorInstance()->inform(e.what());

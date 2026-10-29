@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,8 +16,12 @@
 # @date    28-05-25
 
 # imports
-from ..imports import *
-from .functions import *
+import time
+from ..enums.viewPositions import positions
+from ..constants import DELAY_UNDOREDO
+from ..general.functions import focusOnFrame
+from ..input.keyboard import typeKey, typeTwoKeys
+from ..input.mouse import leftClickOffset
 
 
 def undo(referencePosition, number, offsetX=0, offsetY=0):
@@ -31,7 +35,7 @@ def undo(referencePosition, number, offsetX=0, offsetY=0):
     # needed to avoid errors with undo/redo (Provisionally)
     typeKey('i')
     # click over referencePosition
-    leftClick(referencePosition, positions.reference, offsetX, offsetY)
+    leftClickOffset(referencePosition, positions.reference, offsetX, offsetY)
     for _ in range(number):
         typeTwoKeys('ctrl', 'z')
         time.sleep(DELAY_UNDOREDO)
@@ -48,7 +52,7 @@ def redo(referencePosition, number, offsetX=0, offsetY=0):
     # needed to avoid errors with undo/redo (Provisionally)
     typeKey('i')
     # click over referencePosition
-    leftClick(referencePosition, positions.reference, offsetX, offsetY)
+    leftClickOffset(referencePosition, positions.reference, offsetX, offsetY)
     for _ in range(number):
         typeTwoKeys('ctrl', 'y')
         time.sleep(DELAY_UNDOREDO)

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -43,7 +43,7 @@
 void
 ROMAFrame::fillOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
-    oc.addCallExample("-c <CONFIGURATION>", "run routing with options from file");
+    oc.addCallExample("-c <CONFIGURATION>", TL("run routing with options from file"));
 
     // insert options sub-topics
     SystemFrame::addConfigurationOptions(oc); // fill this subtopic, too
@@ -243,7 +243,7 @@ ROMAFrame::checkOptions() {
         WRITE_ERRORF(TL("Invalid route choice method '%'."), oc.getString("route-choice-method"));
         return false;
     }
-    if (oc.getInt("paths") > 1 && (oc.getString("routing-algorithm") == "CH" || oc.getString("routing-algorithm") == "CHWrapper")) {
+    if (oc.getInt("paths") > 1 && (oc.getString("routing-algorithm") == "CH" || oc.getString("routing-algorithm") == "CHWrapper" || oc.getString("routing-algorithm") == "CCH")) {
         WRITE_WARNING(TL("Contraction hierarchies do not work with k shortest path search (please use a different routing algorithm)!"));
     }
     return true;

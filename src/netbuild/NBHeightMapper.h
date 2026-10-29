@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -33,6 +33,10 @@ typedef __int16 int16_t;
 #include <utils/geom/PositionVector.h>
 #include <utils/geom/Boundary.h>
 #include <utils/common/UtilExceptions.h>
+
+#ifdef HAVE_GDAL
+#include <ogr_spatialref.h>
+#endif
 
 #define TRIANGLE_RTREE_QUAL RTree<NBHeightMapper::Triangle*, NBHeightMapper::Triangle, float, 2, NBHeightMapper::QueryResult>
 
@@ -124,10 +128,13 @@ public:
 private:
 
     struct RasterData {
-        int16_t* raster;
+        float* raster;
         Boundary boundary;
         int xSize;
         int ySize;
+#ifdef HAVE_GDAL
+        OGRCoordinateTransformation* transform;
+#endif
     };
 
     /// @brief the singleton instance

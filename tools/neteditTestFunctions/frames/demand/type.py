@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,28 +16,28 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
+import time
+from ...enums.attributesEnum import attrs
+from ...constants import DELAY_QUESTION
+from ...general.functions import focusOnFrame
+from ...input.keyboard import typeKey, typeTwoKeys, updateText
 
 
-def openVTypeDialog():
-    """
-    @brief create vType
-    """
-    # focus current frame
-    focusOnFrame()
-    # jump to stop type
-    for _ in range(attrs.type.buttons.dialog):
-        typeKey('tab')
-    # type space
-    typeKey('space')
-    # wait some second to question dialog
-    time.sleep(DELAY_QUESTION)
-
-
-def modifyVTypeDialogAttribute(attributeIndex, value):
+def modifyVTypeDialogAttribute(operation, attributeIndex, value):
     """
     @brief modify VType attribute of type int/float/string
     """
+    # first check if open dialog
+    if (operation == "open"):
+        # focus current frame
+        focusOnFrame()
+        # jump to stop type
+        for _ in range(attrs.type.buttons.dialog):
+            typeKey('tab')
+        # type space
+        typeKey('space')
+        # wait some second to question dialog
+        time.sleep(DELAY_QUESTION)
     # focus dialog
     typeTwoKeys('alt', 'f')
     # jump to attribute
@@ -47,3 +47,7 @@ def modifyVTypeDialogAttribute(attributeIndex, value):
     updateText(value)
     # type Enter to commit change
     typeKey('enter')
+    # finally check if close dialog
+    if (operation == "close"):
+        # close dialog
+        typeTwoKeys("alt", "a")

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -60,6 +60,11 @@ public:
     /// @brief Definition of a node cluster container
     typedef std::vector<NodeSet> NodeClusters;
     typedef std::pair<NBNode*, double> NodeAndDist;
+    struct JoinCluster {
+        std::set<std::string> cluster;
+        NBNode* node;
+        bool resetConnections;
+    };
 
     /// @brief Constructor
     NBNodeCont() {}
@@ -107,7 +112,7 @@ public:
      * @param[in] offset An offset which can be applied in the case positions are blurred
      * @return The node at the given position, or 0 if no such node exists
      */
-    NBNode* retrieve(const Position& position, const double offset = 0.) const;
+    std::vector<NBNode*> retrieveByPos(const Position& position, const double offset = 0.) const;
 
     /// @brief Returns the pointer to the begin of the stored nodes
     std::map<std::string, NBNode*>::const_iterator begin() const {
@@ -122,11 +127,14 @@ public:
 
     /// @name Methods for joining nodes
     /// @{
-    /* @brief add ids of nodes wich shall not be joined
+    /* @brief add ids of nodes which shall not be joined
      * @param[in] ids A list of ids to exclude from joining
      * @note it does not check whether the nodes exist because all nodes may not have been loaded yet
      */
     void addJoinExclusion(const std::vector<std::string>& ids);
+
+    /// @brief if base is an existing node id, find a unused id of the form base + sep + INT
+    std::string createUnusedID(const std::string& base, const std::string& sep);
 
     /** @brief generate id from cluster node ids
      * @param[in] cluster The cluster ids
@@ -151,7 +159,7 @@ public:
     /** @brief add ids of nodes which shall be joined into a single node
      * @param[in] cluster The cluster to add
      */
-    void addCluster2Join(const std::set<std::string>& cluster, NBNode* node);
+    void addCluster2Join(const std::set<std::string>& cluster, NBNode* node, const bool resetConnections = false);
 
     /// @brief Joins loaded junction clusters (see NIXMLNodesHandler)
     int joinLoadedClusters(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc);
@@ -159,8 +167,8 @@ public:
     /// @brief Joins junctions that are very close together
     int joinJunctions(double maxDist, NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc, NBPTStopCont& sc);
 
-    /// @brief Joins junctions with the same coordinates regardless of topology
-    int joinSameJunctions(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc);
+    /// @brief Joins junctions with similar coordinates regardless of topology
+    int joinSameJunctions(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc, double maxDist);
 
     /// @brief return all cluster neighbors for the given node
     static NodeSet getClusterNeighbors(const NBNode* n, double longThreshold, NodeSet& cluster);
@@ -370,7 +378,7 @@ public:
     }
 
     /// @brief remap node IDs according to options --numerical-ids and --reserved-ids
-    int remapIDs(bool numericaIDs, bool reservedIDs, const std::string& prefix, NBTrafficLightLogicCont& tlc);
+    int remapIDs(bool numericaIDs, bool reservedIDs, bool keptIDs, const std::string& prefix, NBTrafficLightLogicCont& tlc);
 
     /// @brief guess and mark fringe nodes
     int guessFringe();
@@ -409,7 +417,7 @@ private:
     /// @brief remove nodes that form a slip lane from cluster
     void pruneSlipLaneNodes(NodeSet& cluster, double maxDist) const;
 
-    /// @brief determine wether the cluster is not too complex for joining
+    /// @brief determine whether the cluster is not too complex for joining
     bool feasibleCluster(const NodeSet& cluster, const std::map<const NBNode*, std::vector<NBNode*> >& ptStopEnds,
                          double maxDist, std::string& reason, NBNode*& tryRemove) const;
 
@@ -422,17 +430,17 @@ private:
 
     /// @name Helper methods for guessing/computing traffic lights
     /// @{
-    /** @brief Returns whethe the given node cluster should be controlled by a tls
+    /** @brief Returns whether the given node cluster should be controlled by a tls
      * @param[in] c The node cluster
      * @param[in] laneSpeedThreshold threshold for determining whether a node or cluster should be tls controlled
      * @return Whether this node cluster shall be controlled by a tls
      */
     bool shouldBeTLSControlled(const NodeSet& c, double laneSpeedThreshold, bool recheck = false) const;
 
-    /// @brief check wheter the set of nodes only contains pedestrian crossings
+    /// @brief check whether the set of nodes only contains pedestrian crossings
     bool onlyCrossings(const NodeSet& c) const;
 
-    /// @brief check wheter the set of nodes contains traffic lights with custom id
+    /// @brief check whether the set of nodes contains traffic lights with custom id
     bool customTLID(const NodeSet& c) const;
     /// @}
 
@@ -452,7 +460,7 @@ private:
     std::set<std::string> myJoinExclusions;
 
     /// @brief loaded sets of node ids to join (cleared after use)
-    std::vector<std::pair<std::set<std::string>, NBNode*> > myClusters2Join;
+    std::vector<JoinCluster> myClusters2Join;
 
     /// @brief sets of node ids which were joined
     std::vector<std::set<std::string> > myJoinedClusters;

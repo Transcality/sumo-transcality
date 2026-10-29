@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -49,7 +49,7 @@ FXMutex MSRoute::myDictMutex(true);
 MSRoute::MSRoute(const std::string& id,
                  const ConstMSEdgeVector& edges,
                  const bool isPermanent, const RGBColor* const c,
-                 const std::vector<SUMOVehicleParameter::Stop>& stops,
+                 const StopParVector& stops,
                  SUMOTime replacedTime,
                  int replacedIndex) :
     Named(id), myEdges(edges), myAmPermanent(isPermanent),
@@ -91,6 +91,13 @@ const MSEdge*
 MSRoute::getLastEdge() const {
     assert(myEdges.size() > 0);
     return myEdges.back();
+}
+
+
+const MSEdge*
+MSRoute::getFirstEdge() const {
+    assert(myEdges.size() > 0);
+    return myEdges.front();
 }
 
 
@@ -222,19 +229,24 @@ MSRoute::writeEdgeIDs(OutputDevice& os, int firstIndex, int lastIndex, bool with
         lastIndex = (int)myEdges.size();
     }
     int internal = 0;
+    // collect the ids first, writing them to the stream one by one is slow
+    std::string ids;
     for (int i = firstIndex; i < lastIndex; i++) {
-        os << myEdges[i]->getID() << ' ';
+        ids += myEdges[i]->getID();
+        ids += ' ';
         if (withInternal && i + 1 < lastIndex) {
             const MSEdge* next = myEdges[i + 1];
             const MSEdge* edge = myEdges[i]->getInternalFollowingEdge(next, svc);
             // Take into account non-internal lengths until next non-internal edge
             while (edge != nullptr && edge->isInternal()) {
-                os << edge->getID() << ' ';
+                ids += edge->getID();
+                ids += ' ';
                 internal++;
                 edge = edge->getInternalFollowingEdge(next, svc);
             }
         }
     }
+    os << ids;
     return internal + lastIndex - firstIndex;
 }
 
@@ -400,7 +412,7 @@ MSRoute::getColor() const {
 }
 
 
-const std::vector<SUMOVehicleParameter::Stop>&
+const StopParVector&
 MSRoute::getStops() const {
     return myStops;
 }

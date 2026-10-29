@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@
 #include <utils/common/RGBColor.h>
 #include <utils/common/SUMOTime.h>
 #include <utils/common/SUMOVehicleClass.h>
+#include <utils/distribution/Distribution_Parameterized.h>
 
 
 // ===========================================================================
@@ -399,6 +400,7 @@ public:
 
         /// @brief The stopping duration
         SUMOTime duration = -1;
+        Distribution_Parameterized durationDist;
 
         /// @brief The time at which the vehicle may continue its journey
         SUMOTime until = -1;
@@ -494,7 +496,6 @@ public:
         int getFlags() const;
     };
 
-
     /** @brief Returns whether the given parameter was set
      * @param[in] what The parameter which one asks for
      * @return Whether the given parameter was set
@@ -528,7 +529,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] depart The parsed depart time, if given
      * @param[out] dd The parsed departProcedure definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid depart definition
      */
     static bool parseDepart(const std::string& val, const std::string& element, const std::string& id,
@@ -540,7 +541,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] lane The parsed lane, if given
      * @param[out] dld The parsed departLane definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid departLane definition
      */
     static bool parseDepartLane(const std::string& val, const std::string& element, const std::string& id,
@@ -552,7 +553,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] pos The parsed position, if given
      * @param[out] dpd The parsed departPos definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid departPos definition
      */
     static bool parseDepartPos(const std::string& val, const std::string& element, const std::string& id,
@@ -564,7 +565,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] pos The parsed position, if given
      * @param[out] dpd The parsed departPosLat definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid departPosLat definition
      */
     static bool parseDepartPosLat(const std::string& val, const std::string& element, const std::string& id,
@@ -576,7 +577,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] speed The parsed speed, if given
      * @param[out] dsd The parsed departSpeed definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid departSpeed definition
      */
     static bool parseDepartSpeed(const std::string& val, const std::string& element, const std::string& id,
@@ -588,7 +589,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] edgeIndex The parsed edge index, if given
      * @param[out] ded The parsed departEdge definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid departEdge definition
      */
     static bool parseRouteIndex(const std::string& val, const std::string& element, const std::string& id,
@@ -601,7 +602,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] lane The parsed lane, if given
      * @param[out] ald The parsed arrivalLane definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid arrivalLane definition
      */
     static bool parseArrivalLane(const std::string& val, const std::string& element, const std::string& id,
@@ -613,7 +614,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] pos The parsed position, if given
      * @param[out] apd The parsed arrivalPos definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid arrivalPos definition
      */
     static bool parseArrivalPos(const std::string& val, const std::string& element, const std::string& id,
@@ -625,7 +626,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] pos The parsed position, if given
      * @param[out] apd The parsed arrivalPosLat definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid arrivalPosLat definition
      */
     static bool parseArrivalPosLat(const std::string& val, const std::string& element, const std::string& id,
@@ -638,7 +639,7 @@ public:
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] speed The parsed speed, if given
      * @param[out] asd The parsed arrivalSpeed definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid arrivalSpeed definition
      */
     static bool parseArrivalSpeed(const std::string& val, const std::string& element, const std::string& id,
@@ -659,7 +660,7 @@ public:
      * @param[in] element The name of the type of the parsed element, for building the error message
      * @param[in] id The id of the parsed element, for building the error message
      * @param[out] modeSet The parsed modes definition
-     * @param[out] error Error message, if an error occures
+     * @param[out] error Error message, if an error occurs
      * @return Whether the given value is a valid arrivalSpeed definition
      */
     static bool parsePersonModes(const std::string& modes, const std::string& element, const std::string& id, SVCPermissions& modeSet, std::string& error);
@@ -765,10 +766,10 @@ public:
     /// @name Repetition definition
     /// @{
     /// @brief The number of times the vehicle shall be repeatedly inserted
-    int repetitionNumber;
+    long long int repetitionNumber;
 
     /// @brief The number of times the vehicle was already inserted
-    int repetitionsDone;
+    long long int repetitionsDone;
 
     /// @brief The time offset between vehicle reinsertions
     SUMOTime repetitionOffset;
@@ -874,3 +875,5 @@ protected:
     bool areInsertionChecksValid(const std::string& value) const;
 
 };
+
+typedef std::vector<SUMOVehicleParameter::Stop> StopParVector;

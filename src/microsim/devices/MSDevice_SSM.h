@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -746,18 +746,18 @@ private:
     double myExtraTime;
     /// Whether to use the original coordinate system for output
     bool myUseGeoCoords;
-    /// Wether to print the positions for all timesteps
+    /// Whether to print the positions for all timesteps
     bool myWritePositions;
-    /// Wether to print the lanes and positions for all timesteps and conflicts
+    /// Whether to print the lanes and positions for all timesteps and conflicts
     bool myWriteLanesPositions;
-    /// Wether to write measuers with NA entries
+    /// Whether to write measures with NA entries
     bool myWriteNA;
     /// Whether to exclude certain conflicts containing certain conflict types from the output
     bool myFilterConflictTypes;
     /// Which conflict types to exclude from the output
     std::vector<int> myDroppedConflictTypes;
 
-    /// Flags for switching on / off comutation of different SSMs, derived from myMeasures
+    /// Flags for switching on / off computation of different SSMs, derived from myMeasures
     bool myComputeTTC, myComputeDRAC, myComputePET, myComputeBR, myComputeSGAP, myComputeTGAP, myComputePPET, myComputeMDRAC;
     MSVehicle* myHolderMS;
     /// @}

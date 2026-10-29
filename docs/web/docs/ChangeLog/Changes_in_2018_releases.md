@@ -4,6 +4,8 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
 
 ## Version 1.1.0 (18.12.2018)
 
+[Downloads](https://sumo.dlr.de/releases/1.1.0/)
+
 ### Bugfixes
 
 - Simulation
@@ -178,6 +180,8 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
 
 ## Version 1.0.1 (18.09.2018)
 
+[Downloads](https://sumo.dlr.de/releases/1.0.1/)
+
 ### Bugfixes
 
 - Simulation
@@ -261,20 +265,22 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
 
 ## Version 1.0.0 (04.09.2018)
 
+[Downloads](https://sumo.dlr.de/releases/1.0.0/)
+
 ### Bugfixes
 
 - Simulation
   - All car-following models now respect the vType-attribute
     *emergencyDecel* as an absolute bound on deceleration. Issue #3556
-  - Fixed some issues when using [continous lane
+  - Fixed some issues when using [continuous lane
     change](../Simulation/SublaneModel.md#simple_continuous_lane-change_model). Issue #3767, Issue #3769, Issue #3770, Issue #3771, Issue #4364
-  - Fixed back-and-forth changing when using [continous lane
+  - Fixed back-and-forth changing when using [continuous lane
     change](../Simulation/SublaneModel.md#simple_continuous_lane-change_model). Issue #4010
   - Fixed loading of teleporting vehicles from simulation state in
     *.sbx* format. Issue #3787
   - Fixed invalid vehicle counts by E2-detector related to
     lane-changing. Issue #3791
-  - Fixed invalid vehicle counts by E3-detector related to re-using
+  - Fixed invalid vehicle counts by E3-detector related to reusing
     vehicle pointers Issue #3108, Issue #4079
   - Fixed bug that was causing invalid slowdown while passing an
     intersection. Issue #3861
@@ -468,7 +474,7 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
     output of safety related quantities. Issue #2669, Issue #4119
   - 'Smoothed' emergency braking Issue #4116
   - Added an initial version of a [driver state
-    device](../Driver_State.md) for modelling imperfect
+    device](../Driver_State.md) for modeling imperfect
     driving.
   - Added an initial version of a [transition of control
     model](../ToC_Device.md).
@@ -493,7 +499,7 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
   - Rerouters now support the attribute *vTypes* which restricts
     their effect to vehicles from the given list of vehicle type
     IDs. Issue #4031
-  - Vehicles are forming a coridor for emergency vehicles Issue #1967
+  - Vehicles are forming a corridor for emergency vehicles Issue #1967
   - Added option **--default.speeddev** {{DT_FLOAT}} to control the default speed deviation of all
     vehicle types that do not define it. Issue #4421
   - Added lane/edge-attribute stopOffset for defining vClass
@@ -530,7 +536,7 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
     (hotkey 'w'). Thanks to Mirko Barthauer for the contribution. Issue #3850
   - Added virtual attribute to identify [bidirectional rail edge
     pairs](../Simulation/Railways.md#bidirectional_track_usage). Issue #3720
-  - Added option to modify the visualisation of [bidirectional rail
+  - Added option to modify the visualization of [bidirectional rail
     edge
     pairs](../Simulation/Railways.md#bidirectional_track_usage)
     (*spread superposed*) Issue #3720
@@ -689,8 +695,8 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
     algorithms](../Simulation/Routing.md#routing_algorithms).
 
 - Simulation
-  - `<vTypeProbe>` is now deprecated in favour of FCD-output filtering
-  - `<vaporizer>` is now deprecated in favour of calibrators.
+  - `<vTypeProbe>` is now deprecated in favor of FCD-output filtering
+  - `<vaporizer>` is now deprecated in favor of calibrators.
   - The default arrival position for person walks is now the middle
     of the destination edge. This reduces the asymmetry from
     arriving in forward or backward direction. Issue #3843
@@ -735,7 +741,7 @@ title: Changes in the 2018 releases (versions 1.0.0, 1.0.1 and 1.1.0)
 
 - TraCI
   - TraCI Version is now 18
-  - Embedded python is now deprecated in favour of
+  - Embedded python is now deprecated in favor of
     [Libsumo](../Libsumo.md).
   - TraCI now consistently represents time in seconds as a double
     precision floating point. This affects all client

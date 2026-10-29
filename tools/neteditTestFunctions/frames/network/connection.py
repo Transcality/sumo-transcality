@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,26 +16,51 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
+import time
 
-def createConnection(referencePosition, fromLanePosition, toLanePosition, mode=""):
+from ...enums.attributesEnum import attrs
+from ...constants import DELAY_SELECT
+from ...general.functions import focusOnFrame
+from ...input.mouse import leftClick
+from ...input.keyboard import typeKey, keyPress, keyRelease
+
+
+def createConnection(referencePosition, fromLanePosition, toLanePosition):
     """
     @brief create connection
     """
-    # check if connection has to be created in certain mode
-    if mode == "conflict":
-        keyPress('ctrl')
-    elif mode == "yield":
-        keyPress('shift')
     # select first lane
     leftClick(referencePosition, fromLanePosition)
     # select another lane for create a connection
     leftClick(referencePosition, toLanePosition)
-    # check if connection has to be created in certain mode
-    if mode == "conflict":
-        keyRelease('ctrl')
-    elif mode == "yield":
-        keyRelease('shift')
+
+
+def createConnectionConflict(referencePosition, fromLanePosition, toLanePosition):
+    """
+    @brief create connection conflict
+    """
+    # press control
+    keyPress('ctrl')
+    # select first lane
+    leftClick(referencePosition, fromLanePosition)
+    # select another lane for create a connection
+    leftClick(referencePosition, toLanePosition)
+    # release control
+    keyRelease('ctrl')
+
+
+def createConnectionYield(referencePosition, fromLanePosition, toLanePosition):
+    """
+    @brief create connection
+    """
+    # press shift
+    keyPress('shift')
+    # select first lane
+    leftClick(referencePosition, fromLanePosition)
+    # select another lane for create a connection
+    leftClick(referencePosition, toLanePosition)
+    # release shift
+    keyRelease('shift')
 
 
 def saveConnectionEdit():

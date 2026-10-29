@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,6 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
-#include <xercesc/util/XMLString.hpp>
 #include <utils/common/StdDefs.h>
 
 
@@ -50,6 +49,9 @@ public:
     /// @brief Transfers the content to lower case
     static std::string to_lower_case(const std::string& str);
 
+    /// @brief Transfers the content to upper case
+    static std::string to_upper_case(const std::string& str);
+
     /// @brief Transfers from Latin 1 (ISO-8859-1) to UTF-8
     static std::string latin1_to_utf8(std::string str);
 
@@ -61,6 +63,9 @@ public:
 
     /// @brief Replaces an environment variable with its value (similar to bash); syntax for a variable is ${NAME}
     static std::string substituteEnvironment(const std::string& str, const std::chrono::time_point<std::chrono::system_clock>* const timeRef = nullptr);
+
+    /// @brief Returns an ISO8601 formatted time string with microsecond precision
+    static std::string isoTimeString(const std::chrono::time_point<std::chrono::system_clock>* const timeRef = nullptr);
 
     ///@brief  Checks whether a given string starts with the prefix
     static bool startsWith(const std::string& str, const std::string prefix);
@@ -86,6 +91,16 @@ public:
      * @brief Escape special characters with backslash
      */
     static std::string escapeShell(const std::string& orig);
+
+    /**
+     * @brief Adds quotes to strings containing the separator or the quote char and escapes the quote char with a backslash
+     *
+     * @param[in] orig The original string
+     * @param[in] separator the separator char
+     * @param[in] quote the quote char
+     * @return the string with the escaped sequences
+     */
+    static std::string escapeCSV(const std::string& orig, const char separator, const char quote = '"');
 
     /// @brief An empty string
     static std::string emptyString;
@@ -146,6 +161,12 @@ public:
     /// @return the default value if the data is empty
     static double toDoubleSecure(const std::string& sData, const double def);
 
+    /**@brief converts a string into a double value. Values in human-readable-time format (see string2time) are permitted and return seconds
+     * @throw an EmptyData - exception if the given string is empty
+     * @throw a NumberFormatException - exception when the string does not contain a double or time value
+     */
+    static double toDoubleAllowTime(const std::string& sData);
+
     /**@brief converts a string into the bool value described by it by calling the char-type converter
      * @return true if the sData is one of the following (case insensitive): '1', 'x', 'true', 'yes', 'on', 't'
      * @return false if the sData is one of the following (case insensitive): '0', '-', 'false', 'no', 'off', 'f'
@@ -166,24 +187,6 @@ public:
     /// @brief parse a speed value with a unit
     static double parseSpeed(const std::string& sData, const bool defaultKmph = true);
 
-    /**@brief converts a 0-terminated XMLCh* array (usually UTF-16, stemming from Xerces) into std::string in UTF-8
-     * @throw an EmptyData - exception if the given pointer is 0
-     */
-    static inline std::string transcode(const XMLCh* const data) {
-        return transcode(data, (int)XERCES_CPP_NAMESPACE::XMLString::stringLen(data));
-    }
-
-    /**@brief converts a 0-terminated XMLCh* array (usually UTF-16, stemming from Xerces) into std::string in UTF-8 considering the given length
-     * @throw EmptyData if the given pointer is 0
-     */
-    static std::string transcode(const XMLCh* const data, int length);
-
-    /// @brief convert a string from the local codepage to UTF-8
-    static std::string transcodeFromLocal(const std::string& localString);
-
-    /// @brief convert a string from UTF-8 to the local codepage
-    static std::string transcodeToLocal(const std::string& utf8String);
-
     /// @brief remove leading whitespace from string
     static std::string trim_left(const std::string s, const std::string& t = " \t\n");
 
@@ -196,8 +199,8 @@ public:
     /// @brief remove leading and trailing whitespace
     static std::string wrapText(const std::string s, int width);
 
-    /// @brief must be called when shutting down the xml subsystem
-    static void resetTranscoder();
+    /// @brief write with maximum precision if needed but remove trailing zeros
+    static std::string adjustDecimalValue(double value, int precision);
 
     /// @brief adds a new formatted message
     // variadic function
@@ -227,6 +230,4 @@ private:
             os << *format;
         }
     }
-
-    static XERCES_CPP_NAMESPACE::XMLLCPTranscoder* myLCPTranscoder;
 };

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -37,7 +37,7 @@ def examine(polygonID):
     print("filled", traci.polygon.getFilled(polygonID))
 
 
-traci.start([sumolib.checkBinary('sumo-gui'), "-c", "sumo.sumocfg", "-S", "-Q"], stdout=sys.stdout)
+traci.start([sumolib.checkBinary('sumo-gui'), "-c", "sumo.sumocfg", "-S", "-Q"] + sys.argv[1:], stdout=sys.stdout)
 # traci.init(port=12345) # debug
 for step in range(3):
     print("step", step)

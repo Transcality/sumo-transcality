@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -90,7 +90,7 @@ ROFrame::fillOptions(OptionsCont& oc, const bool isDUA, const bool isMA) {
     oc.addDescription("phemlight-path", "Input", TL("Determines where to load PHEMlight definitions from"));
 
     oc.doRegister("phemlight-year", new Option_Integer(0));
-    oc.addDescription("phemlight-year", "Input", TL("Enable fleet age modelling with the given reference year in PHEMlight5"));
+    oc.addDescription("phemlight-year", "Input", TL("Enable fleet age modeling with the given reference year in PHEMlight5"));
 
     oc.doRegister("phemlight-temperature", new Option_Float(INVALID_DOUBLE));
     oc.addDescription("phemlight-temperature", "Input", TL("Set ambient temperature to correct NOx emissions in PHEMlight5"));
@@ -180,7 +180,7 @@ ROFrame::fillOptions(OptionsCont& oc, const bool isDUA, const bool isMA) {
 
     if (isDUA || isMA) {
         oc.doRegister("routing-algorithm", new Option_String("dijkstra"));
-        oc.addDescription("routing-algorithm", "Processing", TL("Select among routing algorithms ['dijkstra', 'astar', 'CH', 'CHWrapper']"));
+        oc.addDescription("routing-algorithm", "Processing", TL("Select among routing algorithms ['dijkstra', 'astar', 'CH', 'CHWrapper', 'CCH']"));
     }
 
     oc.doRegister("restriction-params", new Option_StringVector());
@@ -204,6 +204,9 @@ ROFrame::fillOptions(OptionsCont& oc, const bool isDUA, const bool isMA) {
 
     oc.doRegister("weights.turnaround-penalty", new Option_Float(5.0));
     oc.addDescription("weights.turnaround-penalty", "Processing", TL("Apply the given time penalty when computing routing costs for turnaround internal lanes"));
+
+    oc.doRegister("weights.reversal-penalty", new Option_Float(60));
+    oc.addDescription("weights.reversal-penalty", "Processing", TL("Apply the given time penalty when computing routing costs for train reversal. Negative values disable reversal"));
 
     if (!isMA) {
         // register defaults options
@@ -256,6 +259,9 @@ ROFrame::checkOptions(OptionsCont& oc) {
         return false;
     }
 #endif
+    if (oc.exists("mapmatch.junctions") && oc.getBool("mapmatch.junctions") && oc.isDefault("junction-taz")) {
+        oc.setDefault("junction-taz", "true");
+    }
     return true;
 }
 

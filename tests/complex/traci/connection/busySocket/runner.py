@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -30,8 +30,10 @@ if "SUMO_HOME" in os.environ:
 import sumolib  # noqa
 import traci  # noqa
 
-sumoBinary = sumolib.checkBinary(sys.argv[1])
-if sys.argv[1] == "sumo":
+sumoOptions = [a for a in sys.argv[1:] if a.startswith('--')]
+positionalArgs = [a for a in sys.argv[1:] if not a.startswith('--')]
+sumoBinary = sumolib.checkBinary(positionalArgs[0])
+if positionalArgs[0] == "sumo":
     addOption = ["-c", "sumo.sumocfg"]
 else:
     addOption = ["-S", "-Q", "-c", "sumo_log.sumocfg"]
@@ -39,10 +41,10 @@ PORT = sumolib.miscutils.getFreeSocketPort()
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', PORT))
 
-sumoProc = subprocess.Popen([sumoBinary, "--remote-port", str(PORT)] + addOption,
+sumoProc = subprocess.Popen([sumoBinary, "--remote-port", str(PORT)] + addOption + sumoOptions,
                             stdout=sys.stdout)
 try:
-    traci.init(PORT)
+    traci.init(PORT, numRetries=5)
     traci.close()
 except traci.FatalTraCIError as e:
     print(e, file=sys.stderr)

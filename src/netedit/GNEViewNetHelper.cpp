@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,6 @@
 // A file used to reduce the size of GNEViewNet.h grouping structs and classes
 /****************************************************************************/
 
-#include <netedit/GNETagProperties.h>
 #include <netedit/elements/additional/GNEPOI.h>
 #include <netedit/elements/additional/GNEPoly.h>
 #include <netedit/elements/additional/GNETAZ.h>
@@ -32,19 +31,23 @@
 #include <netedit/elements/network/GNEInternalLane.h>
 #include <netedit/elements/network/GNEWalkingArea.h>
 #include <netedit/frames/common/GNESelectorFrame.h>
+#include <netedit/frames/network/GNEConnectorFrame.h>
 #include <netedit/frames/network/GNETLSEditorFrame.h>
+#include <netedit/frames/network/GNECreateEdgeFrame.h>
+#include <netedit/GNETagProperties.h>
 #include <utils/foxtools/MFXMenuCheckIcon.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/div/GUIGlobalViewObjectsHandler.h>
+#include <utils/gui/images/GUITextureSubSys.h>
 #include <utils/options/OptionsCont.h>
 
-#include "GNEViewNetHelper.h"
-#include "GNEViewNet.h"
+#include "GNEApplicationWindow.h"
 #include "GNENet.h"
 #include "GNEUndoList.h"
+#include "GNEViewNet.h"
+#include "GNEViewNetHelper.h"
 #include "GNEViewParent.h"
-#include "GNEApplicationWindow.h"
 
 // ===========================================================================
 // static members
@@ -104,16 +107,16 @@ GNEViewNetHelper::LockManager::isObjectLocked(GUIGlObjectType objectType, const 
     } else if ((objectType >= GLO_WIRE) && (objectType <= GLO_TRACTIONSUBSTATION)) {
         // wires
         return myLockedElements.at(GLO_WIRE).lock;
-    } else if ((objectType == GLO_ROUTE) || (objectType == GLO_ROUTE_EMBEDDED)) {
+    } else if ((objectType >= GLO_ROUTE) && (objectType <= GLO_ROUTE_DISTRIBUTION)) {
         // routes
         return myLockedElements.at(GLO_ROUTE).lock;
     } else if ((objectType >= GLO_VEHICLE) && (objectType <= GLO_ROUTEFLOW)) {
         // vehicles
         return myLockedElements.at(GLO_VEHICLE).lock;
-    } else if ((objectType == GLO_PERSON) || (objectType == GLO_PERSONFLOW)) {
+    } else if ((objectType >= GLO_PERSON) && (objectType <= GLO_PERSONFLOW)) {
         // persons
         return myLockedElements.at(GLO_PERSON).lock;
-    } else if ((objectType == GLO_CONTAINER) || (objectType == GLO_CONTAINERFLOW)) {
+    } else if ((objectType >= GLO_CONTAINER) && (objectType <= GLO_CONTAINERFLOW)) {
         // containers
         return myLockedElements.at(GLO_CONTAINER).lock;
     } else if ((objectType >= GLO_STOP) && (objectType <= GLO_STOP_PLAN)) {
@@ -130,7 +133,7 @@ GNEViewNetHelper::LockManager::updateFlags() {
     // get lock menu commands
     GNEApplicationWindowHelper::LockMenuCommands& lockMenuCommands = myViewNet->getViewParent()->getGNEAppWindows()->getLockMenuCommands();
     // network
-    myLockedElements[GLO_JUNCTION].lock = lockMenuCommands.menuCheckLockJunction->getCheck() == TRUE;
+    myLockedElements[GLO_JUNCTION].lock = lockMenuCommands.menuCheckLockJunctions->getCheck() == TRUE;
     myLockedElements[GLO_EDGE].lock = lockMenuCommands.menuCheckLockEdges->getCheck() == TRUE;
     myLockedElements[GLO_LANE].lock = lockMenuCommands.menuCheckLockLanes->getCheck() == TRUE;
     myLockedElements[GLO_CONNECTION].lock = lockMenuCommands.menuCheckLockConnections->getCheck() == TRUE;
@@ -147,8 +150,8 @@ GNEViewNetHelper::LockManager::updateFlags() {
     myLockedElements[GLO_ROUTE].lock = lockMenuCommands.menuCheckLockRoutes->getCheck() == TRUE;
     myLockedElements[GLO_VEHICLE].lock = lockMenuCommands.menuCheckLockVehicles->getCheck() == TRUE;
     myLockedElements[GLO_PERSON].lock = lockMenuCommands.menuCheckLockPersons->getCheck() == TRUE;
-    myLockedElements[GLO_PERSONTRIP].lock = lockMenuCommands.menuCheckLockPersonTrip->getCheck() == TRUE;
-    myLockedElements[GLO_WALK].lock = lockMenuCommands.menuCheckLockWalk->getCheck() == TRUE;
+    myLockedElements[GLO_PERSONTRIP].lock = lockMenuCommands.menuCheckLockPersonTrips->getCheck() == TRUE;
+    myLockedElements[GLO_WALK].lock = lockMenuCommands.menuCheckLockWalks->getCheck() == TRUE;
     myLockedElements[GLO_RIDE].lock = lockMenuCommands.menuCheckLockRides->getCheck() == TRUE;
     myLockedElements[GLO_CONTAINER].lock = lockMenuCommands.menuCheckLockContainers->getCheck() == TRUE;
     myLockedElements[GLO_TRANSPORT].lock = lockMenuCommands.menuCheckLockTransports->getCheck() == TRUE;
@@ -166,7 +169,7 @@ GNEViewNetHelper::LockManager::updateLockMenuBar() {
     // get lock menu commands
     GNEApplicationWindowHelper::LockMenuCommands& lockMenuCommands = myViewNet->getViewParent()->getGNEAppWindows()->getLockMenuCommands();
     // network
-    lockMenuCommands.menuCheckLockJunction->setCheck(myLockedElements[GLO_JUNCTION].lock);
+    lockMenuCommands.menuCheckLockJunctions->setCheck(myLockedElements[GLO_JUNCTION].lock);
     lockMenuCommands.menuCheckLockEdges->setCheck(myLockedElements[GLO_EDGE].lock);
     lockMenuCommands.menuCheckLockLanes->setCheck(myLockedElements[GLO_LANE].lock);
     lockMenuCommands.menuCheckLockConnections->setCheck(myLockedElements[GLO_CONNECTION].lock);
@@ -183,8 +186,8 @@ GNEViewNetHelper::LockManager::updateLockMenuBar() {
     lockMenuCommands.menuCheckLockRoutes->setCheck(myLockedElements[GLO_ROUTE].lock);
     lockMenuCommands.menuCheckLockVehicles->setCheck(myLockedElements[GLO_VEHICLE].lock);
     lockMenuCommands.menuCheckLockPersons->setCheck(myLockedElements[GLO_PERSON].lock);
-    lockMenuCommands.menuCheckLockPersonTrip->setCheck(myLockedElements[GLO_PERSONTRIP].lock);
-    lockMenuCommands.menuCheckLockWalk->setCheck(myLockedElements[GLO_WALK].lock);
+    lockMenuCommands.menuCheckLockPersonTrips->setCheck(myLockedElements[GLO_PERSONTRIP].lock);
+    lockMenuCommands.menuCheckLockWalks->setCheck(myLockedElements[GLO_WALK].lock);
     lockMenuCommands.menuCheckLockRides->setCheck(myLockedElements[GLO_RIDE].lock);
     lockMenuCommands.menuCheckLockContainers->setCheck(myLockedElements[GLO_CONTAINER].lock);
     lockMenuCommands.menuCheckLockTransports->setCheck(myLockedElements[GLO_TRANSPORT].lock);
@@ -331,6 +334,22 @@ GNEViewNetHelper::InspectedElements::isInspectingMultipleElements() const {
 GNEViewNetHelper::MarkFrontElements::MarkFrontElements() {}
 
 
+const std::unordered_set<GNEAttributeCarrier*>&
+GNEViewNetHelper::MarkFrontElements::getACs() const {
+    return myMarkedACs;
+}
+
+
+void
+GNEViewNetHelper::MarkFrontElements::unmarkAll() {
+    // make a copy because container is modified in every iteration
+    const auto copy = myMarkedACs;
+    for (auto& AC : copy) {
+        AC->unmarkForDrawingFront();
+    }
+}
+
+
 void
 GNEViewNetHelper::MarkFrontElements::markAC(GNEAttributeCarrier* AC) {
     myMarkedACs.insert(AC);
@@ -345,22 +364,6 @@ GNEViewNetHelper::MarkFrontElements::unmarkAC(GNEAttributeCarrier* AC) {
             myMarkedACs.erase(it);
         }
     }
-}
-
-
-void
-GNEViewNetHelper::MarkFrontElements::unmarkAll() {
-    // make a copy because container is modified in every iteration
-    const auto copy = myMarkedACs;
-    for (auto& AC : copy) {
-        AC->unmarkForDrawingFront();
-    }
-}
-
-
-const std::unordered_set<GNEAttributeCarrier*>&
-GNEViewNetHelper::MarkFrontElements::getACs() const {
-    return myMarkedACs;
 }
 
 // ---------------------------------------------------------------------------
@@ -1508,7 +1511,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
     // check what type of AC will be moved
     if (myViewNet->myViewObjectsSelector.getJunctionFront() && (myViewNet->myViewObjectsSelector.getJunctionFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1518,7 +1521,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
         }
     } else if (myViewNet->myViewObjectsSelector.getLaneFront() && (myViewNet->myViewObjectsSelector.getLaneFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1528,7 +1531,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
         }
     } else if (myViewNet->myViewObjectsSelector.getCrossingFront() && (myViewNet->myViewObjectsSelector.getCrossingFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getCrossingFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getCrossingFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1538,7 +1541,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
         }
     } else if (myViewNet->myViewObjectsSelector.getConnectionFront() && (myViewNet->myViewObjectsSelector.getConnectionFront() == editedElement)) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getConnectionFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getConnectionFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1547,15 +1550,8 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveNetworkElementShape() {
             return false;
         }
     } else if (myViewNet->myViewObjectsSelector.getWalkingAreaFront() && (myViewNet->myViewObjectsSelector.getWalkingAreaFront() == editedElement)) {
-        // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getWalkingAreaFront()->getMoveOperation();
-        // continue if move operation is valid
-        if (moveOperation) {
-            myMoveOperation = moveOperation;
-            return true;
-        } else {
-            return false;
-        }
+        // currently walking areas cannot be moved (will be implemented in the future)
+        return false;
     } else {
         // there isn't moved items, then return false
         return false;
@@ -1572,7 +1568,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
     // check what type of AC will be moved
     if (myViewNet->myViewObjectsSelector.getPolyFront() && (markAC == myViewNet->myViewObjectsSelector.getPolyFront())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPolyFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPolyFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1582,7 +1578,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         }
     } else if (myViewNet->myViewObjectsSelector.getPOIFront() && (markAC == myViewNet->myViewObjectsSelector.getPOIFront())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPOIFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getPOIFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1590,9 +1586,10 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         } else {
             return false;
         }
-    } else if (myViewNet->myViewObjectsSelector.getAdditionalFront() && (markAC == myViewNet->myViewObjectsSelector.getAdditionalFront())) {
+    } else if (myViewNet->myViewObjectsSelector.getAdditionalFront() && (markAC == myViewNet->myViewObjectsSelector.getAdditionalFront()) &&
+               myViewNet->myViewObjectsSelector.getAdditionalFront()->getMoveElement()) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getAdditionalFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getAdditionalFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1604,7 +1601,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         // check if over junction there is a geometry point
         if (myViewNet->myViewObjectsSelector.getEdgeFront() && (myViewNet->myViewObjectsSelector.getEdgeFront()->clickedOverGeometryPoint(myRelativeClickedPosition))) {
             // get move operation
-            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveOperation();
+            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveElement()->getMoveOperation();
             // continue if move operation is valid
             if (moveOperation) {
                 myMoveOperation = moveOperation;
@@ -1614,7 +1611,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
             }
         } else {
             // get move operation
-            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveOperation();
+            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getJunctionFront()->getMoveElement()->getMoveOperation();
             // continue if move operation is valid
             if (moveOperation) {
                 myMoveOperation = moveOperation;
@@ -1632,7 +1629,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
             return false;
         } else {
             // get move operation
-            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveOperation();
+            GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getEdgeFront()->getMoveElement()->getMoveOperation();
             // continue if move operation is valid
             if (moveOperation) {
                 myMoveOperation = moveOperation;
@@ -1643,7 +1640,7 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementNetworkMode() {
         }
     } else if (myViewNet->myViewObjectsSelector.getLaneFront() && (markAC == myViewNet->myViewObjectsSelector.getLaneFront())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getLaneFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1664,10 +1661,11 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementDemandMode() {
     myRelativeClickedPosition = myViewNet->getPositionInformation();
     // get front AC
     const GNEAttributeCarrier* markAC = myViewNet->myViewObjectsSelector.getAttributeCarrierFront();
-    // check demand element
-    if (myViewNet->myViewObjectsSelector.getDemandElementFront() && (markAC == myViewNet->myViewObjectsSelector.getDemandElementFront())) {
+    // check if demand element can be moved
+    if (myViewNet->myViewObjectsSelector.getDemandElementFront() && (markAC == myViewNet->myViewObjectsSelector.getDemandElementFront() &&
+            myViewNet->myViewObjectsSelector.getDemandElementFront()->getMoveElement())) {
         // get move operation
-        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getDemandElementFront()->getMoveOperation();
+        GNEMoveOperation* moveOperation = myViewNet->myViewObjectsSelector.getDemandElementFront()->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperation = moveOperation;
@@ -1675,7 +1673,6 @@ GNEViewNetHelper::MoveSingleElementModul::beginMoveSingleElementDemandMode() {
         } else {
             return false;
         }
-
     } else {
         // there isn't moved items, then return false
         return false;
@@ -1874,7 +1871,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateJunctionSelection() {
     const auto selectedJunctions = myViewNet->getNet()->getAttributeCarriers()->getSelectedJunctions();
     // iterate over selected junctions
     for (const auto& junction : selectedJunctions) {
-        moveOperation = junction->getMoveOperation();
+        moveOperation = junction->getMoveElement()->getMoveOperation();
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
         }
@@ -1883,7 +1880,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateJunctionSelection() {
     const auto selectedEdges = myViewNet->getNet()->getAttributeCarriers()->getSelectedEdges();
     // iterate over selected edges
     for (const auto& edge : selectedEdges) {
-        moveOperation = edge->getMoveOperation();
+        moveOperation = edge->getMoveElement()->getMoveOperation();
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
         }
@@ -1897,7 +1894,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateEdgeSelection(const GNEEdge
     const auto selectedJunctions = myViewNet->getNet()->getAttributeCarriers()->getSelectedJunctions();
     // iterate over selected junctions
     for (const auto& junction : selectedJunctions) {
-        GNEMoveOperation* moveOperation = junction->getMoveOperation();
+        GNEMoveOperation* moveOperation = junction->getMoveElement()->getMoveOperation();
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
         }
@@ -1916,7 +1913,7 @@ GNEViewNetHelper::MoveMultipleElementModul::calculateEdgeSelection(const GNEEdge
     const auto selectedEdges = myViewNet->getNet()->getAttributeCarriers()->getSelectedEdges();
     // iterate over edges between 0 and 180 degrees
     for (const auto& edge : selectedEdges) {
-        GNEMoveOperation* moveOperation = edge->getMoveOperation();
+        GNEMoveOperation* moveOperation = edge->getMoveElement()->getMoveOperation();
         // continue if move operation is valid
         if (moveOperation) {
             myMoveOperations.push_back(moveOperation);
@@ -2072,30 +2069,36 @@ GNEViewNetHelper::SelectingArea::processBoundarySelection(const Boundary& bounda
     std::vector<GNEAttributeCarrier*> ACsFiltered;
     ACsFiltered.reserve(myViewNet->getViewObjectsSelector().getAttributeCarriers().size());
     for (const auto& AC : myViewNet->getViewObjectsSelector().getAttributeCarriers()) {
-        // isGLObjectLockedcheck also if we're in their correspoindient supermode
-        if (!AC->getGUIGlObject()->isGLObjectLocked()) {
-            const auto tagProperty = AC->getTagProperty();
-            if (tagProperty->isNetworkElement() || tagProperty->isAdditionalElement()) {
-                // filter edges and lanes
-                if (((tagProperty->getTag() == SUMO_TAG_EDGE) && !selEdges) ||
-                        ((tagProperty->getTag() == SUMO_TAG_LANE) && selEdges)) {
-                    continue;
-                } else {
-                    ACsFiltered.push_back(AC);
-                }
-            } else if (tagProperty->isDemandElement()) {
-                ACsFiltered.push_back(AC);
-            } else if (tagProperty->isGenericData()) {
+        const auto tagProperty = AC->getTagProperty();
+        if (tagProperty->isNetworkElement() || tagProperty->isAdditionalElement()) {
+            // filter edges and lanes
+            if (((tagProperty->getTag() == SUMO_TAG_EDGE) && !selEdges) ||
+                    ((tagProperty->getTag() == SUMO_TAG_LANE) && selEdges)) {
+                continue;
+            } else {
                 ACsFiltered.push_back(AC);
             }
+        } else if (tagProperty->isDemandElement()) {
+            ACsFiltered.push_back(AC);
+        } else if (tagProperty->isGenericData()) {
+            ACsFiltered.push_back(AC);
+        }
+    }
+    // filter ACsInBoundary depending if is locked
+    std::vector<GNEAttributeCarrier*> ACsFilteredUnlocked;
+    ACsFilteredUnlocked.reserve(ACsFiltered.size());
+    for (const auto& AC : ACsFiltered) {
+        // isGLObjectLockedcheck also if we're in their correspoindient supermode
+        if (!AC->getGUIGlObject()->isGLObjectLocked()) {
+            ACsFilteredUnlocked.push_back(AC);
         }
     }
     // declare two sets of attribute carriers, one for select and another for unselect
     std::vector<GNEAttributeCarrier*> ACToSelect;
     std::vector<GNEAttributeCarrier*> ACToUnselect;
     // reserve memory (we assume that in the worst case we're going to insert all elements of ACsInBoundaryFiltered
-    ACToSelect.reserve(ACsFiltered.size());
-    ACToUnselect.reserve(ACsFiltered.size());
+    ACToSelect.reserve(ACsFilteredUnlocked.size());
+    ACToUnselect.reserve(ACsFilteredUnlocked.size());
     // in restrict AND replace mode all current selected attribute carriers will be unselected
     const auto modificationMode = myViewNet->myViewParent->getSelectorFrame()->getModificationModeModul()->getModificationMode();
     if ((modificationMode == GNESelectorFrame::ModificationMode::Operation::RESTRICT) || (modificationMode == GNESelectorFrame::ModificationMode::Operation::REPLACE)) {
@@ -2107,7 +2110,7 @@ GNEViewNetHelper::SelectingArea::processBoundarySelection(const Boundary& bounda
         }
     }
     // iterate over AttributeCarriers obtained of boundary an place it in ACToSelect or ACToUnselect
-    for (const auto& AC : ACsFiltered) {
+    for (const auto& AC : ACsFilteredUnlocked) {
         switch (myViewNet->myViewParent->getSelectorFrame()->getModificationModeModul()->getModificationMode()) {
             case GNESelectorFrame::ModificationMode::Operation::SUB:
                 ACToUnselect.push_back(AC);
@@ -2672,11 +2675,15 @@ GNEViewNetHelper::EditModes::setView(FXSelector sel) {
         gripSupermodes->setWidth(353);
         // show menu commands
         fileMenuCommands.setDefaultView();
+        // hide short edges in create edge frame
+        myViewNet->getViewParent()->getCreateEdgeFrame()->getEdgeTypeSelector()->showDefaultShortEdgeCheckBox(false);
     } else if (sel == MID_GNE_VIEW_JUPEDSIM) {
         myNeteditViewsButton->setIcon(GUIIconSubSys::getIcon(GUIIcon::VIEWJUPEDSIM));
         gripSupermodes->setWidth(250);
         // hide menu commands
         fileMenuCommands.setJuPedSimView();
+        // show short edges in create edge frame
+        myViewNet->getViewParent()->getCreateEdgeFrame()->getEdgeTypeSelector()->showDefaultShortEdgeCheckBox(true);
     }
     // update viewNet
     myViewNet->viewUpdated();
@@ -2820,6 +2827,20 @@ GNEViewNetHelper::NetworkViewOptions::buildNetworkViewOptionsMenuChecks() {
     menuCheckShowJunctionBubble->setChecked(false);
     menuCheckShowJunctionBubble->create();
 
+    menuCheckShowPolygonSymbols = new MFXCheckableButton(false, gripModes, toolTipMenu,
+            (std::string("\t") + TL("Show polygon symbols") + std::string("\t") + TL("Show polygon symbols.")),
+            GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_SHOWPOLYGONSYMBOLS),
+            myViewNet, MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS, GUIDesignMFXCheckableButtonSquare);
+    menuCheckShowPolygonSymbols->setChecked(true);
+    menuCheckShowPolygonSymbols->create();
+
+    menuCheckDrawFilledWalkingAreas = new MFXCheckableButton(false, gripModes, toolTipMenu,
+            (std::string("\t") + TL("Draw filled walking areas") + std::string("\t") + TL("Draw filled walking areas.")),
+            GUIIconSubSys::getIcon(GUIIcon::NETWORKMODE_CHECKBOX_DRAWFILLEDWALKINGAREAS),
+            myViewNet, MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS, GUIDesignMFXCheckableButtonSquare);
+    menuCheckDrawFilledWalkingAreas->setChecked(true);
+    menuCheckDrawFilledWalkingAreas->create();
+
     // always recalc after creating new elements
     gripModes->recalc();
 }
@@ -2843,6 +2864,8 @@ GNEViewNetHelper::NetworkViewOptions::hideNetworkViewOptionsMenuChecks() {
     menuCheckMoveElevation->hide();
     menuCheckChainEdges->hide();
     menuCheckAutoOppositeEdge->hide();
+    menuCheckShowPolygonSymbols->hide();
+    menuCheckDrawFilledWalkingAreas->hide();
 }
 
 
@@ -2897,6 +2920,12 @@ GNEViewNetHelper::NetworkViewOptions::getVisibleNetworkMenuCommands(std::vector<
     if (menuCheckShowJunctionBubble->shown()) {
         commands.push_back(menuCheckShowJunctionBubble);
     }
+    if (menuCheckShowPolygonSymbols->shown()) {
+        commands.push_back(menuCheckShowPolygonSymbols);
+    }
+    if (menuCheckDrawFilledWalkingAreas->shown()) {
+        commands.push_back(menuCheckDrawFilledWalkingAreas);
+    }
 }
 
 
@@ -2929,12 +2958,20 @@ GNEViewNetHelper::NetworkViewOptions::selectEdges() const {
 
 
 bool
-GNEViewNetHelper::NetworkViewOptions::showConnections() const {
+GNEViewNetHelper::NetworkViewOptions::showConnections(const GNEConnection* connection) const {
     if (myViewNet->myEditModes.isCurrentSupermodeData()) {
         return false;
     } else if (myViewNet->myEditModes.networkEditMode == NetworkEditMode::NETWORK_CONNECT) {
-        // check if menu check hide connections ins shown
-        return (menuCheckHideConnections->amChecked() == FALSE);
+        if (myViewNet->getViewParent()->getConnectorFrame()->getConnectionVisualization()->showOnlyFromConnections() && myViewNet->getViewParent()->getConnectorFrame()->getCurrentEditedLane()) {
+            for (const auto& outgoingConnection : myViewNet->getViewParent()->getConnectorFrame()->getCurrentEditedLane()->getParentEdge()->getGNEConnections()) {
+                if ((connection == outgoingConnection) && (outgoingConnection->getLaneFrom() == myViewNet->getViewParent()->getConnectorFrame()->getCurrentEditedLane())) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return (menuCheckHideConnections->amChecked() == false);
+        }
     } else if (myViewNet->myEditModes.networkEditMode == NetworkEditMode::NETWORK_PROHIBITION) {
         return true;
     } else if (myViewNet->myEditModes.isCurrentSupermodeNetwork() && menuCheckShowConnections->shown() == false) {
@@ -2973,6 +3010,26 @@ bool
 GNEViewNetHelper::NetworkViewOptions::editingElevation() const {
     if (menuCheckMoveElevation->shown()) {
         return (menuCheckMoveElevation->amChecked() == TRUE);
+    } else {
+        return false;
+    }
+}
+
+
+bool
+GNEViewNetHelper::NetworkViewOptions::showPolygonSymbols() const {
+    if (menuCheckShowPolygonSymbols->shown()) {
+        return (menuCheckShowPolygonSymbols->amChecked() == TRUE);
+    } else {
+        return false;
+    }
+}
+
+
+bool
+GNEViewNetHelper::NetworkViewOptions::drawFilledWalkingAreas() const {
+    if (menuCheckDrawFilledWalkingAreas->shown()) {
+        return (menuCheckDrawFilledWalkingAreas->amChecked() == TRUE);
     } else {
         return false;
     }
@@ -3446,14 +3503,15 @@ GNEViewNetHelper::IntervalBar::IntervalBar(GNEViewNet* viewNet) :
 
 void
 GNEViewNetHelper::IntervalBar::buildIntervalBarElements() {
+    const auto staticTooltip = myViewNet->myViewParent->getGNEAppWindows()->getStaticTooltipMenu();
     // create interval label
     FXLabel* genericDataLabel = new FXLabel(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-                                            "Data type", 0, GUIDesignLabelThickedFixed(100));
+                                            TL("Data type"), 0, GUIDesignLabelThickedFixed(100));
     genericDataLabel->create();
     // create combo box for generic datas
     myGenericDataTypesComboBox = new MFXComboBoxIcon(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-            GUIDesignComboBoxNCol, false, GUIDesignComboBoxVisibleItemsFixed, myViewNet,
-            MID_GNE_INTERVALBAR_GENERICDATATYPE, GUIDesignComboBoxWidth180);
+            staticTooltip, false, GUIDesignComboBoxVisibleItemsFixed, myViewNet,
+            MID_GNE_INTERVALBAR_GENERICDATATYPE, GUIDesignComboBoxFixed(180));
     myGenericDataTypesComboBox->create();
     // fill combo box
     myGenericDataTypesComboBox->appendIconItem("<all>");
@@ -3462,16 +3520,16 @@ GNEViewNetHelper::IntervalBar::buildIntervalBarElements() {
     myGenericDataTypesComboBox->appendIconItem(toString(SUMO_TAG_TAZREL).c_str());
     // create dataSet label
     FXLabel* dataSetLabel = new FXLabel(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-                                        "Data sets", 0, GUIDesignLabelThickedFixed(100));
+                                        TL("Data sets"), 0, GUIDesignLabelThickedFixed(100));
     dataSetLabel->create();
     // create combo box for sets
     myDataSetsComboBox = new MFXComboBoxIcon(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-            GUIDesignComboBoxNCol, false, GUIDesignComboBoxVisibleItemsFixed,
-            myViewNet, MID_GNE_INTERVALBAR_DATASET, GUIDesignComboBoxWidth180);
+            staticTooltip, false, GUIDesignComboBoxVisibleItemsFixed,
+            myViewNet, MID_GNE_INTERVALBAR_DATASET, GUIDesignComboBoxFixed(180));
     myDataSetsComboBox->create();
     // create checkbutton for myLimitByInterval
     myIntervalCheckBox = new FXCheckButton(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-                                           "Interval", myViewNet, MID_GNE_INTERVALBAR_LIMITED, GUIDesignCheckButtonAttribute);
+                                           TL("Interval"), myViewNet, MID_GNE_INTERVALBAR_LIMITED, GUIDesignCheckButtonAttribute);
     myIntervalCheckBox->create();
     // create textfield for begin
     myBeginTextField = new FXTextField(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
@@ -3483,12 +3541,12 @@ GNEViewNetHelper::IntervalBar::buildIntervalBarElements() {
     myEndTextField->create();
     // create parameter label
     FXLabel* parameterLabel = new FXLabel(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-                                          "Parameter", 0, GUIDesignLabelThickedFixed(100));
+                                          TL("Parameter"), 0, GUIDesignLabelThickedFixed(100));
     parameterLabel->create();
     // create combo box for attributes
     myParametersComboBox = new MFXComboBoxIcon(myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar,
-            GUIDesignComboBoxNCol, false, GUIDesignComboBoxVisibleItemsFixed,
-            myViewNet, MID_GNE_INTERVALBAR_PARAMETER, GUIDesignComboBoxWidth180);
+            staticTooltip, false, GUIDesignComboBoxVisibleItemsFixed,
+            myViewNet, MID_GNE_INTERVALBAR_PARAMETER, GUIDesignComboBoxFixed(180));
     myParametersComboBox->create();
     // always recalc after creating new elements
     myViewNet->myViewParent->getGNEAppWindows()->getToolbarsGrip().intervalBar->recalc();
@@ -3609,7 +3667,7 @@ GNEViewNetHelper::IntervalBar::markForUpdate() {
 
 SumoXMLTag
 GNEViewNetHelper::IntervalBar::getGenericDataType() const {
-    if (myGenericDataTypesComboBox->isEnabled() && (myGenericDataTypesComboBox->getTextColor() == FXRGB(0, 0, 0))) {
+    if (myGenericDataTypesComboBox->isEnabled() && (myGenericDataTypesComboBox->getTextColor() == GUIDesignTextColorBlack)) {
         if (myGenericDataTypesComboBox->getText() == toString(GNE_TAG_EDGEREL_SINGLE).c_str()) {
             return GNE_TAG_EDGEREL_SINGLE;
         } else if (myGenericDataTypesComboBox->getText() == toString(SUMO_TAG_EDGEREL).c_str()) {
@@ -3626,7 +3684,7 @@ GNEDataSet*
 GNEViewNetHelper::IntervalBar::getDataSet() const {
     if (!myDataSetsComboBox->isEnabled() ||
             (myDataSetsComboBox->getCurrentItem() == 0) ||
-            (myDataSetsComboBox->getTextColor() == FXRGB(255, 0, 0))) {
+            (myDataSetsComboBox->getTextColor() == GUIDesignTextColorRed)) {
         return nullptr;
     } else {
         return myViewNet->getNet()->getAttributeCarriers()->retrieveDataSet(myDataSetsComboBox->getText().text());
@@ -3658,7 +3716,7 @@ std::string
 GNEViewNetHelper::IntervalBar::getParameter() const {
     if (!myParametersComboBox->isEnabled() ||
             (myParametersComboBox->getCurrentItem() == 0) ||
-            (myParametersComboBox->getTextColor() == FXRGB(255, 0, 0))) {
+            (myParametersComboBox->getTextColor() == GUIDesignTextColorRed)) {
         return "";
     } else {
         return myParametersComboBox->getText().text();
@@ -3672,9 +3730,9 @@ GNEViewNetHelper::IntervalBar::setGenericDataType() {
             (myGenericDataTypesComboBox->getText() == toString(GNE_TAG_EDGEREL_SINGLE).c_str()) ||
             (myGenericDataTypesComboBox->getText() == toString(SUMO_TAG_EDGEREL).c_str()) ||
             (myGenericDataTypesComboBox->getText() == toString(SUMO_TAG_TAZREL).c_str())) {
-        myGenericDataTypesComboBox->setTextColor(FXRGB(0, 0, 0));
+        myGenericDataTypesComboBox->setTextColor(GUIDesignTextColorBlack);
     } else {
-        myGenericDataTypesComboBox->setTextColor(FXRGB(255, 0, 0));
+        myGenericDataTypesComboBox->setTextColor(GUIDesignTextColorRed);
     }
     // update view net
     myViewNet->updateViewNet();
@@ -3685,9 +3743,9 @@ void
 GNEViewNetHelper::IntervalBar::setDataSet() {
     // check if exist
     if (std::find(myDataSets.begin(), myDataSets.end(), myDataSetsComboBox->getText().text()) != myDataSets.end()) {
-        myDataSetsComboBox->setTextColor(FXRGB(0, 0, 0));
+        myDataSetsComboBox->setTextColor(GUIDesignTextColorBlack);
     } else {
-        myDataSetsComboBox->setTextColor(FXRGB(255, 0, 0));
+        myDataSetsComboBox->setTextColor(GUIDesignTextColorRed);
     }
     // update view net
     myViewNet->updateViewNet();
@@ -3713,11 +3771,11 @@ void
 GNEViewNetHelper::IntervalBar::setBegin() {
     if (myBeginTextField->getText().empty()) {
         myBeginTextField->setText(toString(myViewNet->getNet()->getDataSetIntervalMinimumBegin()).c_str());
-        myBeginTextField->setTextColor(FXRGB(0, 0, 0));
+        myBeginTextField->setTextColor(GUIDesignTextColorBlack);
     } else if (GNEAttributeCarrier::canParse<double>(myBeginTextField->getText().text())) {
-        myBeginTextField->setTextColor(FXRGB(0, 0, 0));
+        myBeginTextField->setTextColor(GUIDesignTextColorBlack);
     } else {
-        myBeginTextField->setTextColor(FXRGB(255, 0, 0));
+        myBeginTextField->setTextColor(GUIDesignTextColorRed);
     }
     // update view net
     myViewNet->updateViewNet();
@@ -3728,11 +3786,11 @@ void
 GNEViewNetHelper::IntervalBar::setEnd() {
     if (myEndTextField->getText().empty()) {
         myEndTextField->setText(toString(myViewNet->getNet()->getDataSetIntervalMaximumEnd()).c_str());
-        myEndTextField->setTextColor(FXRGB(0, 0, 0));
+        myEndTextField->setTextColor(GUIDesignTextColorBlack);
     } else if (GNEAttributeCarrier::canParse<double>(myEndTextField->getText().text())) {
-        myEndTextField->setTextColor(FXRGB(0, 0, 0));
+        myEndTextField->setTextColor(GUIDesignTextColorBlack);
     } else {
-        myEndTextField->setTextColor(FXRGB(255, 0, 0));
+        myEndTextField->setTextColor(GUIDesignTextColorRed);
     }
     // update view net
     myViewNet->updateViewNet();
@@ -3743,9 +3801,9 @@ void
 GNEViewNetHelper::IntervalBar::setParameter() {
     // check if exist
     if (myParameters.count(myParametersComboBox->getText().text()) > 0) {
-        myParametersComboBox->setTextColor(FXRGB(0, 0, 0));
+        myParametersComboBox->setTextColor(GUIDesignTextColorBlack);
     } else {
-        myParametersComboBox->setTextColor(FXRGB(255, 0, 0));
+        myParametersComboBox->setTextColor(GUIDesignTextColorRed);
     }
     // update view net
     myViewNet->updateViewNet();
@@ -3879,7 +3937,7 @@ GNEViewNetHelper::NetworkCheckableButtons::buildNetworkCheckableButtons() {
     trafficLightButton->create();
     // connection mode
     connectionButton = new MFXCheckableButton(false, gripModes, tooltipMenu,
-            std::string("\t") + TL("Connection mode") + std::string("\t") + TL("Mode for edit connections between lanes. (C)"),
+            std::string("\t") + TL("Connection mode") + std::string("\t") + TL("Mode for editing connections between lanes. (C)"),
             GUIIconSubSys::getIcon(GUIIcon::MODECONNECTION), myViewNet, MID_HOTKEY_C_MODE_CONNECT_CONTAINER, GUIDesignMFXCheckableButtonSquare);
     connectionButton->create();
     // prohibition mode
@@ -4297,9 +4355,9 @@ GNEViewNetHelper::LockIcon::drawLockIcon(const GUIVisualizationSettings::Detail 
     if (checkDrawing(d, AC, type, exaggeration)) {
         // Start pushing matrix
         GLHelper::pushMatrix();
-        // Traslate to position
+        // Translate to position
         glTranslated(position.x(), position.y(), GLO_LOCKICON);
-        // Traslate depending of the offset
+        // Translate depending of the offset
         glTranslated(offsetx, offsety, 0);
         // rotate to avoid draw invert
         glRotated(180, 0, 0, 1);

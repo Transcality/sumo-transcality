@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -75,6 +75,11 @@ public:
     /// @name FOX-callbacks
     /// @{
 
+    /// @brief keyboard functions
+    //@{
+    long onKeyPress(FXObject* o, FXSelector sel, void* data);
+    //@}
+
     /// @brief Callback: The selected item shall be centered within the calling view
     long onCmdCenter(FXObject*, FXSelector, void*);
 
@@ -90,19 +95,16 @@ public:
     /// @brief Callback: Selects to current item if enter is pressed
     long onCmdText(FXObject*, FXSelector, void*);
 
-    /// @brief Callback: Selects to current item if enter is pressed
-    long onListKeyPress(FXObject*, FXSelector, void*);
-
     /// @brief Callback: Current list item has changed
     long onChgList(FXObject*, FXSelector, void*);
 
     /// @brief Callback: Current list item selection has changed
     long onChgListSel(FXObject*, FXSelector, void*);
 
-    /// @brief Callback: Hides unselected items if pressed
+    /// @brief Callback: Hides/shows unselected items
     long onCmdFilter(FXObject*, FXSelector, void*);
 
-    /// @brief Callback: Hides unmatched items if pressed
+    /// @brief Callback: Filters list by substring
     long onCmdFilterSubstr(FXObject*, FXSelector, void*);
 
     /// @brief Callback: Toggle selection status of current object / list
@@ -110,11 +112,23 @@ public:
     long onCmdAddListSelection(FXObject*, FXSelector, void*);
     long onCmdClearListSelection(FXObject*, FXSelector, void*);
 
+    /// @brief Callback: Update "Select all" button
+    long onUpdAddListSelection(FXObject*, FXSelector, void*);
+
+    /// @brief Callback: Update "Deselect all" button
+    long onUpdClearListSelection(FXObject*, FXSelector, void*);
+
     /// @brief Callback: Toggle locator by name
     long onCmdLocateByName(FXObject*, FXSelector, void*);
 
     /// @brief Callback: Update list
     long onCmdUpdate(FXObject*, FXSelector, void*);
+
+    /// @brief Callback: Toggle case sensitive search
+    long onCmdCaseSensitive(FXObject*, FXSelector, void*);
+
+    /// @brief Callback: Toggle auto center
+    long onCmdAutoCenter(FXObject*, FXSelector, void*);
     /// @}
 
     /// @brief sets the focus after the window is created to work-around bug in libfox
@@ -141,8 +155,17 @@ protected:
     /// @brief filter ACs (needed in netedit)
     virtual void filterACs(const std::vector<GUIGlID>& GLIDs);
 
-    /// update the list with the given ids
+    /// @brief update the list with the given ids
     void refreshList(const std::vector<GUIGlID>& ids);
+
+    /// @brief apply current filters and update list
+    void applyFilters();
+
+    /// @brief update "Select all" and "Deselect all" buttons status
+    void updateSelectionButtons();
+
+    /// @brief whether locate by name is active
+    bool locateByName() const;
 
     /// @brief retrieve name for the given object
     virtual std::string getObjectName(GUIGlObject* o) const;
@@ -163,6 +186,12 @@ private:
     /// @brief The button that triggers tracking on the select vehicle
     FXButton* myTrackButton;
 
+    /// @brief The button to select all items in list
+    FXButton* mySelectAllButton;
+
+    /// @brief The button to deselect all items in list
+    FXButton* myDeselectAllButton;
+
     /// @brief The chosen id
     GUIGlObject* mySelected;
 
@@ -172,11 +201,20 @@ private:
     /// @brief myList contains (void) pointers to elements of myIDs instead of the more volatile pointers to GUIGlObject
     std::set<GUIGlID> myIDs;
 
-    /// @brief whether to locate by object name instead of id
-    bool myLocateByName;
+    /// @brief all object IDs available for choosing
+    std::vector<GUIGlID> myAllIDs;
 
-    /// @brief whether the list was filter by substring
-    bool myHaveFilteredSubstring;
+    /// @brief number of selected items currently displayed in myList
+    int myNumSelectedItems;
+
+    /// @brief whether to hide unselected items
+    FXCheckButton* myHideUnselected;
+
+    /// @brief whether to locate by object name instead of id
+    FXCheckButton* myLocateByName;
+
+    /// @brief whether to filter by substring
+    FXCheckButton* myFilterSubstring;
 
     /// @brief label for declaring list size
     FXLabel* myCountLabel;

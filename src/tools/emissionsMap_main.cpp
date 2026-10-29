@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -98,6 +98,9 @@ void single(const OptionsCont& oc, const std::string& of, const std::string& cla
     } else {
         energyParams = std::unique_ptr<EnergyParams>(new EnergyParams());
     }
+    for (auto& vt : vTypes) {
+        delete vt.second;
+    }
     for (double v = vMin; v <= vMax; v += vStep) {
         for (double a = aMin; a <= aMax; a += aStep) {
             for (double s = sMin; s <= sMax; s += sStep) {
@@ -121,7 +124,7 @@ int
 main(int argc, char** argv) {
     OptionsCont& oc = OptionsCont::getOptions();
     oc.setApplicationDescription(TL("Builds and writes an emissions map for SUMO's emission models."));
-    oc.setApplicationName("emissionsMap", "Eclipse SUMO emissionsMap Version " VERSION_STRING);
+    oc.setApplicationName("emissionsMap", "Eclipse SUMO emissionsMap " VERSION_STRING);
     // add options
     SystemFrame::addConfigurationOptions(oc);
     oc.addOptionSubTopic("Input");
@@ -170,7 +173,7 @@ main(int argc, char** argv) {
     oc.addDescription("phemlight-path", "Emissions", TL("Determines where to load PHEMlight definitions from"));
 
     oc.doRegister("phemlight-year", new Option_Integer(0));
-    oc.addDescription("phemlight-year", "Emissions", TL("Enable fleet age modelling with the given reference year in PHEMlight5"));
+    oc.addDescription("phemlight-year", "Emissions", TL("Enable fleet age modeling with the given reference year in PHEMlight5"));
 
     oc.doRegister("phemlight-temperature", new Option_Float(INVALID_DOUBLE));
     oc.addDescription("phemlight-temperature", "Emissions", TL("Set ambient temperature to correct NOx emissions in PHEMlight5"));

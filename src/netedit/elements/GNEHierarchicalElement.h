@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -40,14 +40,14 @@ public:
     /// @brief Destructor
     ~GNEHierarchicalElement();
 
-    /// @brief get parents(used in GNE_Change)
-    const GNEHierarchicalStructureParents getParents() const;
-
     /// @brief clear hierarchical structure parents (used in GNE_Change)
     void clearParents();
 
-    /// @name common get functions
+    /// @name get parent functions
     /// @{
+
+    /// @brief get parents container
+    const GNEHierarchicalStructureParents& getParents() const;
 
     /// @brief get parent junctions
     const GNEHierarchicalContainerParents<GNEJunction*>& getParentJunctions() const;
@@ -72,6 +72,14 @@ public:
 
     /// @brief get parent demand elements
     const GNEHierarchicalContainerParents<GNEGenericData*>& getParentGenericDatas() const;
+
+    /// @}
+
+    /// @name get children functions
+    /// @{
+
+    /// @brief get child container
+    const GNEHierarchicalStructureChildren& getChildren() const;
 
     /// @brief get child junctions
     const GNEHierarchicalContainerChildren<GNEJunction*>& getChildJunctions() const;
@@ -119,6 +127,18 @@ public:
         myHierarchicalStructureChildren.add(element);
     }
 
+    /// @brief Sort childrens
+    template<typename ChildType>
+    void sortChildren(std::vector<ChildType*> sortedChildrens) {
+        // remove elements and add again
+        for (auto child : sortedChildrens) {
+            myHierarchicalStructureChildren.remove(child);
+        }
+        for (auto child : sortedChildrens) {
+            myHierarchicalStructureChildren.add(child);
+        }
+    }
+
     /// @}
 
     /// @name edit function maintain integrity
@@ -143,11 +163,15 @@ public:
     static void updateParent(ElementType element, const int index, ParentType newParent) {
         // remove element from old parent
         auto oldParent = element->myHierarchicalStructureParents.template at<ParentType>(index);
-        oldParent->myHierarchicalStructureChildren.remove(element);
+        if (oldParent) {
+            oldParent->myHierarchicalStructureChildren.remove(element);
+        }
         // update parent
         element->myHierarchicalStructureParents.replaceSingle(index, newParent);
         // insert child in new parent
-        newParent->myHierarchicalStructureChildren.add(element);
+        if (newParent) {
+            newParent->myHierarchicalStructureChildren.add(element);
+        }
     }
 
     /// @brief update all parent elements
@@ -155,28 +179,40 @@ public:
     static void updateParents(ElementType element, GNEHierarchicalContainerParents<ParentType> newParents) {
         // remove children
         for (const auto parent : element->myHierarchicalStructureParents.template get<ParentType>()) {
-            parent->myHierarchicalStructureChildren.remove(element);
+            if (parent) {
+                parent->myHierarchicalStructureChildren.remove(element);
+            }
         }
         // update parents
         element->myHierarchicalStructureParents.replaceAll(newParents);
         // restore children
         for (const auto parent : element->myHierarchicalStructureParents.template get<ParentType>()) {
-            parent->myHierarchicalStructureChildren.add(element);
+            if (parent) {
+                parent->myHierarchicalStructureChildren.add(element);
+            }
         }
     }
 
     /// @brief insert child element
     template<typename ElementType, typename ChildType>
     static void insertChild(ElementType element, ChildType child) {
-        element->myHierarchicalStructureChildren.add(child);
-        child->myHierarchicalStructureParents.add(element);
+        if (element) {
+            element->myHierarchicalStructureChildren.add(child);
+        }
+        if (child) {
+            child->myHierarchicalStructureParents.add(element);
+        }
     }
 
     /// @brief remove child element
     template<typename ElementType, typename ChildType>
     static void removeChild(ElementType element, ChildType child) {
-        element->myHierarchicalStructureChildren.remove(child);
-        child->myHierarchicalStructureParents.remove(element);
+        if (element) {
+            element->myHierarchicalStructureChildren.remove(child);
+        }
+        if (child) {
+            child->myHierarchicalStructureParents.remove(element);
+        }
     }
 
     /// @brief update all children elements
@@ -184,13 +220,17 @@ public:
     static void updateChildren(ElementType element, GNEHierarchicalContainerChildren<ChildType> newChildren) {
         // remove children
         for (const auto children : element->myHierarchicalStructureChildren.template get<ChildType>()) {
-            children->myHierarchicalStructureParents.remove(element);
+            if (children) {
+                children->myHierarchicalStructureParents.remove(element);
+            }
         }
         // update children
         element->myHierarchicalStructureChildren.replaceAll(newChildren);
         // restore children
         for (const auto children : element->myHierarchicalStructureChildren.template get<ChildType>()) {
-            children->myHierarchicalStructureParents.add(element);
+            if (children) {
+                children->myHierarchicalStructureParents.add(element);
+            }
         }
     }
 
@@ -203,12 +243,6 @@ public:
     std::string getNewListOfParents(const GNENetworkElement* currentElement, const GNENetworkElement* newNextElement) const;
 
     /// @}
-
-    /// @brief check if children are overlapped (Used by Rerouters)
-    bool checkChildAdditionalsOverlapping() const;
-
-    /// @brief check if child demand elements are overlapped
-    bool checkChildDemandElementsOverlapping() const;
 
 private:
     /// @brief hierarchical structure with parents

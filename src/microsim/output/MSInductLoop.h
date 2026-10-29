@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2004-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2004-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@
 #include <string>
 #include <deque>
 #include <map>
+#include <queue>
 #include <functional>
 #include <microsim/MSMoveReminder.h>
 #include <microsim/output/MSDetectorFileOutput.h>
@@ -37,6 +38,7 @@
 // class declarations
 // ===========================================================================
 class MSLane;
+class MESegment;
 class MSVehicle;
 class OutputDevice;
 
@@ -232,6 +234,11 @@ public:
      */
     double getOccupancyTime() const;
 
+    /** @brief Returns the maximum stop arrival delay of public transport vehicles that are on the detector
+     * or passed the detector in the last step or -INVALID_DOUBLE
+     */
+    double getArrivalDelay() const;
+
     ///@brief return last time a vehicle was on the detector
     SUMOTime getLastDetectionTime() const;
 
@@ -245,6 +252,10 @@ public:
      * Setting a negative value resets the override
      */
     void overrideTimeSinceDetection(double time);
+
+    /* @brief loads the time since detetion (from state)
+     */
+    void loadTimeSinceLastDetection(double time);
 
     /// @name Methods inherited from MSDetectorFileOutput.
     /// @{
@@ -349,6 +360,10 @@ protected:
     /// @brief helper function for mapping person movement
     void notifyMovePerson(MSTransportable* p, int dir, double pos);
 
+    /// @brief helper function for managing meso timings
+    typedef std::priority_queue<SUMOTime, std::vector<SUMOTime>, std::greater<SUMOTime>> TimeQueue;
+    static void discardOldTimes(TimeQueue& tq, SUMOTime now);
+
 protected:
     /// @brief detecto name
     std::string myName;
@@ -364,6 +379,10 @@ protected:
 
     /// @brief Leave-time of the last vehicle detected [s]
     double myLastLeaveTime;
+
+    /// @brief extrapolated leave times for meso vehicle
+    mutable TimeQueue myNextMesoLeaveTimes;
+    mutable TimeQueue myLastMesoLeaveTimes;
 
     /// @brief overrides the time since last detection
     double myOverrideTime;
@@ -388,6 +407,12 @@ protected:
 
     SUMOTime myLastIntervalEnd;
     SUMOTime myLastIntervalBegin;
+
+    /// @brief current segment (for actuated tls in meso)
+    MESegment* mySegment;
+
+    /// @brief position relative to the current segment
+    double mySegmentPos;
 
 private:
     /// @brief Invalidated copy constructor.

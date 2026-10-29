@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -121,6 +121,9 @@ public:
 
         void switchTo(MSTLLogicControl& tlc, const std::string& programID);
 
+        /// @brief set current program upon loading saved state
+        void switchToLoaded(MSTrafficLightLogic* tl);
+
         /* @brief get logic by programID. For the special case "off"
          * instantiate an MSOffTrafficLightLogic */
         MSTrafficLightLogic* getLogicInstantiatingOff(MSTLLogicControl& tlc,
@@ -227,8 +230,8 @@ public:
     MSTrafficLightLogic* getActive(const std::string& id) const;
 
     /**
-     * Returns the ids of all existing variants-structures, wich are the ids of their
-     * contained tls logics (not the logic's programm-ids)
+     * Returns the ids of all existing variants-structures, which are the ids of their
+     * contained tls logics (not the logic's program-ids)
      * @return the list of ids
      */
     std::vector<std::string> getAllTLIds() const;
@@ -535,7 +538,7 @@ protected:
 
 
     protected:
-        /** @brief Checks, whether the position of a signal programm is at the GSP ("Good Switching Point")
+        /** @brief Checks, whether the position of a signal program is at the GSP ("Good Switching Point")
          *
          * The GSP must be given as a logic's parameter ("GSP"). Not the simulation second,
          *  but the phase the GSP lies within is used. If the phase the GSP lies within is
@@ -550,7 +553,7 @@ protected:
         /** @brief Returns the difference between a given time and the start of the phase
          * @param[in] logic The logic to consider
          * @param[in] toTime The time to ask for
-         * @return How much time elapsed between the last pahse start and the given time
+         * @return How much time elapsed between the last phase start and the given time
          */
         SUMOTime getDiffToStartOfPhase(MSTrafficLightLogic& logic, SUMOTime toTime);
 
@@ -695,7 +698,7 @@ protected:
         /** @brief Stretches the logic to synchronize
          * @param[in] step The current simulation step
          * @param[in] startPos The position in the destination program to switch to
-         * @param[in] allStretchTime The amount by which the logic shall be streched
+         * @param[in] allStretchTime The amount by which the logic shall be stretched
          */
         void stretchLogic(SUMOTime step, SUMOTime startPos, SUMOTime allStretchTime);
 

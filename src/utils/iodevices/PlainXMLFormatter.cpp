@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,9 +21,9 @@
 #include <config.h>
 
 #include <utils/common/ToString.h>
+#include <utils/common/StringUtils.h>
 #include <utils/options/OptionsCont.h>
 #include "PlainXMLFormatter.h"
-#include "StreamDevices.h"
 
 
 // ===========================================================================
@@ -35,26 +35,22 @@ PlainXMLFormatter::PlainXMLFormatter(const int defaultIndentation)
 
 
 bool
-PlainXMLFormatter::writeHeader(StreamDevice& into, const SumoXMLTag& rootElement) {
+PlainXMLFormatter::writeXMLHeader(std::ostream& into, const std::string& rootElement,
+                                  const std::map<SumoXMLAttr, std::string>& attrs,
+                                  bool writeMetadata, bool includeConfig) {
     if (myXMLStack.empty()) {
-        OptionsCont::getOptions().writeXMLHeader(into);
-        openTag(into, rootElement);
-        return true;
-    }
-    return false;
-}
-
-
-bool
-PlainXMLFormatter::writeXMLHeader(StreamDevice& into, const std::string& rootElement,
-                                  const std::map<SumoXMLAttr, std::string>& attrs, bool includeConfig) {
-    if (myXMLStack.empty()) {
-        OptionsCont::getOptions().writeXMLHeader(into, includeConfig);
+        const OptionsCont& oc = OptionsCont::getOptions();
+        oc.writeXMLHeader(into, includeConfig);
         openTag(into, rootElement);
         for (std::map<SumoXMLAttr, std::string>::const_iterator it = attrs.begin(); it != attrs.end(); ++it) {
-            writeAttr(into, toString(it->first), it->second);
+            writeAttr(into, it->first, it->second, false);
         }
         into << ">\n";
+        if (writeMetadata) {
+            into << "    <metadata created_at=\"" << StringUtils::isoTimeString() << "\" created_by=\"" << oc.getFullName() << "\">\n";
+            oc.writeConfiguration(into, true, false, false, "", false, true, "        ");
+            into << "    </metadata>\n";
+        }
         myHavePendingOpener = false;
         return true;
     }
@@ -63,24 +59,24 @@ PlainXMLFormatter::writeXMLHeader(StreamDevice& into, const std::string& rootEle
 
 
 void
-PlainXMLFormatter::openTag(StreamDevice& into, const std::string& xmlElement) {
+PlainXMLFormatter::openTag(std::ostream& into, const std::string& xmlElement) {
     if (myHavePendingOpener) {
         into << ">\n";
     }
     myHavePendingOpener = true;
-    into << std::string(4 * (myXMLStack.size() + myDefaultIndentation), ' ').c_str() << "<" << xmlElement;
+    into << std::string(4 * (myXMLStack.size() + myDefaultIndentation), ' ') << "<" << xmlElement;
     myXMLStack.push_back(xmlElement);
 }
 
 
 void
-PlainXMLFormatter::openTag(StreamDevice& into, const SumoXMLTag& xmlElement) {
+PlainXMLFormatter::openTag(std::ostream& into, const SumoXMLTag& xmlElement) {
     openTag(into, toString(xmlElement));
 }
 
 
 bool
-PlainXMLFormatter::closeTag(StreamDevice& into, const std::string& comment) {
+PlainXMLFormatter::closeTag(std::ostream& into, const std::string& comment) {
     if (!myXMLStack.empty()) {
         if (myHavePendingOpener) {
             into << "/>" << comment << "\n";
@@ -97,7 +93,7 @@ PlainXMLFormatter::closeTag(StreamDevice& into, const std::string& comment) {
 
 
 void
-PlainXMLFormatter::writePreformattedTag(StreamDevice& into, const std::string& val) {
+PlainXMLFormatter::writePreformattedTag(std::ostream& into, const std::string& val) {
     if (myHavePendingOpener) {
         into << ">\n";
         myHavePendingOpener = false;
@@ -105,9 +101,22 @@ PlainXMLFormatter::writePreformattedTag(StreamDevice& into, const std::string& v
     into << val;
 }
 
+
 void
-PlainXMLFormatter::writePadding(StreamDevice& into, const std::string& val) {
+PlainXMLFormatter::writePadding(std::ostream& into, const std::string& val) {
     into << val;
+}
+
+
+void
+PlainXMLFormatter::writeAttr(std::ostream& into, const std::string& attr, const std::string& val, const bool escape) {
+    into << " " << attr << "=\"" << (escape ? StringUtils::escapeXML(val) : val) << "\"";
+}
+
+
+void
+PlainXMLFormatter::writeAttr(std::ostream& into, const SumoXMLAttr attr, const std::string& val, const bool escape) {
+    into << " " << toString(attr) << "=\"" << (escape ? StringUtils::escapeXML(val) : val) << "\"";
 }
 
 

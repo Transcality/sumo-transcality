@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -42,8 +42,9 @@
 // ===========================================================================
 // static member initializations
 // ===========================================================================
-MSDevice_FCDReplay::FCDHandler* MSDevice_FCDReplay::myHandler = nullptr;
-SUMOSAXReader* MSDevice_FCDReplay::myParser = nullptr;
+std::vector<std::unique_ptr<MSDevice_FCDReplay::FCDHandler> > MSDevice_FCDReplay::myHandlers;
+std::vector<std::unique_ptr<SUMOSAXReader> > MSDevice_FCDReplay::myParsers;
+SumoXMLAttrMask MSDevice_FCDReplay::myUsedAttributes;
 
 
 // ===========================================================================
@@ -57,15 +58,18 @@ MSDevice_FCDReplay::insertOptions(OptionsCont& oc) {
     oc.addOptionSubTopic("FCD Replay Device");
     insertDefaultAssignmentOptions("fcd-replay", "FCD Replay Device", oc);
 
-    oc.doRegister("device.fcd-replay.file", new Option_FileName());
-    oc.addDescription("device.fcd-replay.file", "FCD Replay Device", TL("FCD file to read"));
+    oc.doRegister("device.fcd-replay.files", new Option_FileName());
+    oc.addSynonyme("device.fcd-replay.files", "device.fcd-replay.file");
+    oc.addDescription("device.fcd-replay.files", "FCD Replay Device", TL("FCD files to read"));
+    oc.doRegister("device.fcd-replay.consistency", new Option_StringVector(StringVector({ "all" })));
+    oc.addDescription("device.fcd-replay.consistency", "FCD Replay Device", TL("Values to use when replaying ('all' or any combination of 'x', 'y', 'edge', 'lane', 'speed', 'position', 'angle', 'type')"));
 }
 
 
 void
 MSDevice_FCDReplay::buildVehicleDevices(SUMOVehicle& v, std::vector<MSVehicleDevice*>& into) {
     OptionsCont& oc = OptionsCont::getOptions();
-    if (equippedByDefaultAssignmentOptions(oc, "fcd-replay", v, oc.isSet("device.fcd-replay.file"))) {
+    if (equippedByDefaultAssignmentOptions(oc, "fcd-replay", v, oc.isSet("device.fcd-replay.files"))) {
         MSDevice_FCDReplay* device = new MSDevice_FCDReplay(v, "fcdReplay_" + v.getID());
         into.push_back(device);
     }
@@ -74,21 +78,48 @@ MSDevice_FCDReplay::buildVehicleDevices(SUMOVehicle& v, std::vector<MSVehicleDev
 
 void
 MSDevice_FCDReplay::init() {
-    delete myHandler;
-    myHandler = nullptr;
     const OptionsCont& oc = OptionsCont::getOptions();
-    if (oc.isSet("device.fcd-replay.file")) {
-        const std::string& filename = oc.getString("device.fcd-replay.file");
-        myHandler = new MSDevice_FCDReplay::FCDHandler(filename);
-        myParser = XMLSubSys::getSAXReader(*myHandler);
-        if (!myParser->parseFirst(filename)) {
-            throw ProcessError(TLF("Can not read XML-file '%'.", filename));
+    myUsedAttributes.reset();
+    for (const std::string& attr : oc.getStringVector("device.fcd-replay.consistency")) {
+        if (attr == "x" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_X);
         }
-        const SUMOTime inc = parseNext(SIMSTEP);
-        MSNet::getInstance()->getBeginOfTimestepEvents()->addEvent(new MoveVehicles(), SIMSTEP + DELTA_T);
-        if (inc > 0) {
-            MSNet::getInstance()->getBeginOfTimestepEvents()->addEvent(new StaticCommand<MSDevice_FCDReplay>(&MSDevice_FCDReplay::parseNext),
-                    SIMSTEP + inc);
+        if (attr == "y" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_Y);
+        }
+        if (attr == "edge" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_EDGE);
+        }
+        if (attr == "lane" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_LANE);
+        }
+        if (attr == "speed" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_SPEED);
+        }
+        if (attr == "position" || attr == "pos" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_POSITION);
+        }
+        if (attr == "angle" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_ANGLE);
+        }
+        if (attr == "type" || attr == "all") {
+            myUsedAttributes.set(SUMO_ATTR_TYPE);
+        }
+    }
+    myHandlers.clear();
+    if (oc.isSet("device.fcd-replay.files")) {
+        for (const std::string& filename : oc.getStringVector("device.fcd-replay.files")) {
+            myHandlers.push_back(std::unique_ptr<MSDevice_FCDReplay::FCDHandler>(new MSDevice_FCDReplay::FCDHandler(filename)));
+            myParsers.push_back(std::unique_ptr<SUMOSAXReader>(XMLSubSys::getSAXReader(*myHandlers.back())));
+            if (!myParsers.back()->parseFirst(filename)) {
+                throw ProcessError(TLF("Can not read XML-file '%'.", filename));
+            }
+            const SUMOTime inc = parseNext(SIMSTEP);
+            MSNet::getInstance()->getBeginOfTimestepEvents()->addEvent(new MoveVehicles(), SIMSTEP + DELTA_T);
+            if (inc > 0) {
+                MSNet::getInstance()->getBeginOfTimestepEvents()->addEvent(new StaticCommand<MSDevice_FCDReplay>(&MSDevice_FCDReplay::parseNext),
+                        SIMSTEP + inc);
+            }
         }
     }
 }
@@ -97,16 +128,22 @@ MSDevice_FCDReplay::init() {
 SUMOTime
 MSDevice_FCDReplay::parseNext(SUMOTime t) {
     SUMOTime inc = string2time(OptionsCont::getOptions().getString("route-steps"));
-    // make sure that we have always at least inc time steps buffered, so at time 200 we will parse 400 to 600
-    const SUMOTime start = myHandler->getTime();
-    while (myHandler->getTime() < t + 2 * inc) {
-        if (!myParser->parseNext()) {
-            inc = 0;
-            break;
+    bool haveData = false;
+    for (int i = 0; i < (int)myHandlers.size(); i++) {
+        if (myParsers[i] != nullptr) {
+            haveData = true;
+            // make sure that we have always at least inc time steps buffered, so at time 200 we will parse 400 to 600
+            const SUMOTime start = myHandlers[i]->getTime();
+            while (myHandlers[i]->getTime() < t + 2 * inc) {
+                if (!myParsers[i]->parseNext()) {
+                    myParsers[i] = nullptr;
+                    break;
+                }
+            }
+            myHandlers[i]->updateTrafficObjects(start);
         }
     }
-    myHandler->updateTrafficObjects(start);
-    return inc;
+    return haveData ? inc : 0;
 }
 
 
@@ -125,12 +162,15 @@ MSDevice_FCDReplay::~MSDevice_FCDReplay() {
 void
 MSDevice_FCDReplay::move(SUMOTime currentTime) {
     if (myTrajectory == nullptr) {
-        auto it = myHandler->getTrajectories().find(myHolder.getID());
-        if (it == myHandler->getTrajectories().end()) {
+        for (auto& handler : myHandlers) {
+            auto it = handler->getTrajectories().find(myHolder.getID());
+            if (it != handler->getTrajectories().end()) {
+                setTrajectory(&it->second);
+                break;
+            }
+        }
+        if (myTrajectory == nullptr) {
             return;
-        } else {
-            const Trajectory& t = it->second;
-            setTrajectory(&t);
         }
     } else if (myTrajectoryIndex == (int)myTrajectory->size()) {
         // removal happens via the usual MSVehicle::hasArrived mechanism
@@ -188,17 +228,22 @@ MSDevice_FCDReplay::FCDHandler::myStartElement(int element, const SUMOSAXAttribu
             myPositions.clear();
             return;
         case SUMO_TAG_VEHICLE:
-        case SUMO_TAG_PERSON: {
+        case SUMO_TAG_PERSON:
             if (myTime >= SIMSTEP) {
                 const bool isPerson = element == SUMO_TAG_PERSON;
                 const std::string id = attrs.getString(SUMO_ATTR_ID);
-                const Position xy = Position(attrs.getOpt<double>(SUMO_ATTR_X, id.c_str(), ok, libsumo::INVALID_DOUBLE_VALUE),
-                                             attrs.getOpt<double>(SUMO_ATTR_Y, id.c_str(), ok, libsumo::INVALID_DOUBLE_VALUE));
-                const std::string type = attrs.getOpt<std::string>(SUMO_ATTR_TYPE, id.c_str(), ok, "");
-                const std::string edgeOrLane = attrs.getOpt<std::string>(isPerson ? SUMO_ATTR_EDGE : SUMO_ATTR_LANE, id.c_str(), ok, "");
-                const double speed = attrs.getOpt<double>(SUMO_ATTR_SPEED, id.c_str(), ok, libsumo::INVALID_DOUBLE_VALUE);
-                const double pos = attrs.getOpt<double>(SUMO_ATTR_POSITION, id.c_str(), ok, libsumo::INVALID_DOUBLE_VALUE);
-                const double angle = attrs.getOpt<double>(SUMO_ATTR_ANGLE, id.c_str(), ok, libsumo::INVALID_DOUBLE_VALUE);
+                auto getOptDouble = [&](const SumoXMLAttr attr) {
+                    return myUsedAttributes.test(attr) ? attrs.getOpt<double>(attr, id.c_str(), ok, libsumo::INVALID_DOUBLE_VALUE) : libsumo::INVALID_DOUBLE_VALUE;
+                };
+                const Position xy = Position(getOptDouble(SUMO_ATTR_X), getOptDouble(SUMO_ATTR_Y));
+                const std::string type = myUsedAttributes.test(SUMO_ATTR_TYPE) ? attrs.getOpt<std::string>(SUMO_ATTR_TYPE, id.c_str(), ok, "") : "";
+                std::string edgeOrLane;
+                if (myUsedAttributes.test(SUMO_ATTR_EDGE) || myUsedAttributes.test(SUMO_ATTR_LANE)) {
+                    edgeOrLane = attrs.getOpt<std::string>(isPerson ? SUMO_ATTR_EDGE : SUMO_ATTR_LANE, id.c_str(), ok, "");
+                }
+                const double speed = getOptDouble(SUMO_ATTR_SPEED);
+                const double pos = getOptDouble(SUMO_ATTR_POSITION);
+                const double angle = getOptDouble(SUMO_ATTR_ANGLE);
                 std::string vehicle = attrs.getOpt<std::string>(SUMO_ATTR_VEHICLE, id.c_str(), ok, "");
                 if (isPerson) {
                     if (vehicle == "") {
@@ -209,6 +254,10 @@ MSDevice_FCDReplay::FCDHandler::myStartElement(int element, const SUMOSAXAttribu
                     }
                 } else {
                     myPositions[xy] = id;
+                }
+                if (!ok) {
+                    WRITE_WARNING("Invalid  FCD data.");
+                    return;
                 }
                 myTrajectories[id].push_back({myTime, xy, edgeOrLane, pos, speed, angle});
                 const MSEdge* edge = MSEdge::dictionary(isPerson ? edgeOrLane : SUMOXMLDefinitions::getEdgeIDFromLane(edgeOrLane));
@@ -241,7 +290,6 @@ MSDevice_FCDReplay::FCDHandler::myStartElement(int element, const SUMOSAXAttribu
                 }
             }
             return;
-        }
         default:
             break;
     }
@@ -349,7 +397,8 @@ MSDevice_FCDReplay::FCDHandler::updateTrafficObjects(const SUMOTime intervalStar
             }
             MSVehicleType* vehicleType = MSNet::getInstance()->getVehicleControl().getVType(vType);
             if (vehicleType == nullptr) {
-                throw ProcessError("Unknown vType '" + vType + "'.");
+                delete params;
+                throw ProcessError(TLF("Unknown vType '%'.", vType));
             }
             if (routeEdges.front() == nullptr) {
                 if (isPerson) {
@@ -357,6 +406,7 @@ MSDevice_FCDReplay::FCDHandler::updateTrafficObjects(const SUMOTime intervalStar
                 } else {
                     WRITE_WARNINGF(TL("No lane in fcd replay file for vehicle '%' at time %."), id, time2string(t.front().time));
                 }
+                delete params;
                 continue;
             }
             if (isPerson) {
@@ -365,20 +415,21 @@ MSDevice_FCDReplay::FCDHandler::updateTrafficObjects(const SUMOTime intervalStar
                 MSTransportable* person = MSNet::getInstance()->getPersonControl().buildPerson(params, vehicleType, plan, nullptr);
                 person->getSingularType().setVClass(SVC_IGNORING);
                 if (!MSNet::getInstance()->getPersonControl().add(person)) {
-                    throw ProcessError("Duplicate person '" + id + "'.");
+                    delete person;
+                    throw ProcessError(TLF("Duplicate person '%'.", id));
                 }
                 MSTransportableDevice_FCDReplay* device = static_cast<MSTransportableDevice_FCDReplay*>(person->getDevice(typeid(MSTransportableDevice_FCDReplay)));
                 if (device == nullptr) {  // Person did not get a replay device
-                    // TODO delete person
+                    delete person;
                     continue;
                 }
                 device->setTrajectory(&t);
             } else {
                 const std::string dummyRouteID = "DUMMY_ROUTE_" + id;
-                const std::vector<SUMOVehicleParameter::Stop> stops;
+                const StopParVector stops;
                 ConstMSRoutePtr route = std::make_shared<MSRoute>(dummyRouteID, routeEdges, true, nullptr, stops);
                 if (!MSRoute::dictionary(dummyRouteID, route)) {
-                    throw ProcessError("Could not add route '" + dummyRouteID + "'.");
+                    throw ProcessError(TLF("Could not add route '%'.", dummyRouteID));
                 }
                 if (t.front().edgeOrLane != "") {
                     params->departPosProcedure = DepartPosDefinition::GIVEN;
@@ -387,7 +438,7 @@ MSDevice_FCDReplay::FCDHandler::updateTrafficObjects(const SUMOTime intervalStar
                 }
                 SUMOVehicle* vehicle = MSNet::getInstance()->getVehicleControl().buildVehicle(params, route, vehicleType, false, MSVehicleControl::VehicleDefinitionSource::OTHER);
                 if (!MSNet::getInstance()->getVehicleControl().addVehicle(id, vehicle)) {
-                    throw ProcessError("Duplicate vehicle '" + id + "'.");
+                    throw ProcessError(TLF("Duplicate vehicle '%'.", id));
                 }
                 MSNet::getInstance()->getInsertionControl().add(vehicle);
                 MSDevice_FCDReplay* device = static_cast<MSDevice_FCDReplay*>(vehicle->getDevice(typeid(MSDevice_FCDReplay)));
@@ -414,18 +465,21 @@ MSDevice_FCDReplay::FCDHandler::updateTrafficObjects(const SUMOTime intervalStar
                 // TODO optimize: no need to regenerate the whole plan
                 MSTransportable::MSTransportablePlan* plan = makePlan(person->getParameter(), routeEdges, std::get<4>(desc.second), t);
                 const int stageIndex = person->getNumRemainingStages() - 1;
-                MSStage* const final = person->getNextStage(stageIndex);
+                const MSStage* const finalStage = person->getNextStage(stageIndex);
                 bool append = false;
-                for (MSStage* stage : *plan) {
-                    if (stage->getStageType() == final->getStageType() && stage->getFromEdge() == final->getFromEdge()) {
+                for (MSStage* const stage : *plan) {
+                    if (stage->getStageType() == finalStage->getStageType() && stage->getFromEdge() == finalStage->getFromEdge()) {
                         // TODO: circular plans?
                         append = true;
                     }
                     if (append) {
                         person->appendStage(stage);
+                    } else {
+                        delete stage;
                     }
                 }
                 person->removeStage(stageIndex);
+                delete plan;
             } else {
                 SUMOVehicle* vehicle = MSNet::getInstance()->getVehicleControl().getVehicle(id);
                 ConstMSEdgeVector checkedRoute = checkRoute(routeEdges, vehicle);

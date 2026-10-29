@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,6 +19,7 @@
 /****************************************************************************/
 
 #include <netedit/GNEApplicationWindow.h>
+#include <utils/xml/XMLSubSys.h>
 #include <utils/common/FileHelpers.h>
 #include <utils/common/MsgHandler.h>
 #include <utils/common/SysUtils.h>
@@ -34,14 +35,14 @@
 // member method definitions
 // ===========================================================================
 
-GNEPythonTool::GNEPythonTool(GNEApplicationWindow* GNEApp, const std::string& toolPath,
+GNEPythonTool::GNEPythonTool(GNEApplicationWindow* applicationWindow, const std::string& toolPath,
                              const std::string& templateStr, FXMenuPane* menu) :
-    myGNEApp(GNEApp),
+    myApplicationWindow(applicationWindow),
     myToolPath(toolPath),
     myPythonToolName(FileHelpers::getFileFromPath(toolPath, true)) {
     // build menu command
     myMenuCommand = GUIDesigns::buildFXMenuCommandShortcut(menu, myPythonToolName, "", TL("Execute python tool '") + myPythonToolName + "'.",
-                    GUIIconSubSys::getIcon(GUIIcon::TOOL_PYTHON), GNEApp, MID_GNE_OPENPYTHONTOOLDIALOG);
+                    GUIIconSubSys::getIcon(GUIIcon::TOOL_PYTHON), applicationWindow, MID_GNE_OPENPYTHONTOOLDIALOG);
     // parse tool options
     if (templateStr.size() > 0) {
         try {
@@ -56,12 +57,6 @@ GNEPythonTool::GNEPythonTool(GNEApplicationWindow* GNEApp, const std::string& to
 
 
 GNEPythonTool::~GNEPythonTool() {}
-
-
-GNEApplicationWindow*
-GNEPythonTool::getGNEApp() const {
-    return myGNEApp;
-}
 
 
 const std::string&
@@ -131,7 +126,11 @@ GNEPythonTool::getCommand() const {
         if (!option.second->isDefault()) {
             // for boolean values avoid use "true"
             if (option.second->isBool()) {
-                arguments += ("--" + option.first + " ");
+                if (option.second->getBool()) {
+                    arguments += ("--" + option.first + " ");
+                } else {
+                    arguments += ("--no-" + option.first + " ");
+                }
             } else {
                 if (!option.second->isPositional()) {
                     arguments += ("--" + option.first + " ");
@@ -184,13 +183,13 @@ GNEPythonTool::loadConfiguration(const std::string& file) {
     try {
         parser.setDocumentHandler(&handler);
         parser.setErrorHandler(&handler);
-        parser.parse(StringUtils::transcodeToLocal(file).c_str());
+        parser.parse(XMLSubSys::transcodeToLocal(file).c_str());
         if (handler.errorOccurred()) {
             WRITE_ERROR(TL("Could not load tool configuration '") + file + "'.");
             return false;
         }
     } catch (const XERCES_CPP_NAMESPACE::XMLException& e) {
-        WRITE_ERROR(TL("Could not load tool configuration '") + file + "':\n " + StringUtils::transcode(e.getMessage()));
+        WRITE_ERROR(TL("Could not load tool configuration '") + file + "':\n " + XMLSubSys::transcode(e.getMessage()));
         return false;
     }
     // write info

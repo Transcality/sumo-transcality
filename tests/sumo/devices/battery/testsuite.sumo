@@ -1,6 +1,9 @@
 # Vehicle charging battery with a non-constant charging rate
 chargingCurve
 
+# Vehicle charging battery with a non-constant charging rate
+chargingCurve_custom
+
 # chargingStations located in different places
 braunschweig
 
@@ -27,6 +30,12 @@ chargingStations_parked_explicit
 
 # leave the road while charging
 chargingStations_parkingCapacity
+
+# restrained max total power of a charging station with multiple charging vehicles
+chargingStations_totalPower
+
+# see #18241
+chargingStations_totalPower2
 
 # usually loaded from vehicle parameter,
 # default taken from vType parameter
@@ -61,3 +70,6 @@ chargeLevelDist
 
 # distribution of charging levels with error in distribution
 chargeLevelDist_error
+
+# test effect of person mass on consumption
+load_unload_persons

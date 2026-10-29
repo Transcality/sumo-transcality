@@ -61,91 +61,16 @@ modeled using the HBEFA3 based model).
     Please note that the unit of fuel-related outputs changed with SUMO 1.14.0 from liters to milligram.
 	For the old behavior use the option **--emissions.volumetric-fuel**.
 
-<table class="tg">
-  <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-7btt" colspan="7">pollutant / measurement</th>
-  </tr>
-  <tr>
-    <td class="tg-7btt">CO<sub>2</sub></td>
-    <td class="tg-7btt">CO</td>
-    <td class="tg-7btt">HC</td>
-    <td class="tg-7btt">NO<sub>x</sub></td>
-    <td class="tg-7btt">PM<sub>x</sub></td>
-    <td class="tg-7btt">fuel consumption</td>
-    <td class="tg-uzvj">electricity consumption</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">HBEFA v2.1-based<br><code>emissionClass="HBEFA/..."</code></td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">-</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">HBEFA v3.1-based<br><code>emissionClass="HBEFA3/..."</code></td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">-</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">HBEFA v4.2-based<br><code>emissionClass="HBEFA4/..."</code></td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">PHEMlight<br><code>emissionClass="PHEMlight/..."</code></td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">(x)</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">PHEMlight<br><code>emissionClass="PHEMlight5/..."</code></td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">x</td>
-    <td class="tg-c3ow">(x)</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">Electric Vehicle Model<br><code>emissionClass="Energy"</code></td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">x</td>
-  </tr>
-  <tr>
-    <td class="tg-lboi">No Emissions<br><code>emissionClass="Zero"</code></td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-c3ow">-</td>
-    <td class="tg-9wq8">-</td>
-  </tr>
-</table>
+| model | CO<sub>2</sub> | CO | HC | NO<sub>x</sub> | PM<sub>x</sub> | fuel consumption | electricity consumption |
+|-------|:---:|:--:|:--:|:---:|:---:|:----------------:|:-----------------------:|
+| HBEFA v2.1-based<br>`emissionClass="HBEFA/..."` | x | x | x | x | x | x | - |
+| HBEFA v3.1-based<br>`emissionClass="HBEFA3/..."` | x | x | x | x | x | x | - |
+| HBEFA v4.2-based<br>`emissionClass="HBEFA4/..."` | x | x | x | x | x | x | x |
+| PHEMlight<br>`emissionClass="PHEMlight/..."` | x | x | x | x | x | x | (x) |
+| PHEMlight5<br>`emissionClass="PHEMlight5/..."` | x | x | x | x | x | x | (x) |
+| Electric Vehicle Model<br>`emissionClass="Energy"` | - | - | - | - | - | - | x |
+| MMP's Electric Vehicle Emission Model<br>`emissionClass="MMPEVEM"` | - | - | - | - | - | - | x |
+| No Emissions<br>`emissionClass="Zero"` | - | - | - | - | - | - | - |
 
 PHEMlight and PHEMlight5 generate electricity consumption values only if the
 data files for battery powered or hybrid vehicles are available (which are not part of
@@ -153,7 +78,7 @@ the free data set).
 
 # Outputs
 
-Pollutants emitted by the simulated vehicles can be visualised using
+Pollutants emitted by the simulated vehicles can be visualized using
 [sumo-gui](../sumo-gui.md) or be written into output files, both by
 [sumo](../sumo.md) and [sumo-gui](../sumo-gui.md). The
 following output can be used:
@@ -172,11 +97,11 @@ following output can be used:
 - [emission-output](../Simulation/Output/EmissionOutput.md):
   Unaggregated emission values for every vehicle and time step
 - [Color vehicles by
-  emissions](../sumo-gui.md#vehicle_visualisation_settings): This
+  emissions](../sumo-gui.md#vehicle_visualization_settings): This
   can be used to show the emissions for each vehicle during each
   simulation step
 - [Color lanes/edges by
-  emissions](../sumo-gui.md#edgelane_visualisation_settings):
+  emissions](../sumo-gui.md#edgelane_visualization_settings):
   This can be used to show the emissions for all vehicles on a lane
   during each simulation step (or for the whole edge in
   [Simulation/Meso](../Simulation/Meso.md)).
@@ -199,7 +124,7 @@ fuel because the engine gets switch off automatically in this case. All PHEMligh
 a threshold depending on the current speed, acceleration and slope to determine whether the vehicle is
 in this regime and set all emission values to zero. The value depends of course also on the
 characteristics of the vehicle such as mass and front area. For details see the code of
-PollutantsInterface::Helper::getCoastingDecel.
+[PollutantsInterface::Helper::getCoastingDecel](https://github.com/eclipse-sumo/sumo/blob/2dd3823d3a23d8a55c99a7df25d903e1d6c563b4/src/utils/emissions/PollutantsInterface.cpp#L197).
 
 # Further Interfaces
 

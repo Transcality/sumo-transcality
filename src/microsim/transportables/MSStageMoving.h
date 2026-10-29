@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -39,7 +39,9 @@ public:
         MSStage(type, route.back(), toStop, arrivalPos),
         myPState(nullptr), myRoute(route), myRouteID(routeID), myRouteStep(myRoute.begin()),
         mySpeed(speed), myDepartPos(departPos),
-        myDepartPosLat(departPosLat), myDepartLane(departLane) {}
+        myDepartPosLat(departPosLat), myDepartLane(departLane),
+        myLoadedWaitingTime(0)
+    {}
 
     /// destructor
     virtual ~MSStageMoving();
@@ -83,6 +85,11 @@ public:
 
     /// Returns the cumulative time the transportable spent waiting
     SUMOTime getTotalWaitingTime() const;
+
+    /// Restore waiting time when loading state
+    void setTotalWaitingTime(SUMOTime t) {
+        myLoadedWaitingTime = t;
+    }
 
     /// Returns the speed of the transportable
     double getSpeed() const;
@@ -177,4 +184,6 @@ protected:
 
     /// @brief the depart lane or -1
     int myDepartLane;
+
+    SUMOTime myLoadedWaitingTime;
 };

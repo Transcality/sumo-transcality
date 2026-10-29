@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -115,11 +115,7 @@ Lane::getLinks(const std::string& laneID) {
 
 std::vector<std::string>
 Lane::getAllowed(const std::string& laneID) {
-    SVCPermissions permissions = getLane(laneID)->getPermissions();
-    if (permissions == SVCAll) {  // special case: write nothing
-        permissions = 0;
-    }
-    return getVehicleClassNamesList(permissions);
+    return getVehicleClassNamesList(getLane(laneID)->getPermissions());
 }
 
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -65,14 +65,16 @@ public:
      * @brief return */
     static StopPos checkStopPos(double& startPos, double& endPos, const double laneLength, const double minLength, const bool friendlyPos);
 
-    /// @brief check if start and end position of a stop is valid
-    static bool isStopPosValid(const double startPos, const double endPos, const double laneLength, const double minLength, const bool friendlyPos);
-
     /// @brief returns the first departure time that was ever read
     SUMOTime getFirstDepart() const;
 
     /// @brief Returns the last loaded depart time
     SUMOTime getLastDepart() const;
+
+    /// @brief get parsing RNG
+    static SumoRNG* getParsingRNG() {
+        return &myParsingRNG;
+    }
 
 protected:
     /// @name inherited from GenericSAXHandler
@@ -203,6 +205,9 @@ protected:
     bool parseStop(SUMOVehicleParameter::Stop& stop, const SUMOSAXAttributes& attrs, std::string errorSuffix, MsgHandler* const errorOutput);
 
 protected:
+    virtual const SUMOVTypeParameter* getVTypeParameter(const std::string& refid) = 0;
+
+protected:
     /// @brief flag to enable or disable hard fails
     const bool myHardFail;
 
@@ -231,10 +236,16 @@ protected:
     double myCurrentCosts;
 
     /// @brief List of the stops on the parsed route
-    std::vector<SUMOVehicleParameter::Stop> myActiveRouteStops;
+    StopParVector myActiveRouteStops;
 
     /// @brief The currently parsed vehicle type
     SUMOVTypeParameter* myCurrentVType;
+
+    /// @brief if the currently parsed vType is only a reference to an existing type, store the refId
+    std::string myCurrentVTypeRef;
+
+    /// @brief if the currently parsed vType is only a reference, store the probability here
+    double myCurrentVTypeProbability;
 
     /// @brief The default value for flow begins
     SUMOTime myBeginDefault;
@@ -253,6 +264,12 @@ protected:
 
     /// @brief whether references to internal routes are allowed in this context
     bool myAllowInternalRoutes;
+
+    /// @brief IDs of skipped vehicles to suppress errors for the triggered transportables within
+    std::set<std::string> mySkippedVehicles;
+
+    /// @brief A random number generator used to choose from vtype/route distributions and computing the speed factors
+    static SumoRNG myParsingRNG;
 
 private:
     /// @brief Invalidated copy constructor

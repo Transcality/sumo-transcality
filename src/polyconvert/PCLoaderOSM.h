@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -108,7 +108,7 @@ protected:
         std::vector<long long int> myCurrentNodes;
         /// @brief Additional attributes
         std::map<std::string, std::string> myAttributes;
-        // @brief Wether this way constitutes a complete polygon object
+        // @brief Whether this way constitutes a complete polygon object
         bool standalone;
     };
 
@@ -137,6 +137,7 @@ private:
 
     static double mergeClosest(const std::map<long long int, PCOSMNode*>& nodes, std::vector<std::vector<long long int> >& snippets);
 
+    static double parseHeight(const std::map<std::string, std::string>& attrs, long long int id);
 protected:
     /**
      * @class NodesHandler

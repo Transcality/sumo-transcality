@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -35,19 +35,16 @@ netedit.changeMode("meanData")
 netedit.createMeanData()
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.minSamples, "dummy")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.detectPersons, "dummy")
 
 # modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.minSamples, "-12")
-
-# modify meanData
-netedit.modifyAttributeOverlapped(netedit.attrs.edgeMeanData.inspect.minSamples, "7.5")
+netedit.modifyAttribute(netedit.attrs.edgeMeanData.inspect.detectPersons, "walk")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

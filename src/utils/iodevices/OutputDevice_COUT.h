@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2004-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2004-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -44,11 +44,17 @@ protected:
     /// @name Methods that override/implement OutputDevice-methods
     /// @{
 
+    /** @brief Returns the associated ostream
+     * @return cout
+     */
+    std::ostream& getOStream();
+
+
     /** @brief Called after every write access.
      *
      * Calls flush on stdout.
      */
-    virtual void postWriteHook() override;
+    virtual void postWriteHook();
     /// @}
 
 
@@ -66,5 +72,6 @@ private:
 private:
     /// @brief my singular instance
     static OutputDevice* myInstance;
+
 
 };

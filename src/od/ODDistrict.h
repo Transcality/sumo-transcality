@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -58,7 +58,7 @@ public:
      *  the network. The weight is used when a random source shall be
      *  chosen.
      *
-     * BTW, it is possible to add a source twice. In this case it will occure
+     * BTW, it is possible to add a source twice. In this case it will occur
      *  twice within the distribution so that the behaviour is as adding
      *  both given probabilities.
      *
@@ -74,7 +74,7 @@ public:
      *  network and reach the district.  The weight is used when a random
      *  sink shall be chosen.
      *
-     * BTW, it is possible to add a sink twice. In this case it will occure
+     * BTW, it is possible to add a sink twice. In this case it will occur
      *  twice within the distribution so that the behaviour is as adding
      *  both given probabilities.
      *

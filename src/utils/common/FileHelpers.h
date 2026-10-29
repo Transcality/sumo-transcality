@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include "SUMOTime.h"
+#include "Translation.h"
 
 
 // ===========================================================================
@@ -80,13 +81,6 @@ public:
      */
     static std::string addExtension(const std::string& path, const std::string& extension);
 
-    /** @brief Get the file extension from the given file path
-     *
-     * @param[in] path The path to the file
-     * @return the file extension (with dot, example: '.xml')
-     */
-    static std::string getExtension(const std::string& path);
-
     /** @brief Returns the second path as a relative path to the first file
      *
      * Given the position of the configuration file, and the information where a second
@@ -123,7 +117,7 @@ public:
      */
     static bool isAbsolute(const std::string& path);
 
-    /** @brief Returns the path from a configuration so that it is accessable from the current working directory
+    /** @brief Returns the path from a configuration so that it is accessible from the current working directory
      *
      * If the path is absolute, it is returned. Otherwise, the file's position
      *  is computed regarding the configuration path (see getConfigurationRelative).
@@ -165,6 +159,8 @@ public:
     /// @brief prepend the given prefix to the last path component of the given file path
     static std::string prependToLastPathComponent(const std::string& prefix, const std::string& path);
 
+    /// @brief append the given suffix after the file name but before the extension
+    static std::string appendBeforeExtension(const std::string& path, const std::string& suffix, bool checkSep = true);
     /// @}
 
     /// @name binary writing functions

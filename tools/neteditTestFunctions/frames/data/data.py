@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,10 +16,11 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
+from ...general.functions import focusOnFrame
+from ...input.keyboard import typeKey, updateText
 
 
-def createDataSet(dataSetID="newDataSet"):
+def createDataSet(dataSetID):
     """
     @brief create dataSet
     """
@@ -30,8 +31,6 @@ def createDataSet(dataSetID="newDataSet"):
         typeKey('tab')
     # enable create dataSet
     typeKey('space')
-    # go to create new dataSet
-    typeKey('tab')
     # create new ID
     updateText(dataSetID)
     # go to create new dataSet button
@@ -40,7 +39,7 @@ def createDataSet(dataSetID="newDataSet"):
     typeKey('space')
 
 
-def createDataInterval(begin="0", end="3600"):
+def createDataInterval(begin, end):
     """
     @brief create dataInterval
     """

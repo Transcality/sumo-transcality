@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 #include <utils/iodevices/OutputDevice.h>
-#include <utils/options/OptionsCont.h>
 #include <utils/common/ToString.h>
 #include <utils/common/StringUtils.h>
 #include <utils/geom/GeomHelper.h>
@@ -145,6 +144,23 @@ MSPerson::MSPersonStage_Access::ProceedCmd::execute(SUMOTime currentTime) {
 }
 
 
+void
+MSPerson::MSPersonStage_Access::saveState(std::ostringstream& out, MSTransportable* /*transportable*/) {
+    out << " " << myDeparted << " " << myEstimatedArrival;
+}
+
+
+void
+MSPerson::MSPersonStage_Access::loadState(MSTransportable* person, std::istringstream& state) {
+    state >> myDeparted;
+    state >> myEstimatedArrival;
+    MSNet* net = MSNet::getInstance();
+    MSEdge* edge = myDestinationStop != nullptr ? &myDestinationStop->getLane().getEdge() : const_cast<MSEdge*>(myDestination);
+    net->getBeginOfTimestepEvents()->addEvent(new ProceedCmd(person, edge), myEstimatedArrival);
+    net->getPersonControl().startedAccess();
+    edge->addTransportable(person);
+}
+
 /* -------------------------------------------------------------------------
  * MSPerson - methods
  * ----------------------------------------------------------------------- */
@@ -181,7 +197,7 @@ MSPerson::checkAccess(const MSStage* const prior, const bool waitAtStop) {
                                                     prevStop->getLane().geometryPositionAtOffset(arrivalAtBs));
             } else {
                 const bool useDoors = access->exit == MSStoppingPlace::AccessExit::DOORS ||
-                                      (OptionsCont::getOptions().getString("pedestrian.model") != "jupedsim" && access->exit == MSStoppingPlace::AccessExit::CARRIAGE);
+                                      (!MSNet::getInstance()->getPersonControl().getMovementModel()->usingDoors() && access->exit == MSStoppingPlace::AccessExit::CARRIAGE);
                 if (access->exit == MSStoppingPlace::AccessExit::CARRIAGE) {
                     const double startPos = prior->getStageType() == MSStageType::TRIP ? prior->getEdgePos(0) : prior->getArrivalPos();
                     const double startPosLat = prior->getStageType() == MSStageType::TRIP ? prior->getEdgePosLat(0) : prior->getArrivalPosLat();
@@ -216,7 +232,7 @@ MSPerson::checkAccess(const MSStage* const prior, const bool waitAtStop) {
     if (prior->getJumpDuration() > 0) {
         // negative distance indicates jump
         MSStage* newStage = new MSPersonStage_Access(getDestination(), nullptr, getArrivalPos(), 0.0, -1, true,
-                prior->getPosition(SIMSTEP) , (*myStep)->getPosition(SIMSTEP));
+                prior->getPosition(SIMSTEP), (*myStep)->getPosition(SIMSTEP));
         myStep = myPlan->insert(myStep, newStage);
         return true;
     }
@@ -229,6 +245,17 @@ MSPerson::getImpatience() const {
     return MAX2(0., MIN2(1., getVehicleType().getImpatience()
                          + STEPS2TIME((*myStep)->getWaitingTime()) / MSPModel_Striping::MAX_WAIT_TOLERANCE));
 }
+
+
+bool
+MSPerson::isJammed() const {
+    MSStageWalking* stage = dynamic_cast<MSStageWalking*>(getCurrentStage());
+    if (stage != nullptr) {
+        return stage->getPState()->isJammed();
+    }
+    return false;
+}
+
 
 const std::string&
 MSPerson::getNextEdge() const {

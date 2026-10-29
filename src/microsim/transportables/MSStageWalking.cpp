@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -121,18 +121,17 @@ MSStageWalking::proceed(MSNet* net, MSTransportable* person, SUMOTime now, MSSta
         }
         return;
     }
-    const OptionsCont& oc = OptionsCont::getOptions();
+    MSTransportableControl& pControl = net->getPersonControl();
     if (previous->getEdgePos(now) >= 0 && previous->getEdge() == *myRouteStep) {
         // we need to adapt to the arrival position of the vehicle unless we have an explicit access
         myDepartPos = previous->getEdgePos(now);
-        if (oc.getString("pedestrian.model") == "jupedsim") {
+        if (pControl.getMovementModel()->usingDoors()) {
             myDepartPosLat = previous->getEdgePosLat(now);
         }
         if (myWalkingTime > 0) {
             mySpeed = computeAverageSpeed();
         }
     }
-    MSTransportableControl& pControl = net->getPersonControl();
     myPState = pControl.getMovementModel()->add(person, this, now);
     if (myPState == nullptr) {
         pControl.erase(person);
@@ -142,7 +141,7 @@ MSStageWalking::proceed(MSNet* net, MSTransportable* person, SUMOTime now, MSSta
         // we only need new move reminders if we are walking a different edge (else it is probably a rerouting)
         activateEntryReminders(person, true);
     }
-    if (oc.getBool("vehroute-output.exit-times")) {
+    if (OptionsCont::getOptions().getBool("vehroute-output.exit-times")) {
         myExitTimes = new std::vector<SUMOTime>();
     }
     (*myRouteStep)->addTransportable(person);
@@ -164,16 +163,6 @@ MSStageWalking::setSpeed(double speed) {
 double
 MSStageWalking::computeAverageSpeed() const {
     return walkDistance() / STEPS2TIME(myWalkingTime + 1); // avoid systematic rounding errors
-}
-
-
-bool
-MSPerson::isJammed() const {
-    MSStageWalking* stage = dynamic_cast<MSStageWalking*>(getCurrentStage());
-    if (stage != nullptr) {
-        return stage->getPState()->isJammed();
-    }
-    return false;
 }
 
 
@@ -300,7 +289,7 @@ MSStageWalking::tripInfoOutput(OutputDevice& os, const MSTransportable* const pe
 
 
 void
-MSStageWalking::routeOutput(const bool /* isPerson */, OutputDevice& os, const bool withRouteLength, const MSStage* const /* previous */) const {
+MSStageWalking::routeOutput(const bool /* isPerson */, OutputDevice& os, const bool withRouteLength, const MSStage* const /* previous */, const bool withTiming, const bool saveState) const {
     os.openTag("walk").writeAttr(SUMO_ATTR_EDGES, myRoute);
     std::string comment = "";
     if (myDestinationStop != nullptr) {
@@ -331,11 +320,16 @@ MSStageWalking::routeOutput(const bool /* isPerson */, OutputDevice& os, const b
         std::vector<std::string> missing(MAX2(0, (int)myRoute.size() - (int)myExitTimes->size()), "-1");
         exits.insert(exits.end(), missing.begin(), missing.end());
         os.writeAttr("exitTimes", exits);
+    }
+    if (withTiming) {
         os.writeAttr(SUMO_ATTR_STARTED, myDeparted >= 0 ? time2string(myDeparted) : "-1");
         os.writeAttr(SUMO_ATTR_ENDED, myArrived >= 0 ? time2string(myArrived) : "-1");
     }
     if (OptionsCont::getOptions().getBool("vehroute-output.cost")) {
         os.writeAttr(SUMO_ATTR_COST, getCosts());
+    }
+    if (saveState && getTotalWaitingTime() > 0) {
+        os.writeAttr("waitingTime", time2string(getTotalWaitingTime()));
     }
     os.closeTag(comment);
 }
@@ -358,7 +352,6 @@ MSStageWalking::moveToNextEdge(MSTransportable* person, SUMOTime currentTime, in
     if (myExitTimes != nullptr && nextInternal == nullptr) {
         myExitTimes->push_back(currentTime);
     }
-    myMoveReminders.clear();
     myLastEdgeEntryTime = currentTime;
     //std::cout << SIMTIME << " moveToNextEdge person=" << person->getID() << "\n";
     if (myCurrentInternalEdge != nullptr) {
@@ -440,9 +433,13 @@ MSStageWalking::activateMoveReminders(MSTransportable* person, double oldPos, do
 void
 MSStageWalking::activateLeaveReminders(MSTransportable* person, const MSLane* lane, double lastPos, SUMOTime t, bool arrived) {
     MSMoveReminder::Notification notification = arrived ? MSMoveReminder::NOTIFICATION_ARRIVED : MSMoveReminder::NOTIFICATION_JUNCTION;
-    for (MSMoveReminder* const rem : myMoveReminders) {
-        rem->updateDetector(*person, 0.0, lane->getLength(), myLastEdgeEntryTime, t, t, true);
-        rem->notifyLeave(*person, lastPos, notification);
+    for (std::vector<MSMoveReminder*>::iterator rem = myMoveReminders.begin(); rem != myMoveReminders.end();) {
+        (*rem)->updateDetector(*person, 0.0, lane->getLength(), myLastEdgeEntryTime, t, t, true);
+        if ((*rem)->notifyLeave(*person, lastPos, notification)) {
+            ++rem;
+        } else {
+            rem = myMoveReminders.erase(rem);
+        }
     }
 }
 
@@ -455,7 +452,7 @@ MSStageWalking::getRoutePosition() const {
 
 double
 MSStageWalking::getMaxSpeed(const MSTransportable* const person) const {
-    return mySpeed >= 0 ? mySpeed : person->getMaxSpeed();
+    return mySpeed >= 0 ? mySpeed : (person != nullptr ? person->getMaxSpeed() : DEFAULT_PEDESTRIAN_SPEED);
 }
 
 std::string
@@ -469,8 +466,16 @@ MSStageWalking::getStageSummary(const bool /* isPerson */) const {
 
 
 void
-MSStageWalking::saveState(std::ostringstream& out) {
+MSStageWalking::saveState(std::ostringstream& out, MSTransportable* /*transportable*/) {
     out << " " << myDeparted << " " << (myRouteStep - myRoute.begin()) << " " << myLastEdgeEntryTime;
+    if (myExitTimes != nullptr) {
+        out << " " << myExitTimes->size();
+        for (SUMOTime t : *myExitTimes) {
+            out << " " << t;
+        }
+    } else {
+        out << " " << -1;
+    }
     myPState->saveState(out);
 }
 
@@ -479,6 +484,20 @@ void
 MSStageWalking::loadState(MSTransportable* transportable, std::istringstream& state) {
     int stepIdx;
     state >> myDeparted >> stepIdx >> myLastEdgeEntryTime;
+    int exitTimesSize;
+    state >> exitTimesSize;
+    if (exitTimesSize >= 0) {
+        myExitTimes = new std::vector<SUMOTime>();
+        SUMOTime t;
+        for (int i = 0; i < exitTimesSize; i++) {
+            state >> t;
+            myExitTimes->push_back(t);
+        }
+        if (!OptionsCont::getOptions().getBool("vehroute-output.exit-times")) {
+            delete myExitTimes;
+            myExitTimes = nullptr;
+        }
+    }
     myRouteStep = myRoute.begin() + stepIdx;
     myPState = MSNet::getInstance()->getPersonControl().getMovementModel()->loadState(transportable, this, state);
     if (myPState->getLane() && !myPState->getLane()->isNormal()) {

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,11 +19,13 @@
 /****************************************************************************/
 
 #include <netedit/changes/GNEChange_Connection.h>
-#include <netedit/GNEViewParent.h>
-#include <netedit/GNEUndoList.h>
-#include <netedit/GNENet.h>
+#include <netedit/dialogs/basic/GNEWarningBasicDialog.h>
 #include <netedit/elements/network/GNEConnection.h>
 #include <netedit/frames/common/GNESelectorFrame.h>
+#include <netedit/GNEApplicationWindow.h>
+#include <netedit/GNENet.h>
+#include <netedit/GNEUndoList.h>
+#include <netedit/GNEViewParent.h>
 #include <utils/foxtools/MFXDynamicLabel.h>
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/windows/GUIAppEnum.h>
@@ -35,8 +37,8 @@
 // ===========================================================================
 
 FXDEFMAP(GNEConnectorFrame::ConnectionModifications) ConnectionModificationsMap[] = {
-    FXMAPFUNC(SEL_COMMAND,  MID_CANCEL,     GNEConnectorFrame::ConnectionModifications::onCmdCancelModifications),
-    FXMAPFUNC(SEL_COMMAND,  MID_OK,         GNEConnectorFrame::ConnectionModifications::onCmdSaveModifications),
+    FXMAPFUNC(SEL_COMMAND,  MID_CANCEL, GNEConnectorFrame::ConnectionModifications::onCmdCancelModifications),
+    FXMAPFUNC(SEL_COMMAND,  MID_OK,     GNEConnectorFrame::ConnectionModifications::onCmdSaveModifications),
 };
 
 FXDEFMAP(GNEConnectorFrame::ConnectionOperations) ConnectionOperationsMap[] = {
@@ -48,9 +50,16 @@ FXDEFMAP(GNEConnectorFrame::ConnectionOperations) ConnectionOperationsMap[] = {
     FXMAPFUNC(SEL_COMMAND,  MID_GNE_CONNECTORFRAME_SELECTPASS,          GNEConnectorFrame::ConnectionOperations::onCmdSelectPass),
 };
 
+FXDEFMAP(GNEConnectorFrame::ConnectionVisualization) ConnectionVisualizationMap[] = {
+    FXMAPFUNC(SEL_COMMAND,  MID_GNE_CONNECTORFRAME_VISIBLEININSPECTMODE,    GNEConnectorFrame::ConnectionVisualization::onCmdToggleVisibleInInspectMode),
+    FXMAPFUNC(SEL_COMMAND,  MID_GNE_CONNECTORFRAME_INSPECTCONNECTIONS,      GNEConnectorFrame::ConnectionVisualization::onCmdToggleInspectConnections),
+    FXMAPFUNC(SEL_COMMAND,  MID_GNE_CONNECTORFRAME_HIDEOTHERSOURCES,        GNEConnectorFrame::ConnectionVisualization::onCmdToggleHideOtherSources),
+};
+
 // Object implementation
-FXIMPLEMENT(GNEConnectorFrame::ConnectionModifications, MFXGroupBoxModule, ConnectionModificationsMap, ARRAYNUMBER(ConnectionModificationsMap))
-FXIMPLEMENT(GNEConnectorFrame::ConnectionOperations,    MFXGroupBoxModule, ConnectionOperationsMap,    ARRAYNUMBER(ConnectionOperationsMap))
+FXIMPLEMENT(GNEConnectorFrame::ConnectionModifications, GNEGroupBoxModule, ConnectionModificationsMap,  ARRAYNUMBER(ConnectionModificationsMap))
+FXIMPLEMENT(GNEConnectorFrame::ConnectionOperations,    GNEGroupBoxModule, ConnectionOperationsMap,     ARRAYNUMBER(ConnectionOperationsMap))
+FXIMPLEMENT(GNEConnectorFrame::ConnectionVisualization, GNEGroupBoxModule, ConnectionVisualizationMap,  ARRAYNUMBER(ConnectionVisualizationMap))
 
 
 // ===========================================================================
@@ -62,7 +71,7 @@ FXIMPLEMENT(GNEConnectorFrame::ConnectionOperations,    MFXGroupBoxModule, Conne
 // ---------------------------------------------------------------------------
 
 GNEConnectorFrame::CurrentLane::CurrentLane(GNEConnectorFrame* connectorFrameParent) :
-    MFXGroupBoxModule(connectorFrameParent, TL("Lane")) {
+    GNEGroupBoxModule(connectorFrameParent, TL("Lane")) {
     // create lane label
     myCurrentLaneLabel = new FXLabel(getCollapsableFrame(), TL("No lane selected"), 0, GUIDesignLabel(JUSTIFY_LEFT));
 }
@@ -85,7 +94,7 @@ GNEConnectorFrame::CurrentLane::updateCurrentLaneLabel(const std::string& laneID
 // ---------------------------------------------------------------------------
 
 GNEConnectorFrame::ConnectionModifications::ConnectionModifications(GNEConnectorFrame* connectorFrameParent) :
-    MFXGroupBoxModule(connectorFrameParent, TL("Modifications")),
+    GNEGroupBoxModule(connectorFrameParent, TL("Modifications")),
     myConnectorFrameParent(connectorFrameParent) {
 
     // Create "Cancel" button
@@ -124,9 +133,10 @@ GNEConnectorFrame::ConnectionModifications::onCmdSaveModifications(FXObject*, FX
         if (myProtectRoutesCheckBox->isEnabled() && (myProtectRoutesCheckBox->getCheck() == TRUE)) {
             for (const auto& demandElement : myConnectorFrameParent->myCurrentEditedLane->getParentEdge()->getChildDemandElements()) {
                 if (demandElement->isDemandElementValid() != GNEDemandElement::Problem::OK) {
-                    FXMessageBox::warning(getApp(), MBOX_OK,
-                                          TL("Error saving connection operations"), "%s",
-                                          (TLF("Connection edition cannot be saved because route '%' is broken.", demandElement->getID()).c_str()));
+                    // open warning dialog
+                    GNEWarningBasicDialog(myConnectorFrameParent->getViewNet()->getViewParent()->getGNEAppWindows(),
+                                          TL("Error saving connection operations"),
+                                          TLF("Connection edition cannot be saved because route '%s' is broken.", demandElement->getID()));
                     return 1;
                 }
             }
@@ -148,7 +158,7 @@ GNEConnectorFrame::ConnectionModifications::onCmdSaveModifications(FXObject*, FX
 // ---------------------------------------------------------------------------
 
 GNEConnectorFrame::ConnectionOperations::ConnectionOperations(GNEConnectorFrame* connectorFrameParent) :
-    MFXGroupBoxModule(connectorFrameParent, TL("Operations")),
+    GNEGroupBoxModule(connectorFrameParent, TL("Operations")),
     myConnectorFrameParent(connectorFrameParent) {
 
     // Create "Select Dead Ends" button
@@ -307,11 +317,81 @@ GNEConnectorFrame::ConnectionOperations::onCmdResetSelectedConnections(FXObject*
 }
 
 // ---------------------------------------------------------------------------
+// GNEConnectorFrame::ConnectionVisualization - methods
+// ---------------------------------------------------------------------------
+
+GNEConnectorFrame::ConnectionVisualization::ConnectionVisualization(GNEConnectorFrame* connectorFrameParent) :
+    GNEGroupBoxModule(connectorFrameParent, TL("Visualization")),
+    myConnectorFrameParent(connectorFrameParent) {
+
+    // Create checkbox for show in inspect mode
+    myToggleVisibleInInspectMode = new FXCheckButton(getCollapsableFrame(), TL("Show in inspect mode"), this, MID_GNE_CONNECTORFRAME_VISIBLEININSPECTMODE, GUIDesignCheckButton);
+
+    // Create checkbox for toggle hide other sources
+    myToggleHideOtherSources = new FXCheckButton(getCollapsableFrame(), TL("Hide other sources"), this, MID_GNE_CONNECTORFRAME_HIDEOTHERSOURCES, GUIDesignCheckButton);
+    myToggleHideOtherSources->setCheck(FALSE);
+
+    // Create checkbox for toggle inspect connections buttons
+    myToggleInspectConnectionsCheckbutton = new FXCheckButton(getCollapsableFrame(), TL("Inspect connections"), this, MID_GNE_CONNECTORFRAME_INSPECTCONNECTIONS, GUIDesignCheckButton);
+}
+
+
+GNEConnectorFrame::ConnectionVisualization::~ConnectionVisualization() {}
+
+
+void
+GNEConnectorFrame::ConnectionVisualization::updateShowConnections() {
+    // mirror the value of show connections
+    if (myConnectorFrameParent->getViewNet()->getNetworkViewOptions().menuCheckShowConnections->amChecked()) {
+        myToggleVisibleInInspectMode->setCheck(TRUE, FALSE);
+    } else {
+        myToggleVisibleInInspectMode->setCheck(FALSE, FALSE);
+    }
+}
+
+
+bool
+GNEConnectorFrame::ConnectionVisualization::showConnections() const {
+    return myToggleVisibleInInspectMode->getCheck() == TRUE;
+}
+
+
+bool
+GNEConnectorFrame::ConnectionVisualization::showOnlyFromConnections() const {
+    return myToggleHideOtherSources->getCheck() == TRUE;
+}
+
+
+bool
+GNEConnectorFrame::ConnectionVisualization::inspectConnections() const {
+    return myToggleInspectConnectionsCheckbutton->getCheck() == TRUE;
+}
+
+
+long GNEConnectorFrame::ConnectionVisualization::onCmdToggleVisibleInInspectMode(FXObject* obj, FXSelector sel, void* ptr) {
+    return myConnectorFrameParent->getViewNet()->onCmdToggleShowConnections(obj, sel, ptr);
+}
+
+
+long
+GNEConnectorFrame::ConnectionVisualization::onCmdToggleHideOtherSources(FXObject*, FXSelector, void*) {
+    myConnectorFrameParent->getViewNet()->updateViewNet();
+    return 1;
+}
+
+
+long
+GNEConnectorFrame::ConnectionVisualization::onCmdToggleInspectConnections(FXObject*, FXSelector, void*) {
+    myConnectorFrameParent->getViewNet()->updateViewNet();
+    return 1;
+}
+
+// ---------------------------------------------------------------------------
 // GNEConnectorFrame::ConnectionSelection - methods
 // ---------------------------------------------------------------------------
 
 GNEConnectorFrame::ConnectionSelection::ConnectionSelection(GNEConnectorFrame* connectorFrameParent) :
-    MFXGroupBoxModule(connectorFrameParent, TL("Selection")) {
+    GNEGroupBoxModule(connectorFrameParent, TL("Selection")) {
     // create label
     new MFXDynamicLabel(getCollapsableFrame(), (std::string("- ") + TL("Hold <SHIFT> while clicking to create unyielding connections (pass=true).")).c_str(), 0, GUIDesignLabelFrameInformation);
     new MFXDynamicLabel(getCollapsableFrame(), (std::string("- ") + TL("Hold <CTRL> while clicking to create conflicting connections (i.e. at zipper nodes or with incompatible permissions)")).c_str(), 0, GUIDesignLabelFrameInformation);
@@ -325,7 +405,7 @@ GNEConnectorFrame::ConnectionSelection::~ConnectionSelection() {}
 // ---------------------------------------------------------------------------
 
 GNEConnectorFrame::Legend::Legend(GNEConnectorFrame* connectorFrameParent) :
-    MFXGroupBoxModule(connectorFrameParent, TL("Information")) {
+    GNEGroupBoxModule(connectorFrameParent, TL("Information")) {
 
     // create possible target label
     FXLabel* possibleTargetLabel = new FXLabel(getCollapsableFrame(), TL("Possible Target"), 0, GUIDesignLabel(JUSTIFY_LEFT));
@@ -366,7 +446,10 @@ GNEConnectorFrame::GNEConnectorFrame(GNEViewParent* viewParent, GNEViewNet* view
     // create connection modifications module
     myConnectionModifications = new ConnectionModifications(this);
 
-    // create connection operations module
+    // create connection visualization module
+    myConnectionVisualization = new ConnectionVisualization(this);
+
+    // create connection operation module
     myConnectionOperations = new ConnectionOperations(this);
 
     // create connection selection module
@@ -378,6 +461,13 @@ GNEConnectorFrame::GNEConnectorFrame(GNEViewParent* viewParent, GNEViewNet* view
 
 
 GNEConnectorFrame::~GNEConnectorFrame() {}
+
+
+void
+GNEConnectorFrame::show() {
+    myConnectionVisualization->updateShowConnections();
+    GNEFrame::show();
+}
 
 
 void
@@ -396,9 +486,21 @@ GNEConnectorFrame::handleLaneClick(const GNEViewNetHelper::ViewObjectsSelector& 
 }
 
 
+GNELane*
+GNEConnectorFrame::getCurrentEditedLane() const {
+    return myCurrentEditedLane;
+}
+
+
 GNEConnectorFrame::ConnectionModifications*
 GNEConnectorFrame::getConnectionModifications() const {
     return myConnectionModifications;
+}
+
+
+GNEConnectorFrame::ConnectionVisualization*
+GNEConnectorFrame::getConnectionVisualization() {
+    return myConnectionVisualization;
 }
 
 
@@ -470,7 +572,7 @@ GNEConnectorFrame::buildConnection(GNELane* lane, const bool mayDefinitelyPass, 
                 changed = true;
                 break;
             }
-            case LaneStatus::CONFLICTED:
+            case LaneStatus::CONFLICTED: {
                 SVCPermissions fromPermissions = srcEdge->getNBEdge()->getPermissions(fromIndex);
                 SVCPermissions toPermissions = destEdge->getNBEdge()->getPermissions(lane->getIndex());
                 if ((fromPermissions & toPermissions) == SVC_PEDESTRIAN) {
@@ -480,6 +582,9 @@ GNEConnectorFrame::buildConnection(GNELane* lane, const bool mayDefinitelyPass, 
                 } else {
                     myViewNet->setStatusBarText(TL("Another lane from the same edge already connects to that lane"));
                 }
+                break;
+            }
+            default:
                 break;
         }
         if (changed) {

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -228,6 +228,12 @@ Edge::getMeanFriction(const std::string& edgeID) {
 
 
 double
+Edge::getMaxSpeed(const std::string& edgeID) {
+    return getEdge(edgeID)->getSpeedLimit();
+}
+
+
+double
 Edge::getLastStepOccupancy(const std::string& edgeID) {
     return getEdge(edgeID)->getOccupancy();
 }
@@ -437,6 +443,8 @@ Edge::handleVariable(const std::string& objID, const int variable, VariableWrapp
             return wrapper->wrapInt(objID, variable, getLastStepVehicleNumber(objID));
         case LAST_STEP_MEAN_SPEED:
             return wrapper->wrapDouble(objID, variable, getLastStepMeanSpeed(objID));
+        case VAR_MAXSPEED:
+            return wrapper->wrapDouble(objID, variable, getMaxSpeed(objID));
         case VAR_FRICTION:
             return wrapper->wrapDouble(objID, variable, getMeanFriction(objID));
         case LAST_STEP_OCCUPANCY:

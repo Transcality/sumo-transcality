@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -71,6 +71,16 @@ MSCFModel::~MSCFModel() {}
 
 
 MSCFModel::VehicleVariables::~VehicleVariables() {}
+
+void
+MSCFModel::VehicleVariables::saveState(OutputDevice& /* out */, const MSCFModel& cfm) const {
+    WRITE_WARNINGF(TL("carFollowModel of vType '%' cannot save state"), cfm.myType->getID());
+}
+
+
+void
+MSCFModel::VehicleVariables::loadState(const SUMOSAXAttributes& /* attrs */) {
+}
 
 
 double
@@ -454,6 +464,7 @@ MSCFModel::getMinimalArrivalTime(double dist, double currentSpeed, double arriva
     }
     // will either drive as fast as possible and decelerate as late as possible
     // or accelerate as fast as possible and then hold that speed
+    arrivalSpeed = MAX2(0.0, arrivalSpeed); // ballistic model may call this with -std::numeric_limits<double>::max()
     const double accel = (arrivalSpeed >= currentSpeed) ? getMaxAccel() : -getMaxDecel();
     const double accelTime = accel == 0. ? 0. : (arrivalSpeed - currentSpeed) / accel;
     const double accelWay = accelTime * (arrivalSpeed + currentSpeed) * 0.5;

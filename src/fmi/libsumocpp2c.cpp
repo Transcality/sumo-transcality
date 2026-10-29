@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2020-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2020-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -23,7 +23,7 @@
 // Avoid warnings in windows build because of strcpy instead of strcpy_s,
 // because the latter is not available on all platforms
 #define _CRT_SECURE_NO_WARNINGS
-#pragma warning(disable:4820 4514 5045 4668 4710)
+#pragma warning(disable:4820 4514 5045 4668 4710 4711)
 #endif
 
 #include <sstream>

@@ -7,6 +7,9 @@ person_by_options_and_param
 # Copy of person_attributes
 person_attributes
 
+# write all person attributes
+all_attributes
+
 # output not from every person
 riding
 
@@ -15,3 +18,12 @@ riding_noPersons
 
 # disable person fcd-output
 riding_noPersons_radius
+
+# output not from every person
+parquet
+
+# separated person fcd
+separate
+
+# separated person fcd
+separate_parquet

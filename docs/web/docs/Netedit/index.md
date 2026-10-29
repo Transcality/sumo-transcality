@@ -140,7 +140,7 @@ sumo-gui](../sumo-gui.md#keyboard_shortcuts) are supported.
 
 ## Customizing Visualization
 
-Most of the visualization options that are available in [sumo-gui](../sumo-gui.md#changing_the_appearancevisualisation_of_the_simulation) can also be set in netedit. This includes the facilities for [loading
+Most of the visualization options that are available in [sumo-gui](../sumo-gui.md#changing_the_appearancevisualization_of_the_simulation) can also be set in netedit. This includes the facilities for [loading
 background images](../sumo-gui.md#showing_background_images). It is also possible to load [POIs and Polygons](elementsShape.md) using the menu *File-> Additionals and Shapes-> Load Additionals*.
 
 ### Background Grid
@@ -246,6 +246,5 @@ Right clicking over an element will open a popup-menu with functions and operati
     Currently, you may either switching on **--opposites.guess** via the [F10-menu](#processing_menu_options) or set lane attribute 'oppositeID'.
 
 - Editing [walkingarea shapes](../Networks/PlainXML.md#walking_areas)
-- Integration of [netgenerate](../netgenerate.md)
-- Integration of [netdiff](../Tools/Net.md#netdiffpy)
+- Ability to graphically edit decals in the "Decals"-Mode
 - Adding / merging of sub-networks to the existing network

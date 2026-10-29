@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -33,8 +33,8 @@
 // member method definitions
 // ===========================================================================
 
-GNENetDiffTool::GNENetDiffTool(GNEApplicationWindow* GNEApp, const std::string& toolPath, FXMenuPane* menu) :
-    GNEPythonTool(GNEApp, toolPath, "", menu) {
+GNENetDiffTool::GNENetDiffTool(GNEApplicationWindow* applicationWindow, const std::string& toolPath, FXMenuPane* menu) :
+    GNEPythonTool(applicationWindow, toolPath, "", menu) {
     // fill options
     fillNetDiffOptions(myPythonToolsOptions);
     fillNetDiffOptions(myPythonToolsOptionsOriginal);
@@ -48,7 +48,7 @@ void
 GNENetDiffTool::setCurrentValues() {
     myPythonToolsOptions.resetWritable();
     // obtain curren network folder
-    const auto networkPath = OptionsCont::getOptions().getString("net-file");
+    const auto networkPath = OptionsCont::getOptions().getString("sumo-net-file");
     if (networkPath.empty()) {
         myPythonToolsOptions.set("outprefix", "");
     } else {
@@ -60,9 +60,9 @@ GNENetDiffTool::setCurrentValues() {
 void
 GNENetDiffTool::postProcessing() {
     // first check if there is a network
-    if (myGNEApp->getViewNet()) {
+    if (myApplicationWindow->getViewNet()) {
         // get selector operator modul from selector frame
-        auto selectorModul = myGNEApp->getViewNet()->getViewParent()->getSelectorFrame()->getSelectionOperationModul();
+        auto selectorModul = myApplicationWindow->getViewNet()->getViewParent()->getSelectorFrame()->getSelectionOperationModul();
         // select elements
         if (myPythonToolsOptions.getBool("select-modified")) {
             selectorModul->loadFromFile(myPythonToolsOptions.getString("outprefix") + ".changed.sel.txt");
@@ -106,6 +106,37 @@ GNENetDiffTool::getCommand() const {
             myPythonToolsOptions.getBool("load-shapes-deleted")) {
         arguments += "--write-shapes ";
     }
+    // add rest of arguments
+    if (myPythonToolsOptions.getBool("load-shapes-modified")) {
+        arguments += "--write-shapes ";
+    }
+    if (myPythonToolsOptions.getBool("write-selections")) {
+        arguments += "--write-selections ";
+    }
+    if (myPythonToolsOptions.getBool("plain-geo")) {
+        arguments += "--plain-geo ";
+    }
+    if (myPythonToolsOptions.getBool("verbose")) {
+        arguments += "--verbose ";
+    }
+    if (myPythonToolsOptions.getBool("use-prefix")) {
+        arguments += "--use-prefix ";
+    }
+    if (myPythonToolsOptions.getBool("direct")) {
+        arguments += "--direct ";
+    }
+    if (myPythonToolsOptions.getBool("patch-on-import")) {
+        arguments += "--patch-on-import ";
+    }
+    if (myPythonToolsOptions.getBool("remove-plain")) {
+        arguments += "--remove-plain ";
+    }
+    if (myPythonToolsOptions.getString("copy").size() > 0) {
+        arguments += "--copy " + myPythonToolsOptions.getString("copy") + " ";
+    }
+    if (myPythonToolsOptions.getString("path").size() > 0) {
+        arguments += "--path " + myPythonToolsOptions.getString("path") + " ";
+    }
     return getCommandPath() + " " + arguments;
 }
 
@@ -114,15 +145,46 @@ void
 GNENetDiffTool::fillNetDiffOptions(OptionsCont& options) {
     // build custom options for netdiff
     options.addOptionSubTopic("input");
-    options.addOptionSubTopic("output");
     options.doRegister("original-net", new Option_Network(""));
     options.addDescription("original-net", "input", TL("Original network"));
 
     options.doRegister("modified-net", new Option_Network(""));
     options.addDescription("modified-net", "input", TL("Modified network"));
 
+    options.addOptionSubTopic("output");
     options.doRegister("outprefix", new Option_FileName());
     options.addDescription("outprefix", "output", TL("Output prefix network"));
+
+    options.doRegister("write-selections", new Option_Bool(false));
+    options.addDescription("write-selections", "output", TL("Write selection files for created, deleted and changed elements"));
+
+    options.doRegister("write-shapes", new Option_Bool(false));
+    options.addDescription("write-shapes", "output", TL("Write shape files for created, deleted and changed elements"));
+
+    options.doRegister("plain-geo", new Option_Bool(false));
+    options.addDescription("plain-geo", "output", TL("Write geo coordinates instead of network coordinates"));
+
+    options.addOptionSubTopic("Processing");
+    options.doRegister("verbose", new Option_Bool(false));
+    options.addDescription("verbose", "Processing", TL("Give more output"));
+
+    options.doRegister("use-prefix", new Option_Bool(false));
+    options.addDescription("use-prefix", "Processing", TL("Interpret source and dest as plain-xml prefix instead of network names"));
+
+    options.doRegister("direct", new Option_Bool(false));
+    options.addDescription("direct", "Processing", TL("Compare source and dest files directly"));
+
+    options.doRegister("patch-on-import", new Option_Bool(false));
+    options.addDescription("patch-on-import", "Processing", TL("Generate patch that can be applied during initial network import (exports additional connection elements)"));
+
+    options.doRegister("remove-plain", new Option_Bool(false));
+    options.addDescription("remove-plain", "Processing", TL("Avoid saving plain xml files of source and destination networks"));
+
+    options.doRegister("copy", new Option_String());
+    options.addDescription("copy", "Processing", TL("Comma-separated list of element names to copy (if they are unchanged)"));
+
+    options.doRegister("path", new Option_String());
+    options.addDescription("path", "Processing", TL("Path to binaries"));
 
     options.addOptionSubTopic("Select");
     options.doRegister("select-modified", new Option_Bool(false));
@@ -149,27 +211,29 @@ GNENetDiffTool::fillNetDiffOptions(OptionsCont& options) {
 void
 GNENetDiffTool::loadShapes(const std::string& file) {
     // get undo list
-    auto undoList = myGNEApp->getUndoList();
+    auto undoList = myApplicationWindow->getUndoList();
     // disable validation for additionals
     XMLSubSys::setValidation("never", "auto", "auto");
+    // get (or create) bucket for this new file
+    auto bucket = myApplicationWindow->getFileBucketHandler()->getBucket(FileBucket::Type::ADDITIONAL, file, true);
     // Create additional handler
-    GNEGeneralHandler generalHandler(myGNEApp->getViewNet()->getNet(), file, myGNEApp->isUndoRedoAllowed(), true);
+    GNEGeneralHandler generalHandler(myApplicationWindow->getViewNet()->getNet(), bucket, myApplicationWindow->isUndoRedoAllowed());
     // begin undoList operation
     undoList->begin(Supermode::NETWORK, GUIIcon::SUPERMODENETWORK, TL("load shapes from '") + file + "'");
     // Run parser
     if (!generalHandler.parse()) {
         // write error
-        WRITE_ERROR(TL("Loading of shape file failed: ") + file);
+        WRITE_ERROR(TLF("Loading of shape file '%' failed", file));
     } else {
         // write info
-        WRITE_MESSAGE(TL("Loading of shape file successfully: ") + file);
+        WRITE_MESSAGE(TLF("Loading of shape file '%' successfully", file));
     }
     // end undoList operation
     undoList->end();
     // restore validation for additionals
     XMLSubSys::setValidation("auto", "auto", "auto");
     // update view
-    myGNEApp->getViewNet()->update();
+    myApplicationWindow->getViewNet()->update();
 }
 
 /****************************************************************************/

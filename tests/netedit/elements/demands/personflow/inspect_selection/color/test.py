@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -39,9 +39,10 @@ netedit.changeMode("inspect")
 
 # inspect person
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.person)
+netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.terminateOption, "22")
 
 # change color using dialog
-netedit.modifyColorAttribute(netedit.attrs.personFlow.inspectSelection.colorButton, 5)
+netedit.modifyColorAttribute(netedit.attrs.personFlow.inspectSelection.colorButton)
 
 # change color with an invalid value
 netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.color, "")
@@ -59,7 +60,7 @@ netedit.modifyAttribute(netedit.attrs.personFlow.inspectSelection.color, "12,13,
 netedit.checkUndoRedo(referencePosition)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # save persons
 # quit netedit

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -102,6 +102,12 @@ NIImporter_SUMO::~NIImporter_SUMO() {
         delete ed;
     }
     delete myLocation;
+    if (myCurrentEdge != nullptr) {
+        for (LaneAttrs* const lane : myCurrentEdge->lanes) {
+            delete lane;
+        }
+        delete myCurrentEdge;
+    }
 }
 
 
@@ -172,6 +178,7 @@ NIImporter_SUMO::_loadNetwork(OptionsCont& oc) {
         if (ed->builtEdge != nullptr) {
             ed->builtEdge->setEdgeStopOffset(-1, ed->edgeStopOffset);
             ed->builtEdge->setBidi(ed->bidi != "");
+            ed->builtEdge->setRoutingType(ed->routingType);
         }
     }
     // assign further lane attributes (edges are built)
@@ -301,52 +308,52 @@ NIImporter_SUMO::_loadNetwork(OptionsCont& oc) {
                 NBConnection(prohibitedFrom, prohibitedTo));
         }
     }
-    if (!myHaveSeenInternalEdge && oc.isWriteable("no-internal-links")) {
+    if (oc.isWriteable("no-internal-links") && oc.isDefault("no-internal-links") && !myHaveSeenInternalEdge) {
         oc.set("no-internal-links", "true");
     }
-    if (oc.isWriteable("lefthand")) {
+    if (oc.isWriteable("lefthand") && oc.isDefault("lefthand") && myAmLefthand) {
         oc.set("lefthand", toString(myAmLefthand));
     }
-    if (oc.isWriteable("junctions.corner-detail")) {
+    if (oc.isWriteable("junctions.corner-detail") && oc.isDefault("junctions.corner-detail") && oc.getInt("junctions.corner-detail") != myCornerDetail) {
         oc.set("junctions.corner-detail", toString(myCornerDetail));
     }
-    if (oc.isWriteable("junctions.internal-link-detail") && myLinkDetail > 0) {
+    if (oc.isWriteable("junctions.internal-link-detail") && oc.isDefault("junctions.internal-link-detail") && oc.getInt("junctions.internal-link-detail") != myLinkDetail && myLinkDetail > 0) {
         oc.set("junctions.internal-link-detail", toString(myLinkDetail));
     }
-    if (oc.isWriteable("rectangular-lane-cut")) {
+    if (oc.isWriteable("rectangular-lane-cut") && oc.isDefault("rectangular-lane-cut") && oc.getBool("rectangular-lane-cut") != myRectLaneCut) {
         oc.set("rectangular-lane-cut", toString(myRectLaneCut));
     }
-    if (oc.isWriteable("walkingareas")) {
+    if (oc.isWriteable("walkingareas") && oc.isDefault("walkingareas") && oc.getBool("walkingareas") != myWalkingAreas) {
         oc.set("walkingareas", toString(myWalkingAreas));
     }
-    if (oc.isWriteable("junctions.limit-turn-speed")) {
+    if (oc.isWriteable("junctions.limit-turn-speed") && oc.isDefault("junctions.limit-turn-speed") && oc.getFloat("junctions.limit-turn-speed") != myLimitTurnSpeed) {
         oc.set("junctions.limit-turn-speed", toString(myLimitTurnSpeed));
     }
-    if (oc.isWriteable("check-lane-foes.all") && oc.getBool("check-lane-foes.all") != myCheckLaneFoesAll) {
+    if (oc.isWriteable("check-lane-foes.all") && oc.isDefault("check-lane-foes.all") && oc.getBool("check-lane-foes.all") != myCheckLaneFoesAll) {
         oc.set("check-lane-foes.all", toString(myCheckLaneFoesAll));
     }
-    if (oc.isWriteable("check-lane-foes.roundabout") && oc.getBool("check-lane-foes.roundabout") != myCheckLaneFoesRoundabout) {
+    if (oc.isWriteable("check-lane-foes.roundabout") && oc.isDefault("check-lane-foes.roundabout") && oc.getBool("check-lane-foes.roundabout") != myCheckLaneFoesRoundabout) {
         oc.set("check-lane-foes.roundabout", toString(myCheckLaneFoesRoundabout));
     }
-    if (oc.isWriteable("tls.ignore-internal-junction-jam") && oc.getBool("tls.ignore-internal-junction-jam") != myTlsIgnoreInternalJunctionJam) {
+    if (oc.isWriteable("tls.ignore-internal-junction-jam") && oc.isDefault("tls.ignore-internal-junction-jam") && oc.getBool("tls.ignore-internal-junction-jam") != myTlsIgnoreInternalJunctionJam) {
         oc.set("tls.ignore-internal-junction-jam", toString(myTlsIgnoreInternalJunctionJam));
     }
-    if (oc.isWriteable("default.spreadtype") && oc.getString("default.spreadtype") != myDefaultSpreadType) {
+    if (oc.isWriteable("default.spreadtype") && oc.isDefault("default.spreadtype") && oc.getString("default.spreadtype") != myDefaultSpreadType) {
         oc.set("default.spreadtype", myDefaultSpreadType);
     }
-    if (oc.isWriteable("geometry.avoid-overlap") && oc.getBool("geometry.avoid-overlap") != myGeomAvoidOverlap) {
+    if (oc.isWriteable("geometry.avoid-overlap") && oc.isDefault("geometry.avoid-overlap") && oc.getBool("geometry.avoid-overlap") != myGeomAvoidOverlap) {
         oc.set("geometry.avoid-overlap", toString(myGeomAvoidOverlap));
     }
-    if (oc.isWriteable("junctions.higher-speed") && oc.getBool("junctions.higher-speed") != myJunctionsHigherSpeed) {
+    if (oc.isWriteable("junctions.higher-speed") && oc.isDefault("junctions.higher-speed") && oc.getBool("junctions.higher-speed") != myJunctionsHigherSpeed) {
         oc.set("junctions.higher-speed", toString(myJunctionsHigherSpeed));
     }
-    if (oc.isWriteable("internal-junctions.vehicle-width") && oc.getFloat("internal-junctions.vehicle-width") != myInternalJunctionsVehicleWidth) {
+    if (oc.isWriteable("internal-junctions.vehicle-width") && oc.isDefault("internal-junctions.vehicle-width") && oc.getFloat("internal-junctions.vehicle-width") != myInternalJunctionsVehicleWidth) {
         oc.set("internal-junctions.vehicle-width", toString(myInternalJunctionsVehicleWidth));
     }
-    if (oc.isWriteable("junctions.minimal-shape") && oc.getBool("junctions.minimal-shape") != myJunctionsMinimalShape) {
+    if (oc.isWriteable("junctions.minimal-shape") && oc.isDefault("junctions.minimal-shape") && oc.getBool("junctions.minimal-shape") != myJunctionsMinimalShape) {
         oc.set("junctions.minimal-shape", toString(myJunctionsMinimalShape));
     }
-    if (oc.isWriteable("junctions.endpoint-shape") && oc.getBool("junctions.endpoint-shape") != myJunctionsEndpointShape) {
+    if (oc.isWriteable("junctions.endpoint-shape") && oc.isDefault("junctions.endpoint-shape") && oc.getBool("junctions.endpoint-shape") != myJunctionsEndpointShape) {
         oc.set("junctions.endpoint-shape", toString(myJunctionsEndpointShape));
     }
     if (!deprecatedVehicleClassesSeen.empty()) {
@@ -601,13 +608,12 @@ NIImporter_SUMO::addEdge(const SUMOSAXAttributes& attrs) {
         myHaveSeenInternalEdge = true;
         return; // skip internal edges
     }
-    // get the type
-    myCurrentEdge->type = attrs.getOpt<std::string>(SUMO_ATTR_TYPE, id.c_str(), ok, "");
     // get the origin and the destination node
     myCurrentEdge->fromNode = attrs.getOpt<std::string>(SUMO_ATTR_FROM, id.c_str(), ok, "");
     myCurrentEdge->toNode = attrs.getOpt<std::string>(SUMO_ATTR_TO, id.c_str(), ok, "");
     myCurrentEdge->priority = attrs.getOpt<int>(SUMO_ATTR_PRIORITY, id.c_str(), ok, -1);
     myCurrentEdge->type = attrs.getOpt<std::string>(SUMO_ATTR_TYPE, id.c_str(), ok, "");
+    myCurrentEdge->routingType = attrs.getOpt<std::string>(SUMO_ATTR_ROUTINGTYPE, id.c_str(), ok, "");
     myCurrentEdge->shape = attrs.getOpt<PositionVector>(SUMO_ATTR_SHAPE, id.c_str(), ok, PositionVector());
     NBNetBuilder::transformCoordinates(myCurrentEdge->shape, true, myLocation);
     myCurrentEdge->length = attrs.getOpt<double>(SUMO_ATTR_LENGTH, id.c_str(), ok, NBEdge::UNSPECIFIED_LOADED_LENGTH);
@@ -727,7 +733,6 @@ void
 NIImporter_SUMO::addJunction(const SUMOSAXAttributes& attrs) {
     // get the id, report an error if not given or empty...
     myCurrentJunction.node = nullptr;
-    myCurrentJunction.intLanes.clear();
     myCurrentJunction.response.clear();
     bool ok = true;
     std::string id = attrs.get<std::string>(SUMO_ATTR_ID, nullptr, ok);
@@ -760,7 +765,6 @@ NIImporter_SUMO::addJunction(const SUMOSAXAttributes& attrs) {
         myLastParameterised.push_back(node);
     }
     myCurrentJunction.node = node;
-    myCurrentJunction.intLanes = attrs.get<std::vector<std::string> >(SUMO_ATTR_INTLANES, nullptr, ok, false);
     // set optional radius
     if (attrs.hasAttribute(SUMO_ATTR_RADIUS)) {
         node->setRadius(attrs.get<double>(SUMO_ATTR_RADIUS, id.c_str(), ok));
@@ -777,6 +781,7 @@ NIImporter_SUMO::addJunction(const SUMOSAXAttributes& attrs) {
     }
     node->setRightOfWay(attrs.getOpt<RightOfWay>(SUMO_ATTR_RIGHT_OF_WAY, id.c_str(), ok, node->getRightOfWay()));
     node->setFringeType(attrs.getOpt<FringeType>(SUMO_ATTR_FRINGE, id.c_str(), ok, node->getFringeType()));
+    node->setRoundaboutType(attrs.getOpt<RoundaboutType>(SUMO_ATTR_ROUNDABOUT, id.c_str(), ok, node->getRoundaboutType()));
     if (attrs.hasAttribute(SUMO_ATTR_NAME)) {
         node->setName(attrs.get<std::string>(SUMO_ATTR_NAME, id.c_str(), ok));
     }

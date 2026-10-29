@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -126,6 +126,19 @@ NBTrafficLightDefinition::compute(const OptionsCont& oc) {
     }
     NBTrafficLightLogic* ret = myCompute(brakingTime);
     ret->updateParameters(getParametersMap());
+    if (ret->getType() == TrafficLightType::ACTUATED) {
+        for (const std::string param : {
+                    "jam-threshold", "passing-time", "detector-gap", "detector-length", "inactive-threshold"
+                }) {
+            if (!oc.isDefault("tls.actuated." + param) && !ret->hasParameter(param)) {
+                ret->setParameter(param, oc.getValueString("tls.actuated." + param));
+            }
+        }
+        if (!oc.isDefault("tls.actuated.show-detectors") && !ret->hasParameter("show-detectors")) {
+            ret->setParameter("show-detectors", oc.getValueString("tls.actuated.show-detectors"));
+        }
+
+    }
     return ret;
 }
 
@@ -293,7 +306,7 @@ NBTrafficLightDefinition::forbids(const NBEdge* const possProhibitorFrom,
 
 #ifdef DEBUG_RIGHT_OF_WAY
     if (DEBUGCOND) {
-        std::cout << "foribds tls=" << getID() << " from=" << possProhibitedFrom->getID() << " to=" << possProhibitedTo->getID() << " foeFrom=" << possProhibitorFrom->getID() << " foeTo=" << possProhibitorTo->getID() << " rnslp=" << regardNonSignalisedLowerPriority << " sameNodeOnly=" << sameNodeOnly;
+        std::cout << "forbids tls=" << getID() << " from=" << possProhibitedFrom->getID() << " to=" << possProhibitedTo->getID() << " foeFrom=" << possProhibitorFrom->getID() << " foeTo=" << possProhibitorTo->getID() << " rnslp=" << regardNonSignalisedLowerPriority << " sameNodeOnly=" << sameNodeOnly;
     }
 #endif
     if (incnode != outnode) {

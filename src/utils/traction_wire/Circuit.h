@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -61,6 +61,12 @@ class Node;
  */
 class Circuit {
 
+public:
+    /// @brief whether per-substation overhead-wire current limits should be enforced
+    static void enforceCurrentLimits(const bool val) {
+        myCurrentLimits = val;
+    }
+
 private:
 
     std::vector<Node*>* nodes;
@@ -84,6 +90,9 @@ private:
     * stable solution. This is then reported as alphaBest.
     */
     double alphaBest;
+
+    /// @brief whether per-substation overhead-wire current limits should be enforced
+    static bool myCurrentLimits;
 public:
     /**
      * @brief Flag of alpha scaling parameter

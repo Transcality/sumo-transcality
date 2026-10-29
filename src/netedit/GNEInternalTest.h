@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -41,8 +41,8 @@ public:
     /// @brief destructor
     ~GNEInternalTest();
 
-    /// @brief start netedit test
-    void runNeteditTests(GNEApplicationWindow* applicationWindow);
+    /// @brief run netedit internal test
+    void runNeteditInternalTests(GNEApplicationWindow* applicationWindow);
 
 private:
     /// @brief Invalidated default constructor.

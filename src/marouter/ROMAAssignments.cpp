@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -166,15 +166,15 @@ ROMAAssignments::capacityConstraintFunction(const ROEdge* edge, const double flo
 
 
 bool
-ROMAAssignments::addRoute(const ConstROEdgeVector& edges, std::vector<RORoute*>& paths, std::string routeId, double prob) {
-    std::vector<RORoute*>::iterator p;
+ROMAAssignments::addRoute(const ConstROEdgeVector& edges, std::vector<std::shared_ptr<RORoute> >& paths, std::string routeId, double prob) {
+    std::vector<std::shared_ptr<RORoute> >::iterator p;
     for (p = paths.begin(); p != paths.end(); p++) {
         if (edges == (*p)->getEdgeVector()) {
             break;
         }
     }
     if (p == paths.end()) {
-        paths.push_back(new RORoute(routeId, 0., prob, edges, nullptr, std::vector<SUMOVehicleParameter::Stop>()));
+        paths.push_back(std::make_shared<RORoute>(routeId, 0., prob, edges, nullptr, StopParVector()));
         return true;
     }
     (*p)->addProbability(prob);
@@ -207,8 +207,8 @@ ROMAAssignments::computePath(ODCell* cell, const SUMOTime time, const double pro
         }
     } else {
         double minCost = std::numeric_limits<double>::max();
-        RORoute* minRoute = nullptr;
-        for (RORoute* const p : cell->pathsVector) {
+        std::shared_ptr<RORoute> minRoute = nullptr;
+        for (const std::shared_ptr<RORoute>& p : cell->pathsVector) {
             const double cost = router->recomputeCosts(edges, myDefaultVehicle, time);
             if (cost < minCost) {
                 minCost = cost;
@@ -238,8 +238,8 @@ ROMAAssignments::getKPaths(const int kPaths, const double penalty) {
 void
 ROMAAssignments::resetFlows() {
     const double begin = STEPS2TIME(MIN2(myBegin, myMatrix.getCells().front()->begin));
-    for (std::map<std::string, ROEdge*>::const_iterator i = myNet.getEdgeMap().begin(); i != myNet.getEdgeMap().end(); ++i) {
-        ROMAEdge* edge = static_cast<ROMAEdge*>(i->second);
+    for (ROEdge* e : ROEdge::getAllEdges()) {
+        ROMAEdge* const edge = static_cast<ROMAEdge*>(e);
         edge->setFlow(begin, STEPS2TIME(myEnd), 0.);
         edge->setHelpFlow(begin, STEPS2TIME(myEnd), 0.);
     }
@@ -250,8 +250,8 @@ void
 ROMAAssignments::writeInterval(const SUMOTime begin, const SUMOTime end) {
     if (myNetloadOutput != nullptr) {
         myNetloadOutput->openTag(SUMO_TAG_INTERVAL).writeAttr(SUMO_ATTR_BEGIN, time2string(begin)).writeAttr(SUMO_ATTR_END, time2string(end));
-        for (std::map<std::string, ROEdge*>::const_iterator i = myNet.getEdgeMap().begin(); i != myNet.getEdgeMap().end(); ++i) {
-            ROMAEdge* edge = static_cast<ROMAEdge*>(i->second);
+        for (ROEdge* e : ROEdge::getAllEdges()) {
+            const ROMAEdge* const edge = static_cast<ROMAEdge*>(e);
             if (edge->getFunction() == SumoXMLEdgeFunc::NORMAL) {
                 myNetloadOutput->openTag(SUMO_TAG_EDGE).writeAttr(SUMO_ATTR_ID, edge->getID());
                 const double traveltime = edge->getTravelTime(getDefaultVehicle(), STEPS2TIME(begin));
@@ -300,8 +300,8 @@ ROMAAssignments::incremental(const int numIter, const bool verbose) {
             WRITE_MESSAGE(" starting interval " + time2string(intervalStart));
         }
         std::map<const ROMAEdge*, double> loadedTravelTimes;
-        for (std::map<std::string, ROEdge*>::const_iterator i = myNet.getEdgeMap().begin(); i != myNet.getEdgeMap().end(); ++i) {
-            ROMAEdge* edge = static_cast<ROMAEdge*>(i->second);
+        for (ROEdge* e : ROEdge::getAllEdges()) {
+            const ROMAEdge* const edge = static_cast<ROMAEdge*>(e);
             if (edge->hasLoadedTravelTime(STEPS2TIME(intervalStart))) {
                 loadedTravelTimes[edge] = edge->getTravelTime(myDefaultVehicle, STEPS2TIME(intervalStart));
             }
@@ -335,6 +335,8 @@ ROMAAssignments::incremental(const int numIter, const bool verbose) {
                     }
                     continue;
                 }
+#else
+                UNUSED_PARAMETER(workerIndex);
 #endif
                 if (lastOrigin != c->origin) {
                     myRouter.setBulkMode(false);
@@ -394,16 +396,14 @@ ROMAAssignments::sue(const int maxOuterIteration, const int maxInnerIteration, c
                 const SUMOTime begin = myAdditiveTraffic ? myBegin : c->begin;
                 const SUMOTime end = myAdditiveTraffic ? myEnd : c->end;
                 // update path cost
-                for (std::vector<RORoute*>::const_iterator j = c->pathsVector.begin(); j != c->pathsVector.end(); ++j) {
-                    RORoute* r = *j;
+                for (const std::shared_ptr<RORoute>& r : c->pathsVector) {
                     r->setCosts(myRouter.recomputeCosts(r->getEdgeVector(), myDefaultVehicle, 0));
                     //                    std::cout << std::setprecision(20) << r->getID() << ":" << r->getCosts() << std::endl;
                 }
                 // calculate route utilities and probabilities
                 RouteCostCalculator<RORoute, ROEdge, ROVehicle>::getCalculator().calculateProbabilities(c->pathsVector, myDefaultVehicle, 0);
                 // calculate route flows
-                for (std::vector<RORoute*>::const_iterator j = c->pathsVector.begin(); j != c->pathsVector.end(); ++j) {
-                    RORoute* r = *j;
+                for (const std::shared_ptr<RORoute>& r : c->pathsVector) {
                     const double pathFlow = r->getProbability() * c->vehicleNumber;
                     // assign edge flow deltas
                     for (ConstROEdgeVector::const_iterator e = r->getEdgeVector().begin(); e != r->getEdgeVector().end(); e++) {
@@ -418,8 +418,8 @@ ROMAAssignments::sue(const int maxOuterIteration, const int maxInnerIteration, c
                 const double intervalLengthInHours = STEPS2TIME(it.second - it.first) / 3600.;
                 const double intBegin = STEPS2TIME(it.first);
                 const double intEnd = STEPS2TIME(it.second);
-                for (std::map<std::string, ROEdge*>::const_iterator e = myNet.getEdgeMap().begin(); e != myNet.getEdgeMap().end(); ++e) {
-                    ROMAEdge* edge = static_cast<ROMAEdge*>(e->second);
+                for (ROEdge* e : ROEdge::getAllEdges()) {
+                    ROMAEdge* const edge = static_cast<ROMAEdge*>(e);
                     const double oldFlow = edge->getFlow(intBegin);
                     double newFlow = oldFlow;
                     if (inner == 0 && outer == 0) {
@@ -452,6 +452,17 @@ ROMAAssignments::sue(const int maxOuterIteration, const int maxInnerIteration, c
             }
             // additional stability check from python script: if notstable < math.ceil(net.geteffEdgeCounts()*0.005) or notstable < 3: stable = True
         }
+        // travel times changed since the metric was last built (or since the
+        // previous outer iteration): flag it stale so the *first* subsequent
+        // router query re-customizes (CCH) / rebuilds the hierarchy (CH)
+        // from current edge weights. recomputeCosts() above never consults
+        // the cached metric (it reads the live effort function directly), so
+        // a single reset() here -- right before the only call that does,
+        // computePath()'s router->compute() below -- is exactly as correct
+        // as resetting after every inner iteration, but for an
+        // expensive-to-rebuild algorithm like CH this cuts the number of
+        // rebuilds from O(maxInnerIteration) to one per outer iteration.
+        myRouter.reset(myDefaultVehicle);
         // check for a new route, if none available, break
         // several modifications about when a route is new and when to break are in the original script
         bool newRoute = false;
@@ -465,15 +476,13 @@ ROMAAssignments::sue(const int maxOuterIteration, const int maxInnerIteration, c
     // final round of assignment
     for (const ODCell* const c : myMatrix.getCells()) {
         // update path cost
-        for (std::vector<RORoute*>::const_iterator j = c->pathsVector.begin(); j != c->pathsVector.end(); ++j) {
-            RORoute* r = *j;
+        for (const std::shared_ptr<RORoute>& r : c->pathsVector) {
             r->setCosts(myRouter.recomputeCosts(r->getEdgeVector(), myDefaultVehicle, 0));
         }
         // calculate route utilities and probabilities
         RouteCostCalculator<RORoute, ROEdge, ROVehicle>::getCalculator().calculateProbabilities(c->pathsVector, myDefaultVehicle, 0);
         // calculate route flows
-        for (std::vector<RORoute*>::const_iterator j = c->pathsVector.begin(); j != c->pathsVector.end(); ++j) {
-            RORoute* r = *j;
+        for (const std::shared_ptr<RORoute>& r : c->pathsVector) {
             r->setProbability(r->getProbability() * c->vehicleNumber);
         }
     }

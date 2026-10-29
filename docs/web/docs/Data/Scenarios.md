@@ -46,7 +46,7 @@ of Bologna", SUMO2014, p 19-26
 - [Repository](https://github.com/SiLab-group/DigitalTwin_GenevaMotorway)
 
 Everyone (after registering at ODPMS) can get access to fine-grained (minute resolution) real-time traffic data from traffic counters and use it as input in DT-GM.
-The details of modelling and results will also be publicly available in two papers, which for the moment we only mentioned in the README file since they are under review process. (if need it we can provide you preprint of the paper "Building a Motorway Digital Twin in SUMO: Real-Time Simulation of Continuous Data Stream from Traffic Counters")
+The details of modeling and results will also be publicly available in two papers, which for the moment we only mentioned in the README file since they are under review process. (if need it we can provide you preprint of the paper "Building a Motorway Digital Twin in SUMO: Real-Time Simulation of Continuous Data Stream from Traffic Counters")
 
 # Ingolstadt traffic scenario
 ## InTAS
@@ -130,7 +130,7 @@ There is further information about
 
 # TAVF-Hamburg
 
-A scenario from the [TAVF](https://tavf.hamburg/en/) test track for automated and
+A scenario from the [TAVF](https://new-mobility-solutions.de/en/tavf/) test track for automated and
 connected driving in Hamburg.
 
 - [TAVF-Hamburg Scenario on GitHub](https://github.com/DLR-TS/sumo-scenarios/tree/main/TAVF-Hamburg)
@@ -166,6 +166,12 @@ Tools"](https://web.archive.org/web/20170808122505/https://elib.dlr.de/98046/1/C
 This scenario can be followed as a tutorial - it showcases how routes can be generated within a network, using counting data.
 
 - [Wildau Scenario on GitHub](https://github.com/DLR-TS/sumo-scenarios/tree/main/Wildau)
+
+# German Motorways
+This scenario is meant to showcase the power of [mesosim](../Simulation/Meso.md) by running 500k cars (random traffic) on the german motorway system. On a high end machine this runs in 10x realtime.
+
+[German Motorways Scenario on GitHub](https://github.com/DLR-TS/sumo-scenarios/tree/main/germany-motorways)
+
 
 # Test cases
 

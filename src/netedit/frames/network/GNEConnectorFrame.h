@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -22,14 +22,12 @@
 
 #include <netbuild/NBEdge.h>
 #include <netedit/frames/GNEFrame.h>
+#include <netedit/frames/common/GNEGroupBoxModule.h>
 
 // ===========================================================================
 // class definitions
 // ===========================================================================
-/**
- * @class GNEConnectorFrame
- * The Widget for modifying selections of network-elements
- */
+
 class GNEConnectorFrame : public GNEFrame {
 
 public:
@@ -38,7 +36,7 @@ public:
     // class CurrentLane
     // ===========================================================================
 
-    class CurrentLane : public MFXGroupBoxModule {
+    class CurrentLane : public GNEGroupBoxModule {
 
     public:
         /// @brief constructor
@@ -59,7 +57,7 @@ public:
     // class ConnectionModifications
     // ===========================================================================
 
-    class ConnectionModifications : public MFXGroupBoxModule {
+    class ConnectionModifications : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNEConnectorFrame::ConnectionModifications)
 
@@ -101,7 +99,7 @@ public:
     // class ConnectionOperations
     // ===========================================================================
 
-    class ConnectionOperations : public MFXGroupBoxModule {
+    class ConnectionOperations : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNEConnectorFrame::ConnectionOperations)
 
@@ -161,10 +159,67 @@ public:
     };
 
     // ===========================================================================
+    // class ConnectionVisualization
+    // ===========================================================================
+
+    class ConnectionVisualization : public GNEGroupBoxModule {
+        /// @brief FOX-declaration
+        FXDECLARE(GNEConnectorFrame::ConnectionVisualization)
+
+    public:
+        /// @brief constructor
+        ConnectionVisualization(GNEConnectorFrame* connectorFrameParent);
+
+        /// @brief destructor
+        ~ConnectionVisualization();
+
+        /// @brief update show connections
+        void updateShowConnections();
+
+        /// @brief check if show connections
+        bool showConnections() const;
+
+        /// @brief check if show only from connections
+        bool showOnlyFromConnections() const;
+
+        /// @brief check if inspect connections
+        bool inspectConnections() const;
+
+        /// @name FOX-callbacks
+        /// @{
+
+        /// @brief Called when the user toggles the show always connection checkbox
+        long onCmdToggleVisibleInInspectMode(FXObject* obj, FXSelector sel, void* ptr);
+
+        /// @brief Called when the user toggles the show only from checkbox
+        long onCmdToggleHideOtherSources(FXObject*, FXSelector, void*);
+
+        /// @brief Called when the user toggles the inspect connections checkbox
+        long onCmdToggleInspectConnections(FXObject*, FXSelector, void*);
+        /// @}
+
+    protected:
+        FOX_CONSTRUCTOR(ConnectionVisualization)
+
+    private:
+        /// @brief pointer to connectorFrame parent
+        GNEConnectorFrame* myConnectorFrameParent;
+
+        /// @brief "Visible in inspet mode" check button
+        FXCheckButton* myToggleVisibleInInspectMode;
+
+        /// @brief "Hide other sources" check button
+        FXCheckButton* myToggleHideOtherSources;
+
+        /// @brief "Inspect connections" check button
+        FXCheckButton* myToggleInspectConnectionsCheckbutton;
+    };
+
+    // ===========================================================================
     // class ConnectionSelection
     // ===========================================================================
 
-    class ConnectionSelection : public MFXGroupBoxModule {
+    class ConnectionSelection : public GNEGroupBoxModule {
 
     public:
         /// @brief constructor
@@ -178,7 +233,7 @@ public:
     // class Legend
     // ===========================================================================
 
-    class Legend : public MFXGroupBoxModule {
+    class Legend : public GNEGroupBoxModule {
 
     public:
         /// @brief constructor
@@ -199,13 +254,24 @@ public:
     /// @brief Destructor
     ~GNEConnectorFrame();
 
+    /**@brief show Frame
+     * @note some GNEFrames needs a re-implementation
+     */
+    void show();
+
     /**@brief either sets the current lane or toggles the connection of the
      * @param viewObjects collection of objects under cursor after click over view
      */
     void handleLaneClick(const GNEViewNetHelper::ViewObjectsSelector& viewObjects);
 
+    /// @brief get the lane of which connections are to be modified
+    GNELane* getCurrentEditedLane() const;
+
     /// @brief get pointer to ConnectionModifications module
     ConnectionModifications* getConnectionModifications() const;
+
+    /// @brief get pointer to ConnectionVisualization module
+    ConnectionVisualization* getConnectionVisualization();
 
 private:
     /// @brief the status of a target lane
@@ -242,7 +308,10 @@ private:
     /// @brief ConnectionModifications module
     GNEConnectorFrame::ConnectionModifications* myConnectionModifications = nullptr;
 
-    /// @brief ConnectionOperations module
+    /// @brief ConnectionVisualization module
+    GNEConnectorFrame::ConnectionVisualization* myConnectionVisualization = nullptr;
+
+    /// @brief connectionOperations module
     GNEConnectorFrame::ConnectionOperations* myConnectionOperations = nullptr;
 
     /// @brief ConnectionSelection module

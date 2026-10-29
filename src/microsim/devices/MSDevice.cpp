@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -56,8 +56,11 @@
 // ===========================================================================
 // static member variables
 // ===========================================================================
+const std::string MSDevice::LOADSTATE_DEVICENAMES("LOADSTATE_DEVICENAMES");
 std::map<std::string, std::set<std::string> > MSDevice::myExplicitIDs;
+std::map<std::string, MSDevice::DefaultAssignment> MSDevice::myDefaultAssignments[2];
 SumoRNG MSDevice::myEquipmentRNG("deviceEquipment");
+
 
 // ===========================================================================
 // debug flags
@@ -145,11 +148,34 @@ MSDevice::buildTransportableDevices(MSTransportable& p, std::vector<MSTransporta
 
 void
 MSDevice::cleanupAll() {
+    myDefaultAssignments[0].clear();
+    myDefaultAssignments[1].clear();
     MSRoutingEngine::cleanup();
     MSDevice_Tripinfo::cleanup();
     MSDevice_FCD::cleanup();
     MSDevice_Taxi::cleanup();
 }
+
+
+const MSDevice::DefaultAssignment&
+MSDevice::getDefaultAssignment(const OptionsCont& oc, const std::string& deviceName, const bool isPerson) {
+    // the options do not change during a run, the cache is cleared in cleanupAll
+    std::map<std::string, DefaultAssignment>& cache = myDefaultAssignments[isPerson ? 1 : 0];
+    auto it = cache.find(deviceName);
+    if (it == cache.end()) {
+        DefaultAssignment d;
+        d.prefix = (isPerson ? "person-device." : "device.") + deviceName;
+        d.parameterKey = "has." + deviceName + ".device";
+        d.probabilityKey = d.prefix + ".probability";
+        d.deterministic = oc.exists(d.prefix + ".deterministic") && oc.getBool(d.prefix + ".deterministic");
+        d.numberGiven = d.deterministic || (oc.exists(d.probabilityKey) && oc.getFloat(d.probabilityKey) >= 0.);
+        d.probability = d.numberGiven ? oc.getFloat(d.probabilityKey) : 0;
+        d.nameGiven = oc.exists(d.prefix + ".explicit") && oc.isSet(d.prefix + ".explicit");
+        it = cache.emplace(deviceName, d).first;
+    }
+    return it->second;
+}
+
 
 void
 MSDevice::insertDefaultAssignmentOptions(const std::string& deviceName, const std::string& optionsTopic, OptionsCont& oc, const bool isPerson) {
@@ -164,6 +190,20 @@ MSDevice::insertDefaultAssignmentOptions(const std::string& deviceName, const st
 
     oc.doRegister(prefix + ".deterministic", new Option_Bool(false));
     oc.addDescription(prefix + ".deterministic", optionsTopic, "The '" + deviceName + "' devices are set deterministic using a fraction of 1000");
+}
+
+
+std::string
+MSDevice::getDeviceName(const std::string& id) {
+    if (StringUtils::startsWith(id, "routing_")) {
+        // special case: renamed in output
+        return "rerouting";
+    } else if (StringUtils::startsWith(id, "driverstate")) {
+        // special case: no underscore
+        return "driverstate";
+    } else {
+        return id.substr(0, id.find('_'));
+    }
 }
 
 

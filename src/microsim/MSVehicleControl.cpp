@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -62,6 +62,7 @@ MSVehicleControl::MSVehicleControl() :
     myMaxSpeedFactor(1),
     myMinDeceleration(SUMOVTypeParameter::getDefaultDecel(SVC_IGNORING)),
     myMinDecelerationRail(SUMOVTypeParameter::getDefaultDecel(SVC_RAIL)),
+    myMaxMinGap(0),
     myPendingRemovals(MSGlobals::gNumSimThreads > 1) {
 
     initDefaultTypes();
@@ -97,10 +98,6 @@ MSVehicleControl::initDefaultTypes() {
     myVTypeDict[DEFAULT_RAILTYPE_ID] = MSVehicleType::build(defRailType);
 
     SUMOVTypeParameter defContainerType(DEFAULT_CONTAINERTYPE_ID, SVC_CONTAINER);
-    // ISO Container TEU (cannot set this based on vClass)
-    defContainerType.length = 6.1;
-    defContainerType.width = 2.4;
-    defContainerType.height = 2.6;
     defContainerType.parametersSet |= VTYPEPARS_VEHICLECLASS_SET;
     myVTypeDict[DEFAULT_CONTAINERTYPE_ID] = MSVehicleType::build(defContainerType);
 
@@ -112,7 +109,8 @@ SUMOVehicle*
 MSVehicleControl::buildVehicle(SUMOVehicleParameter* defs,
                                ConstMSRoutePtr route, MSVehicleType* type,
                                const bool ignoreStopErrors, const VehicleDefinitionSource source, bool addRouteStops) {
-    MSVehicle* built = new MSVehicle(defs, route, type, type->computeChosenSpeedDeviation(source == VehicleDefinitionSource::ROUTEFILE || source == VehicleDefinitionSource::STATE ? MSRouteHandler::getParsingRNG() : nullptr));
+    const double speedFactor = type->computeChosenSpeedDeviation(defs->speedFactor, source == VehicleDefinitionSource::ROUTEFILE ? MSRouteHandler::getParsingRNG() : nullptr);
+    MSVehicle* built = new MSVehicle(defs, route, type, speedFactor);
     initVehicle(built, ignoreStopErrors, addRouteStops, source);
     return built;
 }
@@ -204,22 +202,30 @@ MSVehicleControl::vehicleDeparted(const SUMOVehicle& v) {
     myTotalDepartureDelay += STEPS2TIME(v.getDeparture() - STEPFLOOR(v.getParameter().depart));
     MSNet::getInstance()->informVehicleStateListener(&v, MSNet::VehicleState::DEPARTED);
     myMaxSpeedFactor = MAX2(myMaxSpeedFactor, v.getChosenSpeedFactor());
+    myMaxMinGap = MAX2(myMaxMinGap, v.getVehicleType().getMinGap());
+    const double maxDecel = v.getVehicleType().getCarFollowModel().getMaxDecel();
     if ((v.getVClass() & (SVC_PEDESTRIAN | SVC_NON_ROAD)) == 0) {
         // only  worry about deceleration of road users
-        myMinDeceleration = MIN2(myMinDeceleration, v.getVehicleType().getCarFollowModel().getMaxDecel());
+        myMinDeceleration = MIN2(myMinDeceleration, maxDecel);
     } else if ((v.getVClass() & SVC_RAIL_CLASSES) != 0) {
-        myMinDecelerationRail = MIN2(myMinDecelerationRail, v.getVehicleType().getCarFollowModel().getMaxDecel());
+        myMinDecelerationRail = MIN2(myMinDecelerationRail, maxDecel);
+        if ((v.getEdge()->getPermissions() & SVC_ROAD_MOTOR_CLASSES) != 0) {
+            // shared rail/road
+            myMinDeceleration = MIN2(myMinDeceleration, maxDecel);
+        }
     }
 }
 
 
 void
-MSVehicleControl::setState(int runningVehNo, int loadedVehNo, int endedVehNo, double totalDepartureDelay, double totalTravelTime) {
+MSVehicleControl::setState(int runningVehNo, int loadedVehNo, int endedVehNo, double totalDepartureDelay, double totalTravelTime, double maxSpeedFactor, double minDecel) {
     myRunningVehNo = runningVehNo;
     myLoadedVehNo = loadedVehNo;
     myEndedVehNo = endedVehNo;
     myTotalDepartureDelay = totalDepartureDelay;
     myTotalTravelTime = totalTravelTime;
+    myMaxSpeedFactor = maxSpeedFactor;
+    myMinDeceleration = minDecel;
 }
 
 
@@ -230,7 +236,14 @@ MSVehicleControl::saveState(OutputDevice& out) {
     out.writeAttr(SUMO_ATTR_BEGIN, myLoadedVehNo);
     out.writeAttr(SUMO_ATTR_END, myEndedVehNo);
     out.writeAttr(SUMO_ATTR_DEPART, myTotalDepartureDelay);
-    out.writeAttr(SUMO_ATTR_TIME, myTotalTravelTime).closeTag();
+    out.writeAttr(SUMO_ATTR_TIME, myTotalTravelTime);
+    out.writeAttr(SUMO_ATTR_SPEEDFACTOR, myMaxSpeedFactor);
+    out.writeAttr(SUMO_ATTR_DECEL, myMinDeceleration);
+    const SUMOTime loaderTime = MSNet::getInstance()->getLoaderTime();
+    if (loaderTime > 0 && loaderTime != SUMOTime_MAX) {
+        out.writeAttr(SUMO_ATTR_LOADERTIME, MSNet::getInstance()->getLoaderTime());
+    }
+    out.closeTag();
     // save vehicle types
     for (const auto& item : myVTypeDict) {
         if (myReplaceableDefaultVTypes.count(item.first) == 0) {
@@ -243,8 +256,13 @@ MSVehicleControl::saveState(OutputDevice& out) {
         out.writeAttr(SUMO_ATTR_PROBS, item.second->getProbs());
         out.closeTag();
     }
+    std::vector<SUMOVehicle*> sortedVehs;
     for (const auto& item : myVehicleDict) {
-        item.second->saveState(out);
+        sortedVehs.push_back(item.second);
+    }
+    std::sort(sortedVehs.begin(), sortedVehs.end(), ComparatorNumericalIdLess());
+    for (SUMOVehicle* veh : sortedVehs) {
+        veh->saveState(out);
     }
 }
 

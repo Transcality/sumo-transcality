@@ -57,6 +57,7 @@ repositories include a nightly build as well (called ***sumo-git***).
 - [openSUSE Leap 15.4 repository](https://download.opensuse.org/repositories/science:/dlr/15.4/)
 - [openSUSE Leap 15.5 repository](https://download.opensuse.org/repositories/science:/dlr/15.5/)
 - [openSUSE Leap 15.6 repository](https://download.opensuse.org/repositories/science:/dlr/15.6/)
+- [openSUSE Leap 16.0 repository](https://download.opensuse.org/repositories/science:/dlr/16.0/)
 - [openSUSE Tumbleweed repository](https://download.opensuse.org/repositories/science:/dlr/openSUSE_Tumbleweed/)
 - [Fedora 36 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_36/)
 - [Fedora 37 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_37/)
@@ -65,12 +66,15 @@ repositories include a nightly build as well (called ***sumo-git***).
 - [Fedora 40 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_40/)
 - [Fedora 41 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_41/)
 - [Fedora 42 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_42/)
+- [Fedora 43 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_43/)
+- [Fedora 44 repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_44/)
 - [Fedora Rawhide repository](https://download.opensuse.org/repositories/science:/dlr/Fedora_Rawhide/)
 - [CentOS 7 repository](https://download.opensuse.org/repositories/science:/dlr/CentOS_7/)
 - [Debian 9 repository](https://download.opensuse.org/repositories/science:/dlr/Debian_9.0/)
 - [Debian 10 repository](https://download.opensuse.org/repositories/science:/dlr/Debian_10/)
 - [Debian 11 repository](https://download.opensuse.org/repositories/science:/dlr/Debian_11/)
 - [Debian 12 repository](https://download.opensuse.org/repositories/science:/dlr/Debian_12/)
+- [Debian 13 repository](https://download.opensuse.org/repositories/science:/dlr/Debian_13/)
 - [Debian Testing repository](https://download.opensuse.org/repositories/science:/dlr/Debian_Testing/)
 - [Debian Unstable repository](https://download.opensuse.org/repositories/science:/dlr/Debian_Unstable/)
 - [xUbuntu 16.04 repository](https://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/)
@@ -78,6 +82,8 @@ repositories include a nightly build as well (called ***sumo-git***).
 - [xUbuntu 20.04 repository](https://download.opensuse.org/repositories/science:/dlr/xUbuntu_20.04/)
 - [xUbuntu 22.04 repository](https://download.opensuse.org/repositories/science:/dlr/xUbuntu_22.04/)
 - [xUbuntu 24.04 repository](https://download.opensuse.org/repositories/science:/dlr/xUbuntu_24.04/)
+- [xUbuntu 26.04 repository](https://download.opensuse.org/repositories/science:/dlr/xUbuntu_26.04/)
+- [Arch repository](https://download.opensuse.org/repositories/science:/dlr/Arch/)
 
 Furthermore there are a debian and an ubuntu
 launchpad project as well as an archlinux package:
@@ -114,27 +120,6 @@ Make sure to have Python and XQuartz installed on your Mac.
 You can also build SUMO by following these instructions [here](Installing/MacOS_Build.md).
 
 
-### Homebrew
-
-You can also read the Homebrew-based installation guide [here](Installing/index.md#macos) or follow the [build instructions](Installing/MacOS_Build.md).
-The usage of the homebrew bottles is discouraged.
-
-!!! caution "Important notice"
-    We no longer maintain the installation via Homebrew. It may be used to install older versions, but support is not provided. Please use the installer or build SUMO yourself.
-
-***If you used the installer, this step is not needed!***
-
-In order to have a more native feel on macOS, we provide some application launchers (icons / shortcuts). These launchers ***work with all versions of SUMO and do not need to be updated***.
-
-<ul>
-<li><a class="no-arrow-link" href="https://sumo.dlr.de/daily/SUMO_launchers.dmg">Download SUMO launchers</a><?php getInfo("SUMO_launchers.dmg","d",false);?></li>
-</ul>
-
-These launchers allow you to select **sumo-gui** as the default application to open `.sumocfg` files on macOS, and even add **sumo-gui**, **netedit** and the **OSM Web Wizard** to the dock.
-
-!!! caution "Important notice"
-    In order to use the launchers, make sure you have installed SUMO beforehand (any version) and have set the [SUMO_HOME](Basics/Basic_Computer_Skills.md#sumo_home) environment variable.
-
 ## Sources
 
 Download the sources, examples, and CMake-files for creating Visual Studio
@@ -151,15 +136,19 @@ Starting with SUMO 1.8.0 (for macOS since 1.12.0) the installation is also possi
 
 You can install either the applications: `pip install eclipse-sumo` or only traci (`pip install traci`), libsumo (`pip install libsumo`) or sumolib (`pip install sumolib`).
 
-This should work for Windows, macOS and all Linux versions which are more recent than 2014.
-The applications are available for Python 2 and Python 3, libsumo only for Python 3.6 and above. This gives an easy way to test
+This should work for Windows, macOS and all Linux versions which are more recent than 2014. Linux wheels are provided in four flavors:
+[manylinux2014 and manylinux_2_28](https://github.com/pypa/manylinux) for x86_64 and aarch64. manylinux2014 is missing some components such as GDAL and JuPedSim but manylinux_2_28 should be feature complete
+(pip usually chooses the newest version compatible with your system, so unless you are still on CentOS 7 or openSUSE 15.x you should be fine).
+
+The applications are available for Python 2 and Python 3, libsumo only for Python 3.9 and above. This gives an easy way to test
 a new SUMO version via [virtual environments](https://docs.python.org/3/library/venv.html) or a nightly build using the following commands (on Linux):
 ```
 python -m venv sumo_test
-cd sumo_test
-. bin/activate
+. sumo_test/bin/activate
 pip install eclipse-sumo
+python -c "import sumo; print('SUMO_HOME=' + sumo.SUMO_HOME)"
 ```
+The last line prints the value to set for the SUMO_HOME environment variable when using this virtual environment.
 
 !!! caution "macOS dependencies"
     In order to use the Python wheels on macOS you need to have all the dependencies installed and up to date via brew for instance by following the [standard installation](Installing/index.md#macos) once.
@@ -199,12 +188,16 @@ see [the notes below](Downloads.md#note_on_licensing). The following packages ca
 <li>Windows zip with all extras (contains GPL code): <a class="no-arrow-link" href="https://sumo.dlr.de/daily/sumo-win64extra-git.zip">https://sumo.dlr.de/daily/sumo-win64extra-git.zip</a><?php getInfo("sumo-win64extra-git.zip","d",true);?></li>
 <li>Windows 64-bit binaries of the SUMO game: <a class="no-arrow-link" href="https://sumo.dlr.de/daily/sumo-game-win64-git.zip">https://sumo.dlr.de/daily/sumo-game-win64-git.zip</a><?php getInfo("sumo-game-win64-git.zip","d",true);?></li>
 <li>Windows 64-bit debug version: <a class="no-arrow-link" href="https://sumo.dlr.de/daily/sumo-win64Debug-git.zip">https://sumo.dlr.de/daily/sumo-win64Debug-git.zip</a><?php getInfo("sumo-win64Debug-git.zip","d",true);?></li>
+<li>macOS pkg installer: <a class="no-arrow-link" href="https://sumo.dlr.de/daily/sumo-git.pkg">https://sumo.dlr.de/daily/sumo-git.pkg</a><?php getInfo("sumo-git.pkg","d",true);?></li>
 </ul>
 
-The nightly builds are also available as [Python wheels](https://sumo.dlr.de/daily/wheels/).
+The nightly builds are also available as [home made Python wheels](https://sumo.dlr.de/daily/wheels/) and
+[Python wheels built by GitHub Actions](https://sumo.dlr.de/daily/ciwheels/). The latter are usually preferred,
+since they cover more different Python versions, especially for Windows and macOS. But if you prefer a binary from Berlin
+use the first source.
 To install the latest nightly version (it is strongly encouraged to do this in a virtual environment) use [the instructions above](#python_packages_virtual_environments) replacing the install line with:
 ```
-pip install -f https://sumo.dlr.de/daily/wheels/ eclipse-sumo
+pip install -f https://sumo.dlr.de/daily/ciwheels/ eclipse-sumo
 ```
 Although this is a python package, it contains all compiled SUMO binaries and should be fully functional (see the requirements in [the section above](#python_packages_virtual_environments)).
 The nightly python wheels are also available for libsumo, sumolib and traci.
@@ -257,9 +250,9 @@ listed in the table below.
 
 ## Dependencies for developers
 
-For the Windows platform you can retrieve all dependencies by cloning
-this repository: <https://github.com/DLR-TS/SUMOLibraries>, if you want
-to develop with Visual Studio. If you just want to run SUMO, use the
+For the Windows platform you can download the [dependent libraries](https://github.com/DLR-TS/SUMOLibraries/releases).
+Use the latest release if you are developing, if not use the release matching your SUMO version.
+If you just want to run SUMO, use the
 binary downloads above which already contain the runtime dependencies.
 
 ## Scenarios and other Data
@@ -267,6 +260,10 @@ binary downloads above which already contain the runtime dependencies.
 - [networks](Data/Networks.md)
 - [traffic data](Data/Traffic_Data.md)
 - [Test cases](Tutorials/index.md#using_examples_from_the_test_suite)
+
+## Logos
+
+Visit the [Logos and Branding Page](https://sumo.dlr.de/logo) to download official logo files and other brand assets.
 
 # Note on Licensing
 
@@ -294,18 +291,43 @@ switch($type){
 $file = $_SERVER['DOCUMENT_ROOT']. $file;
 if(file_exists($file)){
 $size = "<span class='badge badge-pill badge-secondary' style='margin-left:5px;'>" . round(((filesize($file))/1048576),1) . " MB" . "</span>";
+$checksumBtn = "";
+$modal = "";
+$shaFile = $file . ".sha256";
+if(file_exists($shaFile)){
+  $shaContent = trim(file_get_contents($shaFile));
+  $parts = preg_split('/\s+/', $shaContent);
+  $checksum = !empty($parts) ? $parts[0] : $shaContent;
+  $modalId = "checksum_" . md5($file);
+  $checksumBtn = "<button type='button' class='btn btn-sm btn-xs btn-outline-secondary ml-2' data-toggle='modal' data-target='#" . $modalId . "' title='View SHA256 checksum'>Checksum</button>";
+  $modal = "<div class='modal fade' id='" . $modalId . "' tabindex='-1' role='dialog' aria-labelledby='" . $modalId . "Label' aria-hidden='true'>"
+         . "<div class='modal-dialog modal-dialog-centered' role='document'>"
+         . "<div class='modal-content'>"
+         . "<div class='modal-header'>"
+         . "<h5 class='modal-title' id='" . $modalId . "Label'>SHA256 Checksum</h5>"
+         . "<button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button>"
+         . "</div>"
+         . "<div class='modal-body' style='color: #495057 !important;'>"
+         . "<p><strong>File:</strong> " . htmlspecialchars($fname) . "</p>"
+         . "<p><strong>Checksum (SHA256):</strong></p>"
+         . "<pre><span></span><code class='hljs'>" . htmlspecialchars($checksum) . "</code></pre>"
+         . "</div>"
+         . "</div>"
+         . "</div>"
+         . "</div>";
+}
 if ($nightly) {
   $fileDate = "<span class='badge badge-pill badge-light' style='margin-left:5px;'>" . date("F d Y H:i:s", filemtime($file)) . " UTC</span>";
-  echo $fileDate . $size;
+  echo $fileDate . $size . $checksumBtn . $modal;
 } else {
-  echo $size;
+  echo $size . $checksumBtn . $modal;
 }
 }}
 
 function getNightlyFreshness($fname){
 $zip = new ZipArchive;
 $zip->open($_SERVER['DOCUMENT_ROOT']. "/daily/" . $fname);
-$freshnessIs = str_replace("\"","",str_replace("#define VERSION_STRING ","",$zip->getFromName('sumo-git/include/version.h')));
+$freshnessIs = str_replace("\"","",str_replace("#define VERSION_STRING ","",$zip->getFromName('sumo-win64-git/include/version.h')));
 echo $freshnessIs;
 $zip->close();
 }

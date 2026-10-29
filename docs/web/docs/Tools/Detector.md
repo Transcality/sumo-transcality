@@ -115,7 +115,7 @@ It requires the use of an input flow file and then performs a comparison between
 
 # edgeDataFromFlow.py
 
-This script converts [detector flow files](../Demand/Routes_from_Observation_Points.md#computing_flows) to into [edgeData format](../Simulation/Output/Lane-_or_Edge-based_Traffic_Measures.md#edge-based_network_states) (i.e. to be used by [routeSampler.py](Turns.md#edge_counts) or for [visualization in sumo-gui](../sumo-gui.md#visualizing_edge-related_data))
+This script converts [detector flow files](../Demand/Routes_from_Observation_Points.md#computing_flows) to [edgeData format](../Simulation/Output/Lane-_or_Edge-based_Traffic_Measures.md#edge-based_network_states) (i.e. to be used by [routeSampler.py](Turns.md#edge_counts) or for [visualization in sumo-gui](../sumo-gui.md#visualizing_edge-related_data))
 Example:
 ```
 <SUMO_HOME>/tools/detector/edgeDataFromFlow.py -d input_detectors.det.xml -f input_flows.txt -o edgedata.xml
@@ -140,4 +140,23 @@ det2;52.432373;13.496142
 It can be turned into a file with detectors with:
 ```
 <SUMO_HOME>/tools/detector/mapDetectors.py -n net.net.xml -d  det.csv -o det.add.xml
+```
+
+
+# flow2POI.py
+
+This script converts [detector flow files](../Demand/Routes_from_Observation_Points.md#computing_flows) to [POIs](../Simulation/Shapes.md#poi_point_of_interest_definitions).
+The total traffic count will be written into the `type` attribute of the poi for streamlined visualization of localized flow values.
+Aggregated traffic values (i.e. hourly) will be written as `<param`> elements of the respective POI which makes it easy to show the respective value using gui-setting *Show poi text param*.
+
+```
+<SUMO_HOME>/tools/detector/flow2POI.py -d input_detectors.add.xml -f input_flows.txt -o pois.add.xml -i 60
+```
+
+# flowConservation.py
+
+This script reads a network and an [edgeData file](../Simulation/Output/Lane-_or_Edge-based_Traffic_Measures.md#edge-based_network_states) to find data that violates conservation of flow at each junction where enough data is available to determine this.  The algorithm looks upstream and downstream to estimate missing values (i.e. if only incoming flow is available from traffic light detectors). By setting option **--symmetry-threshold** missing values can estimated from the reverse direction for edges with traffic below the given threshold.
+
+```
+<SUMO_HOME>/tools/detector/flowConservation.py -n net.net.xml -e input_edgedata.xml
 ```

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -56,8 +56,11 @@ MEVehicle::MEVehicle(SUMOVehicleParameter* pars, ConstMSRoutePtr route,
     mySegment(nullptr),
     myQueIndex(0),
     myEventTime(SUMOTime_MIN),
+    myEventIndex(-1),
     myLastEntryTime(SUMOTime_MIN),
     myBlockTime(SUMOTime_MAX),
+    myUnqueuedEventTime(SUMOTime_MIN),
+    myWasJammed(false),
     myInfluencer(nullptr) {
 }
 
@@ -70,31 +73,45 @@ MEVehicle::getBackPositionOnLane(const MSLane* /* lane */) const {
 
 double
 MEVehicle::getPositionOnLane() const {
-// the following interpolation causes problems with arrivals and calibrators
-//    const double fracOnSegment = MIN2(double(1), STEPS2TIME(MSNet::getInstance()->getCurrentTimeStep() - myLastEntryTime) / STEPS2TIME(myEventTime - myLastEntryTime));
-    return mySegment == nullptr ? 0 : (double(mySegment->getIndex()) /* + fracOnSegment */) * mySegment->getLength();
+    if (MSGlobals::gMesoInterpolatePos) {
+        // interpolation may cause problems with arrivals and calibrators
+        const auto& mesoPos = getEdge()->getMesoPositions();
+        const auto& posIt = mesoPos.find(this);
+        if (posIt != mesoPos.end()) {
+            return posIt->second.first;
+        }
+    }
+    return mySegment == nullptr ? 0. : (double)mySegment->getIndex() * mySegment->getLength();
 }
 
 
 double
 MEVehicle::getAngle() const {
-    const MSLane* const lane = getEdge()->getLanes()[0];
+    const MSLane* const lane = getEdge()->getLanes()[MAX2(0, getQueIndex())];
     return lane->getShape().rotationAtOffset(lane->interpolateLanePosToGeometryPos(getPositionOnLane()));
 }
 
 
 double
 MEVehicle::getSlope() const {
-    const MSLane* const lane = getEdge()->getLanes()[0];
-    return lane->getShape().slopeDegreeAtOffset(lane->interpolateLanePosToGeometryPos(getPositionOnLane()));
+    const MSLane* const lane = getEdge()->getLanes()[MAX2(0, getQueIndex())];
+    return lane->getShape().slopeDegreeAtOffset(lane->interpolateLanePosToGeometryPos(getPositionOnLane()
+                - (MSGlobals::gSlopeCentered ? getLength() / 2 : 0)));
+}
+
+
+const MSEdge*
+MEVehicle::getCurrentEdge() const {
+    return mySegment != nullptr ? &mySegment->getEdge() : getEdge();
 }
 
 
 Position
 MEVehicle::getPosition(const double offset) const {
-    const MSLane* const lane = getEdge()->getLanes()[0];
+    const MSLane* const lane = getEdge()->getLanes()[MAX2(0, getQueIndex())];
     return lane->geometryPositionAtOffset(getPositionOnLane() + offset);
 }
+
 
 PositionVector
 MEVehicle::getBoundingBox(double offset) const {
@@ -115,6 +132,7 @@ MEVehicle::getBoundingBox(double offset) const {
     return result;
 }
 
+
 double
 MEVehicle::getSpeed() const {
     if (getWaitingTime() > 0 || isStopped()) {
@@ -127,10 +145,12 @@ MEVehicle::getSpeed() const {
 
 double
 MEVehicle::getAverageSpeed() const {
-    if (mySegment == nullptr || myQueIndex == MESegment::PARKING_QUEUE) {
+    // cache for thread safety
+    MESegment* s = mySegment;
+    if (s == nullptr || myQueIndex == MESegment::PARKING_QUEUE) {
         return 0;
     } else {
-        return MIN2(mySegment->getLength() / STEPS2TIME(myEventTime - myLastEntryTime),
+        return MIN2(s->getLength() / STEPS2TIME(myEventTime - myLastEntryTime),
                     getEdge()->getLanes()[myQueIndex]->getVehicleMaxSpeed(this));
     }
 }
@@ -198,7 +218,7 @@ MEVehicle::setApproaching(MSLink* link) {
         const double speed = getSpeed();
         link->setApproaching(this, getEventTime() + (link->getState() == LINKSTATE_ALLWAY_STOP ?
                              (SUMOTime)RandHelper::rand((int)2) : 0), // tie braker
-                             speed, speed, true,
+                             speed, link->getViaLaneOrLane()->getVehicleMaxSpeed(this), true,
                              speed, getWaitingTime(),
                              // @note: dist is not used by meso (getZipperSpeed is never called)
                              getSegment()->getLength(), 0);
@@ -230,6 +250,7 @@ SUMOTime
 MEVehicle::checkStop(SUMOTime time) {
     const SUMOTime initialTime = time;
     bool hadStop = false;
+    bool reachedStop = false;
     for (MSStop& stop : myStops) {
         if (stop.joinTriggered) {
             WRITE_WARNINGF(TL("Join stops are not available in meso yet (vehicle '%', segment '%')."),
@@ -241,7 +262,12 @@ MEVehicle::checkStop(SUMOTime time) {
         }
         const SUMOTime cur = time;
         if (stop.duration > 0) { // it might be a triggered stop with duration -1
-            time += stop.duration;
+            if (stop.duration >= SUMOTime_MAX / 2) {
+                // avoid overflow!
+                time = SUMOTime_MAX / 2;
+            } else {
+                time += stop.duration;
+            }
         }
         if (stop.pars.until > time) {
             // @note: this assumes the stop is reached at time. With the way this is called in MESegment (time == entryTime),
@@ -252,6 +278,7 @@ MEVehicle::checkStop(SUMOTime time) {
             time = MAX2(cur, stop.pars.ended);
         }
         if (!stop.reached) {
+            reachedStop = true;
             stop.reached = true;
             stop.pars.started = myLastEntryTime;
             stop.endBoarding = stop.pars.extension >= 0 ? time + stop.pars.extension : SUMOTime_MAX;
@@ -263,15 +290,17 @@ MEVehicle::checkStop(SUMOTime time) {
                                    getID(), mySegment->getID(), time2string(time));
                 }
             }
-            MSDevice_Taxi* taxi = static_cast<MSDevice_Taxi*>(getDevice(typeid(MSDevice_Taxi)));
-            if (taxi != nullptr) {
-                taxi->notifyMove(*this, 0, 0, 0);
-            }
         }
         if (stop.triggered || stop.containerTriggered || stop.joinTriggered) {
             time = MAX2(time, cur + DELTA_T);
         }
         hadStop = true;
+    }
+    if (reachedStop) {
+        MSDevice_Taxi* taxi = static_cast<MSDevice_Taxi*>(getDevice(typeid(MSDevice_Taxi)));
+        if (taxi != nullptr) {
+            taxi->notifyMove(*this, 0, 0, 0);
+        }
     }
     MSDevice_Tripinfo* tripinfo = static_cast<MSDevice_Tripinfo*>(getDevice(typeid(MSDevice_Tripinfo)));
     if (tripinfo != nullptr) {
@@ -291,7 +320,7 @@ MEVehicle::resumeFromStopping() {
             rem.first->notifyStopEnded();
         }
         if (MSStopOut::active()) {
-            MSStopOut::getInstance()->stopEnded(this, stop.pars, mySegment->getEdge().getID());
+            MSStopOut::getInstance()->stopEnded(this, stop);
         }
         myPastStops.push_back(stop.pars);
         myPastStops.back().routeIndex = (int)(stop.edge - myRoute->begin());
@@ -302,7 +331,9 @@ MEVehicle::resumeFromStopping() {
         myStops.pop_front();
         if (myEventTime > now) {
             // if this is an aborted stop we need to change the event time of the vehicle
-            if (MSGlobals::gMesoNet->removeLeaderCar(this)) {
+            const bool isLeader = mySegment->getQueue(myQueIndex).back() == this;
+            if (isLeader) {
+                MSGlobals::gMesoNet->removeLeaderCar(this);
                 myEventTime = now + 1;
                 MSGlobals::gMesoNet->addLeaderCar(this, nullptr);
             }
@@ -358,15 +389,19 @@ MEVehicle::processStop() {
         resumeFromStopping();
         hadStop = true;
     }
+    if (getWaitingTime() > 0) {
+        // entry back onto the road was blocked for some time
+        MSDevice_Tripinfo* tripinfoDevice = static_cast<MSDevice_Tripinfo*>(getDevice(typeid(MSDevice_Tripinfo)));
+        if (tripinfoDevice != nullptr) {
+            tripinfoDevice->recordMesoParkingTimeLoss(getWaitingTime());
+        }
+    }
     mySegment->getEdge().removeWaiting(this);
 }
 
 
 bool
-MEVehicle::mayProceed() {
-    if (mySegment == nullptr) {
-        return true;
-    }
+MEVehicle::endTriggeredStop() {
     MSNet* const net = MSNet::getInstance();
     SUMOTime dummy = -1; // boarding- and loading-time are not considered
     for (MSStop& stop : myStops) {
@@ -426,6 +461,18 @@ MEVehicle::mayProceed() {
             return false;
         }
     }
+    return true;
+}
+
+
+bool
+MEVehicle::mayProceed() {
+    if (mySegment == nullptr) {
+        return true;
+    }
+    if (!endTriggeredStop()) {
+        return false;
+    }
     return mySegment->isOpen(this);
 }
 
@@ -459,21 +506,21 @@ MEVehicle::updateDetectorForWriting(MSMoveReminder* rem, SUMOTime currentTime, S
 
 
 void
-MEVehicle::updateDetectors(SUMOTime currentTime, const bool isLeave, const MSMoveReminder::Notification reason) {
+MEVehicle::updateDetectors(const SUMOTime currentTime, const SUMOTime exitTime, const bool isLeave, const MSMoveReminder::Notification reason) {
     // segments of the same edge have the same reminder so no cleaning up must take place
     const bool cleanUp = isLeave && (reason != MSMoveReminder::NOTIFICATION_SEGMENT);
     for (MoveReminderCont::iterator rem = myMoveReminders.begin(); rem != myMoveReminders.end();) {
-        if (currentTime != getLastEntryTime()) {
+        if (currentTime != getLastEntryTime() && reason < MSMoveReminder::NOTIFICATION_VAPORIZED_CALIBRATOR) {
             rem->first->updateDetector(*this, mySegment->getIndex() * mySegment->getLength(),
                                        (mySegment->getIndex() + 1) * mySegment->getLength(),
-                                       getLastEntryTime(), currentTime, getEventTime(), cleanUp);
+                                       getLastEntryTime(), currentTime, exitTime, cleanUp);
 #ifdef _DEBUG
             if (myTraceMoveReminders) {
                 traceMoveReminder("notifyMove", rem->first, rem->second, true);
             }
 #endif
         }
-        if (!isLeave || rem->first->notifyLeave(*this, mySegment->getLength(), reason)) {
+        if (!isLeave || rem->first->notifyLeave(*this, mySegment == nullptr ? 0 : mySegment->getLength(), reason)) {
 #ifdef _DEBUG
             if (isLeave && myTraceMoveReminders) {
                 traceMoveReminder("notifyLeave", rem->first, rem->second, true);
@@ -550,7 +597,7 @@ MEVehicle::saveState(OutputDevice& out) {
         return;
     }
     MSBaseVehicle::saveState(out);
-    assert(mySegment == nullptr || *myCurrEdge == &mySegment->getEdge());
+    assert(mySegment == nullptr || *myCurrEdge == &mySegment->getEdge() || mySegment->getEdge().isInternal());
     std::vector<SUMOTime> internals;
     internals.push_back(myParameter->parametersSet);
     internals.push_back(myDeparture);
@@ -561,6 +608,11 @@ MEVehicle::saveState(OutputDevice& out) {
     internals.push_back(myEventTime);
     internals.push_back(myLastEntryTime);
     internals.push_back(myBlockTime);
+    internals.push_back(isStopped());
+    internals.push_back(myPastStops.size());
+    internals.push_back(myWasJammed);
+    internals.push_back(myEventIndex);
+    internals.push_back(myUnqueuedEventTime);
     out.writeAttr(SUMO_ATTR_STATE, toString(internals));
     // save past stops
     for (SUMOVehicleParameter::Stop stop : myPastStops) {
@@ -583,6 +635,9 @@ MEVehicle::saveState(OutputDevice& out) {
     for (MSDevice* dev : myDevices) {
         dev->saveState(out);
     }
+    for (const auto& item : myMoveReminders) {
+        item.first->saveReminderState(out, *this);
+    }
     out.closeTag();
 }
 
@@ -593,6 +648,8 @@ MEVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
         throw ProcessError(TL("Error: Invalid vehicles in state (may be a micro state)!"));
     }
     int routeOffset;
+    bool stopped;
+    int pastStops;
     int segIndex;
     int queIndex;
     std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
@@ -605,6 +662,11 @@ MEVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
     bis >> myEventTime;
     bis >> myLastEntryTime;
     bis >> myBlockTime;
+    bis >> stopped;
+    bis >> pastStops;
+    bis >> myWasJammed;
+    bis >> myEventIndex;
+    bis >> myUnqueuedEventTime;
     myDepartPos /= 1000.; // was stored as mm
 
     if (attrs.hasAttribute(SUMO_ATTR_ARRIVALPOS_RANDOMIZED)) {
@@ -621,6 +683,16 @@ MEVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
         myEventTime -= offset;
         myLastEntryTime -= offset;
         myCurrEdge = myRoute->begin() + routeOffset;
+        // fix stops
+        while (pastStops > 0) {
+            for (const auto& rem : myMoveReminders) {
+                rem.first->notifyStopEnded();
+            }
+            myPastStops.push_back(myStops.front().pars);
+            myPastStops.back().routeIndex = (int)(myStops.front().edge - myRoute->begin());
+            myStops.pop_front();
+            pastStops--;
+        }
         if (segIndex >= 0) {
             MESegment* seg = MSGlobals::gMesoNet->getSegmentForEdge(**myCurrEdge);
             while (seg->getIndex() != (int)segIndex) {
@@ -631,13 +703,14 @@ MEVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
             }
             setSegment(seg, queIndex);
             if (queIndex == MESegment::PARKING_QUEUE) {
-                MSGlobals::gMesoNet->addLeaderCar(this, nullptr);
+                MSGlobals::gMesoNet->addLeaderCar(this, nullptr, true);
+                getCurrentEdge()->getLanes()[0]->addParking(this);
             }
         } else {
             // on teleport
             setSegment(nullptr, 0);
             assert(myEventTime != SUMOTime_MIN);
-            MSGlobals::gMesoNet->addLeaderCar(this, nullptr);
+            MSGlobals::gMesoNet->addLeaderCar(this, nullptr, true);
         }
         // see MSBaseVehicle constructor
         if (myParameter->wasSet(VEHPARS_FORCE_REROUTE)) {
@@ -647,8 +720,15 @@ MEVehicle::loadState(const SUMOSAXAttributes& attrs, const SUMOTime offset) {
     if (myBlockTime != SUMOTime_MAX) {
         myBlockTime -= offset;
     }
+    if (myUnqueuedEventTime != SUMOTime_MIN) {
+        myUnqueuedEventTime -= offset;
+    }
     std::istringstream dis(attrs.getString(SUMO_ATTR_DISTANCE));
     dis >> myOdometer >> myNumberReroutes;
+    if (stopped) {
+        myStops.front().startedFromState = true;
+        myStops.front().reached = true;
+    }
 }
 
 

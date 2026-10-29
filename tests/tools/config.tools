@@ -15,6 +15,8 @@ copy_test_path:in_out.add.xml
 copy_test_path:three_split.net.xml
 copy_test_path:input_net.net.xml
 copy_test_path:input_net.net.xml.gz
+copy_test_path:input_net2.net.xml
+copy_test_path:input_net2.net.xml.gz
 copy_test_path:input_edges.edg.xml
 copy_test_path:input_nodes.nod.xml
 copy_test_path:input_plain.tll.xml
@@ -26,7 +28,9 @@ copy_test_path:input_routes.rou.xml.gz
 copy_test_path:input_routes2.rou.xml
 copy_test_path:input_flows.flows.xml
 copy_test_path:input_turns.xml
+copy_test_path:input_tazrel.xml
 copy_test_path:input_detectors.det.xml
+copy_test_path:input_detectors.add.xml
 copy_test_path:input_stops.xml
 copy_test_path:input_stopinfos.xml
 copy_test_path:input_config.xml
@@ -51,6 +55,7 @@ copy_test_path:testLinks.txt
 copy_test_path:routesx.rou.alt.xml
 copy_test_path:routesy.rou.alt.xml
 copy_test_path:input_districts.xml
+copy_test_path:input_connectivity.xml
 copy_test_path:input_districts.xml.gz
 copy_test_path:input_mtx0708.fma
 copy_test_path:vissim.inp
@@ -61,6 +66,7 @@ copy_test_path:connections.con.xml
 copy_test_path:selection.txt
 copy_test_path:input_selection.txt
 copy_test_path:source.net.xml
+copy_test_path:source.net.xml.gz
 copy_test_path:source.nod.xml
 copy_test_path:source.edg.xml
 copy_test_path:source.con.xml
@@ -68,6 +74,7 @@ copy_test_path:source.tll.xml
 copy_test_path:source.xml
 copy_test_path:source.xml.gz
 copy_test_path:dest.net.xml
+copy_test_path:dest.net.xml.gz
 copy_test_path:dest.nod.xml
 copy_test_path:dest.edg.xml
 copy_test_path:dest.con.xml
@@ -78,6 +85,7 @@ copy_test_path:fcd.xml.gz
 copy_test_path:fcd2.xml
 copy_test_path:data.txt
 copy_test_path:data.csv
+copy_test_path:data.csv.gz
 copy_test_path:source.csv
 copy_test_path:osm.xml
 copy_test_path:osm_bbox.osm.xml
@@ -116,13 +124,18 @@ connections:connections.con.xml
 turndefs:turn-defs.xml
 turns:turns.xml
 edgedata:edgedata.xml
+turndata:turndata.xml
 od:od.xml
 changednet:input_net.net.xml.chg
 edges:edges.edg.xml
 nodes:nodes.nod.xml
 edges:edges.xml
 nodes:nodes.xml
+edges:out.edg.xml
+nodes:out.nod.xml
+connections:out.con.xml
 net:net.net.xml
+net:out.net.xml
 connections:connections.xml
 fixed:routes.rou.xml.fixed
 activityfile:activityfile.tcl
@@ -138,6 +151,7 @@ routesA:outA.rou.xml
 routesB:outB.rou.xml
 tripinfos:004/tripinfo_004.xml
 additional:out.add.xml
+additional:out_stops.add.xml
 additional2:out2.add.xml
 additional_overwrite:in_out.add.xml
 diff_nod:diff.nod.xml
@@ -264,6 +278,7 @@ output:optional arguments:{REPLACE options:}
 output:succeeded after .*{REPLACE succeeded after TIME}
 output:usage: {LINES 1000}
 output:^load.*dll...
+output:\\{REPLACE /}
 dualog:uration:.*ms
 dualog:uration:.*s
 dualog:Real time factor
@@ -284,6 +299,9 @@ routes:<!-- generated on{[->]}-->
 routesA:<!-- generated on{[->]}-->
 routesB:<!-- generated on{[->]}-->
 xml:<!-- generated on{[->]}-->
+edges:<!-- generated on{[->]}-->
+nodes:<!-- generated on{[->]}-->
+connections:<!-- generated on{[->]}-->
 toolcfg:<!-- generated on{[->]}-->
 created_shapes:<!-- generated on{[->]}-->
 deleted_shapes:<!-- generated on{[->]}-->
@@ -309,7 +327,6 @@ errors:dateutil/tz/tz.py:.*: DeprecationWarning: datetime.datetime.utcfromtimest
 errors:matplotlib/projections/__init__.py:.*: UserWarning: Unable to import Axes3D.{LINES 2}
 errors:site-packages/ortools.*DeprecationWarning:
 errors:remaining_args \.\.\.
-errors:FutureWarning:{LINES 2}
 errors:\^\^\^
 errors:something strange happend{REPLACE something strange happened}
 errors:LinAlgWarning: Ill-conditioned matrix
@@ -334,6 +351,7 @@ xmlstats1:<performance
 xmlstats2:<performance
 xmlstats3:<performance
 edgedata:<!-- generated on{[->]}-->
+turndata:<!-- generated on{[->]}-->
 od:<!-- generated on{[->]}-->
 net:<!--{[->]}-->
 tripinfos:<!--{[->]}-->
@@ -403,6 +421,8 @@ dualog:0.0101
 xmlstats:0.0101
 aggregatebattery:0.0101
 additional:0.0001
+tripinfos:0.0101
+pois:0.0001
 
 [unordered_text]
 errors:ERROR:SCHEMA

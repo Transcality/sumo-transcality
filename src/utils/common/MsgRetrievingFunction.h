@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -50,11 +50,7 @@ public:
     MsgRetrievingFunction(T* object, Operation operation, MsgHandler::MsgType type) :
         myObject(object),
         myOperation(operation),
-        myMsgType(type) {
-            /// @todo We should design a new formatter type for this.
-            myFormatter.reset(new PlainXMLFormatter());
-            myStreamDevice.reset(new OStreamDevice(new std::ostringstream()));
-        }
+        myMsgType(type) {}
 
 
     /// @brief Destructor
@@ -62,11 +58,27 @@ public:
 
 
 protected:
+    /// @name Methods that override/implement OutputDevice-methods
+    /// @{
+
+    /** @brief Returns the associated ostream
+     *
+     * The stream is an ostringstream, actually, into which the message
+     *  is written. It is sent when postWriteHook is called.
+     *
+     * @return The used stream
+     * @see postWriteHook
+     */
+    std::ostream& getOStream() {
+        return myMessage;
+    }
+
+
     /** @brief Sends the data which was written to the string stream via the retrieving function.
      */
     virtual void postWriteHook() {
-        (myObject->*myOperation)(myMsgType, getOStream().str());
-        getOStream().str("");
+        (myObject->*myOperation)(myMsgType, myMessage.str());
+        myMessage.str("");
     }
     /// @}
 
@@ -80,4 +92,8 @@ private:
 
     /// @brief The type of message to retrieve.
     MsgHandler::MsgType myMsgType;
+
+    /// @brief message buffer
+    std::ostringstream myMessage;
+
 };

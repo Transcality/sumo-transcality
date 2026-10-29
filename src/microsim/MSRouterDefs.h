@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2007-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2007-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -39,6 +39,13 @@ typedef std::vector<MSEdge*> MSEdgeVector;
 typedef std::shared_ptr<const MSRoute> ConstMSRoutePtr;
 typedef RouterProvider<MSEdge, MSLane, MSJunction, SUMOVehicle> MSRouterProvider;
 typedef SUMOAbstractRouter<MSEdge, SUMOVehicle> MSVehicleRouter;
+template<class E, class V> class CCHGraph;
+/// @brief the MSEdge instantiation of the CCH graph mapping (utils/router/CCHGraph.h)
+using MSCCHGraph = CCHGraph<MSEdge, SUMOVehicle>;
+class MSVehicleType;
+template<class E, class V, class K> class CCHMetricFamily;
+/// @brief the per-vehicle-type CCH metric store (utils/router/CCHMetricFamily.h)
+using MSCCHMetricFamily = CCHMetricFamily<MSEdge, SUMOVehicle, MSVehicleType>;
 typedef IntermodalRouter<MSEdge, MSLane, MSJunction, SUMOVehicle> MSTransportableRouter;
 typedef PedestrianRouter<MSEdge, MSLane, MSJunction, SUMOVehicle> MSPedestrianRouter;
 typedef MapMatcher<MSEdge, MSLane, MSJunction> MSMapMatcher;

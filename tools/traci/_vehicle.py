@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -350,6 +350,13 @@ class VehicleDomain(VTypeDomain):
         Returns the id of the lane the named vehicle was at within the last step.
         """
         return self._getUniversal(tc.VAR_LANE_ID, vehID)
+
+    def getShadowLaneID(self, vehID):
+        """getShadowLaneID(string) -> string
+
+        Returns the id of the shadow lane if the vehicle is currently changing lanes.
+        """
+        return self._getUniversal(tc.VAR_SHADOW_LANE_ID, vehID)
 
     def getLaneIndex(self, vehID):
         """getLaneIndex(string) -> integer
@@ -835,6 +842,13 @@ class VehicleDomain(VTypeDomain):
         """
         return self._getUniversal(tc.VAR_DISTANCE, vehID)
 
+    def getReferenceDistance(self, vehID):
+        """getReferenceDistance(string) -> double
+        Returns the distance along the linear reference system
+        in which the current edge takes part (i.e. kilometrage/mile markers)
+        """
+        return self._getUniversal(tc.VAR_REFERENCE_DISTANCE, vehID)
+
     def getStopParameter(self, vehID, nextStopIndex, param, customParam=False):
         """getStopParameter(string, int, string) -> string
         Gets the value of the given parameter for the stop at the given index
@@ -1206,7 +1220,7 @@ class VehicleDomain(VTypeDomain):
         setRoute(string, list) ->  None
 
         changes the vehicle route to given edges list.
-        The first edge in the list has to be the one that the vehicle is at at the moment.
+        The first edge in the list has to be the one that the vehicle is at the moment.
 
         example usage:
         setRoute('1', ['1', '2', '4', '6', '7'])

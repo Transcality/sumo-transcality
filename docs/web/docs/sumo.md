@@ -73,9 +73,15 @@ configuration:
 | Option | Description |
 |--------|-------------|
 | **--write-license** {{DT_BOOL}} | Include license info into every output file; *default:* **false** |
+| **--write-metadata** {{DT_BOOL}} | Write parsable metadata (configuration etc.) instead of comments; *default:* **false** |
 | **--output-prefix** {{DT_STR}} | Prefix which is applied to all output files. The special string 'TIME' is replaced by the current time. |
+| **--output-suffix** {{DT_STR}} | Suffix which is applied to all output files. The special string 'TIME' is replaced by the current time. |
 | **--precision** {{DT_INT}} | Defines the number of digits after the comma for floating point output; *default:* **2** |
 | **--precision.geo** {{DT_INT}} | Defines the number of digits after the comma for lon,lat output; *default:* **6** |
+| **--output.compression** {{DT_STR}} | Defines the standard compression algorithm (currently only for parquet output) |
+| **--output.format** {{DT_STR}} | Defines the standard output format if not derivable from the file name ('xml', 'csv', 'parquet'); *default:* **xml** |
+| **--output.column-header** {{DT_STR}} | How to derive column headers from attribute names ('none', 'tag', 'auto', 'plain', 'full'); *default:* **auto** |
+| **--output.column-separator** {{DT_STR}} | Separator in CSV output; *default:* **;** |
 | **-H** {{DT_BOOL}}<br> **--human-readable-time** {{DT_BOOL}} | Write time values as hour:minute:second or day:hour:minute:second rather than seconds; *default:* **false** |
 | **--netstate-dump** {{DT_FILE}} | Save complete network states into FILE |
 | **--netstate-dump.empty-edges** {{DT_BOOL}} | Write also empty edges completely when dumping; *default:* **false** |
@@ -98,18 +104,26 @@ configuration:
 | **--substations-output.precision** {{DT_INT}} | Write substation values with the given precision (default 2); *default:* **2** |
 | **--fcd-output** {{DT_FILE}} | Save the Floating Car Data |
 | **--fcd-output.geo** {{DT_BOOL}} | Save the Floating Car Data using geo-coordinates (lon/lat); *default:* **false** |
+| **--fcd-output.utm** {{DT_BOOL}} | Save the Floating Car Data using utm/unshifted coordinates (x/y); *default:* **false** |
 | **--fcd-output.signals** {{DT_BOOL}} | Add the vehicle signal state to the FCD output (brake lights etc.); *default:* **false** |
 | **--fcd-output.distance** {{DT_BOOL}} | Add kilometrage to the FCD output (linear referencing); *default:* **false** |
 | **--fcd-output.acceleration** {{DT_BOOL}} | Add acceleration to the FCD output; *default:* **false** |
+| **--fcd-output.speed-relative** {{DT_BOOL}} | Add relative speed (vehicle speed / edge speed limit) to the FCD output; *default:* **false** |
 | **--fcd-output.max-leader-distance** {{DT_FLOAT}} | Add leader vehicle information to the FCD output (within the given distance); *default:* **-1** |
 | **--fcd-output.params** {{DT_STR_LIST}} | Add generic parameter values to the FCD output |
 | **--fcd-output.filter-edges.input-file** {{DT_FILE}} | Restrict fcd output to the edge selection from the given input file |
 | **--fcd-output.attributes** {{DT_STR_LIST}} | List attributes that should be included in the FCD output |
 | **--fcd-output.filter-shapes** {{DT_STR_LIST}} | List shape names that should be used to filter the FCD output |
+| **--fcd-output.skip-empty** {{DT_BOOL}} | Do not save data for time steps which have no vehicles / transportables; *default:* **false** |
+| **--person-fcd-output** {{DT_FILE}} | Save fcd for persons and container to separate FILE |
 | **--device.ssm.filter-edges.input-file** {{DT_FILE}} | Restrict SSM device output to the edge selection from the given input file |
 | **--full-output** {{DT_FILE}} | Save a lot of information for each timestep (very redundant) |
 | **--queue-output** {{DT_FILE}} | Save the vehicle queues at the junctions (experimental) |
 | **--queue-output.period** {{DT_TIME}} | Save vehicle queues with the given period; *default:* **-1** |
+| **--queue-output.aggregation** {{DT_TIME}} | Write aggregated queue length statistics (max, median, 95th percentile) per edge for the given period (e.g. a traffic light cycle) instead of per-timestep data; *default:* **-1** |
+| **--queue-output.speed-threshold** {{DT_FLOAT}} | Maximum speed for counting a vehicle as queued; *default:* **1.38889** |
+| **--queue-output.percentile** {{DT_FLOAT}} | The percentile (0-100) to report as percentileQueueLength in aggregated queue output; *default:* **95** |
+| **--queue-output.skip-empty** {{DT_BOOL}} | Do not save data for time steps / intervals which have no queue (required for column based output formats); *default:* **false** |
 | **--vtk-output** {{DT_FILE}} | Save complete vehicle positions inclusive speed values in the VTK Format (usage: /path/out will produce /path/out_$TIMESTEP$.vtp files) |
 | **--amitran-output** {{DT_FILE}} | Save the vehicle trajectories in the Amitran format |
 | **--summary-output** {{DT_FILE}} | Save aggregated vehicle departure info into FILE |
@@ -223,9 +237,14 @@ configuration:
 | **--tls.delay_based.detector-range** {{DT_FLOAT}} | Sets default range for detecting delayed vehicles; *default:* **100** |
 | **--tls.yellow.min-decel** {{DT_FLOAT}} | Minimum deceleration when braking at yellow; *default:* **3** |
 | **--railsignal-moving-block** {{DT_BOOL}} | Let railsignals operate in moving-block mode by default; *default:* **false** |
+| **--railsignal.moving-block.default-classes** {{DT_STR_LIST}} | List vehicle classes that default to moving-block operations; *default:* **tram,cable_car** |
+| **--railsignal.moving-block.max-dist** {{DT_FLOAT}} | Maximum signal distance above which zipper conflicts are ignored; *default:* **200** |
 | **--railsignal.max-block-length** {{DT_FLOAT}} | Do not build blocks longer than FLOAT and issue a warning instead; *default:* **20000** |
-| **--railsignal.default-classes** {{DT_STR_LIST}} | List vehicle classes that uses block-based insertion checks even when the network has no rail signals for them; *default:* **rail,rail_fast,rail_electric,rail_urban** |
+| **--railsignal.default-classes** {{DT_STR_LIST}} | List vehicle classes that uses block-based insertion checks even when the network has no rail signals for them; *default:* **rail,rail_fast,rail_electric,rail_urban,subway** |
+| **--slope-centered** {{DT_BOOL}} | Compute slope at the vehicle center of mass instead of integrating over front and back; *default:* **false** |
 | **--time-to-impatience** {{DT_TIME}} | Specify how long a vehicle may wait until impatience grows from 0 to 1, defaults to 300, non-positive values disable impatience growth; *default:* **180** |
+| **--default.departspeed** {{DT_STR}} | Select default depart speed; *default:* **avg** |
+| **--default.departlane** {{DT_STR}} | Select default depart lane; *default:* **best_prob** |
 | **--default.action-step-length** {{DT_FLOAT}} | Length of the default interval length between action points for the car-following and lane-change models (in seconds). If not specified, the simulation step-length is used per default. Vehicle- or VType-specific settings override the default. Must be a multiple of the simulation step-length.; *default:* **0** |
 | **--default.carfollowmodel** {{DT_STR}} | Select default car following model (Krauss, IDM, ...); *default:* **Krauss** |
 | **--default.speeddev** {{DT_FLOAT}} | Select default speed deviation. A negative value implies vClass specific defaults (0.1 for the default passenger class); *default:* **-1** |
@@ -237,7 +256,7 @@ configuration:
 | **--parking.maneuver** {{DT_BOOL}} | Whether parking simulation includes maneuvering time and associated lane blocking; *default:* **false** |
 | **--use-stop-ended** {{DT_BOOL}} | Override stop until times with stop ended times when given; *default:* **false** |
 | **--use-stop-started** {{DT_BOOL}} | Override stop arrival times with stop started times when given; *default:* **false** |
-| **--pedestrian.model** {{DT_STR}} | Select among pedestrian models ['nonInteracting', 'striping', 'remote']; *default:* **striping** |
+| **--pedestrian.model** {{DT_STR}} | Select among pedestrian models ['nonInteracting', 'striping', 'jupedsim']; *default:* **striping** |
 | **--pedestrian.timegap-crossing** {{DT_FLOAT}} | Minimal acceptable gap (in seconds) between two vehicles before starting to cross; *default:* **2** |
 | **--pedestrian.striping.stripe-width** {{DT_FLOAT}} | Width of parallel stripes for segmenting a sidewalk (meters) for use with model 'striping'; *default:* **0.64** |
 | **--pedestrian.striping.dawdling** {{DT_FLOAT}} | Factor for random slow-downs [0,1] for use with model 'striping'; *default:* **0.2** |
@@ -263,14 +282,16 @@ configuration:
 | **--mapmatch.junctions** {{DT_BOOL}} | Match positions to junctions instead of edges; *default:* **false** |
 | **--mapmatch.taz** {{DT_BOOL}} | Match positions to taz instead of edges; *default:* **false** |
 | **--weights.turnaround-penalty** {{DT_FLOAT}} | Apply the given time penalty when computing routing costs for turnaround internal lanes; *default:* **5** |
+| **--weights.reversal-penalty** {{DT_FLOAT}} | Apply the given time penalty when computing routing costs for train reversal. Negative values disable reversal; *default:* **60** |
 | **--persontrip.walk-opposite-factor** {{DT_FLOAT}} | Use FLOAT as a factor on walking speed against vehicle traffic direction; *default:* **1** |
 
 ### Routing
 
 | Option | Description |
 |--------|-------------|
-| **--routing-algorithm** {{DT_STR}} | Select among routing algorithms ['dijkstra', 'astar', 'CH', 'CHWrapper']; *default:* **dijkstra** |
+| **--routing-algorithm** {{DT_STR}} | Select among routing algorithms ['dijkstra', 'astar', 'CH', 'CHWrapper', 'CCH']; *default:* **dijkstra** |
 | **--weights.random-factor** {{DT_FLOAT}} | Edge weights for routing are dynamically disturbed by a random factor drawn uniformly from [1,FLOAT); *default:* **1** |
+| **--weights.random-factor.dynamic** {{DT_BOOL}} | When using option --weights.random-factor, vary the randomness over time; *default:* **false** |
 | **--weights.minor-penalty** {{DT_FLOAT}} | Apply the given time penalty when computing minimum routing costs for minor-link internal lanes; *default:* **1.5** |
 | **--weights.tls-penalty** {{DT_FLOAT}} | Apply scaled travel time penalties based on green split when computing minimum routing costs for internal lanes at traffic lights; *default:* **0** |
 | **--weights.priority-factor** {{DT_FLOAT}} | Consider edge priorities in addition to travel times, weighted by factor; *default:* **0** |
@@ -279,8 +300,8 @@ configuration:
 | **--astar.landmark-distances** {{DT_FILE}} | Initialize lookup table for astar ALT-variant from the given file |
 | **--persontrip.walkfactor** {{DT_FLOAT}} | Use FLOAT as a factor on pedestrian maximum speed during intermodal routing; *default:* **0.75** |
 | **--persontrip.transfer.car-walk** {{DT_STR_LIST}} | Where are mode changes from car to walking allowed (possible values: 'parkingAreas', 'ptStops', 'allJunctions' and combinations); *default:* **parkingAreas** |
-| **--persontrip.transfer.taxi-walk** {{DT_STR_LIST}} | Where taxis can drop off customers ('allJunctions, 'ptStops') |
-| **--persontrip.transfer.walk-taxi** {{DT_STR_LIST}} | Where taxis can pick up customers ('allJunctions, 'ptStops') |
+| **--persontrip.transfer.taxi-walk** {{DT_STR_LIST}} | Where taxis can drop off customers ('allJunctions, 'ptStops', 'parkingAreas') |
+| **--persontrip.transfer.walk-taxi** {{DT_STR_LIST}} | Where taxis can pick up customers ('allJunctions, 'ptStops', 'parkingAreas') |
 | **--persontrip.default.group** {{DT_STR}} | When set, trips between the same origin and destination will share a taxi by default |
 | **--persontrip.taxi.waiting-time** {{DT_TIME}} | Estimated time for taxi pickup; *default:* **300** |
 | **--persontrip.ride-public-line** {{DT_BOOL}} | Only use the intended public transport line rather than any alternative line that stops at the destination; *default:* **false** |
@@ -294,6 +315,12 @@ configuration:
 | **--device.rerouting.adaptation-weight** {{DT_FLOAT}} | The weight of prior edge weights for exponential moving average; *default:* **0** |
 | **--device.rerouting.adaptation-steps** {{DT_INT}} | The number of steps for moving average weight of prior edge weights; *default:* **180** |
 | **--device.rerouting.adaptation-interval** {{DT_TIME}} | The interval for updating the edge weights; *default:* **1** |
+| **--device.rerouting.cch-update-threshold.factor** {{DT_FLOAT}} | Only propagate an arc weight into the CCH metric if it changed by more than the given factor; *default:* **1** |
+| **--device.rerouting.cch-update-threshold.constant** {{DT_TIME}} | Only propagate an arc weight into the CCH metric if it changed by more than the given TIME; *default:* **0** |
+| **--device.rerouting.cch-ensemble** {{DT_INT}} | Keep this many frozen weights.random-factor realizations (CCH metrics) per vehicle type and assign vehicles to them by a stable id hash; *default:* **1** |
+| **--device.rerouting.threshold.factor** {{DT_FLOAT}} | Only reroute if the new route is faster than the current route by the given factor; *default:* **1** |
+| **--device.rerouting.threshold.constant** {{DT_TIME}} | Only reroute if the new route is faster than the current route by the given TIME; *default:* **0** |
+| **--device.rerouting.invalidation** {{DT_BOOL}} | Only perform a periodic reroute when the current route's remaining cost has drifted beyond the threshold (cheap re-scoring gate before the full reroute); *default:* **false** |
 | **--device.rerouting.with-taz** {{DT_BOOL}} | Use zones (districts) as routing start- and endpoints; *default:* **false** |
 | **--device.rerouting.mode** {{DT_STR}} | Set routing flags (8 ignores temporary blockages); *default:* **0** |
 | **--device.rerouting.init-with-loaded-weights** {{DT_BOOL}} | Use weight files given with option --weight-files for initializing edge weights; *default:* **false** |
@@ -339,7 +366,7 @@ configuration:
 |--------|-------------|
 | **--emissions.volumetric-fuel** {{DT_BOOL}} | Return fuel consumption values in (legacy) unit l instead of mg; *default:* **false** |
 | **--phemlight-path** {{DT_FILE}} | Determines where to load PHEMlight definitions from; *default:* **./PHEMlight/** |
-| **--phemlight-year** {{DT_INT}} | Enable fleet age modelling with the given reference year in PHEMlight5; *default:* **0** |
+| **--phemlight-year** {{DT_INT}} | Enable fleet age modeling with the given reference year in PHEMlight5; *default:* **0** |
 | **--phemlight-temperature** {{DT_FLOAT}} | Set ambient temperature to correct NOx emissions in PHEMlight5; *default:* **1.79769e+308** |
 | **--device.emissions.probability** {{DT_FLOAT}} | The probability for a vehicle to have a 'emissions' device; *default:* **-1** |
 | **--device.emissions.explicit** {{DT_STR_LIST}} | Assign a 'emissions' device to named vehicles |
@@ -381,7 +408,6 @@ configuration:
 | **--device.stationfinder.radius** {{DT_TIME}} | Search radius in travel time seconds; *default:* **180** |
 | **--device.stationfinder.maxEuclideanDistance** {{DT_FLOAT}} | Euclidean search distance in meters (a negative value disables the restriction); *default:* **-1** |
 | **--device.stationfinder.repeat** {{DT_TIME}} | When to trigger a new search if no station has been found; *default:* **60** |
-| **--device.stationfinder.maxChargePower** {{DT_FLOAT}} | The maximum charging speed of the vehicle battery; *default:* **100000** |
 | **--device.stationfinder.chargeType** {{DT_STR}} | Type of energy transfer; *default:* **charging** |
 | **--device.stationfinder.waitForCharge** {{DT_TIME}} | After this waiting time vehicle searches for a new station when the initial one is blocked; *default:* **600** |
 | **--device.stationfinder.minOpportunityDuration** {{DT_TIME}} | Only stops with a predicted duration of at least the given threshold are considered for opportunistic charging.; *default:* **3600** |
@@ -513,8 +539,10 @@ configuration:
 | **--device.taxi.dispatch-algorithm.output** {{DT_FILE}} | Write information from the dispatch algorithm to FILE |
 | **--device.taxi.dispatch-algorithm.params** {{DT_STR}} | Load dispatch algorithm parameters in format KEY1:VALUE1[,KEY2:VALUE] |
 | **--device.taxi.dispatch-period** {{DT_TIME}} | The period between successive calls to the dispatcher; *default:* **60** |
+| **--device.taxi.dispatch-keep-unreachable** {{DT_TIME}} | The time before aborting unreachable reservations; *default:* **3600** |
 | **--device.taxi.idle-algorithm** {{DT_STR}} | The behavior of idle taxis [stop,randomCircling,taxistand]; *default:* **stop** |
 | **--device.taxi.idle-algorithm.output** {{DT_FILE}} | Write information from the idling algorithm to FILE |
+| **--device.taxi.vclasses** {{DT_STR_LIST}} | Network permissions that can be accessed by taxis; *default:* **taxi** |
 
 ### Glosa Device
 | Option | Description |
@@ -559,7 +587,8 @@ configuration:
 | **--device.fcd-replay.probability** {{DT_FLOAT}} | The probability for a vehicle to have a 'fcd-replay' device; *default:* **-1** |
 | **--device.fcd-replay.explicit** {{DT_STR_LIST}} | Assign a 'fcd-replay' device to named vehicles |
 | **--device.fcd-replay.deterministic** {{DT_BOOL}} | The 'fcd-replay' devices are set deterministic using a fraction of 1000; *default:* **false** |
-| **--device.fcd-replay.file** {{DT_FILE}} | FCD file to read |
+| **--device.fcd-replay.files** {{DT_FILE}} | FCD files to read |
+| **--device.fcd-replay.consistency** {{DT_STR_LIST}} | Values to use when replaying ('all' or any combination of 'x', 'y', 'edge', 'lane', 'speed', 'position', 'angle', 'type'); *default:* **all** |
 
 ### Traci Server
 | Option | Description |
@@ -572,6 +601,7 @@ configuration:
 | Option | Description |
 |--------|-------------|
 | **--mesosim** {{DT_BOOL}} | Enables mesoscopic simulation; *default:* **false** |
+| **--meso-ltm** {{DT_BOOL}} | Enables the meso-LTM (LIFT) model; *default:* **false** |
 | **--meso-edgelength** {{DT_FLOAT}} | Length of an edge segment in mesoscopic simulation; *default:* **98** |
 | **--meso-tauff** {{DT_TIME}} | Factor for calculating the net free-free headway time; *default:* **1.13** |
 | **--meso-taufj** {{DT_TIME}} | Factor for calculating the net free-jam headway time; *default:* **1.13** |
@@ -588,6 +618,7 @@ configuration:
 | **--meso-minor-penalty** {{DT_TIME}} | Apply fixed time penalty when driving across a minor link. When using --meso-junction-control.limited, the penalty is not applied whenever limited control is active.; *default:* **0** |
 | **--meso-overtaking** {{DT_BOOL}} | Enable mesoscopic overtaking; *default:* **false** |
 | **--meso-recheck** {{DT_TIME}} | Time interval for rechecking insertion into the next segment after failure; *default:* **0** |
+| **--meso-interpolate-pos** {{DT_BOOL}} | Enable mesoscopic position interpolation; *default:* **false** |
 
 ### Random Number
 
@@ -601,14 +632,14 @@ configuration:
 
 | Option | Description |
 |--------|-------------|
-| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualisation settings from FILE |
+| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualization settings from FILE |
 | **-Q** {{DT_BOOL}}<br> **--quit-on-end** {{DT_BOOL}} | Quits the GUI when the simulation stops; *default:* **false** |
 | **-G** {{DT_BOOL}}<br> **--game** {{DT_BOOL}} | Start the GUI in gaming mode; *default:* **false** |
 | **--game.mode** {{DT_STR}} | Select the game type ('tls', 'drt'); *default:* **tls** |
 | **-S** {{DT_BOOL}}<br> **--start** {{DT_BOOL}} | Start the simulation after loading; *default:* **false** |
 | **-d** {{DT_FLOAT}}<br> **--delay** {{DT_FLOAT}} | Use FLOAT in ms as delay between simulation steps; *default:* **0** |
 | **-B** {{DT_STR_LIST}}<br> **--breakpoints** {{DT_STR_LIST}} | Use TIME[] as times when the simulation should halt |
-| **--edgedata-files** {{DT_FILE}} | Load edge/lane weights for visualization from FILE |
+| **-m** {{DT_FILE}}<br> **--edgedata-files** {{DT_FILE}} | Load edge/lane weights for visualization from FILE |
 | **-N** {{DT_FILE}}<br> **--alternative-net-file** {{DT_FILE}} | Load a secondary road network for abstract visualization from FILE |
 | **--selection-file** {{DT_FILE}} | Load pre-selected elements from FILE |
 | **-D** {{DT_BOOL}}<br> **--demo** {{DT_BOOL}} | Restart the simulation after ending (demo mode); *default:* **false** |

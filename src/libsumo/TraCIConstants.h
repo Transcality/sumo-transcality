@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2007-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2007-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -801,6 +801,11 @@ TRACI_CONST int VAR_LAST_INTERVAL_TIMELOSS = 0x35;
 // last interval vehicle count(set, get: e1, e2)
 TRACI_CONST int VAR_VIRTUAL_DETECTION = 0x22;
 
+// generic lane attribute access (get: meandata)
+TRACI_CONST int VAR_MEANDATA_LANE = 0x16;
+TRACI_CONST int VAR_MEANDATA_VALUES = 0x17;
+TRACI_CONST int VAR_MEANDATA_IDS = 0x18;
+
 // last step person list (get: edges, vehicles)
 TRACI_CONST int LAST_STEP_PERSON_ID_LIST = 0x1a;
 
@@ -1404,6 +1409,9 @@ TRACI_CONST int CMD_REROUTE_EFFORT = 0x91;
 // validates current route (vehicles)
 TRACI_CONST int VAR_ROUTE_VALID = 0x92;
 
+// retrieve distance along linear reference system (vehicle, edge)
+TRACI_CONST int VAR_REFERENCE_DISTANCE = 0x95;
+
 // retrieve information regarding the current person/container stage
 TRACI_CONST int VAR_STAGE = 0xc0;
 
@@ -1475,6 +1483,12 @@ TRACI_CONST int VAR_CS_CHARGE_DELAY = 0x9a;
 
 // parking area access permissions
 TRACI_CONST int VAR_ACCESS_BADGE = 0x9b;
+
+// charging station total power
+TRACI_CONST int VAR_CS_TOTAL_POWER = 0x9c;
+
+// shadow lane (get: vehicle)
+TRACI_CONST int VAR_SHADOW_LANE_ID = 0x9d;
 
 } // namespace libsumo
 

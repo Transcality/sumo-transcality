@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-11-08 12:33:47 by Eclipse SUMO netconvert Version v1_21_0+0667-84505d7ebe2
+<!-- generated on 2026-09-01T14:50:39.045840+01:00 by Eclipse SUMO netconvert v1_27_1+0586-eedfd8e7fd0
 This data file and the accompanying materials
 are made available under the terms of the Eclipse Public License v2.0
 which accompanies this distribution, and is available at
@@ -48,7 +48,7 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
     </edge>
     <edge id=":C_13" function="internal">
         <lane id=":C_13_0" index="0" allow="passenger" speed="7.25" length="4.76" shape="92.60,106.08 91.21,105.24 88.10,104.80"/>
-        <lane id=":C_13_1" index="0" allow="passenger" speed="8.61" length="4.55" shape="92.61,102.24 88.10,101.60"/>
+        <lane id=":C_13_1" index="1" allow="passenger" speed="8.61" length="4.55" shape="92.61,102.24 88.10,101.60"/>
     </edge>
     <edge id=":C_14" function="internal">
         <lane id=":C_14_0" index="0" allow="passenger" speed="9.79" length="15.46" shape="99.42,105.70 101.78,101.78 105.99,99.24 111.90,98.40"/>
@@ -176,8 +176,8 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
         <request index="4"  response="10100001110000111" foes="10101001110000111" cont="0"/>
         <request index="5"  response="10100001110000111" foes="10101001110000111" cont="0"/>
         <request index="6"  response="01100000000000000" foes="01100110000000000" cont="1"/>
-        <request index="7"  response="01011000000001000" foes="01011110000111100" cont="0"/>
-        <request index="8"  response="01011000000001000" foes="01011110000111100" cont="0"/>
+        <request index="7"  response="01010000000001000" foes="01011110000111100" cont="0"/>
+        <request index="8"  response="01011000000000000" foes="01011110000111100" cont="0"/>
         <request index="9"  response="11001000000000011" foes="11001110000110011" cont="1"/>
         <request index="10" response="10100001111000100" foes="10100001111000100" cont="0"/>
         <request index="11" response="10100001111000100" foes="10100001111000100" cont="0"/>

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -91,7 +91,8 @@ public:
     Parameterised* buildInductLoop(const std::string& id,
                                    const std::string& lane, double pos, double length, SUMOTime splInterval,
                                    const std::string& device, bool friendlyPos,
-                                   const std::string name, const std::string& vTypes, const std::string& nextEdges, int detectPersons);
+                                   const std::string name, const std::string& vTypes, const std::string& nextEdges,
+                                   bool mesoTLS, int detectPersons);
 
 
     /** @brief Builds an instantenous induction and adds it to the net
@@ -114,7 +115,8 @@ public:
                                           const std::string& lane, double pos,
                                           const std::string& device, bool friendlyPos,
                                           const std::string name, const std::string& vTypes,
-                                          const std::string& nextEdges);
+                                          const std::string& nextEdges,
+                                          int detectPersons);
 
 
     /** @brief Builds a new E2 detector and adds it to the net's detector control. Also performs some
@@ -279,7 +281,8 @@ public:
             const std::string name, const std::string& vTypes,
             const std::string& nextEdges,
             int detectPersons,
-            bool show);
+            bool show,
+            bool forceMicro = false);
 
 
     /** @brief Creates an instance of an e1 detector using the given values
@@ -294,7 +297,8 @@ public:
     virtual MSDetectorFileOutput* createInstantInductLoop(const std::string& id,
             MSLane* lane, double pos, const std::string& od,
             const std::string name, const std::string& vTypes,
-            const std::string& nextEdges);
+            const std::string& nextEdges,
+            int detectPersons);
 
 
     /** @brief Creates a MSE2Collector instance, overridden by GUIE2Collector::createE2Detector()
@@ -343,25 +347,30 @@ public:
      * @param[in] end dump end time
      * @param[in] type The type of values to be generated
      * @param[in] useLanes Information whether lane-based or edge-based dump shall be generated
-     * @param[in] withEmpty Information whether empty lanes/edges shall be written
+     * @param[in] excludeEmpty Information if and which empty lanes/edges shall be written
      * @param[in] withInternal Information whether internal lanes/edges shall be written
      * @param[in] trackVehicles Information whether information shall be collected per vehicle
      * @param[in] detectPersons Whether pedestrians shall be detected instead of vehicles
      * @param[in] maxTravelTime the maximum travel time to output
      * @param[in] minSamples the minimum number of sample seconds before the values are valid
      * @param[in] haltSpeed the maximum speed to consider a vehicle waiting
+     * @param[in] haltSpeedRel the maximum relative speed to consider a vehicle waiting
      * @param[in] vTypes the set of vehicle types to consider
+     * @param[in] writeAttributes the list of attributes that shall be written
+     * @param[in] edges the list of edges for which output shall be written
+     * @param[in] aggregate Whether a single aggregated value shall be written
+     * @param[in] device The output device for the recorded data
      * @exception InvalidArgument If one of the values is invalid
      */
     void createEdgeLaneMeanData(const std::string& id, SUMOTime frequency,
                                 SUMOTime begin, SUMOTime end, const std::string& type,
-                                const bool useLanes, const bool withEmpty, const bool printDefaults,
+                                const bool useLanes, const std::string& excludeEmpty,
                                 const bool withInternal, const bool trackVehicles, const int detectPersons,
                                 const double maxTravelTime, const double minSamples,
-                                const double haltSpeed, const std::string& vTypes,
+                                const double haltSpeed, const double haltSpeedRel, const std::string& vTypes,
                                 const std::string& writeAttributes,
                                 std::vector<MSEdge*> edges,
-                                bool aggregate,
+                                AggregateType aggregate,
                                 const std::string& device);
     /// @}
 

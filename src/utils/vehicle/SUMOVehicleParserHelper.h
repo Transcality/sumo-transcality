@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -27,13 +27,13 @@
 #include <string>
 #include <utils/common/SUMOTime.h>
 #include <utils/xml/SUMOXMLDefinitions.h>
+#include "SUMOVehicleParameter.h"
 
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 class SUMOSAXAttributes;
-class SUMOVehicleParameter;
 class SUMOVTypeParameter;
 
 
@@ -86,12 +86,12 @@ public:
      * @param[in] attr The SAX-attributes to get vehicle parameter from
      * @param[in] hardFail enable or disable hard fails if a parameter is invalid
      * @param[in] file The name of the file being parsed (for resolving paths)
-     * @param[in] hardFail enable or disable hard fails if a parameter is invalid
+     * @param[in] base base parameters to copy values from (may be nullptr)
      * @exception ProcessError If an attribute's value is invalid and hardFail is enabled
      * @see SUMOVTypeParameter
      * @note: the caller is responsible for deleting the returned pointer
      */
-    static SUMOVTypeParameter* beginVTypeParsing(const SUMOSAXAttributes& attrs, const bool hardFail, const std::string& file);
+    static SUMOVTypeParameter* beginVTypeParsing(const SUMOSAXAttributes& attrs, const bool hardFail, const std::string& file, const SUMOVTypeParameter* const base);
 
     /** @brief Parse string containing AngleTimes triplets (angle, entry time, exit time)
      *
@@ -134,7 +134,7 @@ public:
      * @param[in] id The id of the parsed element, for error message generation
      * @return The parsed vehicle class
      * @see SUMOVehicleClass
-     * @todo Recheck how errors are handled and what happens if they occure
+     * @todo Recheck how errors are handled and what happens if they occur
      */
     static SUMOVehicleClass parseVehicleClass(const SUMOSAXAttributes& attrs, const std::string& id);
 
@@ -150,7 +150,7 @@ public:
      * @param[in] id The id of the parsed element, for error message generation
      * @return The parsed vehicle shape
      * @see SUMOVehicleShape
-     * @todo Recheck how errors are handled and what happens if they occure
+     * @todo Recheck how errors are handled and what happens if they occur
      */
     static SUMOVehicleShape parseGuiShape(const SUMOSAXAttributes& attrs, const std::string& id);
 
@@ -184,7 +184,10 @@ public:
      */
     static bool validProfile(SUMOVTypeParameter* vtype, const std::string data, const SumoXMLAttr attr);
 
-    static int parseCarWalkTransfer(const OptionsCont& oc, const bool hasTaxi = false);
+    static int parseCarWalkTransfer(const OptionsCont& oc, const bool hasTaxi);
+
+    /// @brief parse named stopping place attrs (or use stopParam attrs) and return it's tag and id
+    static bool parseStopTag(const SUMOSAXAttributes& attrs, const SUMOVehicleParameter::Stop* stopParam, SumoXMLTag& tag, std::string& id);
 
 private:
     /**@brief parse ID

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -41,15 +41,17 @@
 #include <utils/foxtools/MFXCheckableButton.h>
 #include <utils/foxtools/MFXImageHelper.h>
 #include <utils/foxtools/MFXSingleEventThread.h>
+#include <utils/foxtools/MFXStaticToolTip.h>
 #include <utils/geom/GeoConvHelper.h>
 #include <utils/geom/GeomHelper.h>
 #include <utils/gui/cursors/GUICursorSubSys.h>
 #include <utils/gui/div/GLHelper.h>
+#include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/div/GUIGlobalSelection.h>
 #include <utils/gui/globjects/GLIncludes.h>
 #include <utils/gui/globjects/GUICursorDialog.h>
-#include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
 #include <utils/gui/globjects/GUIGlObject.h>
+#include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
 #include <utils/gui/globjects/GUIGlObjectStorage.h>
 #include <utils/gui/globjects/GUIPointOfInterest.h>
 #include <utils/gui/globjects/GUIPolygon.h>
@@ -153,16 +155,22 @@ GUISUMOAbstractView::GUISUMOAbstractView(FXComposite* p, GUIMainWindow& app, GUI
 
 GUISUMOAbstractView::~GUISUMOAbstractView() {
     gSchemeStorage.setDefault(myVisualizationSettings->name);
-    gSchemeStorage.saveViewport(myChanger->getXPos(), myChanger->getYPos(), myChanger->getZPos(), myChanger->getRotation());
-    gSchemeStorage.saveDecals(myDecals);
     delete myPopup;
     delete myChanger;
     delete myGUIDialogEditViewport;
     delete myGUIDialogViewSettings;
-    // cleanup decals
-    for (auto& decal : myDecals) {
-        delete decal.image;
+
+    // release GPU textures
+    if (makeCurrent()) {
+        for (auto& decal : myDecals) {
+            if (decal.glID > 0) {
+                queueTextureDelete(static_cast<unsigned int>(decal.glID));
+            }
+        }
+        processPendingTextureDeletes();
+        makeNonCurrent();
     }
+
     // remove all elements
     for (auto& additional : myAdditionallyDrawn) {
         additional.first->removeActiveAddVisualisation(this, ~0);
@@ -232,7 +240,24 @@ GUISUMOAbstractView::screenPos2NetPos(int x, int y) const {
 
 void
 GUISUMOAbstractView::addDecals(const std::vector<Decal>& decals) {
-    myDecals.insert(myDecals.end(), decals.begin(), decals.end());
+    // insert decals but avoid duplicates
+    FXMutexLock lock(myDecalsLockMutex);
+    for (const auto& d : decals) {
+        bool found = false;
+        for (const auto& existing : myDecals) {
+            if (existing.filename == d.filename &&
+                    existing.centerX == d.centerX &&
+                    existing.centerY == d.centerY &&
+                    existing.centerZ == d.centerZ) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            myDecals.push_back(d);
+            myDecals.back().initialised = false;
+        }
+    }
 }
 
 
@@ -240,13 +265,25 @@ void
 GUISUMOAbstractView::updatePositionInformationLabel() const {
     Position pos = getPositionInformation();
     // set cartesian position
-    myApp->getCartesianLabel()->setText(("x:" + toString(pos.x()) + ", y:" + toString(pos.y())).c_str());
+    if (!myApp->getCartesianLabel()->hasFocus()) {
+        myApp->getCartesianLabel()->setText(("x:" + toString(pos.x()) + ", y:" + toString(pos.y())).c_str());
+    }
     // set geo position
-    GeoConvHelper::getFinal().cartesian2geo(pos);
-    if (GeoConvHelper::getFinal().usingGeoProjection()) {
-        myApp->getGeoLabel()->setText(("lat:" + toString(pos.y(), gPrecisionGeo) + ", lon:" + toString(pos.x(), gPrecisionGeo)).c_str());
-    } else {
-        myApp->getGeoLabel()->setText(TL("(No projection defined)"));
+    if (!myApp->getGeoLabel()->hasFocus()) {
+        GeoConvHelper::getFinal().cartesian2geo(pos);
+        if (GeoConvHelper::getFinal().usingGeoProjection()) {
+            if (!myApp->getGeoLabel()->isEnabled()) {
+                myApp->getGeoLabel()->enable();
+                myApp->getGeoLabel()->setEditable(true);
+            }
+            myApp->getGeoLabel()->setText(("lat:" + toString(pos.y(), gPrecisionGeo) + ", lon:" + toString(pos.x(), gPrecisionGeo)).c_str());
+        } else {
+            myApp->getGeoLabel()->setText(TL("(No projection defined)"));
+            if (myApp->getGeoLabel()->isEnabled()) {
+                myApp->getGeoLabel()->disable();
+                myApp->getGeoLabel()->setEditable(false);
+            }
+        }
     }
     // if enabled, set test position
     if (myApp->getTestFrame()) {
@@ -296,6 +333,10 @@ GUISUMOAbstractView::paintGL() {
     if (getWidth() == 0 || getHeight() == 0) {
         return;
     }
+
+    // process pending texture deletions
+    processPendingTextureDeletes();
+
     const long start = SysUtils::getCurrentMillis();
 
     if (getTrackedID() != GUIGlObject::INVALID_ID) {
@@ -381,8 +422,8 @@ GUISUMOAbstractView::getToolTipID() {
 
 
 GUIGlID
-GUISUMOAbstractView::getObjectUnderCursor() {
-    return getObjectAtPosition(getPositionInformation());
+GUISUMOAbstractView::getObjectUnderCursor(double sensitivity) {
+    return getObjectAtPosition(getPositionInformation(), sensitivity);
 }
 
 
@@ -406,15 +447,16 @@ GUISUMOAbstractView::getGUIGlObjectsUnderSnappedCursor() {
 
 
 GUIGlID
-GUISUMOAbstractView::getObjectAtPosition(Position pos) {
+GUISUMOAbstractView::getObjectAtPosition(Position pos, double sensitivity) {
     // calculate a boundary for the given position
     Boundary positionBoundary;
     positionBoundary.add(pos);
-    positionBoundary.grow(SENSITIVITY);
+    positionBoundary.grow(sensitivity);
     const std::vector<GUIGlID> ids = getObjectsInBoundary(positionBoundary);
     // Interpret results
     int idMax = 0;
     double maxLayer = -std::numeric_limits<double>::max();
+    double minDist = std::numeric_limits<double>::max();
     // iterate over obtained GUIGlIDs
     for (const auto& i : ids) {
         // obtain GUIGlObject
@@ -429,10 +471,15 @@ GUISUMOAbstractView::getObjectAtPosition(Position pos) {
         }
         //std::cout << "point selection hit " << o->getMicrosimID() << "\n";
         double layer = o->getClickPriority();
+        double dist = o->getCenter().distanceTo2D(pos);
         // check whether the current object is above a previous one
         if (layer > maxLayer) {
             idMax = i;
             maxLayer = layer;
+            minDist = dist;
+        } else if (layer == maxLayer && dist < minDist) {
+            idMax = i;
+            minDist = dist;
         }
         // unblock object
         GUIGlObjectStorage::gIDStorage.unblockObject(i);
@@ -956,7 +1003,7 @@ GUISUMOAbstractView::centerTo(GUIGlID id, bool applyZoom, double zoomDist) {
 
 
 void
-GUISUMOAbstractView::centerTo(const Position& pos, bool applyZoom, double zoomDist) {
+GUISUMOAbstractView::centerToPos(const Position& pos, bool applyZoom, double zoomDist) {
     // called during tracking. update is triggered somewhere else
     myChanger->centerTo(pos, zoomDist, applyZoom);
     updatePositionInformationLabel();
@@ -1099,9 +1146,6 @@ GUISUMOAbstractView::onLeftBtnPress(FXObject*, FXSelector, void* ptr) {
                 if (o != nullptr) {
                     if (!myApp->isGaming() && (o->getType() == GLO_VEHICLE || o->getType() == GLO_PERSON)) {
                         startTrack(id);
-                    } else if (o->getType() == GLO_REROUTER_EDGE) {
-                        o->onLeftBtnPress(ptr);
-                        update();
                     }
                 }
             }
@@ -1122,8 +1166,7 @@ long
 GUISUMOAbstractView::onLeftBtnRelease(FXObject*, FXSelector, void* ptr) {
     destroyPopup();
     myChanger->onLeftBtnRelease(ptr);
-    FXEvent* e = (FXEvent*) ptr;
-    if (myApp->isGaming() && (e->state & SHIFTMASK) == 0) {
+    if (myApp->isGaming()) {
         onGamingClick(getPositionInformation());
     }
     ungrab();
@@ -1167,21 +1210,7 @@ GUISUMOAbstractView::onMiddleBtnRelease(FXObject*, FXSelector, void* ptr) {
 long
 GUISUMOAbstractView::onRightBtnPress(FXObject*, FXSelector, void* ptr) {
     destroyPopup();
-    if (myApp->isGaming()) {
-        if (makeCurrent()) {
-            int id = getObjectUnderCursor();
-            if (id != 0) {
-                GUIGlObject* o = GUIGlObjectStorage::gIDStorage.getObjectBlocking(id);
-                if (o != nullptr) {
-                    if (o->getType() == GLO_REROUTER_EDGE) {
-                        o->onLeftBtnPress(ptr);
-                        update();
-                    }
-                }
-            }
-            makeNonCurrent();
-        }
-    } else {
+    if (!myApp->isGaming()) {
         myChanger->onRightBtnPress(ptr);
     }
     grab();
@@ -1720,6 +1749,40 @@ GUISUMOAbstractView::getDecalsLockMutex() {
 }
 
 
+void
+GUISUMOAbstractView::queueTextureDelete(unsigned int textureId) {
+    FXMutexLock lock(myTextureDeleteMutex);
+    myPendingTextureDeletes.push_back(textureId);
+}
+
+
+void
+GUISUMOAbstractView::processPendingTextureDeletes() {
+    FXMutexLock lock(myTextureDeleteMutex);
+    if (!myPendingTextureDeletes.empty()) {
+        glDeleteTextures(
+            static_cast<GLsizei>(myPendingTextureDeletes.size()),
+            myPendingTextureDeletes.data()
+        );
+        myPendingTextureDeletes.clear();
+    }
+}
+
+
+void
+GUISUMOAbstractView::clearDecals() {
+    FXMutexLock lock(myDecalsLockMutex);
+    for (auto& decal : myDecals) {
+        if (decal.glID > 0) {
+            queueTextureDelete(static_cast<unsigned int>(decal.glID));
+            decal.glID = -1;
+        }
+        decal.initialised = false;
+    }
+    myDecals.clear();
+}
+
+
 MFXComboBoxIcon*
 GUISUMOAbstractView::getColoringSchemesCombo() {
     return myGlChildWindowParent->getColoringSchemesCombo();
@@ -1744,15 +1807,17 @@ GUISUMOAbstractView::checkGDALImage(Decal& d) {
             const double horizontalSize = xSize * adfGeoTransform[1];
             const double verticalSize = ySize * adfGeoTransform[5];
             Position bottomRight(topLeft.x() + horizontalSize, topLeft.y() + verticalSize);
-            if (GeoConvHelper::getProcessing().x2cartesian(topLeft) && GeoConvHelper::getProcessing().x2cartesian(bottomRight)) {
-                d.width = bottomRight.x() - topLeft.x();
-                d.height = topLeft.y() - bottomRight.y();
-                d.centerX = (topLeft.x() + bottomRight.x()) / 2;
-                d.centerY = (topLeft.y() + bottomRight.y()) / 2;
+            if (GeoConvHelper::getFinal().usingGeoProjection() && GeoConvHelper::getFinal().x2cartesian_const(topLeft) && GeoConvHelper::getFinal().x2cartesian_const(bottomRight)) {
                 //WRITE_MESSAGE("proj: " + toString(poDataset->GetProjectionRef()) + " dim: " + toString(d.width) + "," + toString(d.height) + " center: " + toString(d.centerX) + "," + toString(d.centerY));
             } else {
-                WRITE_WARNINGF(TL("Could not convert coordinates in %."), d.filename);
+                WRITE_WARNINGF(TL("Could not transform coordinates from WGS84 in decal %, assuming UTM."), d.filename);
+                topLeft = topLeft + GeoConvHelper::getFinal().getOffset();
+                bottomRight = bottomRight + GeoConvHelper::getFinal().getOffset();
             }
+            d.width = bottomRight.x() - topLeft.x();
+            d.height = topLeft.y() - bottomRight.y();
+            d.centerX = (topLeft.x() + bottomRight.x()) / 2;
+            d.centerY = (topLeft.y() + bottomRight.y()) / 2;
         }
     }
 #endif
@@ -1770,7 +1835,7 @@ GUISUMOAbstractView::checkGDALImage(Decal& d) {
         return 0;
     }
     for (int j = 0; j < picSize; j++) {
-        result[j] = FXRGB(0, 0, 0);
+        result[j] = GUIDesignTextColorBlack;
     }
     bool valid = true;
     for (int i = 1; i <= poDataset->GetRasterCount(); i++) {
@@ -1820,8 +1885,8 @@ GUISUMOAbstractView::drawDecals() {
                 }
                 MFXImageHelper::scalePower2(img, GUITexturesHelper::getMaxTextureSize());
                 decal.glID = GUITexturesHelper::add(img);
+                delete img;
                 decal.initialised = true;
-                decal.image = img;
             } catch (InvalidArgument& e) {
                 WRITE_ERROR("Could not load '" + decal.filename + "'.\n" + e.what());
                 decal.skip2D = true;

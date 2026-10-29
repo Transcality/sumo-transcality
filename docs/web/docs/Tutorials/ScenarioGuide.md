@@ -24,10 +24,10 @@ interface.
 ## If you already have some network data
 
 Check whether a direct import is possible:
-[Networks/Import](../Networks/Import.md). Otherwise, you will need
+[Networks/Import](../Networks/Import/index.md). Otherwise, you will need
 to convert the data to a simple XML-format which can be read by
 [netconvert](../netconvert.md). Read this page:
-[Networks/Import](../Networks/Import.md).
+[Networks/Import](../Networks/Import/index.md).
 
 ## If you do not yet have any network data
 
@@ -39,12 +39,12 @@ Then import the network as described here:
 
 # Generate the traffic
 
-First, you should understand the basics of vehicle modelling:
+First, you should understand the basics of vehicle modeling:
 [Definition_of_Vehicles,_Vehicle_Types,_and_Routes](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md).
 There are various ways to insert vehicles into the map. Your choice
 basically depends on what kind of information about the traffic you
 have:
-[Demand/Introduction_to_demand_modelling_in_SUMO](../Demand/Introduction_to_demand_modelling_in_SUMO.md).
+[Demand/Introduction_to_demand_modeling_in_SUMO](../Demand/Introduction_to_demand_modeling_in_SUMO.md).
 
 # Improve your Scenario
 

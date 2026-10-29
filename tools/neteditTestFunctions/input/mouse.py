@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,10 +16,49 @@
 # @date    28-05-25
 
 # imports
-from .keyboard import *
-from ..constants import *
+import time
+import pyautogui
+from ..constants import DELAY_MOUSE_MOVE, DELAY_MOUSE_CLICK, DELAY_DRAGDROP, DELAY_KEY
+from ..input.keyboard import keyPress, keyRelease, typeKey
 
-def leftClick(referencePosition, position, offsetX=0, offsetY=0):
+
+def leftClick(referencePosition, position):
+    """
+    @brief do left click over a position relative to referencePosition (pink square)
+    """
+    # obtain clicked position
+    clickedPosition = [referencePosition[0] + position.x, referencePosition[1] + position.y]
+    # move mouse to position
+    pyautogui.moveTo(clickedPosition)
+    # wait after move
+    time.sleep(DELAY_MOUSE_MOVE)
+    # click over position
+    pyautogui.click(button='left')
+    # wait after every operation
+    time.sleep(DELAY_MOUSE_CLICK)
+    # show debug
+    print("TestFunctions: Clicked over position", clickedPosition[0], '-', clickedPosition[1])
+
+
+def leftClickData(referencePosition, position):
+    """
+    @brief do left click over a position relative to referencePosition (pink square) with an small offest y
+    """
+    # obtain clicked position
+    clickedPosition = [referencePosition[0] + position.x, referencePosition[1] + position.y + 30]
+    # move mouse to position
+    pyautogui.moveTo(clickedPosition)
+    # wait after move
+    time.sleep(DELAY_MOUSE_MOVE)
+    # click over position
+    pyautogui.click(button='left')
+    # wait after every operation
+    time.sleep(DELAY_MOUSE_CLICK)
+    # show debug (rest 30 to y position to unify output with internal tests)
+    print("TestFunctions: Clicked over position", clickedPosition[0], '-', clickedPosition[1] - 30)
+
+
+def leftClickOffset(referencePosition, position, offsetX, offsetY):
     """
     @brief do left click over a position relative to referencePosition (pink square)
     """
@@ -147,8 +186,8 @@ def leftClickMultiElement(referencePosition, position, underElement, offsetX=0, 
     print("TestFunctions: Clicked over position",
           clickedPosition[0], '-', clickedPosition[1], "under element", underElement)
 
-    
-def moveMouse(referencePosition, position, offsetX=0, offsetY=0):
+
+def moveMouse(referencePosition, position, offsetX=0, offsetY=0, report=True):
     """
     @brief move mouse to the given position
     """
@@ -159,9 +198,10 @@ def moveMouse(referencePosition, position, offsetX=0, offsetY=0):
     # wait after move
     time.sleep(DELAY_MOUSE_MOVE)
     # show debug
-    print("TestFunctions: Moved to position", movePosition[0], '-', movePosition[1])
+    if (report):
+        print("TestFunctions: Moved to position", movePosition[0], '-', movePosition[1])
 
-    
+
 def dragDrop(referencePosition, x1, y1, x2, y2):
     """
     @brief drag and drop from position 1 to position 2

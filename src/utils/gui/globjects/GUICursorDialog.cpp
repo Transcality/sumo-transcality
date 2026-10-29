@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -20,11 +20,10 @@
 #include <config.h>
 
 #include <utils/gui/div/GUIDesigns.h>
+#include <utils/gui/div/GUIGlobalSelection.h>
 #include <utils/gui/windows/GUIAppEnum.h>
 #include <utils/gui/windows/GUIMainWindow.h>
 #include <utils/gui/windows/GUISUMOAbstractView.h>
-
-#include <netedit/GNEUndoList.h>
 
 #include "GUICursorDialog.h"
 
@@ -225,8 +224,9 @@ GUICursorDialog::buildDialogElements(GUISUMOAbstractView* view, const FXString t
         new FXMenuSeparator(this);
     }
     // create a menu command for every object
-    for (const auto& GLObject : objects) {
-        myMenuCommandGLObjects.push_back(std::make_pair(GUIDesigns::buildFXMenuCommand(this, GLObject->getMicrosimID(), GLObject->getGLIcon(), this, sel), GLObject));
+    for (const auto& glo : objects) {
+        const std::string selStatus = gSelected.isSelected(glo) ? " (selected)" : "";
+        myMenuCommandGLObjects.push_back(std::make_pair(GUIDesigns::buildFXMenuCommand(this, glo->getMicrosimID() + selStatus, glo->getGLIcon(), this, sel), glo));
     }
     // check if create move down menu command
     if (objects.size() > NUM_VISIBLE_ITEMS) {

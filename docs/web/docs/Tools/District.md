@@ -37,7 +37,13 @@ Call option **--help** for additional details.
 
 Filter a taz (district) file using a network file and a vehicle class so
 that only edges which allow the given vehicle class are included in the
-taz definitions.
+taz definitions. Option **--min-connections** can be used to remove
+source edges with too few successors and sink edges with too few
+predecessors. Connections are counted by distinct adjacent edges and,
+when **--vclass** is set, must permit that vehicle class.
+With a positive threshold, the `edges` attribute is expanded into
+`tazSource` and `tazSink` elements with weight 1 so that each direction
+can be filtered independently. Existing source and sink weights are preserved.
 
 ```
 python tools/district/filterDistricts.py -n <net-file> -t <taz-file> -o <output-file> --vclass passenger
@@ -114,3 +120,25 @@ Example call:
 ```
 python tools/district/stationDistricts.py -n <net-file> -s <stop-file> -o <output-file>
 ```
+
+## tazRel2POI.py
+
+Load a TAZ (district) file together with a [tazRelation file](../Demand/Importing_O/D_Matrices.md#tazrelation_format) and generate a [POI](../Simulation/Shapes.md) for each TAZ.
+The size of the POI is used to indicate aggregated statistics about incoming/outgoing/all tazRelations.
+
+Example call:
+
+```
+python tools/district/tazRel2POI.py --taz-file <taz-file> --taz-relation-file <taz-relation-file> -o <output-file>
+```
+
+Further Options
+
+- **--size-metric**: select the value that shall be visualized by the POI size ('in', 'out', or 'all'). Default is 'all'
+- **--attribute**: select the tazRelation attribute to visualize (default 'count')
+
+!!! note
+    By default, the statistic is directly used as poi diameter in m. The visual scaling can be adjusted in the sumo-gui settings with *poi exaggeration*.
+
+!!! note
+    By default, POIs are not shown in netedit data-mode (F4). If they should be shown together with the tazRelations, netedit data-mode visualization option *show shapes* (<kbd>Alt+3</kbd>) must be active

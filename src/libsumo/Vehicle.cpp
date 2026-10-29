@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -177,6 +177,14 @@ std::string
 Vehicle::getLaneID(const std::string& vehID) {
     MSBaseVehicle* veh = Helper::getVehicle(vehID);
     return veh->isOnRoad() ? CALL_MICRO_FUN(veh, getLane()->getID(), "") : "";
+}
+
+
+std::string
+Vehicle::getShadowLaneID(const std::string& vehID) {
+    MSBaseVehicle* veh = Helper::getVehicle(vehID);
+    MSVehicle* microVeh = dynamic_cast<MSVehicle*>(veh);
+    return (microVeh != nullptr && microVeh->isOnRoad()) ? (Named::getIDSecure(microVeh->getLaneChangeModel().getShadowLane(),"")) : "";
 }
 
 
@@ -651,7 +659,7 @@ Vehicle::getStops(const std::string& vehID, int limit) {
     MSBaseVehicle* vehicle = Helper::getVehicle(vehID);
     if (limit < 0) {
         // return past stops up to the given limit
-        const std::vector<SUMOVehicleParameter::Stop>& pastStops = vehicle->getPastStops();
+        const StopParVector& pastStops = vehicle->getPastStops();
         const int n = (int)pastStops.size();
         for (int i = MAX2(0, n + limit); i < n; i++) {
             result.push_back(Helper::buildStopData(pastStops[i]));
@@ -734,6 +742,23 @@ Vehicle::getDrivingDistance2D(const std::string& vehID, double x, double y) {
             return INVALID_DOUBLE_VALUE;
         }
         return distance;
+    } else {
+        return INVALID_DOUBLE_VALUE;
+    }
+}
+
+
+double
+Vehicle::getReferenceDistance(const std::string& vehID) {
+    MSBaseVehicle* veh = Helper::getVehicle(vehID);
+    if (veh->hasDeparted()) {
+        double lanePos = veh->getPositionOnLane();
+        MSVehicle* microVeh = dynamic_cast<MSVehicle*>(veh);
+        if (microVeh != nullptr && microVeh->getLane()->isInternal()) {
+            lanePos = microVeh->getRoute().getDistanceBetween(0., lanePos, microVeh->getEdge()->getLanes()[0],
+                      microVeh->getLane(), microVeh->getRoutePosition());
+        }
+        return veh->getEdge()->getDistanceAt(lanePos);
     } else {
         return INVALID_DOUBLE_VALUE;
     }
@@ -1217,7 +1242,7 @@ Vehicle::getStopParameter(const std::string& vehID, int nextStopIndex, const std
         }
         const SUMOVehicleParameter::Stop& pars = (nextStopIndex >= 0
                 ? vehicle->getStop(nextStopIndex).pars
-                : vehicle->getPastStops()[vehicle->getPastStops().size() + nextStopIndex]);
+                : vehicle->getPastStops()[(int)vehicle->getPastStops().size() + nextStopIndex]);
         if (customParam) {
             // custom user parameter
             return pars.getParameter(param, "");
@@ -1251,7 +1276,7 @@ Vehicle::getStopParameter(const std::string& vehID, int nextStopIndex, const std
         } else if (param == toString(SUMO_ATTR_EXTENSION)) {
             return pars.extension < 0 ? "-1" : time2string(pars.extension);
         } else if (param == toString(SUMO_ATTR_INDEX)) {
-            return toString(nextStopIndex + vehicle->getPastStops().size());
+            return toString(nextStopIndex + (int)vehicle->getPastStops().size());
         } else if (param == toString(SUMO_ATTR_PARKING)) {
             return toString(pars.parking);
         } else if (param == toString(SUMO_ATTR_TRIGGERED)) {
@@ -2255,6 +2280,9 @@ Vehicle::moveTo(const std::string& vehID, const std::string& laneID, double pos,
         moveReminderReason = MSMoveReminder::NOTIFICATION_DEPARTED;
     }
     l->forceVehicleInsertion(veh, pos, moveReminderReason);
+    if (veh->getLaneChangeModel().isOpposite()) {
+        veh->getLaneChangeModel().changedToOpposite();
+    }
 }
 
 
@@ -2612,7 +2640,7 @@ Vehicle::highlight(const std::string& vehID, const TraCIColor& col, double size,
     // Layer
     double lyr = 0.;
     if (MSNet::getInstance()->isGUINet()) {
-        lyr = GLO_VEHICLE + 0.01;
+        lyr = (double)GLO_VEHICLE + 0.01;
         lyr += (type + 1) / 257.;
     }
     // Make Polygon
@@ -2848,6 +2876,8 @@ Vehicle::handleVariable(const std::string& objID, const int variable, VariableWr
             return wrapper->wrapDouble(objID, variable, getSlope(objID));
         case VAR_LANE_ID:
             return wrapper->wrapString(objID, variable, getLaneID(objID));
+        case VAR_SHADOW_LANE_ID:
+            return wrapper->wrapString(objID, variable, getShadowLaneID(objID));
         case VAR_LANE_INDEX:
             return wrapper->wrapInt(objID, variable, getLaneIndex(objID));
         case VAR_SEGMENT_ID:
@@ -2922,6 +2952,8 @@ Vehicle::handleVariable(const std::string& objID, const int variable, VariableWr
             return wrapper->wrapInt(objID, variable, getStopState(objID));
         case VAR_DISTANCE:
             return wrapper->wrapDouble(objID, variable, getDistance(objID));
+        case VAR_REFERENCE_DISTANCE:
+            return wrapper->wrapDouble(objID, variable, getReferenceDistance(objID));
         case VAR_ALLOWED_SPEED:
             return wrapper->wrapDouble(objID, variable, getAllowedSpeed(objID));
         case VAR_SPEED_FACTOR:

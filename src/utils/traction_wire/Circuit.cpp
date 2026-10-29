@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,12 +32,13 @@
 #include <mutex>
 #include <utils/common/MsgHandler.h>
 #include <utils/common/ToString.h>
-#include <microsim/MSGlobals.h>
 #include "Element.h"
 #include "Node.h"
 #include "Circuit.h"
 
 static std::mutex circuit_lock;
+
+bool Circuit::myCurrentLimits = false;
 
 Node* Circuit::addNode(std::string name) {
     if (getNode(name) != nullptr) {
@@ -376,7 +377,7 @@ bool Circuit::solveEquationsNRmethod(double* eqn, double* vals, std::vector<int>
             // RICE_TODO @20210409 This epsilon should be specified somewhere as a constant. Or should be a parameter.
             if ((A * x - b).norm() < 1e-6) {
                 //current limits
-                if (currentSumActual > getCurrentLimit() && MSGlobals::gOverheadWireCurrentLimits) {
+                if (currentSumActual > getCurrentLimit() && Circuit::myCurrentLimits) {
                     alphaReason = ALPHA_CURRENT_LIMITS;
                     alpha_notSolution.push_back(alpha);
                     if (x_best_exist) {
@@ -743,10 +744,8 @@ bool Circuit::createEquationNRmethod(Node* node, double* eqn, double& val, std::
                 // equations with voltage source can be ignored, because some value of current throw the voltage source can be always find
                 removable_ids->push_back((*it)->getId());
                 return false;
-                break;
             case Element::ElementType::ERROR_traction_wire:
                 return false;
-                break;
         }
     }
     return true;

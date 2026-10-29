@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -32,6 +32,7 @@
 #include <microsim/MSNet.h>
 #include <microsim/MSEdge.h>
 #include <microsim/MSGlobals.h>
+#include <mesosim/MELoop.h>
 #include <mesosim/MESegment.h>
 #include "MSTLLogicControl.h"
 #include "MSTrafficLightLogic.h"
@@ -41,7 +42,6 @@
 // static value definitions
 // ===========================================================================
 const MSTrafficLightLogic::LaneVector MSTrafficLightLogic::myEmptyLaneVector;
-
 
 #define SHORT_EDGE ((SUMOVTypeParameter::getDefault().length + SUMOVTypeParameter::getDefault().minGap) * 2)
 
@@ -56,7 +56,7 @@ MSTrafficLightLogic::SwitchCommand::SwitchCommand(MSTLLogicControl& tlcontrol,
     myTLControl(tlcontrol), myTLLogic(tlLogic),
     myAssumedNextSwitch(nextSwitch), myAmValid(true) {
     // higher than default command priority of 0
-    priority = 1;
+    priority = std::numeric_limits<int>::max();
 }
 
 
@@ -87,7 +87,7 @@ MSTrafficLightLogic::SwitchCommand::execute(SUMOTime t) {
             vars.executeOnSwitchActions();
         }
     }
-    myAssumedNextSwitch += next;
+    myAssumedNextSwitch = t + next;
     return next;
 }
 
@@ -224,6 +224,11 @@ MSTrafficLightLogic::init(NLDetectorBuilder&) {
     }
     // check direct conflict (two green links targeting the same lane)
     const int numLinks = (int)myLinks.size();
+    std::set<const MSLane*> unsafeGreen;
+    int firstUnsafePhase = -1;
+    const MSLane* firstUnsafeLane = nullptr;
+    int firstUnsafeOrigins = 0;
+    int unsafeGreenPhases = 0;
     for (int i = 0; i < (int)phases.size(); ++i) {
         std::map<const MSLane*, int, ComparatorNumericalIdLess> greenLanes;
         const std::string& state = phases[i]->getState();
@@ -238,12 +243,26 @@ MSTrafficLightLogic::init(NLDetectorBuilder&) {
                 }
             }
         }
+        bool unsafe = false;
         for (auto item : greenLanes) {
             if (item.second > 1) {
-                WRITE_WARNINGF(TL("Unsafe green phase % in tlLogic '%', program '%'. Lane '%' is targeted by % 'G'-links. (use 'g' instead)"),
-                               i, getID(), getProgramID(), item.first->getID(), item.second);
+                if (unsafeGreenPhases == 0 && !unsafe) {
+                    firstUnsafePhase = i;
+                    firstUnsafeLane = item.first;
+                    firstUnsafeOrigins = item.second;
+                }
+                unsafe = true;
+                unsafeGreen.insert(item.first);
             }
         }
+        if (unsafe) {
+            unsafeGreenPhases++;
+        }
+    }
+    if (unsafeGreenPhases > 0) {
+        const std::string furtherAffected = unsafeGreen.size() > 1 || unsafeGreenPhases > 1 ? TLF(" Overall % lanes in % phases are unsafe.", unsafeGreen.size(), unsafeGreenPhases) : "";
+        WRITE_WARNINGF(TL("Unsafe green phase % in tlLogic '%', program '%'. Lane '%' is targeted by % 'G'-links. (use 'g' instead)%"),
+                       firstUnsafePhase, getID(), getProgramID(), firstUnsafeLane->getID(), firstUnsafeOrigins, furtherAffected);
     }
 
     // check incompatible junction logic
@@ -454,6 +473,9 @@ MSTrafficLightLogic::setCurrentDurationIncrement(SUMOTime delay) {
 
 
 void MSTrafficLightLogic::initMesoTLSPenalties() {
+    if (myLogicType == TrafficLightType::RAIL_SIGNAL) {
+        return;
+    }
     // set mesoscopic time penalties
     const Phases& phases = getPhases();
     const int numLinks = (int)myLinks.size();
@@ -498,6 +520,7 @@ void MSTrafficLightLogic::initMesoTLSPenalties() {
     const double durationSeconds = STEPS2TIME(duration);
     std::set<const MSJunction*> controlledJunctions;
     std::set<const MSEdge*> shortEdges;;
+    const bool overridePenalty = StringUtils::toBool(getParameter(MESegment::OVERRIDE_TLS_PENALTIES, "0"));
     for (int j = 0; j < numLinks; ++j) {
         for (int k = 0; k < (int)myLinks[j].size(); ++k) {
             MSLink* link = myLinks[j][k];
@@ -518,6 +541,10 @@ void MSTrafficLightLogic::initMesoTLSPenalties() {
                 if (tlsPenalty > 0 && edge.getLength() < SHORT_EDGE && shortEdges.count(&edge) == 0) {
                     shortEdges.insert(&edge);
                     WRITE_WARNINGF(TL("Edge '%' is shorter than %m (%m) and will cause incorrect flow reduction with option --meso-tls-penalty"), edge.getID(), SHORT_EDGE, edge.getLength());
+                }
+                if (overridePenalty) {
+                    MESegment* last = MSGlobals::gMesoNet->getSegmentForEdge(edge, std::numeric_limits<double>::max()); 
+                    last->overrideTLSPenalty();
                 }
             }
             link->setMesoTLSPenalty(TIME2STEPS(tlsPenalty * penalty[j] / durationSeconds));
@@ -619,10 +646,14 @@ MSTrafficLightLogic::getLatestEnd(int step) const {
 
 
 void
-MSTrafficLightLogic::loadState(MSTLLogicControl& tlcontrol, SUMOTime t, int step, SUMOTime spentDuration) {
-    const SUMOTime remaining = getPhase(step).duration - spentDuration;
+MSTrafficLightLogic::loadState(MSTLLogicControl& tlcontrol, SUMOTime t, int step, SUMOTime spentDuration, SUMOTime nextSwitch, SUMOTime /*timeInCycle*/, bool active) {
+    myAmActive = active;
+    const SUMOTime remaining = nextSwitch - t;
     changeStepAndDuration(tlcontrol, t, step, remaining);
-    setTrafficLightSignals(t - spentDuration);
+    if (myAmActive) {
+        setTrafficLightSignals(t - spentDuration);
+        tlcontrol.get(getID()).switchToLoaded(this);
+    }
 }
 
 

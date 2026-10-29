@@ -43,6 +43,7 @@ Subscribing to chargingstation.VAR_NAME.
 Subscribing to chargingstation.VAR_PARAMETER.
 Subscribing to chargingstation.VAR_PARAMETER_WITH_KEY.
 Subscribing to chargingstation.VAR_POSITION.
+Subscribing to chargingstation.VAR_CS_TOTAL_POWER.
 Subscribing to chargingstation.VAR_STOP_STARTING_VEHICLES_NUMBER.
 Subscribing to chargingstation.VAR_STOP_STARTING_VEHICLES_IDS.
 Expecting failure for chargingstation.ADD subscription.
@@ -67,6 +68,7 @@ Subscribing to edge.LAST_STEP_OCCUPANCY.
 Subscribing to edge.LAST_STEP_PERSON_ID_LIST.
 Subscribing to edge.LAST_STEP_VEHICLE_ID_LIST.
 Subscribing to edge.LAST_STEP_VEHICLE_NUMBER.
+Subscribing to edge.VAR_MAXSPEED.
 Subscribing to edge.VAR_FRICTION.
 Subscribing to edge.VAR_NOXEMISSION.
 Subscribing to edge.VAR_NOISEEMISSION.
@@ -175,8 +177,11 @@ Subscribing to lanearea.VAR_PARAMETER_WITH_KEY.
 Subscribing to lanearea.VAR_POSITION.
 Expecting failure for lanearea.ADD subscription.
 Could not add subscription. Get Lane Area Detector Variable: unsupported variable 0x80 specified
+Subscribing to meandata.VAR_MEANDATA_LANE.
+Subscribing to meandata.VAR_MEANDATA_VALUES.
 Subscribing to meandata.ID_COUNT.
 Subscribing to meandata.TRACI_ID_LIST.
+Subscribing to meandata.VAR_MEANDATA_IDS.
 Subscribing to meandata.VAR_PARAMETER.
 Subscribing to meandata.VAR_PARAMETER_WITH_KEY.
 Expecting failure for meandata.ADD subscription.
@@ -479,6 +484,7 @@ Subscribing to vehicle.LAST_STEP_PERSON_ID_LIST.
 Subscribing to vehicle.VAR_PERSON_NUMBER.
 Subscribing to vehicle.VAR_POSITION.
 Subscribing to vehicle.VAR_POSITION3D.
+Subscribing to vehicle.VAR_REFERENCE_DISTANCE.
 Subscribing to vehicle.VAR_ROAD_ID.
 Subscribing to vehicle.VAR_EDGES.
 Subscribing to vehicle.VAR_ROUTE_ID.
@@ -487,6 +493,7 @@ Subscribing to vehicle.VAR_ROUTING_MODE.
 Subscribing to vehicle.VAR_SECURE_GAP.
 Subscribing to vehicle.VAR_SEGMENT_ID.
 Subscribing to vehicle.VAR_SEGMENT_INDEX.
+Subscribing to vehicle.VAR_SHADOW_LANE_ID.
 Subscribing to vehicle.VAR_SHAPECLASS.
 Subscribing to vehicle.VAR_SIGNALS.
 Subscribing to vehicle.VAR_SLOPE.
@@ -587,7 +594,8 @@ Could not add subscription. Get Vehicle Type Variable: unsupported variable 0x80
                        151: 22000.0,
                        152: 0.95,
                        153: 0,
-                       154: 0.0}}
+                       154: 0.0,
+                       156: -1.0}}
 {'1si': {0: ('1fi',
              '1o',
              '1si',
@@ -624,6 +632,7 @@ Could not add subscription. Get Vehicle Type Variable: unsupported variable 0x80
          27: '',
          61: 1.0,
          62: ('3o_0', ''),
+         65: 13.89,
          67: 90.0,
          82: 3,
          88: -1.0,
@@ -744,7 +753,39 @@ Could not add subscription. Get Vehicle Type Variable: unsupported variable 0x80
                  'r',
                  'r',
                  13.242356285797488),),
-           52: (),
+           52: ('private',
+                'emergency',
+                'authority',
+                'army',
+                'vip',
+                'pedestrian',
+                'passenger',
+                'hov',
+                'taxi',
+                'bus',
+                'coach',
+                'delivery',
+                'truck',
+                'trailer',
+                'motorcycle',
+                'moped',
+                'bicycle',
+                'evehicle',
+                'tram',
+                'rail_urban',
+                'rail',
+                'rail_electric',
+                'rail_fast',
+                'ship',
+                'container',
+                'cable_car',
+                'subway',
+                'aircraft',
+                'wheelchair',
+                'scooter',
+                'drone',
+                'custom1',
+                'custom2'),
            53: (),
            55: ('4si_1',),
            60: ('private',
@@ -824,7 +865,53 @@ Could not add subscription. Get Vehicle Type Variable: unsupported variable 0x80
                 68: 10.0,
                 81: '2si_1',
                 126: ''}}
-{'meandata_0': {0: (), 1: 0, 62: ('3o_0', ''), 126: ''}}
+{'meandata_0': {0: ('meandata_0',),
+                1: 1,
+                22: 12.604700382370503,
+                23: (nan,
+                     nan,
+                     12.604700382370503,
+                     10.323718408159912,
+                     nan,
+                     nan,
+                     nan,
+                     nan,
+                     nan,
+                     nan,
+                     nan,
+                     nan,
+                     62.505,
+                     nan,
+                     nan,
+                     62.505,
+                     nan,
+                     nan,
+                     nan,
+                     27.780000000000005,
+                     nan),
+                24: ('1fi',
+                     '1o',
+                     '1si',
+                     '2fi',
+                     '2o',
+                     '2si',
+                     '3fi',
+                     '3o',
+                     '3si',
+                     '4fi',
+                     '4o',
+                     '4si',
+                     'a',
+                     'b',
+                     'c',
+                     'd',
+                     'e',
+                     'f',
+                     'g',
+                     'h',
+                     'i'),
+                62: ('flow', ''),
+                126: ''}}
 {'multientryexit_0': {0: ('multientryexit_0',),
                       1: 1,
                       16: 0,
@@ -1123,6 +1210,8 @@ Could not add subscription. Get Vehicle Type Variable: unsupported variable 0x80
                137: 0,
                140: 0.8739630791299645,
                146: True,
+               149: 6.850652830884791,
+               157: '',
                161: '',
                162: -1073741824,
                177: 1.750652830884792,

@@ -12,7 +12,7 @@ uses the same input data as the main [sumo](../sumo.md) model. It
 computes vehicle movements with queues and runs up to 100 times faster
 than the microscopic model of [sumo](../sumo.md). Additionally, due
 to using a coarser model for intersections and lane-changing it is more
-tolerant of network modelling errors than [sumo](../sumo.md).
+tolerant of network modeling errors than [sumo](../sumo.md).
 
 - **Purpose:** Simulates a defined scenario
 - **System:** portable (Linux/Windows is tested); runs on command line
@@ -115,6 +115,12 @@ numerical values are supported for option **--meso-jam-threshold** {{DT_FLOAT}}:
   jammed)
 - value = 1: Jamming is disabled
 
+### Speeds
+
+Meso vehicles do not model their current speed. Therefore vehicle attributes concerning acceleration, departSpeed or arrivalSpeed take no effect.
+The only relevant attributes are those that concern the [maximum possible speed](VehicleSpeed.md#edgelane_speed_and_speedfactor): `maxSpeed`, `desiredMaxSpeed`,`speedFactor`, `speedDev`.
+The maximum speed is used to computed a lower bound on travel time along an edge. When the meso model computes a vehicle speed, it gives an estimated average speed along the current segment based on the earliest computed time for leaving the segment (which may include jam effects). If a vehicle is known to be blocked from leaving a segment it's speed is defined as 0.
+
 ### Further Congestion Effects
 
 Another mechanism which creates a negative correlation between density
@@ -128,6 +134,21 @@ On multi-lane edges, [overtaking can be enabled](#lateral_model) to reduce this 
 
 The option **--meso-recheck** {{DT_TIME}} can be used to delay traffic flow into a fully occupied segment. Whenever a vehicle cannot move into the next segment because it is full, the given value acts as a time delay before checking again whether the segment has capacity to receive another vehicle. By default this delay is set to 0.
 
+## LTM: alternative longitudinal model
+
+When setting option **--meso-ltm**, an alternative longitudinal model (the mesoscopic **L**ink **T**ransmission **M**odel) is activated. This model is based on a [publications](https://www.sciencedirect.com/science/article/pii/S1569190X26000018) by Ying-Chuan Ni et. al.
+
+Instead of classifying segments as jammed/free based on **--meso-jam-threshold**, this model achieves jam dynamics by tracking gaps between cars that travel upstream when a car exits a segment.
+Whereas the other model achieves increased headway whenever a car travels from a "jammed" segment into another "jammed" segment, the meso-LTM model achieves increased headway whenever a segment is filled with a combination of cars and gaps. As soon as gaps reach the upstream end of the segment they disappear and thus free up capacity for vehicles from the upstream segment.
+The following parameters are used by the model:
+
+- **meso-tauff**: minimum headway when traveling (default *1.13*), also the time for a gap to travel backwards by 7.5m if a car was traveling at free flow speed
+- **meso-taujf**: minimum headway when traveling after the vehicle was blocked (waitingTime > 0)
+- **meso-taujj**: the time for a gap to travel backwards by 7.5m if a car was *not* traveling at free flow speed (default *1.4*)
+
+!!! note
+    The meso-LTM model achieves more realistic simulation for urban queuing dynamics. The original meso model (Eissfeldt) achieves instant propagation of gaps when queued traffic starts to flow again (i.e. at a traffic light). In contrast, the meso-LTM model distinguishes between a queue that has space at the upstream end and a queue that has space ad the downstream end.
+
 ## Lateral Model
 
 Lateral movement is not modelled explicitly. Vehicles may overtake each
@@ -136,7 +157,7 @@ randomized process depending on vehicle speeds and density.
 
 ## Junction Model
 
-There are 3 basic options for modelling junction control
+There are 3 basic options for modeling junction control
 
 1. **--meso-junction-control false** (the default): No junction control takes place. This should only be
     used for motorway scenarios or in combination with the penalty options below
@@ -199,7 +220,7 @@ It is also possible to load an additional file where only this option is set:
 
 ### Penalty at uncontrolled intersections
 
-**--meso-minor-penalty** {{DT_TIME}} can be used to apply a fixed time penalty when passing an unprioritzed
+**--meso-minor-penalty** {{DT_TIME}} can be used to apply a fixed time penalty when passing an unprioritized
 link (this is disabled when --meso-junction-control.limited is set and
 junction control is active for that link)
 
@@ -215,7 +236,7 @@ The model parameters described above can be customized for each edge type id by 
     <type id="highway.motorway" ...>
         <meso tauff="1.13" taufj="1.13" taujf="1.73" taujj="1.4" jamThreshold="-1"
              multiQueue="true" junctionControl="false" tlsPenalty="0" tlsFlowPenalty="0"
-             minorPenalty="0" overtaking="false"/>
+             minorPenalty="0" overtaking="false" edgeLength="98"/>
     </type>
 </additional>
 ```
@@ -247,8 +268,6 @@ The following outputs are not supported:
 
 The following SUMO features are not supported:
 
-- [Actuated traffic lights](Traffic_Lights.md#type_actuated)
-- Electric model
 - Wireless model
 - Opposite-direction driving
 - Sublane-model

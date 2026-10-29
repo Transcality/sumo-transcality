@@ -53,6 +53,12 @@ Dynamic User Assignment
 - **DUE**:
 Dynamic User Equilibrium
 
+- **DRAC**:
+Deceleration Rate to Avoid Collision, required braking rate to avoid a collision
+
+- **DRT**:
+Demand responsive transport
+
 ## E
 
 - **edge**:
@@ -113,7 +119,7 @@ vehicles (see macroscopic)
 
 - **multimodal**:
 A multimodal traffic simulation is capable of processing
-different types of traffic (busses, trains, vehicles etc.)
+different types of traffic (buses, trains, vehicles etc.)
 
 ## N
 
@@ -145,7 +151,13 @@ an application shall do
 The position of the begin of a vehicle journey. Mostly a TAZ
 processed by OD2TRIPs within which a "source" edge lies
 
+- **OSM**:
+OpenStreetMap
+
 ## P
+
+- **PET**:
+Post-Encroachment Time, the time between one vehicle leaving a conflict point and another entering it
 
 - **poi**:
 short for "point of interest"; A position of an object that may
@@ -161,7 +173,7 @@ the network; it contains the information when the vehicle departs
 ## S
 
 - **script**:
-A small computer program which normally doees not have to be
+A small computer program which normally does not have to be
 compiled. The SUMO package includes several scripts, most written in
 Python
 
@@ -175,10 +187,13 @@ project. The source code must be compiled in order to get the
 runnable application. It is called "tar-ball" because of using the
 application "tar" to join all the source files into a single file.
 
+- **SSM**:
+Surrogate Safety Measures, safety-related indicators in a simulation
+
 - **submicroscopic**:
 In a submicroscopic traffic (flow) simulation, the
 atomic instances are parts of the vehicle or the driver (gearing or
-behavior is modelled)
+behavior is modeled)
 
 ## T
 
@@ -192,6 +207,9 @@ area](../Demand/Importing_O/D_Matrices.md#describing_the_taz)
 
 - **TLS**:
 traffic lights system
+
+- **TraCI**:
+Traffic Control Interface
 
 - **trip**:
 A reduced information about a vehicle's movement; contains
@@ -207,15 +225,28 @@ Institute of Transportation Systems at the German Aerospace
 Center (DLR)
 
 - **TS-BS**:
-TS Standort Braunschweig
+TS Location in Brunswick (Braunschweig)
 
 - **TS-BA**:
-TS Standort Berlin-Adlershof
+TS Location in Berlin-Adlershof
+
+- **TTC**:
+Time to Collision, the time remaining until two vehicles would collide if they keep their current speed and trajectory
 
 - **type(s)-file**:
 A XML-file describing types of streets, see [type
 descriptions for importing networks defined as
 XML](../Networks/PlainXML.md#type_descriptions)
+
+## V
+
+- **vss**:
+Variable speed sign
+
+## W
+
+- **WAUT**:
+Short for "Wochenschaltautomatik" (weekly switch automatism)
 
 ## X
 

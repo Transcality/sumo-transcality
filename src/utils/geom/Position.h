@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -186,7 +186,7 @@ public:
 
     /// @brief output operator
     friend std::ostream& operator<<(std::ostream& os, const Position& p) {
-        os << p.x() << "," << p.y();
+        os << (p.x() + 0.0) << "," << (p.y() + 0.0);
         if (p.z() != double(0.0)) {
             os << "," << p.z();
         }
@@ -314,6 +314,10 @@ public:
     bool isNAN() const {
         return (std::isnan(myX) || std::isnan(myY) || std::isnan(myZ));
     }
+
+    /// @brief round all coordinates to the given precision
+    void round(int precision);
+
 
     /// @brief used to indicate that a position is valid
     static const Position INVALID;

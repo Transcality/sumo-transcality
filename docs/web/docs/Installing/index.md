@@ -126,7 +126,7 @@ Additionally, SUMO provides native **macOS application bundles** for its graphic
 brew install --cask sumo-gui
 ```
 
-In case this process fails, it can also be manually achieved by copying these application bundles from `$SUMO_HOME/build/osx/sumo-gui`, `$SUMO_HOME/build/osx/netedit` and `$SUMO_HOME/build/osx/osm-web-wizard` to the `/Applications` folder. Another alternative is to download the [application launchers](../Downloads.md#homebrew).
+In case this process fails, it can also be manually achieved by copying these application bundles from `$SUMO_HOME/build/osx/sumo-gui`, `$SUMO_HOME/build/osx/netedit` and `$SUMO_HOME/build/osx/osm-web-wizard` to the `/Applications` folder.
 
 These application bundles determine the location of your SUMO installation by evaluating your `$SUMO_HOME` variable setting and start the programs accordingly. Multiple SUMO installations may be used by changing the `$SUMO_HOME` variable.
 
@@ -161,6 +161,7 @@ If you encounter a blank screen after opening sumo-gui (cf. https://github.com/e
 SUMO contains lots of [Python tools](../Tools/index.md) which are part of the sources and the Windows distribution
 and may be packaged on Linux in the sumo or a separate sumo-tools package. To take full advantage of these tools
 you need several additional python modules. The easiest way to install them is to use `pip install -r $SUMO_HOME/tools/requirements.txt`.
+If you want to use JuPedSim as a pedestrian model you also need to `pip install --no-deps jupedsim`.
 
 # via Docker
 

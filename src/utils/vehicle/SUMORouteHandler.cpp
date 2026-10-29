@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -23,6 +23,8 @@
 #include <config.h>
 
 #include <utils/common/MsgHandler.h>
+#include <utils/common/FileHelpers.h>
+#include <utils/common/RandHelper.h>
 #include <utils/options/OptionsCont.h>
 #include <utils/vehicle/SUMOVTypeParameter.h>
 #include <utils/vehicle/SUMOVehicleParserHelper.h>
@@ -30,6 +32,10 @@
 
 #include "SUMORouteHandler.h"
 
+// ===========================================================================
+// static members
+// ===========================================================================
+SumoRNG SUMORouteHandler::myParsingRNG("routehandler");
 
 // ===========================================================================
 // method definitions
@@ -43,6 +49,7 @@ SUMORouteHandler::SUMORouteHandler(const std::string& file, const std::string& e
     myActiveRouteColor(nullptr),
     myCurrentCosts(0.),
     myCurrentVType(nullptr),
+    myCurrentVTypeProbability(-1),
     myBeginDefault(OptionsCont::getOptions().exists("begin") ? string2time(OptionsCont::getOptions().getString("begin")) : 0),
     myEndDefault(OptionsCont::getOptions().exists("end") ? string2time(OptionsCont::getOptions().getString("end")) : -1),
     myFirstDepart(-1),
@@ -142,7 +149,13 @@ SUMORouteHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
                 myCurrentVType = nullptr;
             }
             // create a new vType
-            myCurrentVType = SUMOVehicleParserHelper::beginVTypeParsing(attrs, myHardFail, getFileName());
+            if (attrs.hasAttribute(SUMO_ATTR_REFID) && !attrs.hasAttribute(SUMO_ATTR_ID)) {
+                bool ok = true;
+                myCurrentVTypeRef = attrs.get<std::string>(SUMO_ATTR_REFID, nullptr, ok);
+                myCurrentVTypeProbability = attrs.getOpt<double>(SUMO_ATTR_PROB, myCurrentVTypeRef.c_str(), ok, -1);
+            } else {
+                myCurrentVType = SUMOVehicleParserHelper::beginVTypeParsing(attrs, myHardFail, getFileName(), getVTypeParameter(attrs.getStringSecure(SUMO_ATTR_REFID, "")));
+            }
             myParamStack.push_back(myCurrentVType);
             break;
         case SUMO_TAG_VTYPE_DISTRIBUTION:
@@ -227,8 +240,12 @@ SUMORouteHandler::myEndElement(int element) {
             break;
         case SUMO_TAG_VTYPE:
             closeVType();
-            delete myCurrentVType;
+            if (myCurrentVTypeRef.empty()) {
+                delete myCurrentVType;
+            }
             myCurrentVType = nullptr;
+            myCurrentVTypeRef = "";
+            myCurrentVTypeProbability = -1;
             myParamStack.pop_back();
             break;
         case SUMO_TAG_PERSON:
@@ -259,17 +276,16 @@ SUMORouteHandler::myEndElement(int element) {
             if (myVehicleParameter == nullptr) {
                 break;
             }
-            if (myVehicleParameter->repetitionNumber > 0) {
-                myVehicleParameter->repetitionNumber++; // for backwards compatibility
-                // it is a flow, thus no break here
-                FALLTHROUGH;
-            } else {
+            if (myVehicleParameter->repetitionNumber <= 0) {
                 closeVehicle();
                 delete myVehicleParameter;
                 myVehicleParameter = nullptr;
                 myParamStack.pop_back();
                 break;
             }
+            myVehicleParameter->repetitionNumber++; // for backwards compatibility
+            // it is a flow, thus no break here
+            FALLTHROUGH;
         case SUMO_TAG_FLOW:
             if (myVehicleParameter) {
                 closeFlow();
@@ -349,16 +365,6 @@ SUMORouteHandler::checkStopPos(double& startPos, double& endPos, const double la
 }
 
 
-bool
-SUMORouteHandler::isStopPosValid(const double startPos, const double endPos, const double laneLength, const double minLength, const bool friendlyPos) {
-    // declare dummy start and end positions
-    double dummyStartPos = startPos;
-    double dummyEndPos = endPos;
-    // return checkStopPos
-    return (checkStopPos(dummyStartPos, dummyEndPos, laneLength, minLength, friendlyPos) == STOPPOS_VALID);
-}
-
-
 SUMOTime
 SUMORouteHandler::getFirstDepart() const {
     return myFirstDepart;
@@ -378,10 +384,19 @@ SUMORouteHandler::addParam(const SUMOSAXAttributes& attrs) {
     // only continue if key isn't empty
     if (ok && (key.size() > 0)) {
         // circumventing empty string test
-        const std::string val = attrs.hasAttribute(SUMO_ATTR_VALUE) ? attrs.getString(SUMO_ATTR_VALUE) : "";
+        std::string val = attrs.hasAttribute(SUMO_ATTR_VALUE) ? attrs.getString(SUMO_ATTR_VALUE) : "";
+        // check special params that must be interpreted as relative paths
+        if ((myVehicleParameter != nullptr || myCurrentVType != nullptr)
+                && (key == "device.toc.file" || key == "device.ssm.file")) {
+            val = FileHelpers::checkForRelativity(val, getFileName());
+        }
         // add parameter in current created element
         if (!myParamStack.empty()) {
-            myParamStack.back()->setParameter(key, val);
+            if (!myCurrentVTypeRef.empty() && myParamStack.back() == myCurrentVType) {
+                WRITE_WARNINGF(TL("Ignoring param for referenced vType %"), myCurrentVType->id);
+            } else {
+                myParamStack.back()->setParameter(key, val);
+            }
         }
     }
 }
@@ -503,7 +518,16 @@ SUMORouteHandler::parseStop(SUMOVehicleParameter::Stop& stop, const SUMOSAXAttri
     }
     SUMOVehicleParameter::parseStopTriggers(triggers, expectTrigger, stop);
     stop.arrival = attrs.getOptSUMOTimeReporting(SUMO_ATTR_ARRIVAL, nullptr, ok, -1);
-    stop.duration = attrs.getOptSUMOTimeReporting(SUMO_ATTR_DURATION, nullptr, ok, -1);
+    if (attrs.hasAttribute(SUMO_ATTR_DURATION)) {
+        const std::string durationStr = attrs.get<std::string>(SUMO_ATTR_DURATION, nullptr, ok);
+        std::string error;
+        if (!Distribution_Parameterized::isValidDescription(durationStr, error)) {
+            errorOutput->inform(TLF("Invalid duration for a stop% (%).", errorSuffix, error));
+            return false;
+        }
+        stop.durationDist = Distribution_Parameterized(durationStr);
+        stop.duration = TIME2STEPS(stop.durationDist.sample(&myParsingRNG));
+    }
     stop.until = attrs.getOptSUMOTimeReporting(SUMO_ATTR_UNTIL, nullptr, ok, -1);
     if (!expectTrigger && (!ok || (stop.duration < 0 && stop.until < 0 && stop.speed == 0))) {
         errorOutput->inform(TLF("Invalid duration or end time is given for a stop%.", errorSuffix));

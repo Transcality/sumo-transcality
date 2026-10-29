@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -30,7 +30,7 @@
 #include <utils/gui/div/GUIGeometry.h>
 #define FONTSTASH_IMPLEMENTATION // Expands implementation
 #ifdef _MSC_VER
-#pragma warning(disable: 4505 5219) // do not warn about unused functions and implicit float conversions
+#pragma warning(disable: 4505 5219 5262) // do not warn about unused functions, implicit float conversions, implicit fall-through
 #endif
 #if __GNUC__ > 3
 #pragma GCC diagnostic push
@@ -507,8 +507,8 @@ GLHelper::drawLine(const Position& beg, const Position& end) {
 
 
 void
-GLHelper::drawFilledCircleDetailled(const GUIVisualizationSettings::Detail d, const double radius,
-                                    double beg, double end) {
+GLHelper::drawFilledCircleDetailed(const GUIVisualizationSettings::Detail d, const double radius,
+                                   double beg, double end) {
     // get current resolution level
     switch (d) {
         case GUIVisualizationSettings::Detail::CircleResolution32:
@@ -521,7 +521,7 @@ GLHelper::drawFilledCircleDetailled(const GUIVisualizationSettings::Detail d, co
             drawFilledCircle(radius, 8, beg, end);
             break;
         case GUIVisualizationSettings::Detail::CircleResolution4:
-            drawFilledCircleDetailled(d, radius);
+            drawFilledCircleDetailed(d, radius);
             break;
         default:
             // nothing to draw
@@ -531,7 +531,7 @@ GLHelper::drawFilledCircleDetailled(const GUIVisualizationSettings::Detail d, co
 
 
 void
-GLHelper::drawFilledCircleDetailled(const GUIVisualizationSettings::Detail d, const double radius) {
+GLHelper::drawFilledCircleDetailed(const GUIVisualizationSettings::Detail d, const double radius) {
     // get current resolution level
     switch (d) {
         case GUIVisualizationSettings::Detail::CircleResolution32:
@@ -688,13 +688,7 @@ GLHelper::drawSpaceOccupancies(const double exaggeration, const Position& pos, c
     geom.push_back(Position(+w, +h, 0.));
     geom.push_back(Position(-w, +h, 0.));
     geom.push_back(Position(-w, +0, 0.));
-    /*
-    geom.push_back(Position(pos.x(), pos.y(), pos.z()));
-    geom.push_back(Position(pos.x() + (*l).second.myWidth, pos.y(), pos.z()));
-    geom.push_back(Position(pos.x() + (*l).second.myWidth, pos.y() - (*l).second.myLength, pos.z()));
-    geom.push_back(Position(pos.x(), pos.y() - (*l).second.myLength, pos.z()));
-    geom.push_back(Position(pos.x(), pos.y(), pos.z()));
-    */
+
     // push matrix
     GLHelper::pushMatrix();
     // translate

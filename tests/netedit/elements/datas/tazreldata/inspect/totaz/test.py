@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -32,21 +32,21 @@ netedit.changeSupermode("data")
 netedit.changeMode("TAZRelData")
 
 # create dataSet
-netedit.createDataSet()
+netedit.createDataSet("newDataSet")
 
 # create data interval
-netedit.createDataInterval()
+netedit.createDataInterval("0", "3600")
 
 # create TAZRelData
-netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
-netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
-netedit.typeKey('enter')
+netedit.leftClickData(referencePosition, netedit.positions.elements.demands.TAZGreen)
+netedit.leftClickData(referencePosition, netedit.positions.elements.demands.TAZRed)
+netedit.typeKey("enter")
 
 # go to inspect mode
 netedit.changeMode("inspect")
 
 # inspect TAZRelData
-netedit.leftClick(referencePosition, netedit.positions.elements.data.TAZRelBot)
+netedit.leftClickData(referencePosition, netedit.positions.elements.data.TAZRelBot)
 
 # Change parameter 3 with a non valid value (empty speed)
 netedit.modifyAttribute(netedit.attrs.TAZRelData.inspect.toTAZ, "")
@@ -64,7 +64,7 @@ netedit.modifyAttribute(netedit.attrs.TAZRelData.inspect.toTAZ, "taz_yellow")
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -149,6 +149,15 @@ Parameterised::setParameters(const Parameterised& params) {
 
 
 void
+Parameterised::setParameters(const std::vector<std::pair<std::string, std::string> >& params) {
+    myMap.clear();
+    for (const auto& keyValue : params) {
+        myMap[keyValue.first] = keyValue.second;
+    }
+}
+
+
+void
 Parameterised::setParametersStr(const std::string& paramsString, const std::string kvsep, const std::string sep) {
     // clear parameters
     myMap.clear();
@@ -168,8 +177,8 @@ Parameterised::writeParams(OutputDevice& device) const {
     // iterate over all parameters and write it
     for (const auto& keyValue : myMap) {
         device.openTag(SUMO_TAG_PARAM);
-        device.writeAttr(SUMO_ATTR_KEY, StringUtils::escapeXML(keyValue.first));
-        device.writeAttr(SUMO_ATTR_VALUE, StringUtils::escapeXML(keyValue.second));
+        device.writeAttr(SUMO_ATTR_KEY, keyValue.first, false, true);
+        device.writeAttr(SUMO_ATTR_VALUE, keyValue.second, false, true);
         device.closeTag();
     }
 }

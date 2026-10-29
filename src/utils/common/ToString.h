@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -27,6 +27,17 @@
 #include <iomanip>
 #include <algorithm>
 #include <list>
+#ifdef HAVE_FMT
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4868) // mask warning about left-to-right evaluation order
+#endif
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+#endif
 #include <utils/xml/SUMOXMLDefinitions.h>
 #include <utils/common/SUMOVehicleClass.h>
 #include <utils/common/Named.h>
@@ -49,6 +60,28 @@ inline std::string toString(const T& t, std::streamsize accuracy = gPrecision) {
     oss << std::setprecision(accuracy);
     oss << t;
     return oss.str();
+}
+
+
+template <>
+inline std::string toString(const double& val, std::streamsize accuracy) {
+#ifdef HAVE_FMT
+    // for the runtime wrapper see https://github.com/fmtlib/fmt/issues/3107
+    return fmt::format(fmt::runtime("{:.{}f}"), val, accuracy);
+#else
+    std::ostringstream oss;
+    oss.setf(std::ios::fixed, std::ios::floatfield);
+    oss << std::setprecision(accuracy);
+    oss << val;
+    return oss.str();
+#endif
+}
+
+
+template <>
+inline std::string toString(const std::string& val, std::streamsize accuracy) {
+    UNUSED_PARAMETER(accuracy);
+    return val;
 }
 
 
@@ -124,6 +157,12 @@ template <>
 inline std::string toString<FringeType>(const FringeType& fringeType, std::streamsize accuracy) {
     UNUSED_PARAMETER(accuracy);
     return SUMOXMLDefinitions::FringeTypeValues.getString(fringeType);
+}
+
+template <>
+inline std::string toString<RoundaboutType>(const RoundaboutType& roundaboutType, std::streamsize accuracy) {
+    UNUSED_PARAMETER(accuracy);
+    return SUMOXMLDefinitions::RoundaboutTypeValues.getString(roundaboutType);
 }
 
 template <>
@@ -295,6 +334,15 @@ inline std::string joinToString(const std::vector<T>& v, const T_BETWEEN& betwee
 }
 
 
+#ifdef HAVE_FMT
+// without fmt, vectors of strings use the generic version above
+template <typename T_BETWEEN>
+inline std::string joinToString(const std::vector<std::string>& v, const T_BETWEEN& between, std::streamsize accuracy = gPrecision) {
+    return fmt::format("{}", fmt::join(v, toString(between, accuracy)));
+}
+#endif
+
+
 template <typename T, typename T_BETWEEN>
 inline std::string joinToStringSorting(const std::vector<T>& v, const T_BETWEEN& between, std::streamsize accuracy = gPrecision) {
     std::vector<T> sorted(v);
@@ -305,6 +353,15 @@ inline std::string joinToStringSorting(const std::vector<T>& v, const T_BETWEEN&
 
 template <typename T, typename T_BETWEEN>
 inline std::string joinNamedToStringSorting(const std::set<T*>& ns, const T_BETWEEN& between) {
+    std::vector<std::string> ids;
+    for (T* n : ns) {
+        ids.push_back(Named::getIDSecure(n));
+    }
+    return joinToStringSorting(ids, between);
+}
+
+template <typename T, typename T_BETWEEN>
+inline std::string joinNamedToStringSorting(const std::set<T*, ComparatorIdLess>& ns, const T_BETWEEN& between) {
     std::vector<std::string> ids;
     for (T* n : ns) {
         ids.push_back(Named::getIDSecure(n));
@@ -344,6 +401,17 @@ inline std::string toString(const std::set<V*>& v, std::streamsize accuracy = gP
     UNUSED_PARAMETER(accuracy);
     std::vector<std::string> ids;
     for (typename std::set<V*>::const_iterator it = v.begin(); it != v.end(); ++it) {
+        ids.push_back((*it)->getID());
+    }
+    return joinToStringSorting(ids, " ");
+}
+
+
+template <typename V>
+inline std::string toString(const std::set<V*, ComparatorNumericalIdLess>& v, std::streamsize accuracy = gPrecision) {
+    UNUSED_PARAMETER(accuracy);
+    std::vector<std::string> ids;
+    for (typename std::set<V*, ComparatorNumericalIdLess>::const_iterator it = v.begin(); it != v.end(); ++it) {
         ids.push_back((*it)->getID());
     }
     return joinToStringSorting(ids, " ");

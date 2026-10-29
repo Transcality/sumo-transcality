@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -58,8 +58,8 @@ GUIParkingArea::GUIParkingArea(const std::string& id, const std::vector<std::str
                                unsigned int capacity, double width, double length, double angle, const std::string& name,
                                bool onRoad,
                                const std::string& departPos,
-                               bool lefthand) :
-    MSParkingArea(id, lines, badges, lane, frompos, topos, capacity, width, length, angle, name, onRoad, departPos, lefthand),
+                               bool lefthand, bool reservable) :
+    MSParkingArea(id, lines, badges, lane, frompos, topos, capacity, width, length, angle, name, onRoad, departPos, lefthand, reservable),
     GUIGlObject_AbstractAdd(GLO_PARKING_AREA, id, GUIIconSubSys::getIcon(GUIIcon::PARKINGAREA)) {
     const double offsetSign = (MSGlobals::gLefthand || lefthand) ? -1 : 1;
     myShapeRotations.reserve(myShape.size() - 1);
@@ -114,6 +114,10 @@ GUIParkingArea::getParameterWindow(GUIMainWindow& app,
     ret->mkItem(TL("capacity [#]"), false, getCapacity());
     ret->mkItem(TL("alternatives [#]"), false, getNumAlternatives());
     ret->mkItem(TL("access badges"), false, joinToString(myAcceptedBadges, " "));
+    if (isReservable()) {
+        ret->mkItem(TL("reservations [#]"), true, getNumReservations());
+        ret->mkItem(TL("reservation ids"), true, getReservationString());
+    }
     // close building
     ret->closeBuilding();
     return ret;
@@ -158,7 +162,7 @@ GUIParkingArea::drawGL(const GUIVisualizationSettings& s) const {
         for (size_t i = 0; i != myLines.size(); ++i) {
             // push a new matrix for every line
             GLHelper::pushMatrix();
-            // traslate and rotate
+            // translate and rotate
             glTranslated(mySignPos.x(), mySignPos.y(), 0);
             glRotated(180, 1, 0, 0);
             glRotated(mySignRot, 0, 0, 1);
@@ -232,5 +236,14 @@ GUIParkingArea::getOptionalName() const {
     return myName;
 }
 
+int
+GUIParkingArea::getNumReservations() const {
+    return (int)getRemoteReservedVehicles().size();
+}
+
+const std::string
+GUIParkingArea::getReservationString() const {
+    return toString(getRemoteReservedVehicles());
+}
 
 /****************************************************************************/

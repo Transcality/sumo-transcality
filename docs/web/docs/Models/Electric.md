@@ -19,7 +19,7 @@ You can find a test case for these implementations at
 
 Different aspects of electric vehicles are modeled separately. This page puts the focus
 on modeling the battery and how it is charged and discharged. The actual energy consumption values themselves
-are part of the emission modelling because SUMO can use different models for that.
+are part of the emission modeling because SUMO can use different models for that.
 
 To track the charging status of a vehicle, it must be equipped with a battery
 device. This may be done using the option **--device.battery.explicit <vehID1,vehID2,...\>** or simply setting **--device.battery.probability 1** to equip
@@ -28,16 +28,21 @@ vehicle parameters](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#devi
 
 Additional properties of the vehicle and its electrical components must
 then be defined via [parameters of the vehicle or its
-type](../Simulation/GenericParameters.md). Some property can only be defined for the vehicle type.
+type](../Simulation/GenericParameters.md).
+Note, that some parameters are specific to the battery device and thus carry the `device.battery` prefix. These can be defined either in the `<vType>` or the `<vehicle`.
+Other parameters are more general and also used by other models (i.e. emission models) and thus carry no prefix. All of the later must be defined in the `<vType>`.
 
 These values have the following meanings (the defaults are from the Kia below):
 
 | key                               | Value Type | Default           | Description                                             |
 | --------------------------------- | ---------- | ----------------- | ------------------------------------------------------- |
 | device.battery.capacity           | float      | 35000 (Wh)        | Maximum battery capacity *E<sub>max</sub>*              |
+| device.battery.maximumChargeRate  | float      | 150000 (W)        | Maximum charging rate of the battery                    |
+| device.battery.chargeLevelTable   | float list |                   | Ordered list of state of charge values (from 0 to 1) for which maximum charge rates are defined in `device.battery.chargeCurveTable` |
+| device.battery.chargeCurveTable   | float list |                   | Corresponding maximum charge rates to each state of charge value in `device.battery.chargeLevelTable` |
 | maximumPower                      | float      | 150000 (W)        | Maximum power which the vehicle can reach (unused)      |
 | vehicleMass                       | float      | 1830 (kg)         | Vehicle mass *m<sub>veh</sub>* (deprecated)             |
-| loading                           | float      | 0 (kg)            | Additional mass **(to be defined in the vehicle type)**     |
+| loading                           | float      | 0 (kg)            | Additional mass **(to be defined in the vehicle type)** |
 | frontSurfaceArea                  | float      | 2.6 (m<sup>2</sup>) | Front surface area *A<sub>veh</sub>*                  |
 | airDragCoefficient                | float      | 0.35              | Air drag coefficient *c<sub>w</sub>*                    |
 | rotatingMass                      | float      | 40 (kg)           | (Equivalent) mass of internal rotating elements         |
@@ -47,9 +52,6 @@ These values have the following meanings (the defaults are from the Kia below):
 | propulsionEfficiency              | float      | 0.98              | Drive efficiency *η<sub>prop</sub>*                     |
 | recuperationEfficiency            | float      | 0.96              | Recuperation efficiency *η<sub>recup</sub>*             |
 | stoppingThreshold                 | float      | 0.1 (m/s)         | Maximum velocity to start charging                      |
-| device.battery.maximumChargeRate  | float      | 150000 (W)        | Maximum charging rate of the battery                    |
-| device.battery.chargeLevelTable   | float list |                   | Ordered list of state of charge values (from 0 to 1) for which maximum charge rates are defined in `device.battery.chargeCurveTable` |
-| device.battery.chargeCurveTable   | float list |                   | Corresponding maximum charge rates to each state of charge value in `device.battery.chargeLevelTable` |
 
 !!! note
     Before SUMO 1.20.0 the `rotatingMass` was called `internalMomentOfInertia` but it has been renamed to make clear
@@ -120,7 +122,7 @@ the [stationfinder device](../Simulation/Stationfinder.md) can be configured to 
 
 A charging station is a surface defined on a lane in which the vehicles
 equipped with a battery are charged. The basic structure and parameters
-of bus stops were used for the implementation of charging stations. 
+of bus stops were used for the implementation of charging stations.
 A charging station can be converted to a gas station by setting the **chargeType** attribute to `fuel`. Then electric vehicles cannot charge there anymore.
 
 
@@ -133,6 +135,7 @@ A charging station can be converted to a gas station by setting the **chargeType
 | **endPos**          | float      | lane.length < x < lane.length (negative values count backwards from the end of the lane) |           | End position in the specified lane                                                                                              |
 | friendlyPos | bool | true or false | false | Whether invalid charging station positions should be corrected automatically |
 | **power**           | float  (W) or (mg/s)  | power \> 0  | 22000  | Charging power *P<sub>chrg</sub>*  (If the battery device being charged  [is configured to track fuel](#tracking_fuel_consumption_for_non-electrical_vehicles), charging power will be interpreted as mg/s)  |
+| totalPower          | float  (W) or (mg/s)  | power >= 0  | 0  | Max. charging power *P<sub>chrg</sub>* sum for all charging vehicles of this station (to be shared at the ratio of requested power). Is only active for values > 0. |
 | **efficiency**      | float      | 0 <= efficiency <= 1                                                                       | 0.95   | Charging efficiency *η<sub>chrg</sub>*                                                                                          |
 | **chargeInTransit** | bool       | true or false                                                                              | false  | Enable or disable charge in transit, i.e. vehicle is forced/not forced to stop for charging                                     |
 | **chargeDelay**     | float      | chargeDelay \> 0                                                                           | 0         | Time delay after the vehicles have reached / stopped on the charging station, before the energy transfer (charging) is starting |
@@ -378,7 +381,7 @@ To compute the remaining range on departure, the value of `mWh` (meters per Watt
 
 ## Reducing the power of a charging station
 
-If too many consumers connect to the eletrical grid, it may not be able to supply the nominal power of the charging station. A temporary
+If too many consumers connect to the electrical grid, it may not be able to supply the nominal power of the charging station. A temporary
 power drop of 20% can be modeled using the following sample code:
 ```python
 prevPower = traci.chargingstation.getPower(chargingStationID) # remember for restoring the full power later

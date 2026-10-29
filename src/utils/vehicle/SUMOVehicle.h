@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -48,6 +48,7 @@ class MSVehicleDevice;
 class SUMOSAXAttributes;
 class EnergyParams;
 class PositionVector;
+class MFXOptionalLock;
 
 typedef std::vector<const MSEdge*> ConstMSEdgeVector;
 
@@ -84,6 +85,9 @@ public:
 
     /// Returns the current route
     virtual ConstMSRoutePtr getRoutePtr() const = 0;
+
+    /// @brief return index of edge within route
+    virtual int getRoutePosition() const = 0;
 
     /** @brief Returns the nSuccs'th successor of edge the vehicle is currently at
      *
@@ -127,13 +131,16 @@ public:
      */
     virtual bool reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<MSEdge, SUMOVehicle>& router, const bool onInit = false, const bool withTaz = false, const bool silent = false, const MSEdge* sink = nullptr) = 0;
 
+    /// @brief returns the router according to the current routing mode of the vehicle
+    virtual SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouterTT() const = 0;
+
     /** @brief Validates the current or given route
      * @param[out] msg Description why the route is not valid (if it is the case)
      * @param[in] route The route to check (or 0 if the current route shall be checked)
      * @return Whether the vehicle's current route is valid
      */
     virtual bool hasValidRoute(std::string& msg, ConstMSRoutePtr route = 0) const = 0;
-    /// @brief checks wether the vehicle can depart on the first edge
+    /// @brief checks whether the vehicle can depart on the first edge
     virtual bool hasValidRouteStart(std::string& msg) = 0;
 
     /// @brief computes validity attributes for the current route
@@ -143,6 +150,9 @@ public:
      * @return The current route pointer
      */
     virtual const ConstMSEdgeVector::const_iterator& getCurrentRouteEdge() const = 0;
+
+    /// @return the current edge which may be internal
+    virtual const MSEdge* getCurrentEdge() const = 0;
 
     /** @brief Returns the vehicle's emission model parameter
      *
@@ -258,6 +268,9 @@ public:
     /// @brief removes a person or container
     virtual void removeTransportable(MSTransportable* t) = 0;
 
+    /// @brief removes a person or containers mass
+    virtual void removeTransportableMass(MSTransportable* t) = 0;
+
     /// @brief retrieve riding persons
     virtual const std::vector<MSTransportable*>& getPersons() const = 0;
 
@@ -296,6 +309,8 @@ public:
       * @return Whether the stop could be added
       */
     virtual bool replaceParkingArea(MSParkingArea* parkingArea, std::string& errorMsg) = 0;
+
+    virtual const std::vector<std::string>& getParkingBadges() const = 0;
 
     /// @brief Returns the remaining stop duration for a stopped vehicle or 0
     virtual SUMOTime remainingStopDuration() const = 0;
@@ -388,6 +403,8 @@ public:
 
     /// @brief get bounding rectangle
     virtual PositionVector getBoundingBox(double offset = 0) const = 0;
+
+    virtual std::unique_ptr<MFXOptionalLock> getScopeLock() = 0;
 
     /// @name parking memory io
     //@{

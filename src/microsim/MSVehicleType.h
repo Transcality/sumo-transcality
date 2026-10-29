@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -171,7 +171,7 @@ public:
     /** @brief Computes and returns the speed deviation
      * @return A new, random speed deviation
      */
-    double computeChosenSpeedDeviation(SumoRNG* rng, const double minDev = -1.) const;
+    double computeChosenSpeedDeviation(double speedFactorOverride, SumoRNG* rng, const double minDev = -1.) const;
 
 
     /** @brief Get the default probability of this vehicle type
@@ -475,6 +475,11 @@ public:
      * @param[in] vclass The new vehicle class of this type
      */
     void setVClass(SUMOVehicleClass vclass);
+
+    /** @brief Set a new value for this type's gui shape
+     * @param[in] shapeClass The new shape class of this type
+     */
+    void setGUIShape(SUMOVehicleShape shape);
 
 
     /** @brief Set a new value for this type's default probability

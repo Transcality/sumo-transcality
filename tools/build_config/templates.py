@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2015-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2015-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -44,6 +44,7 @@ TOOLS = [
     "district/filterDistricts.py",
     "district/gridDistricts.py",
     "district/stationDistricts.py",
+    "district/tazRel2POI.py",
 
     # drt
     # "drt/darpSolvers.py",   NO CONFIG
@@ -64,6 +65,7 @@ TOOLS = [
     "import/gtfs/gtfs2pt.py",
     "import/vissim/vissim_parseRoutes.py",
     "import/visum/visum_convertEdgeTypes.py",
+    "import/visum/visum_convertXMLRoutes.py",
 
     # net
     "net/abstractRail.py",
@@ -86,6 +88,14 @@ TOOLS = [
     # "net/xmlconnections_mapEdges.py",       NO CONFIG
     # "net/xmledges_applyOffset.py",          NO CONFIG
     # "net/xmlnodes_applyOffset.py",          NO CONFIG
+    "net/net2sel.py",
+    "net/remap_renamed.py",
+    "net/remap_attributes.py",
+    "net/remap_network.py",
+    "net/remap_additionals.py",
+    "net/cut_net.py",
+    "net/patchRailConflicts.py",
+    "net/patchRailPriorities.py",
 
     # route
     "route/addStopDelay.py",
@@ -106,6 +116,7 @@ TOOLS = [
     "route/tracegenerator.py",
     "route/tracemapper.py",
     # "route/vehicle2flow.py",                NO CONFIG
+    "route/checkReversals.py",
 
     # output
     "output/aggregateBatteryOutput.py",
@@ -140,6 +151,9 @@ TOOLS = [
     "output/vehrouteCountValidation.py",
     "output/vehrouteDiff.py",
     "output/walkFactor.py",
+    "output/instantOutDiff.py",
+    "output/instantOutToEdgeCounts.py",
+    "output/generateDetectors.py",
 
     # shapes
     "shapes/circlePolygon.py",
@@ -153,6 +167,11 @@ TOOLS = [
     "tls/createTlsCsv.py",
     # "tls/tls_check.py",             NO CONFIG
     "tls/tls_csvSignalGroups.py",
+
+    # trigger
+    "trigger/sidings2poly.py",
+    "trigger/calibrator2edgedata.py",
+    "trigger/createOvertakingReroutes.py",
 
     # turn-defs
     # "turn-defs/collectinghandler.py",       NO CONFIG
@@ -177,6 +196,7 @@ TOOLS = [
     "visualization/plot_net_trafficLights.py",
     "visualization/plot_summary.py",
     "visualization/plotXMLAttributes.py",
+    "visualization/plotStops.py",
 
     # xml
     # "xml/addSchema.py",         IGNORE
@@ -295,63 +315,27 @@ SOURCE_DEPS = [
 
 
 def buildTemplateToolHeader(templateHeaderFile):
-    print(
-        u"#pragma once\n"
-        "#include <string>\n"
-        "#include <vector>\n"
-        "\n"
-        "// @brief template tool\n"
-        "struct TemplateTool {\n"
-        "\n"
-        "    // @brief constructor\n"
-        "    TemplateTool(const std::string name_, const std::string pythonPath_,\n"
-        "        const std::string subfolder_, const std::string templateStr_) :\n"
-        "        name(name_),\n"
-        "        pythonPath(pythonPath_),\n"
-        "        subfolder(subfolder_),\n"
-        "        templateStr(templateStr_) {\n"
-        "    }\n"
-        "\n"
-        "    // @brief tool name\n"
-        "    const std::string name;\n"
-        "\n"
-        "    // @brief python path\n"
-        "    const std::string pythonPath;\n"
-        "\n"
-        "    // @brief subfolder path\n"
-        "    const std::string subfolder;\n"
-        "\n"
-        "    // @brief tool template\n"
-        "    const std::string templateStr;\n"
-        "};\n",
-        file=templateHeaderFile)
+    print(u"""#pragma once
+#include <string>
+#include <vector>
 
+struct TemplateTool {
 
-def formatBinTemplate(templateStr):
-    """
-    @brief parse binary of a bin template (sumo, netconvert, etc.)
-    """
-    # remove endlines in Windows
-    templateStr = templateStr.replace("\\r", '')
-    # replace " with \"
-    templateStr = templateStr.replace('"', '\\"')
-    # split lines
-    return templateStr.replace("\n", '"\n    "')
+    TemplateTool(const std::string name_, const std::string pythonPath_,
+        const std::string subfolder_, const std::string templateStr_) :
+        name(name_),
+        pythonPath(pythonPath_),
+        subfolder(subfolder_),
+        templateStr(templateStr_) {
+    }
 
-
-def formatToolTemplate(templateStr):
-    """
-    @brief format python tool template
-    """
-    if templateStr == '' or templateStr[0] != "<":
-        return '""'
-    # replace all current directory values (src/netedit)
-    templateStr = re.sub("(?<=value)(.*)(?=netedit)", "", templateStr)
-    templateStr = templateStr.replace('netedit', '="')
-    # replace " with \"
-    templateStr = templateStr.replace('"', '\\"')
-    # add quotes and end lines
-    return templateStr.replace("<", '"<').replace("\n", '"\n')
+    const std::string name;
+    const std::string pythonPath;
+    const std::string subfolder;
+    const std::string templateStr;
+};
+""",
+          file=templateHeaderFile)
 
 
 def generateTemplate(app, appBin):
@@ -365,13 +349,13 @@ def generateTemplate(app, appBin):
     env["UBSAN_OPTIONS"] = "suppressions=%s/../../build_config/clang_ubsan_suppressions.txt" % dirname(__file__)
     # obtain template piping stdout using check_output
     try:
-        template = formatBinTemplate(subprocess.check_output(
-            [appBin, "--save-template", "stdout"], env=env, universal_newlines=True))
+        template = subprocess.check_output([appBin, "--save-template", "stdout"], env=env, universal_newlines=True)
+        template = template.replace('\n\n', ')xml~") +\nstd::string(R"xml~(\n')
     except subprocess.CalledProcessError as e:
         sys.stderr.write("Error when generating template for " + app + ": '%s'" % e)
         template = ""
     # join variable and formatted template
-    return u'const std::string %sTemplate = "%s";\n' % (app, template)
+    return u'\n\nconst std::string %sTemplate = std::string(R"xml~(%s)xml~");' % (app, template)
 
 
 def _collectOutput(procs, toolPaths, failed, verbose, testFailure):
@@ -379,16 +363,17 @@ def _collectOutput(procs, toolPaths, failed, verbose, testFailure):
     for p, toolPath in zip(procs, toolPaths):
         toolName = os.path.basename(toolPath)[:-3]
         d = os.path.dirname(toolPath)
-        result += 'TemplateTool("%s", "tools/%s", "%s",\n' % (toolName, toolPath, PATH_MAPPING.get(d, d))
+        result += '\nTemplateTool("%s", "tools/%s", "%s", R"xml~(' % (toolName, toolPath, PATH_MAPPING.get(d, d))
         stdout, stderr = p.communicate()
-        if p.returncode:
+        if p.returncode or stdout == '' or stdout[0] != "<":
             failed.append(toolPath if testFailure else toolName)
             if verbose:
                 print("Cannot generate tool template for %s: '%s'." % (toolName, stderr), file=sys.stderr)
-            result += '""'
         else:
-            result += formatToolTemplate(stdout)
-        result += '),\n'
+            # replace all current directory values (src/netedit)
+            stdout = re.sub("(?<=value)(.*)(?=netedit)", "", stdout)
+            result += stdout.replace('netedit', '="')
+        result += ')xml~"),\n'
     return result
 
 
@@ -438,8 +423,8 @@ def checkMod(toolDir, reference):
 
 
 def main():
-    if len(sys.argv) != 3:
-        sys.exit("Arguments: <pathToSumo> <pathToNetgenerate>")
+    if len(sys.argv) != 4:
+        sys.exit("Arguments: <pathToSumo> <pathToNetconvert> <pathToNetgenerate>")
     # get tool dir path (SUMO/tools)
     toolDir = join(dirname(__file__), '..')
     if not os.path.exists("templates.h") or checkMod(toolDir, "templates.h"):
@@ -447,13 +432,15 @@ def main():
         with io.open("templates.h", 'w', encoding='utf8') as templateHeaderFile:
             buildTemplateToolHeader(templateHeaderFile)
             is_debug = sys.argv[1].endswith("D") or sys.argv[1].endswith("D.exe")
-            print(u"const std::vector<TemplateTool> templateTools {\n", file=templateHeaderFile)
+            print(u"const std::vector<TemplateTool> templateTools {", file=templateHeaderFile)
             print(generateToolTemplates(toolDir, TOOLS, is_debug), file=templateHeaderFile)
             print(u"};\n", file=templateHeaderFile)
             # generate sumo Template
             print(generateTemplate("sumo", sys.argv[1]), file=templateHeaderFile)
+            # generate netconvert Template
+            print(generateTemplate("netconvert", sys.argv[2]), file=templateHeaderFile)
             # generate netgenerate Template
-            print(generateTemplate("netgenerate", sys.argv[2]), file=templateHeaderFile)
+            print(generateTemplate("netgenerate", sys.argv[3]), file=templateHeaderFile)
 
 
 if __name__ == "__main__":

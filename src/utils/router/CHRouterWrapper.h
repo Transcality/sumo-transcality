@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -80,10 +80,15 @@ public:
         }
     }
 
-    virtual void prohibit(const std::vector<E*>& toProhibit) {
+    virtual void prohibit(const std::map<const E*, RouterProhibition>& toProhibit) {
         if (toProhibit.size() > 0) {
             WRITE_WARNINGF(TL("Routing algorithm CHWrapper does not support dynamic closing of edges%"), "");
         }
+    }
+
+    virtual bool supportsProhibitions() const {
+        WRITE_WARNINGF(TL("Routing algorithm CHWrapper does not support dynamic closing of edges and lanes%"), "");
+        return false;
     }
 
     virtual SUMOAbstractRouter<E, V>* clone() {
@@ -95,6 +100,14 @@ public:
     }
 
 
+    void setMsgHandler(MsgHandler* const errorMsgHandler) {
+        this->myErrorMsgHandler = errorMsgHandler;
+        for (auto item : myRouters) {
+            item.second->setMsgHandler(errorMsgHandler);
+        }
+    }
+
+
     bool compute(const E* from, const E* to, const V* const vehicle,
                  SUMOTime msTime, std::vector<const E*>& into, bool silent = false) {
         const std::pair<const SUMOVehicleClass, const double> svc = std::make_pair(vehicle->getVClass(), vehicle->getMaxSpeed());
@@ -102,6 +115,7 @@ public:
             // create new router for the given permissions and maximum speed
             // XXX a new router may also be needed if vehicles differ in speed factor
             myRouters[svc] = new CHRouterType(myEdges, myIgnoreErrors, this->myOperation, svc.first, myWeightPeriod, false, false);
+            myRouters[svc]->setMsgHandler(this->myErrorMsgHandler);
         }
         return myRouters[svc]->compute(from, to, vehicle, msTime, into, silent);
     }

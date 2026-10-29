@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -28,13 +28,15 @@ if "SUMO_HOME" in os.environ:
 import sumolib  # noqa
 import traci  # noqa
 
-sumoBinary = sumolib.checkBinary(sys.argv[1])
-if sys.argv[1] == "sumo":
+sumoOptions = [a for a in sys.argv[1:] if a.startswith('--')]
+positionalArgs = [a for a in sys.argv[1:] if not a.startswith('--')]
+sumoBinary = sumolib.checkBinary(positionalArgs[0])
+if positionalArgs[0] == "sumo":
     addOption = []
 else:
     addOption = ["-S", "-Q"]
 
-traci.start([sumoBinary, "-c", "sumo.sumocfg"] + addOption, stdout=sys.stdout)
+traci.start([sumoBinary, "-c", "sumo.sumocfg"] + addOption + sumoOptions, stdout=sys.stdout)
 time.sleep(10)
 step = 0
 while step <= 100:

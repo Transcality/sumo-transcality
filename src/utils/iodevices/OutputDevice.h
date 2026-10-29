@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2004-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2004-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -22,7 +22,6 @@
 /****************************************************************************/
 #pragma once
 #include <config.h>
-#include <iostream>
 
 #include <string>
 #include <map>
@@ -30,27 +29,19 @@
 #include <utils/common/ToString.h>
 #include <utils/xml/SUMOXMLDefinitions.h>
 #include "CSVFormatter.h"
-#include "PlainXMLFormatter.h"
+#ifdef HAVE_PARQUET
 #include "ParquetFormatter.h"
-#include "ParquetUnstructuredFormatter.h"
-#include "StreamDevices.h"
-
-#define OUTPUT_ACCURACY 2
+#endif
+#include "PlainXMLFormatter.h"
 
 // ===========================================================================
 // class definitions
 // ===========================================================================
-// Create an ENUM of the different writers (XML and Parquet)
-enum class OutputWriterType {
-    XML,
-    PARQUET
-};
-
 /**
  * @class OutputDevice
  * @brief Static storage of an output device and its base (abstract) implementation
  *
- * OutputDevices are basically a capsule around an StreamDevice, which give a
+ * OutputDevices are basically a capsule around an std::ostream, which give a
  *  unified access to sockets, files and stdout.
  *
  * Usually, an application builds as many output devices as needed. Each
@@ -100,15 +91,17 @@ public:
      *  within XML-declarations of structures which paths already is aware of the
      *  cwd.
      *
-     * @param[in] optionName  The name of the option to use for retrieving the output definition
-     * @param[in] rootElement The root element to use (XML-output)
-     * @param[in] schemaFile  The basename of the schema file to use (XML-output)
+     * @param[in] optionName   The name of the option to use for retrieving the output definition
+     * @param[in] rootElement  The root element to use (XML-output)
+     * @param[in] schemaFile   The basename of the schema file to use (XML-output)
+     * @param[in] maximumDepth The expected maximum nested depth (Parquet output)
      * @return Whether a device was built (the option was set)
      * @exception IOError If the output could not be built for any reason (error message is supplied)
      */
     static bool createDeviceByOption(const std::string& optionName,
-        const std::string& rootElement = "",
-        const std::string& schemaFile = "");
+                                     const std::string& rootElement = "",
+                                     const std::string& schemaFile = "",
+                                     const int maximumDepth = 2);
 
 
     /** @brief Returns the device described by the option
@@ -132,21 +125,7 @@ public:
     /**  Closes all registered devices
      */
     static void closeAll(bool keepErrorRetrievers = false);
-
-    /** @brief Finalize all global output resources, especially S3 resources
-     */
-    static void finalizeGlobalOutput();
     /// @}
-
-
-    /** @brief Helper method for string formatting
-     *
-     * @param[in] v The floating point value to be formatted
-     * @param[in] precision the precision to achieve
-     * @return The formatted string
-     */
-    static std::string realString(const double v, const int precision = gPrecision);
-
 
 public:
     /// @name OutputDevice member methods
@@ -155,12 +134,9 @@ public:
     /// @brief Constructor
     OutputDevice(const int defaultIndentation = 0, const std::string& filename = "");
 
-    /// @brief Constructor
-    OutputDevice(const std::string& filename, OutputFormatter* formatter);
-
 
     /// @brief Destructor
-    virtual ~OutputDevice() = default;
+    virtual ~OutputDevice();
 
 
     /** @brief returns the information whether one can write into the device
@@ -182,14 +158,19 @@ public:
      */
     void close();
 
+    bool isXML() const {
+        return myFormatter->getType() == OutputFormatterType::XML;
+    }
+
     void setFormatter(OutputFormatter* formatter) {
-        myFormatter.reset(formatter);
+        delete myFormatter;
+        myFormatter = formatter;
     }
 
     /** @brief Sets the precision or resets it to default
      * @param[in] precision The accuracy (number of digits behind '.') to set
      */
-    virtual void setPrecision(int precision = gPrecision);
+    void setPrecision(int precision = gPrecision);
 
     /** @brief Returns the precision of the underlying stream
      */
@@ -209,16 +190,9 @@ public:
      * @todo Describe what is saved
      */
     bool writeXMLHeader(const std::string& rootElement,
-        const std::string& schemaFile,
-        std::map<SumoXMLAttr, std::string> attrs = std::map<SumoXMLAttr, std::string>(),
-        bool includeConfig = true);
-
-
-    template <typename E>
-    bool writeHeader(const SumoXMLTag& rootElement) {
-        return getFormatter().writeHeader(getOStream(), rootElement);
-    }
-
+                        const std::string& schemaFile,
+                        std::map<SumoXMLAttr, std::string> attrs = std::map<SumoXMLAttr, std::string>(),
+                        bool includeConfig = true);
 
     /** @brief Opens an XML tag
      *
@@ -229,8 +203,7 @@ public:
      * @param[in] xmlElement Name of element to open
      * @return The OutputDevice for further processing
      */
-    virtual OutputDevice& openTag(const std::string& xmlElement);
-
+    OutputDevice& openTag(const std::string& xmlElement);
 
     /** @brief Opens an XML tag
      *
@@ -239,8 +212,7 @@ public:
      * @param[in] xmlElement Id of the element to open
      * @return The OutputDevice for further processing
      */
-    virtual OutputDevice& openTag(const SumoXMLTag& xmlElement);
-
+    OutputDevice& openTag(const SumoXMLTag& xmlElement);
 
     /** @brief Closes the most recently opened tag and optionally adds a comment
      *
@@ -252,30 +224,68 @@ public:
      * @return Whether a further element existed in the stack and could be closed
      * @todo it is not verified that the topmost element was closed
      */
-    virtual bool closeTag(const std::string& comment = "");
-
-
+    bool closeTag(const std::string& comment = "");
 
     /** @brief writes a line feed if applicable
      */
     void lf() {
-        getOStream() << "\n";
+        if (myFormatter->getType() == OutputFormatterType::XML) {
+            getOStream() << "\n";
+        }
     }
-
 
     /** @brief writes a named attribute
      *
+     * The attribute is always written even with XML output. The isNull flag is only for tabular outputs.
+     *
      * @param[in] attr The attribute (name)
      * @param[in] val The attribute value
+     * @param[in] isNull Whether the value should be represented as None / null in output formats which support it
+     * @param[in] escape Whether the value should be processed by the escaping mechanism to filter invalid characters
+     * @return The OutputDevice for further processing
+     */
+    template <typename T, class ATTR_TYPE>
+    OutputDevice& writeAttr(const ATTR_TYPE& attr, const T& val, const bool isNull = false, const bool escape = false) {
+        if (myFormatter->getType() == OutputFormatterType::XML) {
+            PlainXMLFormatter::writeAttr(getOStream(), attr, val, escape);
+#ifdef HAVE_PARQUET
+        } else if (myFormatter->getType() == OutputFormatterType::PARQUET) {
+            static_cast<ParquetFormatter*>(myFormatter)->writeAttr(getOStream(), attr, val, isNull, escape);
+#endif
+        } else {
+            static_cast<CSVFormatter*>(myFormatter)->writeAttr(getOStream(), attr, val, isNull, escape);
+        }
+        return *this;
+    }
+
+    /** @brief Parses a list of strings for attribute names and sets the relevant bits in the returned mask.
+     *
+     * It honors the special value "all" to set all bits and other special values for predefined bit sets given as parameter
+     *
+     * @param[in] attrList The attribute names and special values
+     * @param[in] desc A descriptive string for the error message if the attribute is unknown
+     * @param[in] special special values for predefined bitsets
+     * @return The corresponding mask of bits being set
+     */
+    static const SumoXMLAttrMask parseWrittenAttributes(const std::vector<std::string>& attrList, const std::string& desc,
+            const std::map<std::string, SumoXMLAttrMask>& special = std::map<std::string, SumoXMLAttrMask>());
+
+    /** @brief writes a named attribute unless null
+     *
+     * If isNull is true the attribute is not written with XML output. For tabular outputs the behavior is the same as writeAttr.
+     *
+     * @param[in] attr The attribute (name)
+     * @param[in] val The attribute value
+     * @param[in] isNull Whether the value should be filtered or represented as None / null in output formats which support it
+     * @param[in] escape Whether the value should be processed by the escaping mechanism to filter invalid characters
      * @return The OutputDevice for further processing
      */
     template <typename T>
-    OutputDevice& writeAttr(const SumoXMLAttr attr, const T& val) {
-        return writeAttr(toString(attr), val);
-    }
-
-    inline bool useAttribute(const SumoXMLAttr attr, SumoXMLAttrMask attributeMask) const {
-        return attributeMask.test(attr);
+    OutputDevice& writeOptionalAttr(const SumoXMLAttr attr, const T& val, const bool isNull = false, const bool escape = false) {
+        if (myFormatter->getType() == OutputFormatterType::XML && isNull) {
+            return *this;
+        }
+        return writeAttr(attr, val, isNull, escape);
     }
 
     /** @brief writes a named attribute unless filtered
@@ -283,62 +293,48 @@ public:
      * @param[in] attr The attribute (name)
      * @param[in] val The attribute value
      * @param[in] attributeMask The filter that specifies whether the attribute shall be written
+     * @param[in] isNull Whether the value should be represented as None / null in output formats which support it
+     * @param[in] escape Whether the value should be processed by the escaping mechanism to filter invalid characters
      * @return The OutputDevice for further processing
      */
     template <typename T>
-    OutputDevice& writeOptionalAttr(const SumoXMLAttr attr, const T& val, long long int attributeMask) {
-        assert((int)attr <= 63);
-        if (attributeMask == 0 || useAttribute(attr, attributeMask)) {
-            writeAttr(attr, val);
-
-        }
-        return *this;
-    }
-    template <typename T>
-    OutputDevice& writeOptionalAttr(const SumoXMLAttr attr, const T& val, SumoXMLAttrMask attributeMask) {
-        assert((int)attr <= (int)attributeMask.size());
-        if (attributeMask.none() || useAttribute(attr, attributeMask)) {
-
-            writeAttr(attr, val);
-
+    OutputDevice& writeOptionalAttr(const SumoXMLAttr attr, const T& val, const SumoXMLAttrMask& attributeMask,
+                                    const bool isNull = false, const bool escape = false) {
+        assert(attributeMask.none() || (int)attr <= (int)attributeMask.size());
+        if (attributeMask.none() || attributeMask.test(attr)) {
+            return writeOptionalAttr(attr, val, isNull, escape);
         }
         return *this;
     }
 
-
-    /** @brief writes an arbitrary attribute
+    /** @brief writes a named attribute with a generating function unless filtered
+     *
+     * This function should be used if generating the value needs an expensive function call
+     * which will not be executed if the value is filtered anyway.
      *
      * @param[in] attr The attribute (name)
-     * @param[in] val The attribute value
+     * @param[in] valFunc The function to generate the attribute value
+     * @param[in] attributeMask The filter that specifies whether the attribute shall be written
+     * @param[in] isNull Whether the value should be represented as None / null in output formats which support it
+     * @param[in] escape Whether the value should be processed by the escaping mechanism to filter invalid characters
      * @return The OutputDevice for further processing
      */
-    template <typename T>
-    OutputDevice& writeAttr(const std::string& attr, const T& val) {
-
-        switch (this->getType())
-        {
-        case OutputWriterType::XML:
-            // cast the writer to the correct type
-            getFormatter<PlainXMLFormatter>().writeAttr(getOStream(), attr, val);
-            break;
-        case OutputWriterType::PARQUET:
+    template <typename Func>
+    OutputDevice& writeFuncAttr(const SumoXMLAttr attr, const Func& valFunc, const SumoXMLAttrMask& attributeMask,
+                                const bool isNull = false, const bool escape = false) {
+        assert((int)attr <= (int)attributeMask.size());
+        if (attributeMask.none() || attributeMask.test(attr)) {
+            if (myFormatter->getType() == OutputFormatterType::XML) {
+                if (!isNull) {
+                    PlainXMLFormatter::writeAttr(getOStream(), attr, valFunc(), escape);
+                }
 #ifdef HAVE_PARQUET
-            // Explicitly check formatter type to handle both structured and unstructured outputs
-            if (dynamic_cast<ParquetUnstructuredFormatter*>(&this->getFormatter()) != nullptr) {
-                // Unstructured Parquet formatter
-                getFormatter<ParquetUnstructuredFormatter>().writeAttr(getOStream(), attr, val);
-            } else {
-                // Regular structured Parquet formatter
-                getFormatter<ParquetFormatter>().writeAttr(getOStream(), attr, val);
-            }
-#else
-            throw IOError("Parquet output is not supported in this build. Please recompile with the correct options.");
+            } else if (myFormatter->getType() == OutputFormatterType::PARQUET) {
+                static_cast<ParquetFormatter*>(myFormatter)->writeAttr(getOStream(), attr, valFunc(), isNull, escape);
 #endif
-            break;
-        default:
-            throw IOError("Unknown output writer type");
-            break;
-
+            } else {
+                static_cast<CSVFormatter*>(myFormatter)->writeAttr(getOStream(), attr, valFunc(), isNull, escape);
+            }
         }
         return *this;
     }
@@ -356,6 +352,10 @@ public:
         return *this;
     }
 
+    OutputDevice& writeTime(const SumoXMLAttr attr, const SUMOTime val) {
+        myFormatter->writeTime(getOStream(), attr, val);
+        return *this;
+    }
 
     /** @brief writes a preformatted tag to the device but ensures that any
      * pending tags are closed
@@ -387,14 +387,7 @@ public:
      */
     template <class T>
     OutputDevice& operator<<(const T& t) {
-        // getOStream() << t;
-        // get the correct formatter
-        if (this->getOStream().allowRaw()) {
-            writeRaw(t);
-        }
-        else {
-            throw IOError("Raw output is not allowed for this output device");
-        }
+        getOStream() << t;
         postWriteHook();
         return *this;
     }
@@ -407,50 +400,19 @@ public:
         return myFormatter->wroteHeader();
     }
 
-    /// @todo should move to the formatter
-    /// @brief Returns the type of the output device
-    virtual void setOSFlags(std::ios_base::fmtflags flags) {
-        getOStream().setOSFlags(flags);
-    }
-
-    // @brief handle the raw write
-    template <typename T>
-    void writeRaw(const T& val) {
-        // cast the writer to the correct type
-        if (this->getType() == OutputWriterType::XML) {
-            getFormatter<PlainXMLFormatter>().writeRaw(getOStream(), val);
-        }
-        else {
-            throw IOError("Raw output is not supported for this output type");
-        }
+    void setExpectedAttributes(const SumoXMLAttrMask& expected, const int depth) {
+        myFormatter->setExpectedAttributes(expected, depth);
     }
 
 protected:
     /// @brief Returns the associated ostream
-    virtual StreamDevice& getOStream() {
-        return *myStreamDevice;
-    };
+    virtual std::ostream& getOStream() = 0;
 
-    /// @brief Returns the associated ostream
-    template <typename T>
-    T* getStreamDevice() {
-        return static_cast<T*>(myStreamDevice);
-    }
-
-    /// @brief Returns whether the output device is a parquet
-    virtual OutputWriterType getType() const {
-        return OutputWriterType::XML;
-    }
     /** @brief Called after every write access.
      *
      * Default implementation does nothing.
      */
     virtual void postWriteHook();
-
-    /// @brief Returns the formatter
-    OutputFormatter& getFormatter() {
-        return *myFormatter;
-    }
 
 
 private:
@@ -459,26 +421,14 @@ private:
 
     /// @brief old console code page to restore after ending
     static int myPrevConsoleCP;
-    
-    /// @brief default precision for output
-    static int myPrecision;
 
 protected:
     const std::string myFilename;
 
-    /// @brief the stream device
-    std::unique_ptr<StreamDevice> myStreamDevice{nullptr};
+    bool myWriteMetadata;
 
-    /// @brief The formatter for XML
-
-    std::unique_ptr<OutputFormatter> myFormatter{nullptr};
-
-    /// @brief return a type casted formatter
-    template <typename T>
-    T& getFormatter() {
-        return static_cast<T&>(*myFormatter);
-    }
-
+    /// @brief The formatter for XML, CSV or Parquet
+    OutputFormatter* myFormatter;
 
 private:
     /// @brief Invalidated copy constructor.
@@ -486,4 +436,5 @@ private:
 
     /// @brief Invalidated assignment operator.
     OutputDevice& operator=(const OutputDevice&) = delete;
+
 };

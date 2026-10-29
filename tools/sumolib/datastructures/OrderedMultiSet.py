@@ -1,5 +1,5 @@
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -18,7 +18,7 @@
 """
 multi set with insertion-order iteration
 based on OrderedSet by Raymond Hettinger (c) , MIT-License
-[http://code.activestate.com/recipes/576694/]
+https://web.archive.org/web/20260227030136/https://code.activestate.com/recipes/576694/
 """
 from __future__ import absolute_import
 

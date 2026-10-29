@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -122,6 +122,13 @@ class EdgeDomain(Domain):
         Returns the average friction [0..1] for the last time step over all lanes on the given edge.
         """
         return self._getUniversal(tc.VAR_FRICTION, edgeID)
+
+    def getMaxSpeed(self, edgeID):
+        """getMaxSpeed(string) -> double
+
+        Returns the maximum speed (in m/s) of the first lane of the edge.
+        """
+        return self._getUniversal(tc.VAR_MAXSPEED, edgeID)
 
     def getLastStepOccupancy(self, edgeID):
         """getLastStepOccupancy(string) -> double

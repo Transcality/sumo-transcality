@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -362,8 +362,8 @@ NWWriter_OpenDrive::writeNormalEdge(OutputDevice& device, const NBEdge* e,
         device << "                    <lane id=\"" << s2x(j, numLanes) << "\" type=\"" << laneType << "\" level=\"true\">\n";
         device << "                        <link/>\n";
         // this could be used for geometry-link junctions without u-turn,
-        // predecessor and sucessors would be lane indices,
-        // road predecessor / succesfors would be of type 'road' rather than
+        // predecessor and successors would be lane indices,
+        // road predecessor / successors would be of type 'road' rather than
         // 'junction'
         //device << "                            <predecessor id=\"-1\"/>\n";
         //device << "                            <successor id=\"-1\"/>\n";

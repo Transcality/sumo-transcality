@@ -1,5 +1,5 @@
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -14,13 +14,9 @@
 # @author  Mirko Barthauer
 # @date    2023-05-10
 
-from __future__ import print_function
 import gettext
 import os
 
-SUMO_HOME = os.environ.get('SUMO_HOME',
-                           os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-LOCALEDIR = os.path.join(SUMO_HOME, 'data', 'locale')
 CURRENT_LANG = None
 
 
@@ -31,7 +27,9 @@ def addLanguageOption(parser):
 def setLanguage(lang):
     global CURRENT_LANG
     try:
-        translation = gettext.translation("sumo", localedir=LOCALEDIR, languages=[lang])
+        sumoRoot = os.environ.get('SUMO_HOME',
+                                  os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+        translation = gettext.translation("sumo", os.path.join(sumoRoot, 'data', 'locale'), languages=[lang])
         translation.install()
         CURRENT_LANG = translation
     except:  # noqa

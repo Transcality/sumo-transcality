@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -66,7 +66,7 @@ public:
      * @param[in] waitingTime the current total waiting time
      * @param[in] angle the current absolute angle of the vehicle
      */
-    void setDynamicValues(const SUMOTime stopDuration, const bool parking, const SUMOTime waitingTime, const double angle);
+    void setDynamicValues(const SUMOTime stopDuration, const bool parking, const SUMOTime waitingTime, const double angleDiff);
 
     /**@brief Sets the empty mass of the vehicle (type)
      * This is to be used by traci/libsumo
@@ -151,8 +151,7 @@ private:
     double myStopDurationSeconds = -1.;
     bool myAmParking = false;
     double myWaitingTimeSeconds = -1.;
-    double myLastAngle = INVALID_DOUBLE;
-    double myAngle = INVALID_DOUBLE;
+    double myAngleDiff = 0;
     double myTransportableMass = 0.;
 
     static const EnergyParams* myDefault;

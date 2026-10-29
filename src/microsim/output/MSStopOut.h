@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,7 @@
 /// @author  Jakob Erdmann
 /// @date    Wed, 21.12.2016
 ///
-// Ouput information about planned vehicle stop
+// Output information about planned vehicle stop
 /****************************************************************************/
 #pragma once
 #include <config.h>
@@ -30,6 +30,7 @@
 // ===========================================================================
 class OutputDevice;
 class SUMOVehicle;
+class MSStop;
 
 
 // ===========================================================================
@@ -77,7 +78,7 @@ public:
     void loadedContainers(const SUMOVehicle* veh, int n);
     void unloadedContainers(const SUMOVehicle* veh, int n);
 
-    void stopEnded(const SUMOVehicle* veh, const SUMOVehicleParameter::Stop& stop, const std::string& laneOrEdgeID, bool simEnd = false);
+    void stopEnded(const SUMOVehicle* veh, const MSStop& stop, bool simEnd = false);
 
     /// @brief generate output for vehicles which are still stopped at simulation end
     void generateOutputForUnfinished();

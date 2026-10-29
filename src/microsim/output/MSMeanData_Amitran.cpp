@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -107,7 +107,7 @@ MSMeanData_Amitran::MSLaneMeanDataValues::isEmpty() const {
 
 
 void
-MSMeanData_Amitran::MSLaneMeanDataValues::write(OutputDevice& dev, long long int attributeMask, const SUMOTime /* period */,
+MSMeanData_Amitran::MSLaneMeanDataValues::write(OutputDevice& dev, const SumoXMLAttrMask& attributeMask, const SUMOTime /* period */,
         const int /* numLanes */, const double /*speedLimit*/, const double defaultTravelTime, const int /* numVehicles */) const {
     int averageSpeed;
     if (sampleSeconds > 0) {
@@ -130,7 +130,6 @@ MSMeanData_Amitran::MSLaneMeanDataValues::write(OutputDevice& dev, long long int
             dev.closeTag();
         }
     }
-    dev.closeTag();
 }
 
 // ---------------------------------------------------------------------------
@@ -139,7 +138,7 @@ MSMeanData_Amitran::MSLaneMeanDataValues::write(OutputDevice& dev, long long int
 MSMeanData_Amitran::MSMeanData_Amitran(const std::string& id,
                                        const SUMOTime dumpBegin,
                                        const SUMOTime dumpEnd, const bool useLanes,
-                                       const bool withEmpty, const bool printDefaults,
+                                       const std::string& excludeEmpty,
                                        const bool withInternal,
                                        const bool trackVehicles,
                                        const int detectPersons,
@@ -149,8 +148,8 @@ MSMeanData_Amitran::MSMeanData_Amitran(const std::string& id,
                                        const std::string& vTypes,
                                        const std::string& writeAttributes,
                                        const std::vector<MSEdge*>& edges,
-                                       bool aggregate) :
-    MSMeanData(id, dumpBegin, dumpEnd, useLanes, withEmpty, printDefaults,
+                                       AggregateType aggregate) :
+    MSMeanData(id, dumpBegin, dumpEnd, useLanes, excludeEmpty,
                withInternal, trackVehicles, detectPersons, maxTravelTime, minSamples, vTypes, writeAttributes, edges, aggregate),
     myHaltSpeed(haltSpeed) {
 }
@@ -178,19 +177,21 @@ MSMeanData_Amitran::openInterval(OutputDevice& dev, const SUMOTime startTime, co
 }
 
 
-bool
-MSMeanData_Amitran::writePrefix(OutputDevice& dev, const MeanDataValues& values, const SumoXMLTag /* tag */, const std::string id) const {
-    if (myDumpEmpty || !values.isEmpty()) {
-        dev.openTag("link").writeAttr(SUMO_ATTR_ID, id);
-        return true;
-    }
-    return false;
+void
+MSMeanData_Amitran::writePrefix(OutputDevice& dev, const MeanDataValues& /*values*/, const SumoXMLTag /* tag */, const std::string id) const {
+    dev.openTag("link").writeAttr(SUMO_ATTR_ID, id);
 }
 
 
 MSMeanData::MeanDataValues*
 MSMeanData_Amitran::createValues(MSLane* const lane, const double length, const bool doAdd) const {
     return new MSLaneMeanDataValues(lane, length, doAdd, this);
+}
+
+
+std::vector<std::string>
+MSMeanData_Amitran::getAttributeNames() const {
+    return std::vector<std::string> {toString(SUMO_ATTR_AMOUNT), toString(SUMO_ATTR_AVERAGESPEED)};
 }
 
 

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -108,14 +108,13 @@ EnergyParams::~EnergyParams() {}
 
 
 void
-EnergyParams::setDynamicValues(const SUMOTime stopDuration, const bool parking, const SUMOTime waitingTime, const double angle) {
+EnergyParams::setDynamicValues(const SUMOTime stopDuration, const bool parking, const SUMOTime waitingTime, const double angleDiff) {
     if ((stopDuration >= 0 && myStopDurationSeconds < 0.) || (stopDuration < 0 && myStopDurationSeconds >= 0.)) {
         myStopDurationSeconds = STEPS2TIME(stopDuration);
         myAmParking = parking;
     }
     myWaitingTimeSeconds = STEPS2TIME(waitingTime);
-    myLastAngle = myAngle;
-    myAngle = angle;
+    myAngleDiff = angleDiff;
 }
 
 
@@ -129,6 +128,7 @@ EnergyParams::setMass(const double mass) {
 void
 EnergyParams::setTransportableMass(const double mass) {
     myTransportableMass = mass;
+    assert(myTransportableMass >= 0);
 }
 
 
@@ -140,7 +140,7 @@ EnergyParams::getTotalMass(const double defaultEmptyMass, const double defaultLo
 
 double
 EnergyParams::getAngleDiff() const {
-    return myLastAngle == INVALID_DOUBLE ? 0. : GeomHelper::angleDiff(myLastAngle, myAngle);
+    return myAngleDiff;
 }
 
 

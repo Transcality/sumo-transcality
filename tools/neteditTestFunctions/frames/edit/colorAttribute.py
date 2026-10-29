@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,10 +16,12 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
+from ...enums.attributesEnum import attrs
+from ...general.functions import focusOnFrame
+from ...input.keyboard import typeKey, typeTwoKeys
 
 
-def modifyColorAttribute(attributeIndex, color):
+def modifyColorAttribute(attributeIndex):
     """
     @brief modify color using dialog
     """
@@ -33,14 +35,14 @@ def modifyColorAttribute(attributeIndex, color):
     for _ in range(2):
         typeTwoKeys('shift', 'tab')
     # select color
-    for _ in range(1 + color):
+    for _ in range(6):
         typeKey('down')
     # go to accept button and press it
     typeKey('tab')
     typeKey('space')
 
 
-def modifyColorAttributeOverlapped(attributeIndex, color):
+def modifyColorAttributeOverlapped(attributeIndex):
     """
     @brief modify color using dialog
     """
@@ -54,7 +56,7 @@ def modifyColorAttributeOverlapped(attributeIndex, color):
     for _ in range(2):
         typeTwoKeys('shift', 'tab')
     # select color
-    for _ in range(1 + color):
+    for _ in range(6):
         typeKey('down')
     # go to accept button and press it
     typeKey('tab')

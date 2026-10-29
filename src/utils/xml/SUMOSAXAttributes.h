@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2007-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2007-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -230,11 +230,11 @@ public:
      * @brief Returns the bool-value of the named (by its enum-value) attribute
      *
      * Tries to retrieve the attribute from the attribute list. The retrieved
-     *  attribute  (which may be 0) is then parsed using TplConvert<XMLCh>::_2bool.
-     *  If the attribute is empty or ==0, TplConvert<XMLCh>::_2bool throws an
-     *  EmptyData-exception which is passed.
-     * If the value can not be parsed to a bool, TplConvert<XMLCh>::_2bool throws a
-     *  BoolFormatException-exception which is passed.
+     *  attribute  (which may be 0) is then parsed using StringUtils::toBool.
+     *  If the attribute is not set or the empty string, StringUtils::toBool throws an
+     *  EmptyData exception which is passed.
+     * If the value can not be parsed to a bool, StringUtils::toBool throws a
+     *  BoolFormatException which is passed.
      *
      * @param[in] id The id of the attribute to return the value of
      * @return The attribute's value as a bool, if it could be read and parsed
@@ -249,11 +249,11 @@ public:
      * @brief Returns the int-value of the named (by its enum-value) attribute
      *
      * Tries to retrieve the attribute from the attribute list. The retrieved
-     *  attribute  (which may be 0) is then parsed using TplConvert<XMLCh>::_2int.
-     *  If the attribute is empty or ==0, TplConvert<XMLCh>::_2int throws an
-     *  EmptyData-exception which is passed.
-     * If the value can not be parsed to an int, TplConvert<XMLCh>::_2int throws a
-     *  NumberFormatException-exception which is passed.
+     *  attribute  (which may be 0) is then parsed using StringUtils::toInt.
+     *  If the attribute is the empty string or not set, StringUtils::toInt throws an
+     *  EmptyData exception which is passed.
+     * If the value can not be parsed to an int, StringUtils::toInt throws a
+     *  NumberFormatException which is passed.
      *
      * @param[in] id The id of the attribute to return the value of
      * @return The attribute's value as an int, if it could be read and parsed
@@ -444,6 +444,7 @@ INVALID_RETURN(SumoXMLEdgeFunc);
 INVALID_RETURN(SumoXMLNodeType);
 INVALID_RETURN(RightOfWay);
 INVALID_RETURN(FringeType);
+INVALID_RETURN(RoundaboutType);
 INVALID_RETURN(ParkingType);
 INVALID_RETURN(std::vector<std::string>);
 INVALID_RETURN(std::vector<int>);

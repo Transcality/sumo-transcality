@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -105,7 +105,7 @@ def init(manager):
     sumoConfig = "%s%02i.sumocfg" % (PREFIX, options.demand)
     if options.cyber:
         sumoConfig = "%s%02i_cyber.sumocfg" % (PREFIX, options.demand)
-    traci.start([sumoExe, "-c", sumoConfig])
+    traci.start([sumoExe, "-c", sumoConfig, "--default.departspeed", "0", "--default.departlane", "first"])
     traci.simulation.subscribe()
     setting.manager = manager
     setting.verbose = options.verbose

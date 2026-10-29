@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -226,8 +226,19 @@ MSDevice_Tripinfo::notifyMoveInternal(const SUMOTrafficObject& veh,
         myMesoTimeLoss += TIME2STEPS(timeOnLane * (vmax - meanSpeedVehicleOnLane) / vmax);
     }
     myWaitingTime += veh.getWaitingTime();
+    if (veh.getWaitingTime() >= TIME2STEPS(1)) {
+        // waiting counts the time spent waiting to enter the next link (when it's occupied).
+        myWaitingCount++;
+    }
 }
 
+
+void
+MSDevice_Tripinfo::recordMesoParkingTimeLoss(SUMOTime waitingTime) {
+    myMesoTimeLoss += waitingTime;
+    myWaitingTime += waitingTime;
+    myWaitingCount++;
+}
 
 void
 MSDevice_Tripinfo::updateParkingStopTime() {
@@ -286,7 +297,7 @@ MSDevice_Tripinfo::notifyLeave(SUMOTrafficObject& veh, double /*lastPos*/,
                || reason == NOTIFICATION_TELEPORT
                || reason == NOTIFICATION_TELEPORT_CONTINUATION) {
         if (MSGlobals::gUseMesoSim) {
-            myRouteLength += myHolder.getEdge()->getLength();
+            myRouteLength += myHolder.getCurrentEdge()->getLength();
         } else {
             const MSLane* lane = static_cast<MSVehicle&>(veh).getLane();
             if (lane != nullptr) {
@@ -305,10 +316,12 @@ MSDevice_Tripinfo::generateOutput(OutputDevice* tripinfoOut) const {
     SUMOTime duration = 0;
     if (myHolder.hasDeparted()) {
         duration = (myArrivalTime == NOT_ARRIVED ? SIMSTEP : myArrivalTime) - myHolder.getDeparture();
+        const SUMOTime drivingDuration = duration - myStoppingTime;
+        const double speed = drivingDuration > 0 ? routeLength / STEPS2TIME(drivingDuration) : 0;
         if (myHolder.getVClass() == SVC_BICYCLE) {
             myBikeCount++;
             myTotalBikeRouteLength += routeLength;
-            myTotalBikeSpeed += routeLength / STEPS2TIME(duration);
+            myTotalBikeSpeed += speed;
             myTotalBikeDuration += duration;
             myTotalBikeWaitingTime += myWaitingTime;
             myTotalBikeTimeLoss += timeLoss;
@@ -316,7 +329,7 @@ MSDevice_Tripinfo::generateOutput(OutputDevice* tripinfoOut) const {
         } else {
             myVehicleCount++;
             myTotalRouteLength += routeLength;
-            myTotalSpeed += routeLength / STEPS2TIME(duration);
+            myTotalSpeed += speed;
             myTotalDuration += duration;
             myTotalWaitingTime += myWaitingTime;
             myTotalTimeLoss += timeLoss;
@@ -432,10 +445,7 @@ MSDevice_Tripinfo::generateOutputForUnfinished() {
     }
     // unfinished persons
     if (net->hasPersons()) {
-        MSTransportableControl& pc = net->getPersonControl();
-        while (pc.loadedBegin() != pc.loadedEnd()) {
-            pc.erase(pc.loadedBegin()->second);
-        }
+        net->getPersonControl().eraseAll();
     }
 
 }
@@ -911,9 +921,10 @@ MSDevice_Tripinfo::getGlobalParameter(const std::string& prefixedKey) {
 
 void
 MSDevice_Tripinfo::saveState(OutputDevice& out) const {
+    // always write device id to replicate stochastic assignment
+    out.openTag(SUMO_TAG_DEVICE);
+    out.writeAttr(SUMO_ATTR_ID, getID());
     if (myHolder.hasDeparted()) {
-        out.openTag(SUMO_TAG_DEVICE);
-        out.writeAttr(SUMO_ATTR_ID, getID());
         std::ostringstream internals;
         internals << myDepartLane << " ";
         if (!MSGlobals::gUseMesoSim) {
@@ -924,23 +935,25 @@ MSDevice_Tripinfo::saveState(OutputDevice& out) const {
         internals << myStoppingTime << " " << myParkingStarted << " ";
         internals << myArrivalTime << " " << state_arrivalLane << " " << myArrivalPos << " " << myArrivalPosLat << " " << myArrivalSpeed;
         out.writeAttr(SUMO_ATTR_STATE, internals.str());
-        out.closeTag();
     }
+    out.closeTag();
 }
 
 
 void
 MSDevice_Tripinfo::loadState(const SUMOSAXAttributes& attrs) {
-    std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
-    bis >> myDepartLane;
-    if (!MSGlobals::gUseMesoSim) {
-        bis >> myDepartPosLat;
-    }
-    bis >> myDepartSpeed >> myRouteLength >> myWaitingTime >> myAmWaiting >> myWaitingCount;
-    bis >> myStoppingTime >> myParkingStarted;
-    bis >> myArrivalTime >> myArrivalLane >> myArrivalPos >> myArrivalPosLat >> myArrivalSpeed;
-    if (myArrivalLane == STATE_EMPTY_ARRIVALLANE) {
-        myArrivalLane = "";
+    if (attrs.hasAttribute(SUMO_ATTR_STATE)) {
+        std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
+        bis >> myDepartLane;
+        if (!MSGlobals::gUseMesoSim) {
+            bis >> myDepartPosLat;
+        }
+        bis >> myDepartSpeed >> myRouteLength >> myWaitingTime >> myAmWaiting >> myWaitingCount;
+        bis >> myStoppingTime >> myParkingStarted;
+        bis >> myArrivalTime >> myArrivalLane >> myArrivalPos >> myArrivalPosLat >> myArrivalSpeed;
+        if (myArrivalLane == STATE_EMPTY_ARRIVALLANE) {
+            myArrivalLane = "";
+        }
     }
 }
 

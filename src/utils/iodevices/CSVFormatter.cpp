@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,6 +19,11 @@
 /****************************************************************************/
 #include <config.h>
 
+#ifdef HAVE_FMT
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+#endif
+#include <utils/common/MsgHandler.h>
 #include <utils/common/ToString.h>
 #include "CSVFormatter.h"
 
@@ -26,47 +31,91 @@
 // ===========================================================================
 // member method definitions
 // ===========================================================================
-CSVFormatter::CSVFormatter(const char separator)
-    : OutputFormatter(OutputFormatterType::CSV), mySeparator(separator), myMaxDepth(0) {
+CSVFormatter::CSVFormatter(const std::string& columnNames, const char separator)
+    : OutputFormatter(OutputFormatterType::CSV), myHeaderFormat(columnNames), mySeparator(separator) {
+    if (myHeaderFormat == "none") {
+        myWroteHeader = true;
+    }
 }
 
 
 bool
-CSVFormatter::writeXMLHeader(std::ostream& /* into */, const std::string& /* rootElement */,
-                             const std::map<SumoXMLAttr, std::string>& /* attrs */, bool /* includeConfig */) {
+CSVFormatter::writeXMLHeader(std::ostream& into, const std::string& rootElement,
+                             const std::map<SumoXMLAttr, std::string>& attrs, bool /* writeMetadata */,
+                             bool /* includeConfig */) {
+    if (attrs.size() > 2) {
+        myHaveRootAttrs = true;
+        openTag(into, rootElement);
+        for (const auto& a : attrs) {
+            if (a.first != SUMO_ATTR_XMLNS && a.first != SUMO_ATTR_SCHEMA_LOCATION) {
+                writeAttr(into, a.first, a.second, false, false);
+            }
+        }
+        return true;
+    }
     return false;
 }
 
 
 void
-CSVFormatter::openTag(std::ostream& /* into */, const std::string& /* xmlElement */) {
-    myXMLStack.push_back(std::ostringstream());
+CSVFormatter::openTag(std::ostream& /* into */, const std::string& xmlElement) {
+    myXMLStack.push_back({xmlElement, (int)myValues.size()});
 }
 
 
 void
-CSVFormatter::openTag(std::ostream& /* into */, const SumoXMLTag& /* xmlElement */) {
-    myXMLStack.push_back(std::ostringstream());
+CSVFormatter::openTag(std::ostream& /* into */, const SumoXMLTag& xmlElement) {
+    myXMLStack.push_back({toString(xmlElement), (int)myValues.size()});
 }
 
 
 bool
 CSVFormatter::closeTag(std::ostream& into, const std::string& /* comment */) {
     if (myMaxDepth == 0) {
-        into << myHeader << std::endl;
+        // the auto detection case: the first closed tag determines the depth
         myMaxDepth = (int)myXMLStack.size();
     }
-    if ((int)myXMLStack.size() == myMaxDepth) {
-        for (auto it = myXMLStack.begin(); it != myXMLStack.end() - 1; ++it) {
-            into << it->str();
+    const bool eof = myXMLStack.empty() || (myHaveRootAttrs && myXMLStack.size() == 1);
+    if ((myMaxDepth == (int)myXMLStack.size() || eof) && !myWroteHeader) {
+        // First complete row or EOF: write the header
+        if (!myCheckColumns) {
+            WRITE_WARNING("Column based formats are still experimental. Autodetection only works for homogeneous output.");
         }
-        // remove the final separator
-        std::string final = myXMLStack.back().str();
-        final.pop_back();
-        into << final << std::endl;
+        bool full = myHeaderFormat == "full";
+        if (myHeaderFormat == "auto") {
+            const std::set<std::string> uniq(myHeader.begin(), myHeader.end());
+            full = uniq.size() < myHeader.size();
+        }
+#ifdef HAVE_FMT
+        fmt::print(into, "{}\n", fmt::join(full ? myFullHeader : myHeader, std::string_view(&mySeparator, 1)));
+#else
+        into << joinToString(full ? myFullHeader : myHeader, mySeparator) << "\n";
+#endif
+        myWroteHeader = true;
     }
-    if (!myXMLStack.empty()) {
+    if (myNeedsWrite) {
+        myValues.resize(myHeader.size());
+#ifdef HAVE_FMT
+        const std::string row = fmt::format("{}", fmt::join(myValues, std::string_view(&mySeparator, 1)));
+#else
+        const std::string row = joinToString(myValues, mySeparator);
+#endif
+        myBufferedRows.emplace_back(row);
+        mySeenAttrs.reset();
+        myNeedsWrite = false;
+    }
+    if (myWroteHeader && !myBufferedRows.empty()) {
+        for (const std::string& row : myBufferedRows) {
+            into << row << '\n';
+        }
+        myBufferedRows.clear();
+    }
+    if (!eof) {
+        if ((int)myValues.size() > myXMLStack.back().second) {
+            myValues.resize(myXMLStack.back().second);
+        }
         myXMLStack.pop_back();
+        return true;
     }
     return false;
 }

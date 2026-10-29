@@ -4,16 +4,14 @@ default_nocenter
 
 id
 
-pos
-
-period
+jamtreshold
 
 name
 
-routeprobe
-
 output
 
-jamtreshold
+period
+
+routeprobe
 
 vtypes

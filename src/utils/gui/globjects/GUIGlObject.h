@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -109,6 +109,12 @@ public:
     /// @brief get icon associated with this GL Object
     FXIcon* getGLIcon() const;
 
+    /// @brief notify object about popup menu removal
+    GUIGlObject* getGLObjectParent();
+
+    /// @brief notify object about popup menu removal
+    void setGLObjectParent(GUIGlObject* parent);
+
     /// @}
 
     /// @name interfaces to be implemented by derived classes
@@ -182,6 +188,15 @@ public:
     //// @brief Returns the boundary to which the view shall be centered in order to show the object
     virtual Boundary getCenteringBoundary() const = 0;
 
+    virtual Position getCenter() const {
+        return getCenteringBoundary().getCenter();
+    }
+
+    /// @brief return individual scaling factor for this object
+    virtual double getScaleVisual() const {
+        return 1;
+    }
+
     /// @brief Draws the object
     /// @param[in] s The settings for the current view (may influence drawing)
     virtual void drawGL(const GUIVisualizationSettings& s) const = 0;
@@ -200,6 +215,11 @@ public:
 
     /// @brief update GLObject (geometry, ID, etc.) (optional)
     virtual void updateGLObject();
+
+    /// @brief check if object is visible (Currently used only in netedit)
+    virtual bool isVisible(const GUIVisualizationSettings& /*s*/) const {
+        return true;
+    }
 
     virtual double getColorValue(const GUIVisualizationSettings& /*s*/, int /*activeScheme*/) const {
         return 0;
@@ -245,7 +265,7 @@ protected:
     /// @{
     /// @brief build common popup options
     void buildPopUpMenuCommonOptions(GUIGLObjectPopupMenu* ret, GUIMainWindow& app, GUISUMOAbstractView* parent, const SumoXMLTag tag,
-                                     const bool selected, bool addSeparator = true);
+                                     const bool selected, const bool allowDelete, const bool addSeparator);
 
     /** @brief Builds the header
      * @param[in, filled] ret The popup menu to add the entry to
@@ -304,6 +324,9 @@ protected:
     /// @brief build basic additional popup options. Used to unify pop-ups menu in netedit and SUMO-GUI
     void buildAdditionalsPopupOptions(GUIMainWindow& app, GUIGLObjectPopupMenu* ret, const std::string& type);
 
+    /// @brief to be called by child class to ensure cleanup in correct order
+    void cleanupOnDestruction();
+
 private:
     /// @brief The numerical id of the object
     const GUIGlID myGlID;
@@ -322,6 +345,9 @@ private:
 
     /// @brief whether the object can be deleted
     bool myAmBlocked = false;
+
+    /// @brief parent of this GLObject (usually used for lanes and edges)
+    GUIGlObject* myParent = nullptr;
 
     /// @brief Parameter table windows which refer to this object
     std::set<GUIParameterTableWindow*> myParamWindows;

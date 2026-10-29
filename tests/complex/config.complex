@@ -13,6 +13,7 @@ copy_test_path:input_routes2.rou.xml
 copy_test_path:input_routes3.rou.xml
 copy_test_path:net.net.xml
 copy_test_path:input_net.net.xml
+copy_test_path:input_net.net.xml.gz
 copy_test_path:input_net2.net.xml
 copy_test_path:input_net3.net.xml
 copy_test_path:input_net4.net.xml
@@ -31,6 +32,7 @@ copy_test_path:settings.xml
 copy_test_path:sumo.sumocfg
 copy_test_path:sumo_log.sumocfg
 copy_test_path:save_state.sumocfg
+copy_test_path:load_state.sumocfg
 copy_test_path:osm.xml
 copy_test_path_merge:data
 copy_test_path:classes.txt
@@ -44,6 +46,7 @@ copy_test_path:runner.py
 copy_test_path:runnerlib.py
 copy_test_path:validate.py
 copy_test_path:slope.csv
+copy_test_path:data.csv
 copy_test_path:input_additional_template.add.xml
 copy_test_path:test.py
 copy_test_path:simpla.cfg.xml
@@ -76,6 +79,7 @@ log:log.txt
 log2:log2.txt
 cadytslog:cadySumo-log.txt
 detector:detector.xml
+detector2:detector2.xml
 tocs:tocs.xml
 stops:stops.xml
 stopinfos:stopinfos.xml
@@ -94,6 +98,8 @@ railsignalblocks:railsignal_blocks.xml
 railsignalvehs:railsignal_vehicles.xml
 railsignalblocks2:railsignal_blocks2.xml
 railsignalvehs2:railsignal_vehicles2.xml
+weights:weights.xml
+weights2:weights2.xml
 
 [run_dependent_text]
 output:<!--{[->]}-->
@@ -111,6 +117,7 @@ output:Parsing connections from .*{REPLACE Parsing connections from (FILE)}
 output:Loading vehicle type mappings from file.*{REPLACE Loading vehicle type mappings from file '<vtype.map>'...}
 output:Simulation.*started with{REPLACE Simulation started with}
 output:([0-9]* ms){REPLACE (TIME)}
+output:(buildConfig\.[A-Z_]*) .*{REPLACE \1}
 log:([0-9]*ms){REPLACE (TIME)}
 log2:([0-9]*ms){REPLACE (TIME)}
 output:version .*SUMO .*{REPLACE version SUMO}
@@ -124,6 +131,9 @@ output:Cannot read local schema .*,{REPLACE Cannot read local schema <schema>,}
 output:version .* started via libsumo {REPLACE started }
 output:{INTERNAL writedir}{REPLACE <TEXTTEST_SANDBOX>}
 output:Building scenario in .*{REPLACE Building scenario in <DIR>}
+output:vm3dgl: Unable to acquire VMware SVGA 3D display device.
+output:vm3dgl: Failed to initialize svga driver.
+output:vm3dgl: Falling back to LLVMPipe.
 log:Simulation.*started with{REPLACE Simulation started with}
 log:Starting server on port [0-9]*{REPLACE Starting server on port <PORT>}
 log:^Performance:{->}^Vehicles:
@@ -158,6 +168,7 @@ tls_state2:<!--{[->]}-->
 state:<snapshot (.*) version="[^"]*"{REPLACE <snapshot \1 version="<version>"}
 state2:<snapshot (.*) version="[^"]*"{REPLACE <snapshot \1 version="<version>"}
 detector:<!--{[->]}-->
+detector2:<!--{[->]}-->
 toc:<!--{[->]}-->
 toc2:<!--{[->]}-->
 tocs:<!--{[->]}-->
@@ -165,6 +176,8 @@ railsignalblocks:<!--{[->]}-->
 railsignalvehs:<!--{[->]}-->
 railsignalblocks2:<!--{[->]}-->
 railsignalvehs2:<!--{[->]}-->
+weights:<!--{[->]}-->
+weights2:<!--{[->]}-->
 errors:Die Adresse wird bereits verwendet{REPLACE Address already in use}
 errors:Leaked object at
 errors:*** 9 leaks found
@@ -191,6 +204,7 @@ errors:\\{REPLACE /}
 errors:Fontconfig warning:
 errors:Unable to revert mtime:
 errors:DeprecationWarning: builtin type .*wig.* has no __module__ attribute
+errors:Error: tcpip::Socket::accept() Unable to create listening socket: Address already in use{LINES 4}
 ps:%%CreationDate
 gtfs_additional:<!-- generated on{[->]}-->
 gtfs_routes:<!-- generated on{[->]}-->
@@ -225,5 +239,5 @@ fcd:0.0101
 log:0.0101
 
 [batch_extra_version]
-gcc4_64:perf
-msvc16x64:perf
+gcc:perf
+msvc:perf

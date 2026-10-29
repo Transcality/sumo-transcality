@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -273,6 +273,16 @@ private:
         bool myrespectMinGap; // @brief saves the information, if minGap was added to the desired gap s* at the last driver update (reaction time)
         int myap_update; // @brief is a number counting the simulation steps since the last driver/vehicle update (reaction time)
         std::vector<std::pair<double, double>> stop; // @brief saves the intended accelerations and distances from all stopSpeed-calculations of the current time step
+                                                     
+        /** @brief Saves the vehicle variables
+         * @param[in] out The OutputDevice to write the information into
+         */
+        void saveState(OutputDevice& out, const MSCFModel& cfm) const;
+
+        /** @brief Loads the state of the vehicle variables from the given description
+         * @param[in] attrs XML attributes describing the current state
+         */
+        void loadState(const SUMOSAXAttributes& attrs);
     };
 
 private:

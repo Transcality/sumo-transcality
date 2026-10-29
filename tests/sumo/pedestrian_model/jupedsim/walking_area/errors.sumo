@@ -1,3 +1,4 @@
 Warning: Polygon ':1387_c0' at junction '1387' has been replaced by its convex hull as it is not simple.
 Warning: Polygon ':1387_c1' at junction '1387' has been replaced by its convex hull as it is not simple.
 Warning: Polygon ':532_c0' at junction '532' has been replaced by its convex hull as it is not simple.
+Warning: Waiting point 1804.36,2053.30 is not in the geometry for entry on ':1387_c2_0'.

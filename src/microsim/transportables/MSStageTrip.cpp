@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -29,16 +29,30 @@
 #include <utils/router/PedestrianRouter.h>
 #include <utils/router/IntermodalRouter.h>
 #include <microsim/MSEdge.h>
+#include <microsim/MSEdgeControl.h>
+#include <microsim/devices/MSRoutingEngine.h>
 #include <microsim/MSLane.h>
 #include <microsim/MSNet.h>
 #include <microsim/MSStoppingPlace.h>
 #include <microsim/MSVehicleControl.h>
+#include <microsim/devices/MSDevice_Taxi.h>
 #include <microsim/transportables/MSStageDriving.h>
 #include <microsim/transportables/MSStageWaiting.h>
 #include <microsim/transportables/MSStageWalking.h>
 #include <microsim/transportables/MSTransportable.h>
+#include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/transportables/MSPerson.h>
 #include <microsim/transportables/MSStageTrip.h>
+
+
+// ===========================================================================
+// static members
+// ===========================================================================
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+FXMutex MSStageTrip::myVehCtrlMutex;
+#endif
+#endif
 
 
 // ===========================================================================
@@ -123,10 +137,12 @@ MSStageTrip::getVehicles(MSVehicleControl& vehControl, MSTransportable* transpor
             pars.back()->departProcedure = DepartDefinition::TRIGGERED;
         }
         if ((myModeSet & SVC_TAXI) != 0) {
-            pars.push_back(new SUMOVehicleParameter());
-            pars.back()->vtypeid = DEFAULT_TAXITYPE_ID;
-            pars.back()->id = transportable->getID() + "_taxi";
-            pars.back()->line = "taxi";
+            for (const auto& item : MSDevice_Taxi::getTaxiTypes()) {
+                pars.push_back(new SUMOVehicleParameter());
+                pars.back()->vtypeid = item.second;
+                pars.back()->id = transportable->getID() + "_taxi_" + item.second;
+                pars.back()->line = "taxi";
+            }
         }
         if ((myModeSet & SVC_BICYCLE) != 0) {
             pars.push_back(new SUMOVehicleParameter());
@@ -135,10 +151,10 @@ MSStageTrip::getVehicles(MSVehicleControl& vehControl, MSTransportable* transpor
             pars.back()->departProcedure = DepartDefinition::TRIGGERED;
         }
     }
-    ConstMSRoutePtr const routeDummy = std::make_shared<MSRoute>(transportable->getID() + "_0", ConstMSEdgeVector({ origin }), false, nullptr, std::vector<SUMOVehicleParameter::Stop>());
+    ConstMSRoutePtr const routeDummy = std::make_shared<MSRoute>(transportable->getID() + "_0", ConstMSEdgeVector({ origin }), false, nullptr, StopParVector());
     std::vector<SUMOVehicle*> result;
     for (SUMOVehicleParameter* vehPar : pars) {
-        const bool isTaxi = vehPar->vtypeid == DEFAULT_TAXITYPE_ID && vehPar->line == "taxi";
+        const bool isTaxi = vehPar->line == "taxi" && (myModeSet & SVC_TAXI) != 0;
         if (myDepartPos != 0) {
             vehPar->departPosProcedure = DepartPosDefinition::GIVEN;
             vehPar->departPos = myDepartPos;
@@ -176,7 +192,19 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
     double minCost = std::numeric_limits<double>::max();
     std::vector<MSTransportableRouter::TripItem> minResult;
     SUMOVehicle* minVehicle = nullptr;
-    for (SUMOVehicle* vehicle : getVehicles(vehControl, transportable, origin)) {
+    // pre-collect candidate vehicles under lock (buildVehicle touches shared counters)
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+    myVehCtrlMutex.lock();
+#endif
+#endif
+    std::vector<SUMOVehicle*> vehicles = getVehicles(vehControl, transportable, origin);
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+    myVehCtrlMutex.unlock();
+#endif
+#endif
+    for (SUMOVehicle* vehicle : vehicles) {
         std::vector<MSTransportableRouter::TripItem> result;
         double departPos = previous->getArrivalPos();
         MSStoppingPlace* const prevStop = previous->getDestinationStop();
@@ -185,7 +213,7 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
         }
         if (router.compute(origin, destination, departPos, prevStop == nullptr ? "" : prevStop->getID(),
                            myArrivalPos, myDestinationStop == nullptr ? "" : myDestinationStop->getID(),
-                           transportable->getMaxSpeed() * myWalkFactor, vehicle, myModeSet, time, result)) {
+                           transportable->getMaxSpeed() * myWalkFactor, vehicle, transportable->getVTypeParameter(), myModeSet, time, result)) {
             double totalCost = 0;
             for (const MSTransportableRouter::TripItem& item : result) {
                 totalCost += item.cost;
@@ -197,17 +225,27 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
             }
         }
         if (vehicle != nullptr) {
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+            myVehCtrlMutex.lock();
+#endif
+#endif
             vehControl.deleteVehicle(vehicle, true);
             vehControl.discountRoutingVehicle();
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+            myVehCtrlMutex.unlock();
+#endif
+#endif
         }
     }
     if (minCost != std::numeric_limits<double>::max()) {
-        const bool isTaxi = minVehicle != nullptr && minVehicle->getParameter().vtypeid == DEFAULT_TAXITYPE_ID && minVehicle->getParameter().line == "taxi";
+        const bool isTaxi = minVehicle != nullptr && (myModeSet & SVC_TAXI) != 0 && minVehicle->getParameter().line == "taxi";
         bool carUsed = false;
         for (std::vector<MSTransportableRouter::TripItem>::iterator it = minResult.begin(); it != minResult.end(); ++it) {
             if (!it->edges.empty()) {
-                MSStoppingPlace* bs = MSNet::getInstance()->getStoppingPlace(it->destStop, SUMO_TAG_BUS_STOP);
-                double localArrivalPos = bs != nullptr ? bs->getAccessPos(it->edges.back()) : it->edges.back()->getLength() / 2.;
+                MSStoppingPlace* bs = MSNet::getInstance()->getStoppingPlace(it->destStop);
+                double localArrivalPos = bs != nullptr ? bs->getAccessPos(it->edges.back()) : it->arrivalPos;
                 const MSEdge* const first = it->edges.front();
                 const MSEdge* const rideOrigin = origin->isTazConnector() && stages.empty() ? first : nullptr;
                 if (it + 1 == minResult.end() && myHaveArrivalPos) {
@@ -247,7 +285,7 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
                     previous->setCosts(it->cost);
                     previous->setTrip(this);
                     stages.push_back(previous);
-                } else if (isTaxi) {
+                } else if (isTaxi && it->line == minVehicle->getID()) {
                     const ConstMSEdgeVector& prevEdges = previous->getEdges();
                     if (prevEdges.size() >= 2 && previous->getDestinationStop() == nullptr) {
                         // determine walking direction and let the previous
@@ -266,10 +304,6 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
                     previous->setTrip(this);
                     stages.push_back(previous);
                 } else if (minVehicle != nullptr && it->line == minVehicle->getID()) {
-                    if (bs == nullptr && it + 1 != minResult.end()) {
-                        // we have no defined endpoint and are in the middle of the trip, drive as far as possible
-                        localArrivalPos = it->edges.back()->getLength();
-                    }
                     previous = new MSStageDriving(rideOrigin, it->edges.back(), bs, localArrivalPos, 0.0, std::vector<std::string>({ it->line }));
                     previous->setParameters(*this);
                     previous->setCosts(it->cost);
@@ -278,7 +312,8 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
                     minVehicle->replaceRouteEdges(it->edges, -1, 0, "person:" + transportable->getID(), true);
                     minVehicle->setArrivalPos(localArrivalPos);
                     const_cast<SUMOVehicleParameter&>(minVehicle->getParameter()).arrivalPos = localArrivalPos;
-                    vehControl.addVehicle(minVehicle->getID(), minVehicle);
+                    // defer addVehicle to main thread (called from setArrived after parallel routing completes)
+                    myVehicleToAdd = minVehicle;
                     carUsed = true;
                 } else {
                     const std::string line = OptionsCont::getOptions().getBool("persontrip.ride-public-line") ? it->line : LINE_ANY;
@@ -296,8 +331,18 @@ MSStageTrip::reroute(const SUMOTime time, MSTransportableRouter& router, MSTrans
         }
         setCosts(minCost);
         if (minVehicle != nullptr && (isTaxi || !carUsed)) {
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+            myVehCtrlMutex.lock();
+#endif
+#endif
             vehControl.deleteVehicle(minVehicle, true);
             vehControl.discountRoutingVehicle();
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+            myVehCtrlMutex.unlock();
+#endif
+#endif
         }
     } else {
         // append stage so the GUI won't crash due to inconsistent state
@@ -328,7 +373,13 @@ MSStageTrip::setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now
     MSStage::setArrived(net, transportable, now, vehicleArrived);
     std::vector<MSStage*> stages;
     std::string result;
-    if (transportable->getCurrentStageIndex() == 0) {
+    if (!myComputedStages.empty()) {
+        // routing was done in proceed() (serial or parallel)
+        stages.swap(myComputedStages);
+        result = myRoutingError;
+        myRoutingError = "";
+    } else {
+        // TRIP is at index 0 with no preceding stage, so proceed() was never called
         myDepartPos = transportable->getParameter().departPos;
         if (transportable->getParameter().departPosProcedure == DepartPosDefinition::RANDOM) {
             // TODO we should probably use the rng of the lane here
@@ -336,10 +387,10 @@ MSStageTrip::setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now
         }
         MSStageWaiting start(myOrigin, myOriginStop, -1, transportable->getParameter().depart, myDepartPos, "start", true);
         result = reroute(transportable->getParameter().depart, net->getIntermodalRouter(0), transportable, &start, myOrigin, myDestination, stages);
-    } else {
-        MSStage* previous = transportable->getNextStage(-1);
-        myDepartPos = previous->getArrivalPos();
-        result = reroute(now, net->getIntermodalRouter(0), transportable, previous, myOrigin, myDestination, stages);
+    }
+    if (myVehicleToAdd != nullptr) {
+        net->getVehicleControl().addVehicle(myVehicleToAdd->getID(), myVehicleToAdd);
+        myVehicleToAdd = nullptr;
     }
     int idx = 1;
     for (MSStage* stage : stages) {
@@ -350,8 +401,20 @@ MSStageTrip::setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now
 
 
 void
-MSStageTrip::proceed(MSNet* net, MSTransportable* transportable, SUMOTime now, MSStage* /* previous */) {
-    // just skip the stage, every interesting happens in setArrived
+MSStageTrip::proceed(MSNet* net, MSTransportable* transportable, SUMOTime now, MSStage* previous) {
+    myDepartPos = previous->getArrivalPos();
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
+    if (threadPool.size() > 0) {
+        MSRoutingEngine::getIntermodalRouterTT(transportable->getRNGIndex());
+        threadPool.add(new TripRoutingTask(*this, transportable, now, previous));
+        net->getPersonControl().addPendingRouting(transportable);
+        return;
+    }
+#endif
+#endif
+    myRoutingError = reroute(now, net->getIntermodalRouter(0), transportable, previous, myOrigin, myDestination, myComputedStages);
     transportable->proceed(net, now);
 }
 
@@ -376,7 +439,7 @@ MSStageTrip::getStageSummary(const bool) const {
 }
 
 void
-MSStageTrip::routeOutput(const bool /*isPerson*/, OutputDevice& os, const bool /*withRouteLength*/, const MSStage* const previous) const {
+MSStageTrip::routeOutput(const bool /*isPerson*/, OutputDevice& os, const bool /*withRouteLength*/, const MSStage* const previous, const bool /*withTiming*/, const bool /*saveState*/) const {
     if (myArrived < 0) {
         const bool walkFactorSet = myWalkFactor != OptionsCont::getOptions().getFloat("persontrip.walkfactor");
         const bool groupSet = myGroup != OptionsCont::getOptions().getString("persontrip.default.group");
@@ -425,5 +488,20 @@ MSStageTrip::routeOutput(const bool /*isPerson*/, OutputDevice& os, const bool /
         os.closeTag();
     }
 }
+
+
+/* -------------------------------------------------------------------------
+* MSStageTrip::TripRoutingTask - methods
+* ----------------------------------------------------------------------- */
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+void
+MSStageTrip::TripRoutingTask::run(MFXWorkerThread* context) {
+    MSTransportableRouter& router = static_cast<MSEdgeControl::WorkerThread*>(context)->getIntermodalRouter();
+    myStage.myRoutingError = myStage.reroute(myTime, router, myTransportable, myPrevious, myStage.myOrigin, myStage.myDestination, myStage.myComputedStages);
+}
+#endif
+#endif
+
 
 /****************************************************************************/

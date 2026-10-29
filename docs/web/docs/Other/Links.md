@@ -35,7 +35,7 @@ title: Links
 - [Trafix](https://trafix.sourceforge.net/) A road traffic simulation
   based on cellular automata written in C++. \[not revised\].
 - [Visual Traffic
-  Simulation](https://mysite.wanadoo-members.co.uk/tomfotherby/Contents/Uni/Project/index.html)
+  Simulation](https://web.archive.org/web/20071017061139/https://mysite.wanadoo-members.co.uk/tomfotherby/Contents/Uni/Project/index.html)
   A java application which allows to build own networks and simulate
   them. \[not revised\].
 - [MITRASIM-2000](https://www.maerivoet.org/index.php?page=traffic-mitrasim-2000)
@@ -46,12 +46,12 @@ title: Links
 - [TraffSpot](https://traffspot.db-nico.de/) A microscopic simulation
   with a nice 3D-view.
 
-### Traffic Lights Optimisation
+### Traffic Lights Optimization
 
 - [Green Light District](https://sourceforge.net/projects/stoplicht/) A software
-  for testing optimisation methods from the artificial intelligence,
+  for testing optimization methods from the artificial intelligence,
   such as reinforcement or genetic algorithms on their abilities to
-  optimise traffic lights within a complex environment. Seems to be
+  optimize traffic lights within a complex environment. Seems to be
   closed in July, 2001., works pretty fine.
 
 ### Applets

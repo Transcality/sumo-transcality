@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -70,13 +70,13 @@ RORouteHandler::RORouteHandler(RONet& net, const std::string& file,
     myBegin(string2time(OptionsCont::getOptions().getString("begin"))),
     myKeepVTypeDist(OptionsCont::getOptions().getBool("keep-vtype-distributions")),
     myUnsortedInput(OptionsCont::getOptions().exists("unsorted-input") && OptionsCont::getOptions().getBool("unsorted-input")),
+    myWriteFlows(OptionsCont::getOptions().exists("keep-flows") && OptionsCont::getOptions().getBool("keep-flows")),
     myCurrentVTypeDistribution(nullptr),
     myCurrentAlternatives(nullptr),
     myUseTaz(OptionsCont::getOptions().getBool("with-taz")),
     myWriteJunctions(OptionsCont::getOptions().exists("write-trips")
-            && OptionsCont::getOptions().getBool("write-trips")
-            && OptionsCont::getOptions().getBool("write-trips.junctions"))
-{
+                     && OptionsCont::getOptions().getBool("write-trips")
+                     && OptionsCont::getOptions().getBool("write-trips.junctions")) {
     myActiveRoute.reserve(100);
 }
 
@@ -496,12 +496,11 @@ RORouteHandler::closeRoute(const bool mayBeDisconnected) {
             }
         }
     }
-    RORoute* route = new RORoute(myActiveRouteID, myCurrentCosts, myActiveRouteProbability, myActiveRoute,
-                                 myActiveRouteColor, myActiveRouteStops);
+    std::shared_ptr<RORoute> route = std::make_shared<RORoute>(myActiveRouteID, myCurrentCosts, myActiveRouteProbability, myActiveRoute,
+                                     myActiveRouteColor, myActiveRouteStops);
     myActiveRoute.clear();
     if (myCurrentAlternatives == nullptr) {
         if (myNet.getRouteDef(myActiveRouteID) != nullptr) {
-            delete route;
             if (myVehicleParameter != nullptr) {
                 myErrorOutput->inform("Another route for vehicle '" + myVehicleParameter->id + "' exists.");
             } else {
@@ -615,8 +614,7 @@ RORouteHandler::closeRouteDistribution() {
                 }
                 if (ok) {
                     // negative probability indicates that this route should not be written
-                    RORoute* route = new RORoute(myCurrentAlternatives->getID(), 0, -1, edges, nullptr, myActiveRouteStops);
-                    myCurrentAlternatives->addLoadedAlternative(route);
+                    myCurrentAlternatives->addLoadedAlternative(std::make_shared<RORoute>(myCurrentAlternatives->getID(), 0, -1, edges, nullptr, myActiveRouteStops));
                 }
             }
         }
@@ -630,6 +628,8 @@ RORouteHandler::closeVehicle() {
     checkLastDepart();
     // get the vehicle id
     if (myVehicleParameter->departProcedure == DepartDefinition::GIVEN && myVehicleParameter->depart < myBegin) {
+        mySkippedVehicles.insert(myVehicleParameter->id);
+        myNet.routeSkipped();
         return;
     }
     // get vehicle type
@@ -673,14 +673,31 @@ RORouteHandler::closeVehicle() {
 
 void
 RORouteHandler::closeVType() {
-    if (myNet.addVehicleType(myCurrentVType)) {
-        if (myCurrentVTypeDistribution != nullptr) {
-            myCurrentVTypeDistribution->add(myCurrentVType, myCurrentVType->defaultProbability);
+    if (myCurrentVTypeRef.empty()) {
+        myNet.addVehicleType(myCurrentVType);
+        if (OptionsCont::getOptions().isSet("restriction-params")) {
+            const std::vector<std::string> paramKeys = OptionsCont::getOptions().getStringVector("restriction-params");
+            myCurrentVType->cacheParamRestrictions(paramKeys);
         }
     }
-    if (OptionsCont::getOptions().isSet("restriction-params")) {
-        const std::vector<std::string> paramKeys = OptionsCont::getOptions().getStringVector("restriction-params");
-        myCurrentVType->cacheParamRestrictions(paramKeys);
+    if (myCurrentVTypeDistribution != nullptr) {
+        if (myCurrentVTypeRef.empty()) {
+            myCurrentVTypeDistribution->add(myCurrentVType, myCurrentVType->defaultProbability);
+        } else {
+            const RandomDistributor<SUMOVTypeParameter*>* const dist = myNet.getVTypeDistribution(myCurrentVTypeRef);
+            if (dist != nullptr) {
+                const double distProb = (myCurrentVTypeProbability >= 0 ? myCurrentVTypeProbability : 1) / dist->getOverallProb();
+                std::vector<double>::const_iterator probIt = dist->getProbs().begin();
+                for (SUMOVTypeParameter* const type : dist->getVals()) {
+                    myCurrentVTypeDistribution->add(type, distProb * *probIt);
+                    probIt++;
+                }
+            } else {
+                SUMOVTypeParameter* const type = myNet.getVehicleTypeSecure(myCurrentVTypeRef);
+                double probability = myCurrentVTypeProbability >= 0 ? myCurrentVTypeProbability : type->defaultProbability;
+                myCurrentVTypeDistribution->add(type, probability);
+            }
+        }
     }
     myCurrentVType = nullptr;
 }
@@ -695,20 +712,20 @@ RORouteHandler::closePerson() {
     }
     if (myActivePlan == nullptr || myActivePlan->empty()) {
         WRITE_WARNINGF(TL("Discarding person '%' because her plan is empty"), myVehicleParameter->id);
-    } else {
+    } else if (myVehicleParameter->departProcedure != DepartDefinition::GIVEN || myVehicleParameter->depart >= myBegin) {
         ROPerson* person = new ROPerson(*myVehicleParameter, type);
         for (ROPerson::PlanItem* item : *myActivePlan) {
             person->getPlan().push_back(item);
         }
+        myActivePlan->clear();
         if (myNet.addPerson(person)) {
             checkLastDepart();
             registerLastDepart();
         }
+    } else {
+        myNet.routeSkipped();
     }
-    delete myVehicleParameter;
-    myVehicleParameter = nullptr;
-    delete myActivePlan;
-    myActivePlan = nullptr;
+    deleteActivePlanAndVehicleParameter();
 }
 
 
@@ -727,7 +744,9 @@ RORouteHandler::closePersonFlow() {
         // instantiate all persons of this flow
         int i = 0;
         std::string baseID = myVehicleParameter->id;
-        if (myVehicleParameter->repetitionProbability > 0) {
+        if (myWriteFlows) {
+            addFlowPerson(typeID, myVehicleParameter->depart, baseID, i);
+        } else if (myVehicleParameter->repetitionProbability > 0) {
             if (myVehicleParameter->repetitionEnd == SUMOTime_MAX) {
                 throw ProcessError(TLF("probabilistic personFlow '%' must specify end time", myVehicleParameter->id));
             } else {
@@ -767,18 +786,16 @@ RORouteHandler::closePersonFlow() {
             }
         }
     }
-    delete myVehicleParameter;
-    myVehicleParameter = nullptr;
-    for (ROPerson::PlanItem* const it : *myActivePlan) {
-        delete it;
-    }
-    delete myActivePlan;
-    myActivePlan = nullptr;
+    deleteActivePlanAndVehicleParameter();
 }
 
 
 void
 RORouteHandler::addFlowPerson(const std::string& typeID, SUMOTime depart, const std::string& baseID, int i) {
+    if (myVehicleParameter->departProcedure == DepartDefinition::GIVEN && depart < myBegin) {
+        myNet.routeSkipped();
+        return;
+    }
     SUMOVehicleParameter pars = *myVehicleParameter;
     pars.id = baseID + "." + toString(i);
     pars.depart = depart;
@@ -848,6 +865,7 @@ RORouteHandler::closeFlow() {
     while (myVehicleParameter->repetitionTotalOffset < offsetToBegin) {
         myVehicleParameter->incrementFlow(1);
         if (myVehicleParameter->repetitionsDone == myVehicleParameter->repetitionNumber) {
+            myNet.routeSkipped();
             delete myVehicleParameter;
             myVehicleParameter = nullptr;
             return;
@@ -890,51 +908,13 @@ RORouteHandler::closeTrip() {
 
 const SUMOVehicleParameter::Stop*
 RORouteHandler::retrieveStoppingPlace(const SUMOSAXAttributes& attrs, const std::string& errorSuffix, std::string& id, const SUMOVehicleParameter::Stop* stopParam) {
-    // dummy stop parameter to hold the attributes
-    SUMOVehicleParameter::Stop stop;
-    if (stopParam != nullptr) {
-        stop = *stopParam;
-    } else {
-        bool ok = true;
-        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_BUS_STOP, nullptr, ok, "");
-        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_TRAIN_STOP, nullptr, ok, stop.busstop); // alias
-        stop.chargingStation = attrs.getOpt<std::string>(SUMO_ATTR_CHARGING_STATION, nullptr, ok, "");
-        stop.overheadWireSegment = attrs.getOpt<std::string>(SUMO_ATTR_OVERHEAD_WIRE_SEGMENT, nullptr, ok, "");
-        stop.containerstop = attrs.getOpt<std::string>(SUMO_ATTR_CONTAINER_STOP, nullptr, ok, "");
-        stop.parkingarea = attrs.getOpt<std::string>(SUMO_ATTR_PARKING_AREA, nullptr, ok, "");
-    }
     const SUMOVehicleParameter::Stop* toStop = nullptr;
-    if (stop.busstop != "") {
-        toStop = myNet.getStoppingPlace(stop.busstop, SUMO_TAG_BUS_STOP);
-        id = stop.busstop;
+    SumoXMLTag tag = SUMO_TAG_NOTHING;
+    SUMOVehicleParserHelper::parseStopTag(attrs, stopParam, tag, id);
+    if (tag != SUMO_TAG_NOTHING) {
+        toStop = myNet.getStoppingPlace(id, tag);
         if (toStop == nullptr) {
-            WRITE_ERROR("The busStop '" + stop.busstop + "' is not known" + errorSuffix);
-        }
-    } else if (stop.containerstop != "") {
-        toStop = myNet.getStoppingPlace(stop.containerstop, SUMO_TAG_CONTAINER_STOP);
-        id = stop.containerstop;
-        if (toStop == nullptr) {
-            WRITE_ERROR("The containerStop '" + stop.containerstop + "' is not known" + errorSuffix);
-        }
-    } else if (stop.parkingarea != "") {
-        toStop = myNet.getStoppingPlace(stop.parkingarea, SUMO_TAG_PARKING_AREA);
-        id = stop.parkingarea;
-        if (toStop == nullptr) {
-            WRITE_ERROR("The parkingArea '" + stop.parkingarea + "' is not known" + errorSuffix);
-        }
-    } else if (stop.chargingStation != "") {
-        // ok, we have a charging station
-        toStop = myNet.getStoppingPlace(stop.chargingStation, SUMO_TAG_CHARGING_STATION);
-        id = stop.chargingStation;
-        if (toStop == nullptr) {
-            WRITE_ERROR("The chargingStation '" + stop.chargingStation + "' is not known" + errorSuffix);
-        }
-    } else if (stop.overheadWireSegment != "") {
-        // ok, we have an overhead wire segment
-        toStop = myNet.getStoppingPlace(stop.overheadWireSegment, SUMO_TAG_OVERHEAD_WIRE_SEGMENT);
-        id = stop.overheadWireSegment;
-        if (toStop == nullptr) {
-            WRITE_ERROR("The overhead wire segment '" + stop.overheadWireSegment + "' is not known" + errorSuffix);
+            myErrorOutput->inform(TLF("The % '%' is not known%", toString(tag), id, errorSuffix));
         }
     }
     return toStop;
@@ -1100,16 +1080,20 @@ RORouteHandler::addRide(const SUMOSAXAttributes& attrs) {
             return;
         }
         const std::string vehID = st.front();
-        if (!myNet.knowsVehicle(vehID)) {
-            myErrorOutput->inform("Unknown vehicle '" + vehID + "' in triggered departure for person '" + pid + "'.");
-            return;
+        if (myNet.knowsVehicle(vehID)) {
+            const SUMOTime vehDepart = myNet.getDeparture(vehID);
+            if (vehDepart == -1) {
+                myErrorOutput->inform("Cannot use triggered vehicle '" + vehID + "' in triggered departure for person '" + pid + "'.");
+                return;
+            }
+            myVehicleParameter->depart = vehDepart + 1; // write person after vehicle
+        } else {
+            if (mySkippedVehicles.count(vehID) == 0) {
+                myErrorOutput->inform("Unknown vehicle '" + vehID + "' in triggered departure for person '" + pid + "'.");
+                return;
+            }
+            myVehicleParameter->departProcedure = DepartDefinition::GIVEN; // make sure the person gets skipped due to depart time
         }
-        SUMOTime vehDepart = myNet.getDeparture(vehID);
-        if (vehDepart == -1) {
-            myErrorOutput->inform("Cannot use triggered vehicle '" + vehID + "' in triggered departure for person '" + pid + "'.");
-            return;
-        }
-        myVehicleParameter->depart = vehDepart + 1; // write person after vehicle
     }
     ROPerson::addRide(plan, from, to, lines, arrivalPos, stoppingPlaceID, group);
 }
@@ -1127,7 +1111,10 @@ RORouteHandler::addTransport(const SUMOSAXAttributes& attrs) {
         }
         const std::string vehID = st.front();
         if (!myNet.knowsVehicle(vehID)) {
-            throw ProcessError("Unknown vehicle '" + vehID + "' in triggered departure for container '" + pid + "'.");
+            if (mySkippedVehicles.count(vehID) == 0) {
+                throw ProcessError("Unknown vehicle '" + vehID + "' in triggered departure for container '" + pid + "'.");
+            }
+            return;
         }
         SUMOTime vehDepart = myNet.getDeparture(vehID);
         if (vehDepart == -1) {
@@ -1264,7 +1251,7 @@ RORouteHandler::addWalk(const SUMOSAXAttributes& attrs) {
         if (attrs.hasAttribute(SUMO_ATTR_ROUTE)) {
             const std::string routeID = attrs.get<std::string>(SUMO_ATTR_ROUTE, myVehicleParameter->id.c_str(), ok);
             RORouteDef* routeDef = myNet.getRouteDef(routeID);
-            const RORoute* route = routeDef != nullptr ? routeDef->getFirstRoute() : nullptr;
+            const std::shared_ptr<const RORoute> route = routeDef != nullptr ? routeDef->getFirstRoute() : nullptr;
             if (route == nullptr) {
                 throw ProcessError("The route '" + routeID + "' for walk of person '" + myVehicleParameter->id + "' is not known.");
             }
@@ -1321,6 +1308,20 @@ RORouteHandler::retrieveEdge(const std::string& id) {
     return myNet.getEdge(id);
 }
 
+
+const SUMOVTypeParameter*
+RORouteHandler::getVTypeParameter(const std::string& refid) {
+    if (refid == "") {
+        return nullptr;
+    }
+    if (!myNet.knowsVType(refid)) {
+        myErrorOutput->inform(TLF("Unknown vehicle type '%'.", refid));
+        return nullptr;
+    }
+    return myNet.getVehicleTypeSecure(refid);
+}
+
+
 bool
 RORouteHandler::checkLastDepart() {
     if (!myUnsortedInput) {
@@ -1328,5 +1329,6 @@ RORouteHandler::checkLastDepart() {
     }
     return true;
 }
+
 
 /****************************************************************************/

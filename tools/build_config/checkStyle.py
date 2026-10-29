@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2010-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2010-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -27,7 +27,7 @@ import sys
 import subprocess
 import multiprocessing
 import xml.sax
-import codecs
+import io
 from optparse import OptionParser
 try:
     import flake8  # noqa
@@ -74,7 +74,7 @@ EPL_HEADER = """/***************************************************************
 """
 EPL_GPL_HEADER = """/****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -90,12 +90,10 @@ EPL_GPL_HEADER = """/***********************************************************
 
 class PropertyReader(xml.sax.handler.ContentHandler):
 
-    """Reads the svn properties of files as written by svn pl -v --xml"""
-
     def __init__(self, doFix, doPep, license_attrs):
         self._fix = doFix
         self._pep = doPep
-        self._license = dict([e.split(":") for e in license_attrs.split(",")]) if license_attrs else None
+        self._license = dict([e.split(":") for e in license_attrs.split(";")]) if license_attrs else None
         self._file = ""
         self._property = None
         self._value = ""
@@ -206,11 +204,10 @@ class PropertyReader(xml.sax.handler.ContentHandler):
                     self._haveFixed = True
             elif fileLicense != newLicense:
                 if self._license:
-                    lines[idx:idx] = newLicense.splitlines(True) + ["\n",
-                                                                    "# @file    %s\n" % os.path.basename(self._file),
-                                                                    "# @author  %s\n" % self._license.get("author", ""),
-                                                                    "# @date    %s\n" % self._license.get("date", ""),
-                                                                    "\n"]
+                    lines[idx:idx] = (newLicense.splitlines(True)
+                                      + ["\n", "# @file    %s\n" % os.path.basename(self._file)]
+                                      + ["# @author  %s\n" % a for a in self._license.get("author", "").split(",")]
+                                      + ["# @date    %s\n" % self._license.get("date", ""), "\n"])
                     if "module" in self._license:
                         lines[idx+2:idx+2] = ["# %s\n" % ml for ml in self._license["module"].split('\\n')]
                     self._haveFixed = True
@@ -295,15 +292,15 @@ class PropertyReader(xml.sax.handler.ContentHandler):
             self._file = fileName
         ext = os.path.splitext(self._file)[1]
         try:
-            with codecs.open(self._file, 'r', 'utf8') as f:
+            with io.open(self._file, encoding='utf8') as f:
                 f.read()
         except UnicodeDecodeError as err:
             print(self._file, err)
-        self.checkFileHeader(ext)
         if exclude:
             for x in exclude:
                 if x + "/" in self._file:
                     return None
+        self.checkFileHeader(ext)
         if ext in (".cpp", ".h", ".java") and HAVE_ASTYLE and self._fix:
             subprocess.call(["astyle", "--style=java", "--unpad-paren", "--pad-header", "--pad-oper",
                              "--add-brackets", "--indent-switches", "--align-pointer=type",

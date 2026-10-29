@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -27,13 +27,11 @@ class positions:
 
     # reference position
 
-
     class reference:
         x = 0
         y = 0
 
     # down-left position (to avoid missclicks with toolbar menus)
-
 
     class downLeft:
         x = 950
@@ -41,25 +39,21 @@ class positions:
 
     # extern lane bot (common for all tests)
 
-
     class externLaneBot:
         x = 42
         y = 332
 
     # extern lane Top (common for all tests)
 
-
     class externLaneTop:
         x = 42
         y = 136
-
 
     class overlappedTest:
         x = 500
         y = 218
 
     # network
-
 
     class selection:
 
@@ -92,13 +86,12 @@ class positions:
             y = 373
 
         class rectangleLargeA:
-            x = 129
-            y = 4
+            x = 252
+            y = 75
 
         class rectangleLargeB:
-            x = 867
-            y = 463
-
+            x = 744
+            y = 394
 
     class network:
 
@@ -337,7 +330,6 @@ class positions:
                 x = 447
                 y = 225
 
-
     class elements:
 
         class edge0Ped:
@@ -348,10 +340,6 @@ class positions:
             x = 381
             y = 443
 
-        class edge0_dataMode:
-            x = 381
-            y = 473  # 443 + 30
-
         class edge1Ped:
             x = 874
             y = 238
@@ -359,10 +347,6 @@ class positions:
         class edge1:
             x = 850
             y = 222
-
-        class edge1_dataMode:
-            x = 850
-            y = 252  # 222 + 30
 
         class edge2Ped:
             x = 463
@@ -372,10 +356,6 @@ class positions:
             x = 494
             y = 26
 
-        # class edge2_dataMode:
-        #    x = 494
-        #    y = 26 + 30
-
         class edge3Ped:
             x = 409
             y = 57
@@ -383,10 +363,6 @@ class positions:
         class edge3:
             x = 477
             y = 56
-
-        # class edge3_dataMode:
-        #    x = 477
-        #    y = 56 + 30
 
         class edge4Ped:
             x = 791
@@ -396,10 +372,6 @@ class positions:
             x = 817
             y = 235
 
-        # class edge4_dataMode:
-        #    x = 817
-        #    y = 235 + 30
-
         class edge5Ped:
             x = 459
             y = 383
@@ -407,10 +379,6 @@ class positions:
         class edge5:
             x = 515
             y = 413
-
-        # class edge5_dataMode:
-        #    x = 515
-        #    y = 413 + 30
 
         class edgeBike0:
             x = 145
@@ -460,33 +428,6 @@ class positions:
             x = 503
             y = 233
 
-        # movement radius
-        class movementRadius:
-            up = 70
-            down = -70
-            left = -70
-            right = 70
-
-        class movementRadiusB:
-            up = 100
-            down = -100
-            left = -100
-            right = 100
-
-        class movementRadiusC:
-            up = 200
-            down = 0
-            left = 0
-            right = 190
-
-        class movementEdgeTop:
-            up = -180
-            down = 0
-
-        class movementEdgeBot:
-            up = 0
-            down = 180
-
         # additional (for inspect, delete, etc.)
         class additionals:
 
@@ -508,7 +449,7 @@ class positions:
 
             class parkingArea:
                 x = 340
-                y = 185
+                y = 210
 
             class parkingSpace:
                 x = 437
@@ -581,8 +522,6 @@ class positions:
             class geometryPointDestinyB:
                 x = 498
                 y = 332
-
-            shapeSize = 200
 
         # demand elements (for inspect, delete, etc.)
         class demands:
@@ -664,8 +603,8 @@ class positions:
                 y = 474
 
             class stopLane:
-                x = 415
-                y = 30
+                x = 499
+                y = 26
 
             class planEdge1:
                 x = 848
@@ -708,12 +647,11 @@ class positions:
 
             class TAZRelTop:
                 x = 630
-                y = 238
+                y = 215
 
             class TAZRelBot:
-                x = 650
-                y = 255
-
+                x = 630
+                y = 225
 
     class bugs:
 

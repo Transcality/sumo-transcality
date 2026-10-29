@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -42,6 +42,7 @@
 #include <microsim/devices/MSDevice_GLOSA.h>
 #include <utils/common/RandHelper.h>
 #include <utils/common/SUMOTime.h>
+#include <utils/xml/SUMOSAXAttributes.h>
 
 //#define DEBUG_V
 
@@ -79,6 +80,64 @@ MSCFModel_EIDM::MSCFModel_EIDM(const MSVehicleType* vtype) :
 }
 
 MSCFModel_EIDM::~MSCFModel_EIDM() {}
+
+void
+MSCFModel_EIDM::VehicleVariables::saveState(OutputDevice& out, const MSCFModel& /*cfm*/) const {
+    out.openTag(SUMO_TAG_CFM_VARIABLES);
+    out.writeAttr(SUMO_ATTR_ID, "EIDM");
+    std::ostringstream internals;
+    internals << minaccel << " ";
+    internals << wouldacc << " ";
+    internals << lastacc << " ";
+    internals << realacc << " ";
+    internals << lastrealacc << " ";
+    internals << realleaderacc << " ";
+    internals << lastleaderacc << " ";
+    internals << v0_int << " ";
+    internals << v0_old << " ";
+    internals << t_off << " ";
+    internals << myw_gap << " ";
+    internals << myw_speed << " ";
+    internals << myw_error << " ";
+    internals << myv_est_l << " ";
+    internals << myv_est << " ";
+    internals << mys_est << " ";
+    internals << myrespectMinGap << " ";
+    internals << myap_update;
+    out.writeAttr(SUMO_ATTR_STATE, internals.str());
+    out.closeTag();
+}
+
+
+void
+MSCFModel_EIDM::VehicleVariables::loadState(const SUMOSAXAttributes& attrs) {
+    bool ok = true;
+    const std::string cfmID = attrs.get<std::string>(SUMO_ATTR_ID, nullptr, ok);
+    if (cfmID != "EIDM") {
+        throw ProcessError(TLF("incompatible carFollowModel '%' when loading state for EIDM", cfmID));
+    }
+    std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
+    bis >> minaccel;
+    bis >> wouldacc;
+    bis >> lastacc;
+    bis >> realacc;
+    bis >> lastrealacc;
+    bis >> realleaderacc;
+    bis >> lastleaderacc;
+    bis >> v0_int;
+    bis >> v0_old;
+    bis >> t_off;
+    bis >> myw_gap;
+    bis >> myw_speed;
+    bis >> myw_error;
+    bis >> myv_est_l;
+    bis >> myv_est;
+    bis >> mys_est;
+    bis >> myrespectMinGap;
+    bis >> myap_update;
+}
+
+
 
 double
 MSCFModel_EIDM::insertionFollowSpeed(const MSVehicle* const /*veh*/, double speed, double gap2pred, double predSpeed, double predMaxDecel, const MSVehicle* const /*pred*/) const {
@@ -207,7 +266,7 @@ MSCFModel_EIDM::patchSpeedBeforeLCEIDM(const MSVehicle* /*veh*/, double vMin, do
     // Instead of just multiplying mySigmaerror with vars->myw_error, we add a factor depending on the criticality of the situation,
     // measured with s*/gap. Because when the driver drives "freely" (nothing in front) he may dawdle more than in e.g. congested traffic!
     double Accel_vMax = getCurrentAccel(vMax);
-	double s = MAX2(0., vars->myv_est * myHeadwayTime + vars->myv_est * (vars->myv_est - vars->myv_est_l) / (2 * sqrt(Accel_vMax * myDecel)));
+    double s = MAX2(0., vars->myv_est * myHeadwayTime + vars->myv_est * (vars->myv_est - vars->myv_est_l) / (2 * sqrt(Accel_vMax * myDecel)));
     if (vars->myrespectMinGap) {
         s += myType->getMinGap() + EIDM_POS_ACC_EPS;
     } else {
@@ -716,7 +775,7 @@ MSCFModel_EIDM::internalsecuregap(const MSVehicle* const veh, const double speed
     // SecureGap depends on v0 and may be higher than just looking at s* (In case of the IDM)
     // internalsecuregap uses a targetDecel instead of myDecel!
     VehicleVariables* vars = (VehicleVariables*)veh->getCarFollowVariables();
-	double Accel_speed = getCurrentAccel(speed);
+    double Accel_speed = getCurrentAccel(speed);
     const double delta_v = speed - leaderSpeed;
     double s = MAX2(0.0, speed * myHeadwayTime + speed * delta_v / (2 * sqrt(Accel_speed * myDecel))); // is calculated without MinGap because it is compared to a gap without MinGap!
     // For the IDM: - pow(speed / veh->getLane()->getVehicleMaxSpeed(veh), myDelta)) must be added to (myDecel / myAccel + 1)!

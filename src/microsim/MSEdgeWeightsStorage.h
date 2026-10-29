@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -94,6 +94,14 @@ public:
      * @param[in] e The described edge
      */
     void removeEffort(const MSEdge* const e);
+
+
+    /** @brief Returns whether neither travel times nor efforts are stored
+     * @return Whether this storage holds no information at all
+     */
+    bool empty() const {
+        return myTravelTimes.empty() && myEfforts.empty();
+    }
 
 
     /** @brief Returns the information whether any travel time is known for the given edge

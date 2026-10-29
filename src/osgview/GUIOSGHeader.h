@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,11 +21,6 @@
 #include <config.h>
 
 #ifdef HAVE_OSG
-
-// Define NOMIMAX, due osg may include windows.h somewhere so we need to guard against macro pollution
-#ifdef WIN32
-#define NOMINMAX
-#endif
 
 // avoid certain warnings in MSVC
 #ifdef _MSC_VER
@@ -76,11 +71,6 @@
 // pop MSVC warnings
 #ifdef _MSC_VER
 #pragma warning(pop)
-#endif
-
-// Undefine NOMIMAX
-#ifdef WIN32
-#undef NOMINMAX
 #endif
 
 #endif

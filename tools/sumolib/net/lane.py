@@ -1,5 +1,5 @@
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2011-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2011-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -77,6 +77,10 @@ SUMO_VEHICLE_CLASSES_DEPRECATED = set([
     "cityrail",
     "rail_slow",
     "rail_fast"])
+
+SUMO_ROAD_MOTOR_CLASSES = set([
+    "passenger", "hov", "taxi", "bus", "coach", "delivery", "truck", "trailer",
+    "motorcycle", "moped", "evehicle"])
 
 
 def is_vehicle_class(s):
@@ -237,6 +241,16 @@ class Lane:
         Returns all outgoing connections from this lane.
         """
         return self._outgoing
+
+    def getOutgoingEdges(self):
+        """
+        Returns all outgoing edges from this lane.
+        """
+        result = []
+        for conn in self.getOutgoing():
+            if conn.getTo() not in result:
+                result.append(conn.getTo())
+        return result
 
     def getOutgoingLanes(self):
         """

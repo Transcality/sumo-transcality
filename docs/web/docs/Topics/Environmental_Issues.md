@@ -18,8 +18,8 @@ In the following, the topic of "environmental issues" as seen from
 # User Interaction
 
 Pollutants/noise/consumption is computed only if the user asks for it or
-if it is used for visualisation. Pollutants emitted by the simulated
-vehicles can be visualised using [sumo-gui](../sumo-gui.md) or be
+if it is used for visualization. Pollutants emitted by the simulated
+vehicles can be visualized using [sumo-gui](../sumo-gui.md) or be
 written into output files, both by [sumo](../sumo.md) and
 [sumo-gui](../sumo-gui.md). The following output can be used:
 
@@ -52,75 +52,17 @@ passenger vehicle are used, otherwise those of a heavy duty vehicle.
 
 # Models
 
-SUMO includes the following emission models:
-
-- [HBEFA v2.1-based](../Models/Emissions/HBEFA-based.md): A
-  continuous reformulation of the [HBEFA](https://www.hbefa.net/) [\[1\]](#references)
-  v2.1 emissions data base;
-- [PHEMlight](../Models/Emissions/PHEMlight.md), a derivation of
-  the original
-  [PHEM](https://www.itna.tugraz.at/en/research/areas/em/)[\[2\]](#references)
-  emission model.
-
-Both models implement different vehicle emission classes. These classes
-can be assigned to vehicles by using the vehicle type attribute
-"`emissionClass`" (see [Vehicle Emission
-Classes](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#vehicle_emission_classes)).
-Available emission classes can be found within the emission model
-descriptions ([HBEFA
-v2.1-based](../Models/Emissions/HBEFA-based.md),
-[PHEMlight](../Models/Emissions/PHEMlight.md)).
-
-The noise model is based on HARMONOISE.
-
-<center>
-
-**Table: pollutants covered by models**
-
-<table>
-  <tr>
-    <th class="tg-amwm" rowspan="2">model</th>
-    <th class="tg-amwm" colspan="6">pollutant / measurement</th>
-  </tr>
-  <tr>
-    <td class="tg-amwm">CO2</td>
-    <td class="tg-amwm">CO</td>
-    <td class="tg-amwm">HC</td>
-    <td class="tg-amwm">NOx</td>
-    <td class="tg-amwm">PMx</td>
-    <td class="tg-amwm">fuel</td>
-  </tr>
-  <tr>
-    <td class="tg-0lax"><a href="../Models/Emissions/HBEFA-based.md">HBEFA v2.1-based</a></td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-  </tr>
-  <tr>
-    <td class="tg-0lax"><a href="../Models/Emissions/PHEMlight.md">PHEMlight</a></td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-    <td class="tg-baqh">x</td>
-  </tr>
-</table>
-
-</center>
+SUMO includes [several emission models](../Models/Emissions.md) and a noise model based on HARMONOISE.
 
 # Research
 
-## Emissions Modelling
+## Emissions Modeling
 
-The emission models implemented in [sumo](../sumo.md) re-use
+The emission models implemented in [sumo](../sumo.md) reuse
 existing models and data bases. The first steps including an overview of
 fifteen reviewed models as well as the derivation of the [HBEFA
 v2.1-based](../Models/Emissions/HBEFA-based.md) model are given in
-the deliverable "*D3.1 – Traffic Modelling: Environmental Factors*"[\[3\]](#references)
+the deliverable "*D3.1 – Traffic Modeling: Environmental Factors*"[\[3\]](#references)
 of the [iTETRIS](https://www.ict-itetris.eu/)[\[4\]](#references) project. The
 development of [PHEMlight](../Models/Emissions/PHEMlight.md) is
 described in the deliverable "*Deliverable 4.1 - Extended Simulation
@@ -189,7 +131,7 @@ simulate and evaluate some of such actions in his Master thesis[\[15\]](#referen
     of January 2014.
 
 3.  Krajzewicz, D.; Nippold, R. and Lazaro, O. *D3.1 – Traffic
-    Modelling: Environmental Factors*. iTETRIS consortium, 2009
+    Modeling: Environmental Factors*. iTETRIS consortium, 2009
 
 4.  [*iTETRIS* - An Integrated Wireless and Traffic Platform for
     Real-Time Road Traffic Management

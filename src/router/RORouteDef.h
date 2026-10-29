@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -24,6 +24,7 @@
 
 #include <string>
 #include <iostream>
+#include <memory>
 #include <utils/common/Named.h>
 #include <utils/router/SUMOAbstractRouter.h>
 #include "RORoute.h"
@@ -62,20 +63,25 @@ public:
 
 
     /// @brief Destructor
-    virtual ~RORouteDef();
+    virtual ~RORouteDef() {}
 
 
     /** @brief Adds a single alternative loaded from the file
         An alternative may also be generated during DUA */
-    void addLoadedAlternative(RORoute* alternative);
+    void addLoadedAlternative(std::shared_ptr<RORoute> alternative) {
+        myAlternatives.push_back(alternative);
+    }
 
     /** @brief Adds an alternative loaded from the file */
     void addAlternativeDef(const RORouteDef* alternative);
 
+    /** @brief removes invalid alternatives and raise an error or warning **/
+    void validateAlternatives(const ROVehicle* veh, MsgHandler* errorHandler);
+
     /** @brief Triggers building of the complete route (via
      * preComputeCurrentRoute) or returns precomputed route */
-    RORoute* buildCurrentRoute(SUMOAbstractRouter<ROEdge, ROVehicle>& router, SUMOTime begin,
-                               const ROVehicle& veh) const;
+    std::shared_ptr<RORoute> buildCurrentRoute(SUMOAbstractRouter<ROEdge, ROVehicle>& router, SUMOTime begin,
+            const ROVehicle& veh) const;
 
     /** @brief Builds the complete route
      * (or chooses her from the list of alternatives, when existing) */
@@ -89,22 +95,24 @@ public:
                             bool isTrip = false) const;
 
     /** @brief Adds an alternative to the list of routes
+     * and returns the route that was replaced or nullptr
     *
      * (This may be the new route) */
-    void addAlternative(SUMOAbstractRouter<ROEdge, ROVehicle>& router,
-                        const ROVehicle* const, RORoute* current, SUMOTime begin);
+    std::shared_ptr<RORoute> addAlternative(SUMOAbstractRouter<ROEdge, ROVehicle>& router,
+                                            const ROVehicle* const, std::shared_ptr<RORoute> current, SUMOTime begin,
+                                            MsgHandler* errorHandler);
 
     const ROEdge* getOrigin() const;
     const ROEdge* getDestination() const;
 
-    const RORoute* getFirstRoute() const {
+    std::shared_ptr<const RORoute> getFirstRoute() const {
         if (myAlternatives.empty()) {
-            return 0;
+            return nullptr;
         }
         return myAlternatives.front();
     }
 
-    const RORoute* getUsedRoute() const {
+    std::shared_ptr<const RORoute> getUsedRoute() const {
         return myAlternatives[myLastUsed];
     }
 
@@ -145,24 +153,25 @@ public:
         myUsingJTRR = true;
     }
 
+    static void setSkipNew() {
+        mySkipNewRoutes = true;
+    }
+
 protected:
     /// @brief backtrack to last mandatory edge and route to next mandatory
     static bool backTrack(SUMOAbstractRouter<ROEdge, ROVehicle>& router,
-            ConstROEdgeVector::const_iterator& i, int lastMandatory, ConstROEdgeVector::iterator nextMandatory,
-            ConstROEdgeVector& newEdges, const ROVehicle& veh, SUMOTime begin);
+                          ConstROEdgeVector::const_iterator& i, int lastMandatory, const ROEdge* nextMandatory,
+                          ConstROEdgeVector& newEdges, const ROVehicle& veh, SUMOTime begin);
 
 protected:
     /// @brief precomputed route for out-of-order computation
-    mutable RORoute* myPrecomputed;
+    mutable std::shared_ptr<RORoute> myPrecomputed;
 
     /// @brief Index of the route used within the last step
     mutable int myLastUsed;
 
     /// @brief The alternatives
-    std::vector<RORoute*> myAlternatives;
-
-    /// @brief Routes which are deleted someplace else
-    std::set<RORoute*> myRouteRefs;
+    std::vector<std::shared_ptr<RORoute> > myAlternatives;
 
     /// @brief Information whether a new route was generated
     mutable bool myNewRoute;
@@ -174,6 +183,7 @@ protected:
     mutable bool myDiscardSilent;
 
     static bool myUsingJTRR;
+    static bool mySkipNewRoutes;
 
 private:
     /// @brief Invalidated copy constructor

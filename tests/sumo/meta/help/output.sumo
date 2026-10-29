@@ -1,5 +1,5 @@
-Eclipse SUMO sumo Version v1_22_0+1676-989a5715aeb
- Copyright (C) 2001-2025 German Aerospace Center (DLR) and others; https://sumo.dlr.de
+Eclipse SUMO sumo v1_28_0+0203-956beccee8c8
+ Copyright (C) 2001-2026 German Aerospace Center (DLR) and others; https://sumo.dlr.de
 A microscopic, multi-modal traffic simulation.
 
 Usage: sumo [OPTION]*
@@ -17,7 +17,11 @@ Configuration Options:
 Input Options:
   -n, --net-file FILE                  Load road network description from FILE
   -r, --route-files FILE               Load routes descriptions from FILE(s)
+  --ignore.routeelements               Ignore route elements during loading of
+                                        sumo-configs
   -a, --additional-files FILE          Load further descriptions from FILE(s)
+  --ignore.additionalelements          Ignore additional elements during
+                                        loading of sumo-configs
   -w, --weight-files FILE              Load edge/lane weights for online
                                         rerouting from FILE
   -x, --weight-attribute STR           Name of the xml attribute which gives
@@ -34,13 +38,28 @@ Input Options:
 Output Options:
   --write-license                      Include license info into every output
                                         file
+  --write-metadata                     Write parsable metadata (configuration
+                                        etc.) instead of comments
   --output-prefix STR                  Prefix which is applied to all output
+                                        files. The special string 'TIME' is
+                                        replaced by the current time.
+  --output-suffix STR                  Suffix which is applied to all output
                                         files. The special string 'TIME' is
                                         replaced by the current time.
   --precision INT                      Defines the number of digits after the
                                         comma for floating point output
   --precision.geo INT                  Defines the number of digits after the
                                         comma for lon,lat output
+  --output.compression STR             Defines the standard compression
+                                        algorithm (currently only for parquet
+                                        output)
+  --output.format STR                  Defines the standard output format if
+                                        not derivable from the file name ('xml',
+                                        'csv', 'parquet')
+  --output.column-header STR           How to derive column headers from
+                                        attribute names ('none', 'tag', 'auto',
+                                        'plain', 'full')
+  --output.column-separator STR        Separator in CSV output
   -H, --human-readable-time            Write time values as hour:minute:second
                                         or day:hour:minute:second rather than
                                         seconds
@@ -81,11 +100,15 @@ Output Options:
   --fcd-output FILE                    Save the Floating Car Data
   --fcd-output.geo                     Save the Floating Car Data using
                                         geo-coordinates (lon/lat)
+  --fcd-output.utm                     Save the Floating Car Data using
+                                        utm/unshifted coordinates (x/y)
   --fcd-output.signals                 Add the vehicle signal state to the FCD
                                         output (brake lights etc.)
   --fcd-output.distance                Add kilometrage to the FCD output
                                         (linear referencing)
   --fcd-output.acceleration            Add acceleration to the FCD output
+  --fcd-output.speed-relative          Add relative speed (vehicle speed / edge
+                                        speed limit) to the FCD output
   --fcd-output.max-leader-distance FLOAT  Add leader vehicle information to the
                                         FCD output (within the given distance)
   --fcd-output.params STR[]            Add generic parameter values to the FCD
@@ -96,6 +119,10 @@ Output Options:
                                         in the FCD output
   --fcd-output.filter-shapes STR[]     List shape names that should be used to
                                         filter the FCD output
+  --fcd-output.skip-empty              Do not save data for time steps which
+                                        have no vehicles / transportables
+  --person-fcd-output FILE             Save fcd for persons and container to
+                                        separate FILE
   --device.ssm.filter-edges.input-file FILE  Restrict SSM device output to the
                                         edge selection from the given input file
   --full-output FILE                   Save a lot of information for each
@@ -104,6 +131,19 @@ Output Options:
                                         (experimental)
   --queue-output.period TIME           Save vehicle queues with the given
                                         period
+  --queue-output.aggregation TIME      Write aggregated queue length statistics
+                                        (max, median, 95th percentile) per edge
+                                        for the given period (e.g. a traffic
+                                        light cycle) instead of per-timestep
+                                        data
+  --queue-output.speed-threshold FLOAT  Maximum speed for counting a vehicle as
+                                        queued
+  --queue-output.percentile FLOAT      The percentile (0-100) to report as
+                                        percentileQueueLength in aggregated
+                                        queue output
+  --queue-output.skip-empty            Do not save data for time steps /
+                                        intervals which have no queue (required
+                                        for column based output formats)
   --vtk-output FILE                    Save complete vehicle positions
                                         inclusive speed values in the VTK Format
                                         (usage: /path/out will produce
@@ -319,15 +359,24 @@ Processing Options:
                                         yellow
   --railsignal-moving-block            Let railsignals operate in moving-block
                                         mode by default
+  --railsignal.moving-block.default-classes STR[]  List vehicle classes that
+                                        default to moving-block operations
+  --railsignal.moving-block.max-dist FLOAT  Maximum signal distance above which
+                                        zipper conflicts are ignored
   --railsignal.max-block-length FLOAT  Do not build blocks longer than FLOAT
                                         and issue a warning instead
   --railsignal.default-classes STR[]   List vehicle classes that uses
                                         block-based insertion checks even when
                                         the network has no rail signals for them
+  --slope-centered                     Compute slope at the vehicle center of
+                                        mass instead of integrating over front
+                                        and back
   --time-to-impatience TIME            Specify how long a vehicle may wait
                                         until impatience grows from 0 to 1,
                                         defaults to 300, non-positive values
                                         disable impatience growth
+  --default.departspeed STR            Select default depart speed
+  --default.departlane STR             Select default depart lane
   --default.action-step-length FLOAT   Length of the default interval length
                                         between action points for the
                                         car-following and lane-change models (in
@@ -367,7 +416,8 @@ Processing Options:
   --use-stop-started                   Override stop arrival times with stop
                                         started times when given
   --pedestrian.model STR               Select among pedestrian models
-                                        ['nonInteracting', 'striping', 'remote']
+                                        ['nonInteracting', 'striping',
+                                        'jupedsim']
   --pedestrian.timegap-crossing FLOAT  Minimal acceptable gap (in seconds)
                                         between two vehicles before starting to
                                         cross
@@ -435,15 +485,23 @@ Processing Options:
   --weights.turnaround-penalty FLOAT   Apply the given time penalty when
                                         computing routing costs for turnaround
                                         internal lanes
+  --weights.reversal-penalty FLOAT     Apply the given time penalty when
+                                        computing routing costs for train
+                                        reversal. Negative values disable
+                                        reversal
   --persontrip.walk-opposite-factor FLOAT  Use FLOAT as a factor on walking
                                         speed against vehicle traffic direction
 
 Routing Options:
   --routing-algorithm STR              Select among routing algorithms
-                                        ['dijkstra', 'astar', 'CH', 'CHWrapper']
+                                        ['dijkstra', 'astar', 'CH', 'CHWrapper',
+                                        'CCH']
   --weights.random-factor FLOAT        Edge weights for routing are dynamically
                                         disturbed by a random factor drawn
                                         uniformly from [1,FLOAT)
+  --weights.random-factor.dynamic      When using option
+                                        --weights.random-factor, vary the
+                                        randomness over time
   --weights.minor-penalty FLOAT        Apply the given time penalty when
                                         computing minimum routing costs for
                                         minor-link internal lanes
@@ -469,9 +527,11 @@ Routing Options:
                                         'parkingAreas', 'ptStops',
                                         'allJunctions' and combinations)
   --persontrip.transfer.taxi-walk STR[]  Where taxis can drop off customers
-                                        ('allJunctions, 'ptStops')
+                                        ('allJunctions, 'ptStops',
+                                        'parkingAreas')
   --persontrip.transfer.walk-taxi STR[]  Where taxis can pick up customers
-                                        ('allJunctions, 'ptStops')
+                                        ('allJunctions, 'ptStops',
+                                        'parkingAreas')
   --persontrip.default.group STR       When set, trips between the same origin
                                         and destination will share a taxi by
                                         default
@@ -498,6 +558,26 @@ Routing Options:
                                         average weight of prior edge weights
   --device.rerouting.adaptation-interval TIME  The interval for updating the
                                         edge weights
+  --device.rerouting.cch-update-threshold.factor FLOAT  Only propagate an arc
+                                        weight into the CCH metric if it changed
+                                        by more than the given factor
+  --device.rerouting.cch-update-threshold.constant TIME  Only propagate an arc
+                                        weight into the CCH metric if it changed
+                                        by more than the given TIME
+  --device.rerouting.cch-ensemble INT  Keep this many frozen
+                                        weights.random-factor realizations (CCH
+                                        metrics) per vehicle type and assign
+                                        vehicles to them by a stable id hash
+  --device.rerouting.threshold.factor FLOAT  Only reroute if the new route is
+                                        faster than the current route by the
+                                        given factor
+  --device.rerouting.threshold.constant TIME  Only reroute if the new route is
+                                        faster than the current route by the
+                                        given TIME
+  --device.rerouting.invalidation      Only perform a periodic reroute when the
+                                        current route's remaining cost has
+                                        drifted beyond the threshold (cheap
+                                        re-scoring gate before the full reroute)
   --device.rerouting.with-taz          Use zones (districts) as routing start-
                                         and endpoints
   --device.rerouting.mode STR          Set routing flags (8 ignores temporary
@@ -567,8 +647,8 @@ Emissions Options:
                                         (legacy) unit l instead of mg
   --phemlight-path FILE                Determines where to load PHEMlight
                                         definitions from
-  --phemlight-year INT                 Enable fleet age modelling with the
-                                        given reference year in PHEMlight5
+  --phemlight-year INT                 Enable fleet age modeling with the given
+                                        reference year in PHEMlight5
   --phemlight-temperature FLOAT        Set ambient temperature to correct NOx
                                         emissions in PHEMlight5
   --device.emissions.probability FLOAT  The probability for a vehicle to have a
@@ -634,8 +714,6 @@ Battery Options:
                                         restriction)
   --device.stationfinder.repeat TIME   When to trigger a new search if no
                                         station has been found
-  --device.stationfinder.maxChargePower FLOAT  The maximum charging speed of
-                                        the vehicle battery
   --device.stationfinder.chargeType STR  Type of energy transfer
   --device.stationfinder.waitForCharge TIME  After this waiting time vehicle
                                         searches for a new station when the
@@ -872,10 +950,14 @@ Taxi Device Options:
                                         KEY1:VALUE1[,KEY2:VALUE]
   --device.taxi.dispatch-period TIME   The period between successive calls to
                                         the dispatcher
+  --device.taxi.dispatch-keep-unreachable TIME  The time before aborting
+                                        unreachable reservations
   --device.taxi.idle-algorithm STR     The behavior of idle taxis
                                         [stop|randomCircling|taxistand]
   --device.taxi.idle-algorithm.output FILE  Write information from the idling
                                         algorithm to FILE
+  --device.taxi.vclasses STR[]         Network permissions that can be accessed
+                                        by taxis
 
 GLOSA Device Options:
   --device.glosa.probability FLOAT     The probability for a vehicle to have a
@@ -938,7 +1020,11 @@ FCD Replay Device Options:
                                         vehicles
   --device.fcd-replay.deterministic    The 'fcd-replay' devices are set
                                         deterministic using a fraction of 1000
-  --device.fcd-replay.file FILE        FCD file to read
+  --device.fcd-replay.files FILE       FCD files to read
+  --device.fcd-replay.consistency STR[]  Values to use when replaying ('all' or
+                                        any combination of 'x', 'y', 'edge',
+                                        'lane', 'speed', 'position', 'angle',
+                                        'type')
 
 TraCI Server Options:
   --remote-port INT                    Enables TraCI Server if set
@@ -946,6 +1032,7 @@ TraCI Server Options:
 
 Mesoscopic Options:
   --mesosim                            Enables mesoscopic simulation
+  --meso-ltm                           Enables the meso-LTM (LIFT) model
   --meso-edgelength FLOAT              Length of an edge segment in mesoscopic
                                         simulation
   --meso-tauff TIME                    Factor for calculating the net free-free
@@ -989,6 +1076,7 @@ Mesoscopic Options:
   --meso-overtaking                    Enable mesoscopic overtaking
   --meso-recheck TIME                  Time interval for rechecking insertion
                                         into the next segment after failure
+  --meso-interpolate-pos               Enable mesoscopic position interpolation
 
 Random Number Options:
   --random                             Initialises the random number generator
@@ -1002,7 +1090,7 @@ Random Number Options:
                                         repeatable simulations).
 
 GUI Only Options:
-  -g, --gui-settings-file FILE         Load visualisation settings from FILE
+  -g, --gui-settings-file FILE         Load visualization settings from FILE
   -Q, --quit-on-end                    Quits the GUI when the simulation stops
   -G, --game                           Start the GUI in gaming mode
   --game.mode STR                      Select the game type ('tls', 'drt')
@@ -1011,7 +1099,7 @@ GUI Only Options:
                                         simulation steps
   -B, --breakpoints STR[]              Use TIME[] as times when the simulation
                                         should halt
-  --edgedata-files FILE                Load edge/lane weights for visualization
+  -m, --edgedata-files FILE            Load edge/lane weights for visualization
                                         from FILE
   -N, --alternative-net-file FILE      Load a secondary road network for
                                         abstract visualization from FILE

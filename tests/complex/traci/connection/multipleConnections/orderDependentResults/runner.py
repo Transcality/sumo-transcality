@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -34,7 +34,9 @@ import traci  # noqa
 
 PORT = sumolib.miscutils.getFreeSocketPort()
 DELTA_T = 1000
-sumoBinary = sumolib.checkBinary(sys.argv[1])
+sumoOptions = [a for a in sys.argv[1:] if a.startswith('--')]
+positionalArgs = [a for a in sys.argv[1:] if not a.startswith('--')]
+sumoBinary = sumolib.checkBinary(positionalArgs[0])
 
 
 def traciLoop(port, traciEndTime, i, runNr, steplength=0):
@@ -85,8 +87,9 @@ def traciLoop(port, traciEndTime, i, runNr, steplength=0):
 
 def runSingle(sumoEndTime, traciEndTime, numClients, runNr):
     sumoProcess = subprocess.Popen(
-        "%s -v --num-clients %s -c sumo.sumocfg -S -Q --remote-port %s" %
-        (sumoBinary, numClients, PORT), shell=True, stdout=sys.stdout)  # Alternate ordering
+        [sumoBinary, "-v", "--num-clients", str(numClients),
+         "-c", "sumo.sumocfg", "-S", "-Q", "--remote-port", str(PORT)] + sumoOptions, stdout=sys.stdout)
+    # Alternate ordering
     procs = [multiprocessing.Process(target=traciLoop, args=(PORT, traciEndTime, (i + 1), runNr))
              for i in range(numClients)]
     for p in procs:

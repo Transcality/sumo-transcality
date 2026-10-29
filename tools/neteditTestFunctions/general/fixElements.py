@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,28 +16,55 @@
 # @date    28-05-25
 
 # imports
-from .functions import *
+import time
+from ..constants import DELAY_QUESTION
+from ..files.save import saveExistentFile
+from ..input.keyboard import typeKey, typeTwoKeys
 
 
-def fixDemandElement(value):
+def fixRoute(solution):
     """
-    @brief fix demand element
+    @brief fix route
     """
-    # focus current frame
-    focusOnFrame()
-    # jump to option
-    for _ in range(value):
-        typeTwoKeys('shift', 'tab')
-    # type space to select
-    typeKey('space')
-    # accept
-    typeTwoKeys('alt', 'a')
+    # save config
+    saveExistentFile("neteditConfig")
+    # select bullet depending of solution
+    if (solution == "selectRouteInvalids"):
+        for _ in range(2):
+            typeTwoKeys('shift', 'tab')
+        typeKey('space')
+        # go back and press accept
+        for _ in range(2):
+            typeKey('tab')
+        typeKey('space')
+    elif (solution == "saveRouteInvalids"):
+        for _ in range(3):
+            typeTwoKeys('shift', 'tab')
+        typeKey('space')
+        # go back and press accept
+        for _ in range(3):
+            typeKey('tab')
+        typeKey('space')
+    elif (solution == "removeRouteInvalids"):
+        for _ in range(4):
+            typeTwoKeys('shift', 'tab')
+        typeKey('space')
+        # go back and press accept
+        for _ in range(4):
+            typeKey('tab')
+        typeKey('space')
+    else:
+        # press cancel
+        typeKey('tab')
+        typeKey('space')
 
 
 def fixDemandElements(solution):
     """
     @brief fix stoppingPlaces
     """
+    # save config
+    saveExistentFile("neteditConfig")
     # select bullet depending of solution
     if (solution == "saveInvalids"):
         for _ in range(3):
@@ -74,10 +101,12 @@ def fixStoppingPlace(solution):
     """
     @brief fix stoppingPlaces
     """
+    # save config
+    saveExistentFile("neteditConfig")
     # wait some second to question dialog
     time.sleep(DELAY_QUESTION)
     # select bullet depending of solution
-    if (solution == "saveInvalids"):
+    if (solution == "savePositionInvalids"):
         for _ in range(3):
             typeTwoKeys('shift', 'tab')
         typeKey('space')
@@ -93,13 +122,45 @@ def fixStoppingPlace(solution):
         for _ in range(2):
             typeKey('tab')
         typeKey('space')
-    elif (solution == "selectInvalids"):
+    elif (solution == "selectPositionInvalids"):
         typeTwoKeys('shift', 'tab')
         typeKey('space')
     # go back and press accept
         typeKey('tab')
         typeKey('space')
-    elif (solution == "activateFriendlyPos"):
+    elif (solution == "activatePositionFriendlyPos"):
+        # default option, then press accept
+        typeKey('space')
+    else:
+        # press cancel
+        typeKey('tab')
+        typeKey('space')
+
+
+def fixCrossings(solution):
+    """
+    @brief fix stoppingPlaces
+    """
+    # save config
+    saveExistentFile("neteditConfig")
+    # wait some second to question dialog
+    time.sleep(DELAY_QUESTION)
+    # select bullet depending of solution
+    if (solution == "saveInvalidCrossings"):
+        for _ in range(2):
+            typeTwoKeys('shift', 'tab')
+        typeKey('space')
+    # go back and press accept
+        for _ in range(2):
+            typeKey('tab')
+        typeKey('space')
+    elif (solution == "selectInvalidCrossings"):
+        typeTwoKeys('shift', 'tab')
+        typeKey('space')
+        # go back and press accept
+        typeKey('tab')
+        typeKey('space')
+    elif (solution == "removeInvalidCrossings"):
         # default option, then press accept
         typeKey('space')
     else:

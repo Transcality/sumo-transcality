@@ -68,6 +68,13 @@ Trips and flows may use the attributes `fromJunction`, `toJunction`, and `viaJun
 Since version 1.2 duarouter supports mapping positions to roads using attributes that end with 'XY' or 'LonLat'. The latter only works in networks that are geo-referenced. The maximum distance for map-matching can be configured using option **--mapmatch.distance** (since version 1.5)
 
 By setting the option **--mapmatch.junctions**, positions are mapped to junctions instead of edges. The routes are then [computed between junctions](#routing_between_junctions).
+While it is possible to match detailed routes by using attribute `viaXY` or `viaLonLat`, this requires rather precise coordinates to work. To handle ambiguity/noise in the data it is better to use a [matching algorithm that considers the whole route when matching individual positions](../Tools/Routes.md#tracemapperpy).
+
+!!! note
+    map-matching works best with coordinates that lie on the centerline of an edge rather than on the median line of the road.
+
+!!! caution
+    Option **--map-match-junctions** may will shorten the route if the from-coordinate lies past the half-way point of the origin edge and also if the to-coordinate lies before the half-way point of the destination edge.
 
 ## Vehicle Types
 
@@ -162,7 +169,7 @@ the *weight-attribute* must be defined:
 
 # Access restrictions
 
-Access to a network edge is typiclly restricte by the [vehicle class](../Simulation/VehiclePermissions.md) defined in a [vehicle type](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#vehicle_types) but can also be customized with [numerical restrictions](../Simulation/VehiclePermissions.md#custom_access_restrictions).
+Access to a network edge is typically restricted by the [vehicle class](../Simulation/VehiclePermissions.md) defined in a [vehicle type](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#vehicle_types) but can also be customized with [numerical restrictions](../Simulation/VehiclePermissions.md#custom_access_restrictions).
 
 # Repair routes
 

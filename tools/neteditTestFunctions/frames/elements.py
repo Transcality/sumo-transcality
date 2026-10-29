@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,8 +16,9 @@
 # @date    28-05-25
 
 # imports
-from neteditTestFunctions.frames.edit.vClassDialog import modifyBoolAttribute
-from ..general.functions import *
+from ..enums.attributesEnum import attrs
+from ..general.functions import focusOnFrame
+from ..input.keyboard import typeKey, updateText
 
 
 def changeElement(frame, element):
@@ -63,20 +64,30 @@ def changeElement(frame, element):
     typeKey('enter')
 
 
-def changeParentElement(frame, element):
+def changePlan(type, plan, flow):
     """
-    @brief change parent element in the given frame (stop...)
+    @brief change plan (in person or container frame)
     """
     # focus current frame
     focusOnFrame()
-    # go to first editable element of frame
-    if (frame == "routeFrame"):
-        for _ in range(attrs.frames.changeParentElement.route):
-            typeKey('tab')
-    elif (frame == "stopFrame"):
-        for _ in range(attrs.frames.changeParentElement.stop):
-            typeKey('tab')
-    # paste the new value
-    updateText(element)
+    # continue depending of type
+    if (type == "person"):
+        # jump to person plan
+        if (flow):
+            for _ in range(attrs.frames.changePlan.personFlow):
+                typeKey('tab')
+        else:
+            for _ in range(attrs.frames.changePlan.person):
+                typeKey('tab')
+    elif (type == "container"):
+        # jump to container plan
+        if (flow):
+            for _ in range(attrs.frames.changePlan.containerFlow):
+                typeKey('tab')
+        else:
+            for _ in range(attrs.frames.changePlan.container):
+                typeKey('tab')
+    # paste the new plan
+    updateText(plan)
     # type enter to save change
     typeKey('enter')

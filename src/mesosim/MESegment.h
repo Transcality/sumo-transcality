@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -51,6 +51,7 @@ class MESegment : public Named {
 public:
     static const double DO_NOT_PATCH_JAM_THRESHOLD;
     static const int PARKING_QUEUE = -1;
+    /// @brief special param value
     static const std::string OVERRIDE_TLS_PENALTIES;
 
     /// @brief edge type specific meso parameters
@@ -65,10 +66,11 @@ public:
         double tlsFlowPenalty;
         SUMOTime minorPenalty;
         bool overtaking;
+        double edgeLength;
     };
 
 
-private:
+protected:
     class Queue {
     public:
         Queue(const SVCPermissions permissions) : myPermissions(permissions) {}
@@ -193,6 +195,15 @@ public:
      */
     SUMOTime hasSpaceFor(const MEVehicle* const veh, const SUMOTime entryTime, int& qIdx, const bool init = false) const;
 
+    /// @brief update entry blockTime for all queues
+    virtual void updateEntryBlockTime(SUMOTime /*time*/) {}
+
+    /// @brief model specific queue state (e.g. the gap times of meso-ltm) for saving / loading
+    virtual std::string getQueueExtraState(int /*qIdx*/) const {
+        return "";
+    }
+    virtual void loadQueueExtraState(int /*qIdx*/, const std::string& /*state*/, SUMOTime /*offset*/) {}
+
     /** @brief Inserts (emits) vehicle into the segment
      *
      * @param[in] veh The vehicle to emit
@@ -219,6 +230,11 @@ public:
     inline const std::vector<MEVehicle*>& getQueue(int index) const {
         assert(index < (int)myQueues.size());
         return myQueues[index].getVehicles();
+    }
+
+    inline SUMOTime getQueueBlockTime(int index) const {
+        assert(index < (int)myQueues.size());
+        return myQueues[index].getBlockTime();
     }
 
     /** @brief Returns the running index of the segment in the edge (0 is the most upstream).
@@ -292,6 +308,9 @@ public:
      */
     double getMeanSpeed(bool useCache) const;
 
+    /// @brief reset myLastMeanSpeedUpdate
+    void resetCachedSpeeds();
+
     /// @brief wrapper to satisfy the FunctionBinding signature
     inline double getMeanSpeed() const {
         return getMeanSpeed(true);
@@ -336,7 +355,7 @@ public:
      * @param[in] time the leave time
      * @todo Isn't always time == veh->getEventTime?
      */
-    void send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason);
+    virtual void send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason);
 
     /** @brief Adds the vehicle to the segment, adapting its parameters
      *
@@ -479,7 +498,24 @@ public:
     /// @brief called when permissions change due to Rerouter or TraCI
     void updatePermissions();
 
-private:
+    /// @brief whether the traffic light should use normal junction control despite penalty options
+    void overrideTLSPenalty() {
+        myTLSPenalty = false;
+    }
+
+    /// @brief convert net time gap (leader back to follower front) to gross time gap (leader front to follower front)
+    inline SUMOTime getMinTauWithVehLength(double lengthWithGap, double vehicleTau) const {
+        return (SUMOTime)((double)myTau_ff * vehicleTau + lengthWithGap * myTau_length);
+    }
+
+    /// @brief like getMinTauWithVehLength but using the jam-state dependent net time gap of the given queue (as in getMeanSpeed)
+    inline SUMOTime getTauWithVehLength(int qIdx, double lengthWithGap, double vehicleTau) const {
+        assert(qIdx >= 0 && qIdx < (int)myQueues.size());
+        const SUMOTime tau = myQueues[qIdx].getOccupancy() < myJamThreshold ? myTau_ff : myTau_jf;
+        return tauWithVehLength(tau, lengthWithGap, vehicleTau);
+    }
+
+protected:
     bool overtake();
 
     void setSpeedForQueue(double newSpeed, SUMOTime currentTime,
@@ -511,10 +547,13 @@ private:
 
     SUMOTime getTauJJ(double nextQueueSize, double nextQueueCapacity, double nextJamThreshold) const;
 
-    /// @brief whether the traffic light should use normal junction control despite penalty options
-    bool tlsPenaltyOverride() const;
+    /// @brief compute current headway depending on traffic state
+    virtual SUMOTime computeHeadway(Queue& q, const Queue& qNext, const MESegment* const next, const MEVehicle* veh) const;
 
-private:
+    /// @brief check jam-avoidance constraints during insertion
+    virtual bool hasSpaceForInsertion(const Queue& q, int qIdx, double newOccupancy, SUMOTime entryTime) const;
+
+protected:
     /// @brief The microsim edge this segment belongs to
     const MSEdge& myEdge;
 
@@ -575,6 +614,8 @@ private:
      * data and should only be used as a unique pointer */
     static MSEdge myDummyParent;
     static MESegment myVaporizationTarget;
+
+    static SVCPermissions myMultiModalWarnings;
 
     /// @brief the mean speed on this segment. Updated at event time or on demand
     mutable double myMeanSpeed;

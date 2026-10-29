@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -28,17 +28,12 @@ if "SUMO_HOME" in os.environ:
 import traci  # noqa
 import sumolib  # noqa
 
-WATCH = False
-
-sumoBinary = 'sumo-gui' if WATCH else sumolib.checkBinary('sumo')
 cmd = [
-    sumoBinary,
+    sumolib.checkBinary('sumo'),
     '-n', 'input_net.net.xml',
     '--no-step-log', ]
-if not WATCH:
-    cmd += ['-S', '-Q']
 
-traci.start(cmd)
+traci.start(cmd + sys.argv[1:])
 
 ANGLE_UNDEF = traci.constants.INVALID_DOUBLE_VALUE
 INVALID = traci.constants.INVALID_DOUBLE_VALUE

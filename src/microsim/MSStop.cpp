@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2005-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2005-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,16 +21,19 @@
 #include <config.h>
 
 #include <mesosim/MESegment.h>
+#include <mesosim/MELoop.h>
 #include "MSLane.h"
+#include "MSEdge.h"
 #include "MSNet.h"
 #include "MSParkingArea.h"
 #include "MSStoppingPlace.h"
+#include "MSRouteHandler.h"
 #include "MSStop.h"
-
 
 // ===========================================================================
 // method definitions
 // ===========================================================================
+
 double
 MSStop::getEndPos(const SUMOVehicle& veh) const {
     const double brakePos = veh.getEdge() == getEdge() ? veh.getPositionOnLane() + veh.getBrakeGap() : 0;
@@ -66,19 +69,37 @@ MSStop::getReachedThreshold() const {
 }
 
 std::string
-MSStop::getDescription() const {
+MSStop::getDescription(bool nameOnly) const {
     std::string result;
     if (parkingarea != nullptr) {
+        if (nameOnly) {
+            return parkingarea->getID();
+        }
         result = "parkingArea:" + parkingarea->getID();
     } else if (containerstop != nullptr) {
+        if (nameOnly) {
+            return containerstop->getID();
+        }
         result = "containerStop:" + containerstop->getID();
     } else if (busstop != nullptr) {
+        if (nameOnly) {
+            return busstop->getID();
+        }
         result = "busStop:" + busstop->getID();
     } else if (chargingStation != nullptr) {
+        if (nameOnly) {
+            return chargingStation->getID();
+        }
         result = "chargingStation:" + chargingStation->getID();
     } else if (overheadWireSegment != nullptr) {
+        if (nameOnly) {
+            return overheadWireSegment->getID();
+        }
         result = "overheadWireSegment:" + overheadWireSegment->getID();
     } else {
+        if (nameOnly) {
+            return "";
+        }
         result = "lane:" + lane->getID() + " pos:" + toString(pars.endPos);
     }
     if (pars.actType != "") {
@@ -88,15 +109,33 @@ MSStop::getDescription() const {
 }
 
 
+std::pair<std::string, SumoXMLTag>
+MSStop::getStoppingPlaceName() const {
+    if (busstop != nullptr && !busstop->getMyName().empty()) {
+        return std::make_pair(busstop->getMyName(), SUMO_TAG_BUS_STOP);
+    } else if (containerstop != nullptr && !containerstop->getMyName().empty()) {
+        return std::make_pair(containerstop->getMyName(), SUMO_TAG_CONTAINER_STOP);
+    } else if (parkingarea != nullptr && !parkingarea->getMyName().empty()) {
+        return std::make_pair(parkingarea->getMyName(), SUMO_TAG_PARKING_AREA);
+    } else if (chargingStation != nullptr && !chargingStation->getMyName().empty()) {
+        return std::make_pair(chargingStation->getMyName(), SUMO_TAG_CHARGING_STATION);
+    } else if (overheadWireSegment != nullptr && !overheadWireSegment->getMyName().empty()) {
+        return std::make_pair(overheadWireSegment->getMyName(), SUMO_TAG_OVERHEAD_WIRE_SEGMENT);
+    }
+    return std::make_pair("", SUMO_TAG_NOTHING);
+}
+
+
 void
 MSStop::write(OutputDevice& dev) const {
     SUMOVehicleParameter::Stop tmp = pars;
     tmp.duration = duration;
-    if (busstop == nullptr
-            && containerstop == nullptr
-            && parkingarea == nullptr
-            && chargingStation == nullptr) {
-        tmp.parametersSet |= STOP_START_SET | STOP_END_SET;
+    if (!triggered && !containerTriggered) {
+        // we are writing in the context of saveState. All required
+        // transportables have entered and we must prevent the trigger condition
+        // to be renewed on loading
+        tmp.triggered = false;
+        tmp.containerTriggered = false;
     }
     tmp.write(dev, false);
     // if the stop has already started but hasn't ended yet we are writing it in
@@ -115,7 +154,7 @@ MSStop::initPars(const SUMOVehicleParameter::Stop& stopPar) {
     parkingarea = static_cast<MSParkingArea*>(MSNet::getInstance()->getStoppingPlace(stopPar.parkingarea, SUMO_TAG_PARKING_AREA));
     chargingStation = MSNet::getInstance()->getStoppingPlace(stopPar.chargingStation, SUMO_TAG_CHARGING_STATION);
     overheadWireSegment = MSNet::getInstance()->getStoppingPlace(stopPar.overheadWireSegment, SUMO_TAG_OVERHEAD_WIRE_SEGMENT);
-    duration = stopPar.duration;
+    duration = stopPar.durationDist.isVariable() ? TIME2STEPS(stopPar.durationDist.sample(MSRouteHandler::getParsingRNG())) : stopPar.duration;
     triggered = stopPar.triggered;
     containerTriggered = stopPar.containerTriggered;
     joinTriggered = stopPar.joinTriggered || stopPar.join != "";
@@ -203,6 +242,48 @@ MSStop::getPlaces() const {
         result.push_back(overheadWireSegment);
     }
     return result;
+}
+
+
+void
+MSStop::replaceStoppingPlace(MSStoppingPlace* sp) {
+    // @note: assume iterator edge is handled elsewhere
+    assert(*edge == &sp->getLane().getEdge());
+    lane = &sp->getLane();
+    SUMOVehicleParameter::Stop& ncPars = const_cast<SUMOVehicleParameter::Stop&>(pars);
+    ncPars.edge = lane->getEdge().getID();
+    ncPars.lane = lane->getID();
+    ncPars.startPos = sp->getBeginLanePosition();
+    ncPars.endPos = sp->getEndLanePosition();
+    if (MSGlobals::gUseMesoSim) {
+        segment = MSGlobals::gMesoNet->getSegmentForEdge(lane->getEdge(), sp->getEndLanePosition());
+    }
+    switch (sp->getElement()) {
+        case SUMO_TAG_BUS_STOP:
+        case SUMO_TAG_TRAIN_STOP:
+            busstop = sp;
+            ncPars.busstop = sp->getID();
+            break;
+        case SUMO_TAG_CONTAINER_STOP:
+            containerstop = sp;
+            ncPars.containerstop = sp->getID();
+            break;
+        case SUMO_TAG_PARKING_AREA:
+            parkingarea = dynamic_cast<MSParkingArea*>(sp);
+            ncPars.parkingarea = sp->getID();
+            break;
+        case SUMO_TAG_CHARGING_STATION:
+            chargingStation = sp;
+            ncPars.chargingStation = sp->getID();
+            break;
+        case SUMO_TAG_OVERHEAD_WIRE_SEGMENT:
+            overheadWireSegment = sp;
+            ncPars.overheadWireSegment = sp->getID();
+            break;
+        default:
+            // should not happen
+            assert(false);
+    }
 }
 
 /****************************************************************************/

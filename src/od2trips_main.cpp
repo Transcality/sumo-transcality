@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -60,7 +60,7 @@
 void
 fillOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
-    oc.addCallExample("-c <CONFIGURATION>", "run with configuration file");
+    oc.addCallExample("-c <CONFIGURATION>", TL("run with configuration file"));
 
     // insert options sub-topics
     SystemFrame::addConfigurationOptions(oc); // fill this subtopic, too
@@ -106,6 +106,9 @@ fillOptions() {
 
     oc.doRegister("flow-output.probability", new Option_Bool(false));
     oc.addDescription("flow-output.probability", "Output", TL("Writes probabilistic flow instead of evenly spaced flow"));
+
+    oc.doRegister("flow-output.poisson", new Option_Bool(false));
+    oc.addDescription("flow-output.poisson", "Output", TL("Writes poisson distributed flow instead of evenly spaced flow"));
 
     oc.doRegister("pedestrians", new Option_Bool(false));
     oc.addDescription("pedestrians", "Output", TL("Writes pedestrians instead of vehicles"));
@@ -201,6 +204,10 @@ checkOptions() {
         WRITE_ERROR(TL("No trip table output file (-o) or flow-output is specified."));
         ok = false;
     }
+    if (oc.getBool("flow-output.probability") && oc.getBool("flow-output.poisson")) {
+        WRITE_ERROR(TL("Only one of the options 'flow-output.probability' and 'flow-output.poisson' may be set."));
+        ok = false;
+    }
     if (oc.getBool("pedestrians") && oc.getBool("persontrips")) {
         WRITE_ERROR(TL("Only one of the Options 'pedestrians' and 'persontrips' may be set."));
         ok = false;
@@ -246,7 +253,7 @@ int
 main(int argc, char** argv) {
     OptionsCont& oc = OptionsCont::getOptions();
     oc.setApplicationDescription(TL("Importer of O/D-matrices for the microscopic, multi-modal traffic simulation SUMO."));
-    oc.setApplicationName("od2trips", "Eclipse SUMO od2trips Version " VERSION_STRING);
+    oc.setApplicationName("od2trips", "Eclipse SUMO od2trips " VERSION_STRING);
     int ret = 0;
     try {
         // initialise subsystems
@@ -307,7 +314,9 @@ main(int argc, char** argv) {
             matrix.writeFlows(string2time(oc.getString("begin")), end,
                               OutputDevice::getDeviceByOption("flow-output"),
                               oc.getBool("ignore-vehicle-type"), oc.getString("prefix"),
-                              oc.getBool("flow-output.probability"), oc.getBool("pedestrians"),
+                              oc.getBool("flow-output.probability"),
+                              oc.getBool("flow-output.poisson"),
+                              oc.getBool("pedestrians"),
                               oc.getBool("persontrips"), modes);
             haveOutput = true;
         }

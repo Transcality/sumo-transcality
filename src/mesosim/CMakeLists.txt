@@ -8,12 +8,16 @@ SET(mesosim_STAT_SRCS
    MELoop.h
    MESegment.cpp
    MESegment.h
+   MELSegment.cpp
+   MELSegment.h
    METriggeredCalibrator.cpp
    METriggeredCalibrator.h
    MEVehicle.cpp
    MEVehicle.h
    MEVehicleControl.cpp
    MEVehicleControl.h
+   METypeHandler.cpp
+   METypeHandler.h
 )
 
 add_library(mesosim STATIC ${mesosim_STAT_SRCS})

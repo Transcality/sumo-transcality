@@ -126,7 +126,7 @@ separation from those without, and special road like living streets and
 pedestrian areas. There is no direct connection to the importance of a
 road. However in OpenStreetMap, a motorway is supposed to have such a
 central barrier separation per default
-[\[1\]]()(https://wiki.openstreetmap.org/wiki/Tag:highway%3Dmotorway). As a
+[\[1\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dmotorway). As a
 consequence, the speed value only varies between rural and urban
 contexts but not between road types, except for motorways, living
 streets and pedestrian areas. The two SUMO edge type files are given
@@ -155,11 +155,11 @@ when converting OpenStreetMap networks without an explicit typemap.
 | highway.pedestrian     | Fußgängerzone. Pedestrians only. (Bicycles should be pushed.) [\[19\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dtrack) [\[20\]](https://wiki.openstreetmap.org/wiki/DE:Tag:highway%3Dpedestrian)                                                                                                        |
 | highway.service        | No explicit regulatory speed limit. Usually you have to give way when leaving such a street as it is not part of the road network with moving traffic. [\[21\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dservice)                    |
 | highway.services       | Rest area with additional services like a gas station. Usually you have to give way when leaving such a street as it is not part of the road network with moving traffic. [\[22\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dservices) |
-| highway.bus_guideway   | For busses only. [\[23\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dbus_guideway)                                                                                                                                                          |
+| highway.bus_guideway   | For buses only. [\[23\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dbus_guideway)                                                                                                                                                          |
 | highway.track          | For agricultural traffic, usually not used by normal vehicles. [\[24\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dtrack)                                                                                                            |
 | highway.path           | Usually “not intended for motor vehicles”. [\[25\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dpath)                                                                                                                                |
 | highway.cycleway       | “Access is only allowed for bikes” in Germany. [\[26\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dcycleway)                                                                                                                            |
-| highway.footway        | For designated footpaths in Germany. (Bicycles must be tagged explicitely.) [\[27\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dfootway) [\[28\]](https://wiki.openstreetmap.org/wiki/DE:Tag:highway%3Dfootway)                                                                                          |
+| highway.footway        | For designated footpaths in Germany. (Bicycles must be tagged explicitly.) [\[27\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dfootway) [\[28\]](https://wiki.openstreetmap.org/wiki/DE:Tag:highway%3Dfootway)                                                                                          |
 | highway.bridleway      | For pedestrians, horses and sometimes bicycles. [\[29\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dbridleway)                                                                                                                           |
 | highway.steps<br>highway.step<br>highway.stairs         | Steps are usually for pedestrians. [\[30\]](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dsteps)                                                                                                        |
 | railway.rail           | Typical full sized trains                                                                                                                                                      |
@@ -191,7 +191,7 @@ OSM, you may wish to load:
 
 Only few data is available about the railway types. The most important
 document might be the [Eisenbahn-Bau- und Betriebsordnung
-(EBO)](https://www.gesetze-im-internet.de/bundesrecht/ebo/gesamt.pdf),
+(EBO)](https://www.gesetze-im-internet.de/ebo/EBO.pdf),
 but even that did not help me much. So the given values are mostly
 personal opinion, except if a reference is given. More references are
 very welcome.

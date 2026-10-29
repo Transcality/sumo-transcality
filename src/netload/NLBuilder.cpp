@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -44,6 +44,7 @@
 #endif
 #include <libsumo/Helper.h>
 #include <mesosim/MEVehicleControl.h>
+#include <mesosim/METypeHandler.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/MSVehicleTransfer.h>
 #include <microsim/MSNet.h>
@@ -51,6 +52,7 @@
 #include <microsim/devices/MSDevice_ToC.h>
 #include <microsim/devices/MSDevice_BTreceiver.h>
 #include <microsim/devices/MSDevice_FCDReplay.h>
+#include <microsim/devices/MSRoutingEngine.h>
 #include <microsim/MSEdgeControl.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/output/MSDetectorControl.h>
@@ -130,8 +132,12 @@ NLBuilder::build() {
         throw ProcessError(TL("Invalid network, no network version declared."));
     }
     // check whether the loaded net agrees with the simulation options
-    if ((myOptions.getBool("no-internal-links") || myOptions.getBool("mesosim")) && myXMLHandler.haveSeenInternalEdge() && myXMLHandler.haveSeenDefaultLength()) {
+    if ((myOptions.getBool("no-internal-links")) && myXMLHandler.haveSeenInternalEdge() && myXMLHandler.haveSeenDefaultLength()) {
         WRITE_WARNING(TL("Network contains internal links which are ignored. Vehicles will 'jump' across junctions and thus underestimate route lengths and travel times."));
+    }
+    if (!myXMLHandler.haveSeenInternalEdge() && myOptions.getBool("mesosim")) {
+        // @todo: setting this option has some side effect in microsim that manifest even in networks without internal lanes this should be checked
+        MSGlobals::gUsingInternalLanes = false;
     }
     buildNet();
     if (myOptions.isSet("alternative-net-file")) {
@@ -151,20 +157,33 @@ NLBuilder::build() {
     // - additional-files before weight-files since the latter might contain intermodal edge data and the intermodal net depends on the stops and public transport from the additionals
 
     bool stateBeginMismatch = false;
+    const SUMOTime stateOffset = string2time(myOptions.getString("load-state.offset"));
     if (myOptions.isSet("load-state")) {
         // first, load only the time
         const SUMOTime stateTime = MSStateHandler::MSStateTimeHandler::getTime(myOptions.getString("load-state"));
-        if (myOptions.isDefault("begin")) {
-            myOptions.set("begin", time2string(stateTime));
-            if (TraCIServer::getInstance() != nullptr) {
-                TraCIServer::getInstance()->stateLoaded(stateTime);
-            }
-        } else {
-            if (stateTime != string2time(myOptions.getString("begin"))) {
-                WRITE_WARNINGF(TL("State was written at a different time=% than the begin time %!"), time2string(stateTime), myOptions.getString("begin"));
+        bool defaultBegin = myOptions.isDefault("begin");
+        if (stateTime != string2time(myOptions.getString("begin"))) {
+            if (myOptions.isDefault("load-state.offset")) {
+                if (!defaultBegin) {
+                    WRITE_WARNINGF(TL("State was written at a different time=% than the begin time % (set option load-state.offset to force a different begin)!"),
+                                   time2string(stateTime), myOptions.getString("begin"));
+                }
+                myOptions.resetWritable("begin");
+                defaultBegin = true;
+            } else {
                 stateBeginMismatch = true;
             }
         }
+        if (defaultBegin) {
+            myOptions.set("begin", time2string(stateTime));
+            // if vehicles are deliberately removed from the state, we must allow them to be reloaded from a route file at state time
+            SUMOTime allowReloadOffset = myOptions.isDefault("load-state.remove-vehicles") ? 0 : 1;
+            myNet.setLoaderTime(stateTime - allowReloadOffset);
+            if (TraCIServer::getInstance() != nullptr) {
+                TraCIServer::getInstance()->stateLoaded(stateTime);
+            }
+        }
+        myNet.setCurrentTimeStep(string2time(myOptions.getString("begin")));
     }
 
     if (myOptions.getBool("junction-taz")) {
@@ -175,8 +194,8 @@ NLBuilder::build() {
             const std::string sourceID = it->first + "-source";
             if (MSEdge::dictionary(sinkID) == nullptr && MSEdge::dictionary(sourceID) == nullptr) {
                 // sink must be built and added before source
-                MSEdge* sink = myEdgeBuilder.buildEdge(sinkID, SumoXMLEdgeFunc::CONNECTOR, "", "", -1, 0);
-                MSEdge* source = myEdgeBuilder.buildEdge(sourceID, SumoXMLEdgeFunc::CONNECTOR, "", "", -1, 0);
+                MSEdge* sink = myEdgeBuilder.buildEdge(sinkID, SumoXMLEdgeFunc::CONNECTOR, "", "", "", -1, 0);
+                MSEdge* source = myEdgeBuilder.buildEdge(sourceID, SumoXMLEdgeFunc::CONNECTOR, "", "", "", -1, 0);
                 sink->setOtherTazConnector(source);
                 source->setOtherTazConnector(sink);
                 MSEdge::dictionary(sinkID, sink);
@@ -199,9 +218,17 @@ NLBuilder::build() {
             }
         }
     }
-
+    // load meso edge types
+    bool haveSeenMesoEdgeType = false;
+    if (MSGlobals::gUseMesoSim) {
+        if (myOptions.isSet("additional-files") && !myOptions.getBool("ignore.additionalelements")) {
+            haveSeenMesoEdgeType = loadMesoEdgeTypes("additional-files");
+        }
+        // meso segment building must be delayed until meso edge types have been read from additional files
+        myNet.getEdgeControl().buildMesoSegments();
+    }
     // load additional net elements (sources, detectors, ...)
-    if (myOptions.isSet("additional-files")) {
+    if (myOptions.isSet("additional-files") && !myOptions.getBool("ignore.additionalelements")) {
         if (!load("additional-files")) {
             return false;
         }
@@ -213,14 +240,17 @@ NLBuilder::build() {
         if (myXMLHandler.haveSeenAdditionalSpeedRestrictions()) {
             myNet.getEdgeControl().setAdditionalRestrictions();
         }
-        if (MSGlobals::gUseMesoSim && (myXMLHandler.haveSeenMesoEdgeType() || myXMLHandler.haveSeenTLSParams())) {
-            myNet.getEdgeControl().setMesoTypes();
+        MSTriggeredRerouter::checkParkingRerouteConsistency();
+    }
+    if (MSGlobals::gUseMesoSim) {
+        if (haveSeenMesoEdgeType || myXMLHandler.haveSeenTLSParams()) {
             for (MSTrafficLightLogic* tll : myNet.getTLSControl().getAllLogics()) {
                 tll->initMesoTLSPenalties();
             }
         }
-        MSTriggeredRerouter::checkParkingRerouteConsistency();
     }
+    // init after preferences have been loaded from additional-files
+    MSRoutingEngine::initWeightConstants(myOptions);
     // init tls after all detectors have been loaded
     myJunctionBuilder.postLoadInitialization();
     // declare meandata set by options
@@ -265,10 +295,9 @@ NLBuilder::build() {
     }
     // load the previous state if wished
     if (myOptions.isSet("load-state")) {
-        myNet.setCurrentTimeStep(string2time(myOptions.getString("begin")));
         const std::string& f = myOptions.getString("load-state");
         long before = PROGRESS_BEGIN_TIME_MESSAGE(TLF("Loading state from '%'", f));
-        MSStateHandler h(f, string2time(myOptions.getString("load-state.offset")));
+        MSStateHandler h(f, stateOffset);
         XMLSubSys::runParser(h, f);
         if (MsgHandler::getErrorInstance()->wasInformed()) {
             return false;
@@ -278,7 +307,7 @@ NLBuilder::build() {
     // routes from FCD files
     MSDevice_FCDReplay::init();
     // load routes
-    if (myOptions.isSet("route-files")) {
+    if (myOptions.isSet("route-files") && !myOptions.getBool("ignore.routeelements")) {
         if (string2time(myOptions.getString("route-steps")) <= 0) {
             // incremental loading is disabled. Load route files fully
             if (!load("route-files")) {
@@ -326,7 +355,7 @@ NLBuilder::init(const bool isLibsumo) {
         throw ProcessError();
     }
 #ifdef HAVE_FOX
-    if (oc.getInt("threads") > 1) {
+    if (oc.getInt("threads") > 1 || oc.getInt("device.rerouting.threads") > 1) {
         // make the output aware of threading
         MsgHandler::setFactory(&MsgHandlerSynchronized::create);
     }
@@ -392,6 +421,9 @@ NLBuilder::buildNet() {
         edges = myEdgeBuilder.build(myXMLHandler.networkVersion());
         junctions = myJunctionBuilder.build();
         junctions->postloadInitContainer();
+        for (MSEdge* e : edges->getEdges()) {
+            e->postLoadInitLaneChanger();
+        }
         routeLoaders = buildRouteLoaderControl(myOptions);
         tlc = myJunctionBuilder.buildTLLogics();
         for (std::string timeStr : myOptions.getStringVector("save-state.times")) {
@@ -446,12 +478,27 @@ NLBuilder::load(const std::string& mmlWhat, const bool isNet) {
 }
 
 
+bool
+NLBuilder::loadMesoEdgeTypes(const std::string& mmlWhat) {
+    if (!myOptions.isUsableFileList(mmlWhat)) {
+        return false;
+    }
+    METypeHandler meTypeHandler("", myNet);
+    for (const std::string& file : myOptions.getStringVector(mmlWhat)) {
+        if (!XMLSubSys::runParser(meTypeHandler, file)) {
+            continue;
+        }
+    }
+    return meTypeHandler.haveSeenMesoEdgeType();
+}
+
+
 SUMORouteLoaderControl*
 NLBuilder::buildRouteLoaderControl(const OptionsCont& oc) {
     // build the loaders
     SUMORouteLoaderControl* loaders =  new SUMORouteLoaderControl(string2time(oc.getString("route-steps")));
     // check whether a list is existing
-    if (oc.isSet("route-files") && string2time(oc.getString("route-steps")) > 0) {
+    if (oc.isSet("route-files") && !oc.getBool("ignore.routeelements") && string2time(oc.getString("route-steps")) > 0) {
         std::vector<std::string> files = oc.getStringVector("route-files");
         for (std::vector<std::string>::const_iterator fileIt = files.begin(); fileIt != files.end(); ++fileIt) {
             if (!FileHelpers::isReadable(*fileIt)) {
@@ -476,8 +523,8 @@ NLBuilder::buildDefaultMeanData(const std::string& optionName, const std::string
         }
         try {
             SUMOTime begin = string2time(OptionsCont::getOptions().getString("begin"));
-            myDetectorBuilder.createEdgeLaneMeanData(id, -1, begin, -1, "traffic", useLanes, false, false,
-                    false, false, false, 100000, 0, SUMO_const_haltingSpeed, "", "", std::vector<MSEdge*>(), false,
+            myDetectorBuilder.createEdgeLaneMeanData(id, -1, begin, -1, "traffic", useLanes, "true",
+                    false, false, 0, 100000, 0, SUMO_const_haltingSpeed, 0, "", "", std::vector<MSEdge*>(), AggregateType::NO,
                     OptionsCont::getOptions().getString(optionName));
         } catch (InvalidArgument& e) {
             WRITE_ERROR(e.what());

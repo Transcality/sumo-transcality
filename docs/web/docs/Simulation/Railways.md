@@ -10,11 +10,15 @@ taken in comparison to a plain vehicular simulation.
 
 # Building a network for train simulation
 
+The following section describes network modeling and import for conventional rail operations. [Special consideration for tram simulations are found below](#tram_network_modeling).
+
 ## Railways
 
-Railways can be imported from
-[OSM](../Networks/Import/OpenStreetMap.md). They can also be
-explicitly specified using the existing *vClasses*.
+Railways can be imported from all the input formats supported by [netconvert](../netconvert.md#import).
+When importing from [OSM](../Networks/Import/OpenStreetMap.md), railways will already configured for the appropriate [vehicle classes](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#abstract_vehicle_class) (i.e. `rail`)
+When building networks from scratch in [netedit](../netedit.md), railways can be modelled by setting edge attribute 'allow' to `rail`.
+
+[Contact the developers](https://eclipse.dev/sumo/contact/) regarding support for other common railway data interchange formats.
 
 ### Parallel Tracks
 If a railway has parallel tracks, these must be modelled as distinct edge
@@ -55,6 +59,11 @@ is exported for the edge types:
 This will lead to compound edge type ids such as
 *railway.rail|usage.main*.
 
+#### Railway line numbers
+
+Line numbers from OSM tag `ref` are exported as 'name' attribute of an edge when option **--output.street-names** is set during import.
+They can can be visualized in sumo-gui with '*Show street name*'.
+
 #### Track numbers
 
 Local track numbers (mostly in train stations) are exported as edge
@@ -65,9 +74,9 @@ dialog and can also be used for coloring (*color by param, streetwise*).
 
 In reality all tracks can be used in either direction if the need arises
 but many rails are used in only one direction most of the time. In SUMO,
-bidirectional track usage must be enabled explicitly. This simplifies
-routing as rails will only be used in their preferred direction most of
-the time.
+bidirectional track usage must be enabled explicitly.
+If only one direction is needed during simulation, it is recommended not to enable bidirectional usage
+because having only one direction available greatly simplifies route search.
 
 Bidirectional track usage is modeled by two edges that have their
 geometries exactly reversed and using the attribute `spreadType="center"`. This will result
@@ -86,11 +95,12 @@ Visualization of bidirectional tracks has a distinct [style and dedicated settin
 ### Working with bidirectional tracks in [netedit](../Netedit/index.md)
 
 - To show both edges that constitute a bidirectional track, activate
-  edge visualization option *spread bidirectional railways/roads* (see [visualization settings](../sumo-gui.md#edgelane_visualisation_settings)). Both edges will be
+  edge visualization option *spread bidirectional railways/roads* (see [visualization settings](../sumo-gui.md#edgelane_visualization_settings)). Both edges will be
   drawn narrower and with a side-offset to make them both visible
   without overlap.
    - this is highly recommended when using connection mode to define connections among bidirectional tracks as it's otherwise hard to distinguish the affected edges
    - the pre-defined gui setting scheme 'rail' automatically activates the *spread ...* setting.
+   - the *spread bidirectinal railways* setting only takes effect after network geometries have been computed for the first time (i.e. after pressing F5)
 - To find (and highlight) all bidirectional tracks, use [attribute
   selection](../Netedit/editModesCommon.md#match_attribute) and search for
   attribute *bidi* with a value of *1*
@@ -99,20 +109,72 @@ Visualization of bidirectional tracks has a distinct [style and dedicated settin
 
 ### Routing in bidirectional networks
 
-When train tracks can be used in both directions, there is considerable freedom for trains when search a path through the network. To reduce the number of conflicts (when two vehicles want to use the same track in opposite directions), the preferred direction for each track can be defined and factored into the routing decision.
+When train tracks can be used in both directions, there is considerable freedom for trains when searching a path through the network. To reduce the number of conflicts (when two vehicles want to use the same track in opposite directions), the preferred direction for each track can be defined and factored into the routing decision.
+There are two ways in which this may be accomplished. They work the same way during network preparation but differ in their effects during simulation.
+Both methods are discussed below followed by a section on [network preparation](#setting_edge_priority_and_routingtype).
 
-To express this preference, the edges in the preferred direction and on the
-preferred side may be assigned a higher priority value. This value will be taken
-into account when setting option **--weights.priority-factor FLOAT** which applies to
-[sumo](../sumo.md) and [duarouter](../duarouter.md).
+### Using priority-factor
 
-At the default option value of 0. Edge priority is ignored when routing. When setting a positive value, the edges with the lowest priority receive a penalty factor to their estimated travel time of 1 + FLOAT (where FLOAT is the option argument) whereas the edges with the highest priority receive no penalty. Edges with medium priority will receive a penalty of 1 + x * FLOAT where
+This method is suitable for rail-only simulation because the option it uses affects all vehicles in the simulation and may have adverse effects on road traffic.
+It's advantage lies in it's simplicity because it requires only a single option.
+
+To express routing preferences, the edges in the preferred direction and on the
+preferred side may be assigned a higher priority value (using edge attribute `priority`).
+This value will be taken into account during routing when setting option **--weights.priority-factor FLOAT**  (applicable to
+[sumo](../sumo.md) and [duarouter](../duarouter.md)).
+
+At the default option value of 0. Edge priority is ignored when routing. When setting a positive value, the edges with the lowest priority receive a penalty factor to their estimated travel time of 1 + FLOAT (where FLOAT is the option argument) whereas the edges with the highest priority receive no penalty. Edges with medium priority will receive an intermediate penalty according to the following code:
 
 ```
-  x = (edgePriority - minPriority) / (maxPriority - minPriority)
+ MinEdgePriority : minimum priority value of all edges
+ MaxEdgePriority : maximum priority value of all edges
+ EdgePriorityRange = MaxEdgePriority - MinEdgePriority
+
+ relativeInversePrio = 1 - ((edgePriority - MinEdgePriority) / EdgePriorityRange)
+ effort =  traveltime * (1 + relativeInversePrio * PriorityFactor)
 ```
 
-The priority values can either be assigned by the user or computed heuristically by [netconvert](../netconvert.md) as explained below.
+!!! note
+    When either trains or road vehicles are routed only outside the simulation this method can also be used for combined simulations (by routing trains and cars separately and only using the option for train routing).
+
+### Using routingType and preference definitions
+
+This method is suitable for multi-modal simulations where road and rail vehicles must be routed in the same simulation.
+It also permits distinguishing fine-grained routing preferences (i.e. between regular rail service which adheres to the default directions and special service vehicles that may use any track in either direction).
+
+To express routing preferences, each rail edge should have it's `routingType` set corresponding to it's status as being in the main direction or in reverse to the main direction. While `routingType` may be an arbitrary string value, the existing [netconvert](../netconvert.md) tooling supports setting a `routingType` that takes on string values between '4' and '0' where '4' corresponds to the main direction and '0' to the reverse of the main direction (with values in between denoting different levels of certainty about directionality).
+
+The effect that each `routingType` takes during routing is expressed by loading `<preference>` elements from an additional file:
+During routing, the estimated travelTime of an edge with the given `routingType` is divided by the given priority value for an applicable `vClass` [(or `vType`)](Routing.md#routing_by_travel_time_and_routingtype).
+
+The following example has the same effect as setting option **weights.priority-factor 1** (but only applies to vClass *rail*).
+
+```xml
+<additional >
+    <preference routingType="4" vClasses="rail" priority="1"/>
+    <preference routingType="3" vClasses="rail" priority="0.8"/>
+    <preference routingType="2" vClasses="rail" priority="0.67"/>
+    <preference routingType="1" vClasses="rail" priority="0.57"/>
+    <preference routingType="0" vClasses="rail" priority="0.5"/>
+</additional>
+```
+
+The following example has the same effect as setting option **weights.priority-factor 3** (but only applies to vTypes *train1* and *train2*).
+
+```xml
+<additional >
+    <preference routingType="4" vTypes="train1 train2" priority="1"/>
+    <preference routingType="3" vClasses="rail" priority="0.57"/>
+    <preference routingType="2" vClasses="rail" priority="0.40"/>
+    <preference routingType="1" vClasses="rail" priority="0.31"/>
+    <preference routingType="0" vClasses="rail" priority="0.25"/>
+</additional>
+```
+
+### Setting edge priority and routingType
+
+The `priority` and corresponding `routingType` values can either be assigned by the user or computed heuristically by [netconvert](../netconvert.md) as explained below.
+Note, that in both heuristics each railway edge will have their `priority` attribute set and it's `routingType` will be set equal the numerical priority value (converted to a string).
 
 #### Priority from partially restricted directionality
 
@@ -142,13 +204,16 @@ train can only leave by reversing direction. [netconvert](../netconvert.md) prov
 
 - **--railway.topology.output** {{DT_FILE}}: Identify problematic tracks (i.e. for manual correction).
 - **--railway.topology.repair** : Automatically fixes problems by analyzing rail network topology and adding bidirectional tracks
-- **--railway.topology.repair.minimal** : Apply automated fixes but only those which are needed for the operation loaded public transport lines
+- **--railway.topology.repair.minimal** : Apply automated fixes but only those which are needed for the operation of loaded public transport lines
 - **--railway.topology.repair.connect-straight** : Allow bidirectional rail use wherever rails with opposite directions meet at a straight angle
 - **--railway.topology.repair.stop-turn** : Add turn-around connections at all loaded stops (to enable direction reversal).
 - **--railway.topology.all-bidi** : make all tracks usable in both directions.
 - **--railway.topology.all-bidi.input-file** : Load edge ids from text file and make those tracks usable in both directions. (one edge id per line, optionally prefixed with 'edge:' as in a [selection file created with netedit](../Netedit/editModesCommon.md#selection_operations)).
 
 ## Rail Signals
+
+Rail signals are important simulation elements that are needed to safely handle train operations where the same track is used in both direction.
+They are also needed to model train operations with block-based signaling. The [details of rail signal behavior are described below](#rail_signal_behavior).
 
 ### Definition
 
@@ -166,15 +231,30 @@ By setting the [netconvert](../netconvert.md)-option **--railway.signals.discard
 
 ### Heuristic generation
 
-By setting the [netconvert](../netconvert.md)-option **--railway.signal.guess-by-stops**, additional signal based on loaded public transport stops.
+By setting the [netconvert](../netconvert.md)-option **--railway.signal.guess.by-stops**, additional signals are generated based on loaded public transport stops.
 Stops are either loaded from the input (i.e. OSM) or with option **--ptstop-files**.
 
 For each public transport stop, at most two signals will be added:
 
-- a signal at the end of the stop edge (unless the node happens to be a switch)
+- a signal at the end of the stop edge
 - a signal at the start of the stop edge or the next upstream edge that is at least 200m upstream of the stop edge end (unless the node happens to be a switch)
 
+!!! note
+    By default, this operation may declare railway switches as rail signals. The switches and signals will continue to work normally but there will be no overlap (Durchrutschweg)
+
+By also setting option **--railway.signal.guess.by-stops.split** the edges will be split in order create suitable rail_signal nodes near the stop location. This also ensures that switches remain uncontrolled.
+
 The minimum distance of 200m between the two signals can be customized with option **--osm.stop-outout.length.train**.
+
+### Placement
+
+In mainline rail operations, a rail signal is located upstream of a conflict point (i.e. a switch) by 50 to 200 meters and even more on high-speed lines. This means it will often be necessary to split an edge so that a new node is created at the exact location where a rail signal is needed (whenever a missing rail signal is added manually). This splitting can be accomplished in [netedit](../Netedit/neteditPopupFunctions.md#split_edge_here) or by loading [split definitions](../Networks/PlainXML.md#road_segment_refining) in netconvert patch file.
+
+An alternative is to define, the switch itself as type `rail_signal` and to move the stop line upstream with [edge attribute `endOffset`](../Networks/PlainXML.md#edge_descriptions). This has several implications:
+
+- it preserves existing network topology and route validity because no new nodes or edges are introduced
+- it requires simulation with [internal links](Intersections.md#internal_links) because vehicles will spend significant time on the greatly enlarged junction (switch) interior.
+- it makes rail signal states harder to analyze in sumo-gui because a single junction may have multiple signal states at the same time and corresponding attributes in the dialog are vectors instead of single numbers
 
 ## Rail Crossings
 
@@ -219,24 +299,11 @@ When setting parameters, `id` indicates the id of the rail-crossing junction and
 
 ## Kilometrage (Mileage, Chainage)
 
-Edges support the attribute *distance* to denote the distance at the
-start of the edge relative to some point of reference for a [linear
-referencing scheme](https://en.wikipedia.org/wiki/Linear_referencing).
-When the distance metric decreases along the forward direction of the edge, this is indicated by using a negative sign for the distance value.
+Edges can be configured to take part in a [linear
+referencing scheme](https://en.wikipedia.org/wiki/Linear_referencing) by setting their [`distance`-attribute](Distances.md#defining_and_using_linear_coordinates).
+The linear coordinates of a vehicle can be included in [fcd-output](Output/FCDOutput.md#further_options) using option **--fcd-output.distance**.
 
-The distance value along an edge is computed as:
-```
-  |edgeDistance + vehiclePos|
-```
-
-Edge distance is imported from OSM and can also be be set along a route in [netedit](../Netedit/elementsDemand.md#route)
-
-The distances value can be written in [fcd-output](Output/FCDOutput.md#further_options) using option **--fcd-output.distance**. It may then be used for plotting by [plot_trajectories.py](../Tools/Visualization.md#plot_trajectoriespy) using the code `k` (i.e. -t kt). The distances can also be visualized in sumo-gui (color edges by distance).
-
-!!! note
-    Negative distance values are not currently supported (pending introduction of another attribute)
-
-# Modelling Trains
+# Modeling Trains
 
 There is a dedicated carFollowMode for trains which can be activated by
 setting `carFollowModel="Rail" trainType="<TYPE>"` in the `<vType>` definition. Allowed values for trainType are
@@ -256,7 +323,7 @@ setting `carFollowModel="Rail" trainType="<TYPE>"` in the `<vType>` definition. 
 These types model traction and rolling resistance for particular trains. To represent the behavior of arbitrary trains, the "custom" trainType may be used (see below).
 Alternatively, any other car following model may be used and configured with appropriate acceleration / deceleration parameters.
 
-# Custom dynamics model with tabular data
+## Custom dynamics model with tabular data
 
 The vType attributes `speedTable`, `tractionTable` and `resistanceTable` can be used to specify a custom interpolation table for traction and resistance.
 Each attribute is interpreted as a table column where the rows defines the traction and resistance for the corresponding speed.
@@ -264,40 +331,74 @@ The speeds must be given in m/s whereas the traction and resistance forces are i
 
 Example:
 ```xml
-	<vType id="0" vClass="rail" carFollowModel="Rail" trainType="custom"
-           speedTable="0 2.78 5.56 8.33 11.11 13.89 16.67 19.44 22.22 25 27.78 30.56 33.33"
-           tractionTable="300 300 263 179 135 108 90 77 67.5 60 54 49 45"
-           resistanceTable="2 4 8.5 14 22 31 41.5 54 68 83.5 111 120 140"/>
+<vType id="0" vClass="rail" carFollowModel="Rail" trainType="custom"
+        speedTable="0 2.78 5.56 8.33 11.11 13.89 16.67 19.44 22.22 25 27.78 30.56 33.33"
+        tractionTable="300 300 263 179 135 108 90 77 67.5 60 54 49 45"
+        resistanceTable="2 4 8.5 14 22 31 41.5 54 68 83.5 111 120 140"/>
 ```
 
-# Custom dynamics model with parameterized curves
+## Custom dynamics model with parameterized curves
 
 The vType attributes `maxPower` and `maxTraction` can be used to specify the traction curve for a given speed (in m/s) according to the formula:
 
- `traction_kN = min(maxPower / speed, maxTraction`
+ `traction_kN = min(maxPower / speed, maxTraction)`
 
 
-The vType attributes `resCoef_quadratic`, `resCoef_linear` and `resCoef_constant` can be usd to specify the resistance curve for a given speed (in m/s) according to the formula:
+The vType attributes `resCoef_quadratic`, `resCoef_linear` and `resCoef_constant` can be used to specify the resistance curve for a given speed (in m/s) according to the formula:
 
  `resistance_kN =  resCoef_quadratic * speed * speed + resCoef_linear * speed + resCoef_constant`
 
 Example:
 ```xml
-   <vType id="0" vClass="rail" carFollowModel="Rail" trainType="custom" maxPower="2350" maxTraction="150"
-        resCoef_quadratic="0.00028" resCoef_linear="0.00003" resCoef_constant="1.670"/>
+<vType id="0" vClass="rail" carFollowModel="Rail" trainType="custom" maxPower="2350" maxTraction="150"
+    resCoef_quadratic="0.00028" resCoef_linear="0.00003" resCoef_constant="1.670"/>
 ```
 
-The attributes
+## Curve Resistance
+Resistance computation for curves is disabled by default because a give network model may not be accurate enough to allow computing sensible values (i.e. abstract networks with sharp 45 degree switches).
+To enable computation, set vType attribute `curveResistance="1"`
+The formula is computed from vType attributes as follows:
+```
+  mass * roeckl_numerator / (curveRadius - roeckl_offset)
+```
+For a curve radius below attribute `roeckl_sharp_radius`, the values `roeckl_numerator_sharp` and `roeckl_offset_sharp` are used instead.
+All defaults are given below. They are tailored to mainline rail on a gauge of 1,435mmm
 
-# Train Schedules
+By default, curvature will be integrated over at least *100m*. If the geometry data of the network is very sparse it may be necessary to set a larger value using vType attribute `curveIntegration`.
+
+!!! caution
+    For rail networks with lower gauge and very shape turns (or rolling stock with short wheel base), the values should be adapted. Attempting to compute resistance for a radius below the offset value will raise a warning.
+
+| Attribute Name  | Default Value          |
+| ------------------- | ------------------ |
+| curveResistance     | 0                  |
+| curveIntegration    | 100                |
+| roeckl_sharp_radius | 300                |
+| roeckl_numerator    | 6380               |
+| roeckl_numerator_sharp | 4910            |
+| roeckl_offset | 55                       |
+| roeckl_offset_sharp | 30                 |
+
+
+## Effects of train length
+
+The length of a train has several important effects on a railway simulation:
+
+- **block occupancy**: A longer train takes up more space and takes longer to completely pass a signal block which impacts capacity
+- **speed limits**: The maximum permitted speed for a train is the minimum of all edges that it occupies (Whereas for road vehicles, only the speed at the front edge is considered).
+- **reversal after a swich**: In order to turn a "sharp corner" at a switch, a train must completely pass the switch and the reverse. The route of train must contain enough edges on the facing side (with one entering track) to let the whole length of the train pass the switch before reversal is possible.
+- **stopping after reversal**: After reversal, the front and the rear of the train exchange their positions. This may cause the head of the train to skip past a stop edge and cause this stop to be skipped if the route does not go far enough past the stop (it is therefore recommended to always stop *before* the reversal).
+
+## Train Schedules
 
 Train schedules are defined in the same way as for any other type of [public transport](Public_Transport.md#public_transport_schedules).
+For long-distance trains that pass stations or other operation control points without scheduled stops, it may be useful to add [waypoints](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#waypoints) to their route. This facilitates computing intermediate edges between stops and results in additional data points for [stop-output](Output/StopOutput.md).
 
 <img src="../images/schedule_until.png" width="500px"/>
 
 Generated by [plotXMLAttributes.py](../Tools/Visualization.md#public_transport_schedule).
 
-# Train Interaction
+## Train Interaction
 
 When simulation trains on a network with railway signals, trains will
 only enter a block (a section of edges between signals) if it is free of
@@ -305,9 +406,9 @@ other trains. When there are no rail signals or multiple trains have
 been inserted in the same block, they will automatically keep a safe
 distance according to their car following model. When using `carFollowModel="Rail"`, trains
 will always keep enough distance to the leading train to come to a safe
-stop even if the lead train was to stop instantly.
+stop even if the lead train were to stop instantly.
 
-# Reversing Direction
+## Reversing Direction
 
 Trains will reverse direction if all of the following conditions are
 met:
@@ -323,10 +424,10 @@ met:
 - There is a "turn-around" connection from the current train edge to
   the reverse direction edge
 
-  !!! note
-      When importing public transport stops with option **--ptstop-output**, all bidirectional edges with a public transport stop will have the necessary turn-around connection and thus be eligible for reversing.
+!!! note
+    When netconvert has loaded public transport stops (either during OSM import or from option **--ptstop-files**) then option **--railway.topology.repair.stop-turn** can be used to add a turn-around connection at every rail public transport stop and thus make it possible for trains to reverse at each stop.
 
-!!! caution   
+!!! caution
     Undesirable train reversals may occur due to invalid stop assignment (i.e. assigning the reverse stop). The tool [checkReversals.py](../Tools/Railways.md#checkreversalspy) can be used to search for unexpected reversals.
 
 # Portion working
@@ -388,9 +489,11 @@ Rail signals perform the following safety functions automatically
 - c) guard the track so that vehicles cannot enter bidirectional sections at the same time. This prevents head-on collisions.
 - d) prevent deadlocks on bidirectional sections
 
+## Moving Block Mode
+
 Functionality **a)** corresponds to the "classic" safety behavior of rail signals ([PZB](https://en.wikipedia.org/wiki/Punktf%C3%B6rmige_Zugbeeinflussung)). When option **--railsignal-moving-block** is set or individual signals are configured with parameter *moving-block* (see below), feature **a)** is disabled and trains will use their configured carFollowModel (i.e. 'Rail') for distance keeping. This is similar to the [LZB](https://en.wikipedia.org/wiki/Linienzugbeeinflussung) safety system when used with extremely short virtual blocks.
 
-To switch a  signal into moving-block-mode, the following additional file may be loaded:
+To switch a signal into moving-block-mode, the following additional file may be loaded:
 ```xml
 <additional xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://sumo.dlr.de/xsd/additional_file.xsd">
     <tlLogic id="gneJ8" programID="0">
@@ -400,6 +503,10 @@ To switch a  signal into moving-block-mode, the following additional file may be
 ```
 
 Parameter *moving-block* may also be updated at runtime with `traci.trafficlight.setParameter`.
+
+!!! note
+    The [abstract vehicle classes](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#abstract_vehicle_class) `tram` and `cable_car` are automatically configured for moving block behavior. This can be configured with sumo option **--railsignal.moving-block.default-classes**.
+
 
 ## Schedule Constraints
 Additionally, rail signals can enforce train ordering to ensure that a [scheduled order at stations](Public_Transport.md#public_transport_schedules) can be kept.
@@ -412,8 +519,6 @@ To make use of this, the following elements can be loaded from an additional fil
         <insertionPredecessor tripId="t3" tl="E" foes="t4"/>
     </railSignalConstraints>
 ```
-
-
 
 ### predecessor constraint
 This constrain defines that a given vehicle id (or tripId) can only pass the current signal after some other vehicle ('foe') with the given id or tripId has passed signal 'tl'. The foe vehicle must have been the last vehicle to do so or it must have been one of the last 'limit' vehicles at the time of switching green.
@@ -434,6 +539,22 @@ This constrain defines that a given vehicle id (or tripId) can only be inserted 
 
 ### constraints generation
 Constraints can be generated using the tool [generateRailSignalConstraints.py](../Tools/Railways.md#generaterailsignalconstraintspy) by using a route file with [stops that define a schedule](Public_Transport.md#public_transport_schedules).
+
+# Tram Simulation
+
+## Tram Behavior
+
+Operationally, there are many similarities between tram and conventional/heavy rail operations with regard to track networks and signaling at conflict points.
+The main difference is that trams are not separated by blocks when following each other. To reflect this in sumo, rail signals on tram tracks are automatically put into [moving block mode](#moving_block_mode) (This is configured with option **--railsignal.moving-block.default-classes**). Tram rail signals are still needed to regulate bidirectional access to single-track sections and they can be used to guard crossing and merging conflicts. However, fewer rail signals are needed compared to a conventional rail simulation because block length is not a critical efficiency factor in one-directional operations.
+
+## Tram Network modeling
+
+In many parts of the world, OSM data does not provide information of signaling infrastructure for tram networks. To achieve smooth operations at conflict points without rail signals, [netconvert](../netconvert.md) sets merging conflicts to junction type 'zipper'. The vehicle classes eligible for this behavior are configured with netconvert option **--railway.signal.permit-unsignalized** (default *tram,cable_car*).
+
+For many tram networks (i.e. with single track sections), this type of conflict handling is not sufficient and rail signals must be added. This can be done manually with netedit or with the tool
+[patchRailConflicts.py](../Tools/Railways.md#patchrailconflictspy).
+
+To simplify tram simulations where rail signals have been added selectively and some conflicts are regulared with zipper junctions, sumo option **--railsignal.moving-block.max-dist** (default *200*) can be used. Rail signal in moving block mode will disregard conflicts at junction type `zipper` if they are beyond the configured maximum distance.
 
 # Deadlocks
 
@@ -548,9 +669,9 @@ The following Objects provide extra information in their context menu to help un
   - **param:insertionBlocked:VEHICLE_ID**: The driveway requested by VEHICLE_ID on which insertion is currently blocked
   - **blocking DRIVEWAY_ID**: The list of foe vehicles which are blocking the insertion driveway with DRIVEWAY_ID
   - **driveWays blocking DRIVEWAY_ID**: the list of foe driveways which are blocking the requested driveway with DRIVEWAY_ID
- 
+
 !!! note
-    Street coloring mode [*by insertion backlog*](../sumo-gui.md#edgelane_visualisation_settings) helps to identify the tracks on which insertion is currently blocked.
+    Street coloring mode [*by insertion backlog*](../sumo-gui.md#edgelane_visualization_settings) helps to identify the tracks on which insertion is currently blocked.
 
 ## Abstract Networks
 
@@ -570,14 +691,14 @@ Rail simulation provides optional outputs related to driveways (Fahrstraßen)
 
 ## railsignal-block-output
 
-By setting option **--railsignal-block-output FILE**, an output file that contains informations for every drivway / signaling block is written.
+By setting option **--railsignal-block-output FILE**, an output file that contains information for every driveway / signaling block is written.
 
 | Element / Attribute Name  | Value Type                                | Description                            |
 | --------------- | --------------------------------------------------- | -------------------------------------- |
 | driveway / **id**         | id (string)                               | The if of the driveWay. See below for interpretation  |
 | driveway/ vehicle         | id                                        | The id of the first train that used this driveWay   |
 | driveway / edges          | list of edgeIDs                           | The complete route of the vehicle that first used this drivway   |
-| forward / lanes           | list of laneIDs                           | The list of lanes up to the next signal or the network border | 
+| forward / lanes           | list of laneIDs                           | The list of lanes up to the next signal or the network border |
 | bidi / lanes              | list of laneIDs                           | The list of oncoming lanes that are in conflict with this driveway |
 | flank / lanes             | list of laneIDs                           | The list of flanking lanes that are in conflict with this driveway |
 | conflictLinks / signals   | list of strings                           | The list of short signal link names (<RAILSIGNAL_ID>_<LINK_INDEX>) that are in conflict with this driveway |
@@ -586,7 +707,7 @@ By setting option **--railsignal-block-output FILE**, an output file that contai
 | siding / start            | edgeID                                    | The edge on which that siding starts |
 | siding / end              | edgeID                                    | The edge on which that siding ends |
 | siding / length           | float                                     | The length of the siding in meters (a Train may not use a siding if it is shorter than it's own length) |
-| deadlock / foes           | list of driveWay ids                      | The list of foe driveways that could create a deadlock toghether with the current driveway. If all foes are occupied, the current driveway must not be entered (only present when [`<deadlock>` elements](#deadlock_prevention) where loaded into the simulation |
+| deadlock / foes           | list of driveWay ids                      | The list of foe driveways that could create a deadlock together with the current driveway. If all foes are occupied, the current driveway must not be entered (only present when [`<deadlock>` elements](#deadlock_prevention) where loaded into the simulation) |
 
 ### Driveway IDs
 
@@ -596,7 +717,7 @@ By setting option **--railsignal-block-output FILE**, an output file that contai
 
 ## railsignal-vehicle-output
 
-By setting option **--railsignal-vehicle-output FILE**, an output file that contains occupancy informations for every driveway is written.
+By setting option **--railsignal-vehicle-output FILE**, an output file that contains occupancy information for every driveway is written.
 This file provides the times whenever a vehicle has entered or left a driveway.
 
 | Element / Attribute Name  | Value Type                                | Description                            |
@@ -610,16 +731,34 @@ This file provides the times whenever a vehicle has entered or left a driveway.
 | exit / time          | float or HH:MM:SS                                   | The time at which the vehicle left the driveWay |
 | exit / reason        | string                                              | The reason for leaving the driveWay |
 
+## railsignal state output
+
+For logging the states of a rail signal, the same method as for [logging
+TLS states of traffic lights](../Simulation/Output/Traffic_Lights.md#tls_states) can be
+used. The attribute `source` must be set to the ID of the junction the rail signal belongs to (or omitted to track the states of all rail signals in the simulation).
+
+
 # Miscellaneous
+- A [tutorial for building a large-scale railway scenario with OSM and GTFS](../Tutorials/RailwayScenario.md)
 - Error checking for [railway schedules](Public_Transport.md#single_vehicles_and_trips) can be done with the tool [checkStopOrder.py](../Tools/Routes.md#checkstoporderpy)
 - The tool [scheduleStats.py](../Tools/Railways.md#schedulestatspy) can be used to check how closely simulated train behavior conforms to a loaded rail schedule w.r.t. punctuality and expected traveltimes between stops.
+- The tool [checkReversals.py](../Tools/Railways.md#checkreversalspy) counts reversals per vehicle and per edge to identify potentially problematic train routes.
+- The tool [patchRailConflicts.py](../Tools/Railways.md#patchrailconflictspy) adds missing rail signals to a network (intended for tram simulation)
+- The tool [patchRailPriorities.py](../Tools/Railways.md#patchrailprioritiespy) helps find sensible train routes on single-track lines that make use of passing loops (sidings) by adapting the [routingType](Routing.md#routing_by_travel_time_and_routingtype) of railway-edges so that trains in different directions use different tracks when possible.
+- The tool [createOvertakingReroutes.py](../Tools/Railways.md#createovertakingreroutespy) is used to generate [rerouter definitions for automatic train overtaking](Rerouter.md#rerouting_to_a_railroad_siding_to_be_overtaken_by_a_faster_train)
+- The tool [plotStops.py](../Tools/Railways.md#plotstopspy) can render schedule diagrams for a given route
+
+<img src="../images/S46_actual.png" width="800px"/>
 
 # Limitations
 
 - Individual rail cars / coupling / uncoupling cannot currently be modeled
-- Distant signals (Vorsignale) are not modelled. Instead trains act as if always having full visibility onto the next main signal
-- Delay of railroad switches is not modelled
-- Overlap (Durchrutschweg) after a rail signal (which guarantuess safety if a red signal is violated), is currently not modelled by the rail signal safety assessment
+- Distant signals (Vorsignale) are not modeled. Instead trains act as if always having full visibility onto the next main signal
+- Trains immediately accelerate once their next signal shows green (proceed)
+- Braking curves assume constant deceleration, Trains drive at maximum physically safe speed.
+- Driver effects during braking (staying below a mandatory braking curve to avoid forced braking) are not modeled
+- Delay of railroad switches is not modeled
+- Overlap (Durchrutschweg) after a rail signal (which guarantees safety if a red signal is violated), is currently not modeled by the rail signal safety assessment
 - Axle counters are assumed after every signal and every railway switch and correspondingly, partial driveways (Teilfahrstraßen) are used in the most efficient manner
-- Stretching and shorting of long trains is not modelled
-- Operational restrictings on reversing trains (Shunting) are not modelled. Trains may reverse according to their defined route and move at normal speeds / acceleration in either direction (subject to rail signal safety rules).
+- Stretching and shortening of long trains is not modeled
+- Operational restrictions on reversing trains (Shunting) are not modeled. Trains may reverse according to their defined route and move at normal speeds / acceleration in either direction (subject to rail signal safety rules).

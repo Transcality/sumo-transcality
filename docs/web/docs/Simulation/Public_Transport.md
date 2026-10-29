@@ -3,14 +3,14 @@ title: Public Transport
 ---
 
 # Introduction
-Most public transport uses fixed routes (busses, trams and trains) and this page describes how to model this type of transport. For demand responsive transport that is more flexible see [Taxi](Taxi.md).
+Most public transport uses fixed routes (buses, trams and trains) and this page describes how to model this type of transport. For demand responsive transport that is more flexible see [Taxi](Taxi.md).
 
-The descriptions below describe how to model busses but the same rules apply for trams, subways and trains.
+The descriptions below describe how to model buses but the same rules apply for trams, subways and trains.
 
 # Bus Stops
 
 It is possible to define positions of bus stops and let vehicles
-("busses") stop at these positions for a pre-given time. Definitions of
+("buses") stop at these positions for a pre-given time. Definitions of
 bus stop locations in SUMO have the following format:
 
 ```xml
@@ -38,7 +38,8 @@ stop is an area on a lane. The parameters have the following meanings:
 !!! note
     The alias `<trainStop>` may be used anywhere instead of `<busStop>` and has the exact same functionality.
 
-The [generic parameter](GenericParameters.md) `<param key="waitingWidth" value="FLOAT"/>` can be used to define the visual spacing of waiting persons at the busStop. 
+The [generic parameters](GenericParameters.md) `<param key="waitingWidth" value="FLOAT"/>` and `<param key="waitingDepth" value="FLOAT"/>` can be used to define the visual spacing of waiting persons at the busStop.
+The generic parameter `<param key="allowOvertakeRight" value="false"/>` can be used to forbid overtaking on the right for an occupied stop on the second lane (or a tram stop in the middle of the road). By default it is allowed.
 
 ## Access Lanes
 
@@ -66,7 +67,7 @@ OSM](../Tutorials/PT_from_OpenStreetMap.md#initial_network_and_public_transit_in
 The value `doors` is currently only used when exiting a train or bus. The starting position for a
 subsequent walk of the exiting passengers will be randomly chosen among the door positions of the train or bus.
 The door positions themselves cannot be defined but they are derived from the number of carriages
-and the number of doors per carriage of the vehicle, see [carriage definition](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#carriages).
+and the number of doors per carriage of the vehicle, see [carriage definition](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#carriages_custom_visualization).
 
 ## Virtual Stops
 

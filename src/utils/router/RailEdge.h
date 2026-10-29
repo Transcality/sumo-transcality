@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -126,10 +126,13 @@ public:
         }
     }
 
-    void init(std::vector<_RailEdge*>& railEdges, int& numericalID, double maxTrainLength) {
+    void init(std::vector<_RailEdge*>& railEdges, int& numericalID, double maxTrainLength, bool permitReversal) {
         // replace turnaround-via with an explicit RailEdge that checks length
         for (const auto& viaPair : myOriginal->getViaSuccessors()) {
             if (viaPair.first == myOriginal->getBidiEdge()) {
+                if (!permitReversal) {
+                    continue;
+                }
                 // direction reversal
                 if (myTurnaround == nullptr) {
                     myTurnaround = new _RailEdge(myOriginal, viaPair.first, numericalID++);
@@ -226,11 +229,32 @@ public:
             std::cout << getID() << " maxLength=" << myMaxLength << " veh=" << vehicle->getID() << " length=" << vehicle->getLength() << "\n";
         }
 #endif
-        return vehicle->getLength() > myMaxLength || (myOriginal != nullptr && myOriginal->prohibits(vehicle));
+        return vehicle->getLength() > myMaxLength
+            || (myOriginal != nullptr && myOriginal->prohibits(vehicle))
+            || replacementProhibits(vehicle);
     }
 
+    bool replacementProhibits(const V* const vehicle) const {
+        for (const E* e : myReplacementEdges) {
+            if (e->prohibits(vehicle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     inline bool restricts(const V* const vehicle) const {
-        return myOriginal != nullptr && myOriginal->restricts(vehicle);
+        return (myOriginal != nullptr && myOriginal->restricts(vehicle)) || replacementRestricts(vehicle);
+    }
+
+    bool replacementRestricts(const V* const vehicle) const {
+        for (const E* e : myReplacementEdges) {
+            if (e->restricts(vehicle)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     const ConstEdgePairVector& getViaSuccessors(SUMOVehicleClass vClass = SVC_IGNORING, bool ignoreTransientPermissions = false) const {

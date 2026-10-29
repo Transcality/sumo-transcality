@@ -30,6 +30,7 @@ The attributes:
 | **file**       | filename           | The path to the output file. The path may be relative. If output is to be discarded "NUL" or "/dev/null" can be given.      |
 | friendlyPos    | bool               | If set, no error will be reported if the detector is placed behind the lane. Instead, the detector will be placed 0.1 meters from the lane's end or at position 0.1, if the position was negative and larger than the lane's length after multiplication with -1.                      |
 | vTypes         | string             | space separated list of vehicle type ids to consider, "" means all; default "".                       |
+| nextEdges      | stringList         | list of edge ids that must all be part of the future route of the vehicle to qualify for detection (default *empty*). Instead of giving one or more "normal" edges it is permitted to give a single internal edge. In this case, the vehicle will be detected if it drives over that internal edge immediately after the detector edge. |
 
 !!! note
     Instead of manually defining detectors in an xml file, they can also be defined visually with [netedit](../../Netedit/index.md).
@@ -73,24 +74,19 @@ movement, then the following value is generated additionally:
 If the vehicle leaves the detector because it arrived, changed lanes or
 teleported a leave event without occupancy is generated.
 
-## Visualisation
+!!! note
+    The timing values are of sub-step resolution, computed by interpolating from the last two simulation steps. This interpolation takes into account **--step-method**.
 
-<table style="border: 0 !important"><thead><tr><td style="border: none; vertical-align:middle; text-align:center;">
-<figure>
-<img src="../../images/Instantaneous_loops.svg" alt="" />
-<figcaption>A scenario with induction loops</figcaption>
-</figure>
-</td><td style="border: none; vertical-align:middle; text-align:center;">
-<figure>
-<img src="../../images/Instantaneous_loop_closeup.svg" alt="" />
-<figcaption>A close-up view at an induction loop</figcaption>
-</figure>
-</td></tr></thead></table>
+## Visualization
+
+| A scenario with induction loops | A close-up view at an induction loop |
+|:---:|:---:|
+| ![A scenario with induction loops](../../images/Instantaneous_loops.svg) | ![A close-up view at an induction loop](../../images/Instantaneous_loop_closeup.svg) |
 
 ## Further Notes
 
 - Instantaneous induct loops are not directly supported by
-  [TraCI](../../TraCI.md). As [Simulated induction loops can be
+  [TraCI](../../TraCI/index.md). As [Simulated induction loops can be
   accessed using
   TraCI](../../TraCI/Induction_Loop_Value_Retrieval.md) allows a
   per-second value retrieval from plain [induction

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -39,8 +39,12 @@
 #include <microsim/MSEdge.h>
 #include <microsim/MSVehicle.h>
 #include <microsim/MSNet.h>
+#include <microsim/MSVehicleControl.h>
 #include <microsim/transportables/MSTransportable.h>
 #include <microsim/transportables/MSPModel.h>
+#include <mesosim/MELoop.h>
+#include <mesosim/MESegment.h>
+#include <mesosim/MEVehicle.h>
 #include <utils/common/MsgHandler.h>
 #include <utils/common/UtilExceptions.h>
 #include <utils/common/StringUtils.h>
@@ -76,10 +80,17 @@ MSInductLoop::MSInductLoop(const std::string& id, MSLane* const lane,
     myOverrideEntryTime(-1),
     myVehicleDataCont(),
     myVehiclesOnDet(),
-    myLastIntervalEnd(-1) {
+    myLastIntervalEnd(-1),
+    mySegment(nullptr) {
     assert(length >= 0);
     assert(myPosition >= 0 && myEndPosition <= myLane->getLength());
     reset();
+    if (MSGlobals::gUseMesoSim) {
+        // used by actuated tls
+        mySegment = MSGlobals::gMesoNet->getSegmentForEdge(lane->getEdge(), myPosition);
+        mySegment->addDetector(this);
+        mySegmentPos = myPosition - mySegment->getIndex() * mySegment->getLength();
+    }
 }
 
 
@@ -105,6 +116,19 @@ MSInductLoop::notifyEnter(SUMOTrafficObject& veh, Notification reason, const MSL
     // vehicles must be kept if the "inductionloop" wants to detect passeengers
     if (!vehicleApplies(veh) && (veh.isPerson() || myDetectPersons <= (int)PersonMode::WALK)) {
         return false;
+    }
+    if (MSGlobals::gUseMesoSim) {
+        MEVehicle* mesoveh = dynamic_cast<MEVehicle*>(&veh);
+        assert(mesoveh != nullptr);
+        const MESegment* seg = mesoveh->getSegment();
+        if (seg != nullptr && (seg->numQueues() == 1 || mesoveh->getQueIndex() == myLane->getIndex())) {
+            const SUMOTime onSegTime = mesoveh->getEventTime() - mesoveh->getLastEntryTime();
+            // extrapolate movement
+            const SUMOTime exLeaveTime = mesoveh->getLastEntryTime() + (SUMOTime)((double)onSegTime * mySegmentPos / seg->getLength());
+            //std::cout << SIMTIME << " det=" << getID() << " veh=" << veh.getID() << " entry=" << STEPS2TIME(mesoveh->getLastEntryTime()) << " et=" << STEPS2TIME(mesoveh->getEventTime()) << " exLeaveTime=" << STEPS2TIME(exLeaveTime) << "\n";
+            myNextMesoLeaveTimes.push(exLeaveTime);
+        }
+        return true;
     }
     if (reason != NOTIFICATION_JUNCTION) { // the junction case is handled in notifyMove
         if (veh.getBackPositionOnLane(myLane) >= myPosition) {
@@ -202,6 +226,27 @@ MSInductLoop::notifyLeave(SUMOTrafficObject& veh, double lastPos, MSMoveReminder
         const int lastDir = lastPos < 0 ? MSPModel::BACKWARD : MSPModel::FORWARD;
         notifyMovePerson(dynamic_cast<MSTransportable*>(&veh), lastDir, lastPos);
     }
+    if (MSGlobals::gUseMesoSim && reason <= MSMoveReminder::NOTIFICATION_SEGMENT && vehicleApplies(veh)) {
+        MEVehicle* mesoveh = dynamic_cast<MEVehicle*>(&veh);
+        assert(mesoveh != nullptr);
+        const MESegment* seg = mesoveh->getSegment();
+        if (seg != nullptr && (seg->numQueues() == 1 || mesoveh->getQueIndex() == myLane->getIndex())) {
+            // interpolate movement + 1 extra second
+            // We can only interpolate the passing time at the detector after the vehicle leaves the segment. Consequently our information is always out of date
+            // (by the time the current vehicle left, the follower vehicle should already have reached the detector so the estimated time gap to the last detection is always too large)
+            // the prior implementation used seg->getBlockTime() which included the headway which somewhat worked around this deficit by accident
+            const SUMOTime inLeaveTime = mesoveh->getEventTime() - TIME2STEPS((seg->getLength() - mySegmentPos - mesoveh->getLength()) / myLane->getSpeedLimit());
+            //std::cout << SIMTIME << " det=" << getID() << " veh=" << veh.getID() << " et=" << STEPS2TIME(mesoveh->getEventTime()) << " inLeaveTime=" << STEPS2TIME(inLeaveTime) << "\n";
+            auto q = seg->getQueue(mesoveh->getQueIndex());
+            if (q.size() > 1 && vehicleApplies(*q[q.size() - 2])) {
+                myLastMesoLeaveTimes.push(inLeaveTime + TIME2STEPS(seg->getLastHeadwaySeconds()));
+                //std::cout << "    inLeaveTime2=" << (STEPS2TIME(inLeaveTime) + seg->getLastHeadwaySeconds()) << "\n";
+            }
+            myLastMesoLeaveTimes.push(inLeaveTime);
+            myEnteredVehicleNumber++;
+        }
+        return false;
+    }
     if (reason != MSMoveReminder::NOTIFICATION_JUNCTION || (veh.isPerson() && myDetectPersons != (int)PersonMode::NONE)) {
 #ifdef HAVE_FOX
         ScopedLocker<> lock(myNotificationMutex, myNeedLock);
@@ -279,7 +324,17 @@ MSInductLoop::getTimeSinceLastDetection() const {
         // detector is occupied
         return 0;
     }
+    if (MSGlobals::gUseMesoSim) {
+        //std::cout << SIMTIME << " det=" << getID() << " qBefore=" << myNextMesoLeaveTimes.size() << " last=" << STEPS2TIME(getLastDetectionTime()) << " qAfter=" << myNextMesoLeaveTimes.size() << " top=" << (myNextMesoLeaveTimes.empty() ? -1 : myNextMesoLeaveTimes.top()) << "\n";
+        return SIMTIME - STEPS2TIME(getLastDetectionTime());
+    }
     return SIMTIME - myLastLeaveTime;
+}
+
+
+void
+MSInductLoop::loadTimeSinceLastDetection(double time) {
+    myLastLeaveTime = SIMTIME - time;
 }
 
 
@@ -304,6 +359,41 @@ MSInductLoop::getOccupancyTime() const {
 }
 
 
+double
+MSInductLoop::getArrivalDelay() const {
+#ifdef HAVE_FOX
+    ScopedLocker<> lock(myNotificationMutex, myNeedLock);
+#endif
+    MSVehicleControl& vc = MSNet::getInstance()->getVehicleControl();
+    double result = -INVALID_DOUBLE;
+    for (const auto& item : collectVehiclesOnDet(SIMSTEP - DELTA_T)) {
+        SUMOVehicle* v = vc.getVehicle(item.idM);
+        if (v != nullptr) {
+            MSBaseVehicle* veh = dynamic_cast<MSBaseVehicle*>(v);
+            double ad = veh->getStopArrivalDelay();
+            if (ad != INVALID_DOUBLE) {
+                result = MAX2(result, ad);
+            }
+        }
+    }
+    return result;
+}
+
+
+void
+MSInductLoop::discardOldTimes(TimeQueue& tq, SUMOTime now) {
+    // discard times in the past except for the latest one
+    SUMOTime last = tq.top();
+    if (tq.size() > 1) {
+        tq.pop();
+        while (tq.size() > 0 && tq.top() < now) {
+            last = tq.top();
+            tq.pop();
+        }
+        tq.push(last);
+    }
+}
+
 
 SUMOTime
 MSInductLoop::getLastDetectionTime() const {
@@ -312,6 +402,19 @@ MSInductLoop::getLastDetectionTime() const {
     }
     if (myVehiclesOnDet.size() != 0) {
         return MSNet::getInstance()->getCurrentTimeStep();
+    }
+    const SUMOTime now = SIMSTEP;
+    if (MSGlobals::gUseMesoSim
+            && !myNextMesoLeaveTimes.empty()
+            && myNextMesoLeaveTimes.top() < now) {
+        discardOldTimes(myNextMesoLeaveTimes, now);
+        SUMOTime last = myNextMesoLeaveTimes.top();
+        if (!myLastMesoLeaveTimes.empty() && myLastMesoLeaveTimes.top() < now) {
+            discardOldTimes(myLastMesoLeaveTimes, now);
+            last = MAX2(last, myLastMesoLeaveTimes.top());
+        }
+        //std::cout << SIMTIME << " det=" << getID() << " result=" << last << " last=" << myNextMesoLeaveTimes.top() << " last2=" << (myLastMesoLeaveTimes.size() > 0 ? myLastMesoLeaveTimes.top() : -1) << "\n";
+        return last;
     }
     return TIME2STEPS(myLastLeaveTime);
 }
@@ -403,6 +506,9 @@ MSInductLoop::writeXMLOutput(OutputDevice& dev, SUMOTime startTime, SUMOTime sto
             contrib++;
         }
     }
+    if (MSGlobals::gUseMesoSim) {
+        contrib = myEnteredVehicleNumber;
+    }
     const double flow = (double)contrib / t * 3600.;
     for (std::map< SUMOTrafficObject*, double >::const_iterator i = myVehiclesOnDet.begin(); i != myVehiclesOnDet.end(); ++i) {
         occupancy += STEPS2TIME(stopTime) - MAX2(STEPS2TIME(startTime), i->second);
@@ -411,7 +517,7 @@ MSInductLoop::writeXMLOutput(OutputDevice& dev, SUMOTime startTime, SUMOTime sto
     const double meanSpeed = contrib != 0 ? speedSum / (double)contrib : -1;
     const double harmonicMeanSpeed = contrib != 0 ? (double)contrib / inverseSpeedSum : -1;
     const double meanLength = contrib != 0 ? lengthSum / (double)contrib : -1;
-    dev.openTag(SUMO_TAG_INTERVAL).writeAttr(SUMO_ATTR_BEGIN, STEPS2TIME(startTime)).writeAttr(SUMO_ATTR_END, STEPS2TIME(stopTime));
+    dev.openTag(SUMO_TAG_INTERVAL).writeTime(SUMO_ATTR_BEGIN, startTime).writeTime(SUMO_ATTR_END, stopTime);
     dev.writeAttr(SUMO_ATTR_ID, StringUtils::escapeXML(getID())).writeAttr("nVehContrib", contrib);
     dev.writeAttr("flow", flow).writeAttr("occupancy", occupancy).writeAttr("speed", meanSpeed).writeAttr("harmonicMeanSpeed", harmonicMeanSpeed);
     dev.writeAttr("length", meanLength).writeAttr("nVehEntered", myEnteredVehicleNumber).closeTag();

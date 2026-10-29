@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2003-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2003-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -109,6 +109,15 @@ public:
     /// @brief handle keys
     long onKeyPress(FXObject* o, FXSelector sel, void* data);
 
+    /// @brief handle right button release
+    long onRightBtnRelease(FXObject* o, FXSelector sel, void* data);
+
+    /// @brief handle clear command
+    long onCmdClear(FXObject*, FXSelector, void*);
+
+    /// @brief handle update of clear command
+    long onUpdClear(FXObject* sender, FXSelector, void* data);
+
     /// @brief The text colors used
     static FXHiliteStyle* getStyles();
 
@@ -124,32 +133,37 @@ private:
         /// @brief constructor
         MsgOutputDevice(GUIMessageWindow* msgWindow, GUIEventType type) :
             myMsgWindow(msgWindow),
-            myType(type){ 
-                /// @todo We should design a new formatter type for this.
-                myFormatter.reset(new PlainXMLFormatter());
-                myStreamDevice.reset(new OStreamDevice(new std::ostringstream()));
-            }
+            myType(type) { }
 
         /// @brief destructor
         ~MsgOutputDevice() { }
 
     protected:
+        /// @brief get Output Stream
+        std::ostream& getOStream() {
+            return myStream;
+        }
         /// @brief write hook
         void postWriteHook() {
-            myMsgWindow->appendMsg(myType, getOStream().str());
-            getOStream().str("");
+            myMsgWindow->appendMsg(myType, myStream.str());
+            myStream.str("");
         }
 
     private:
         /// @brief pointer to message Windows
         GUIMessageWindow* myMsgWindow;
 
+        /// @brief output string stream
+        std::ostringstream myStream;
+
         /// @brief type of event
         GUIEventType myType;
     };
 
     /// @brief get active string object
+    static bool findObjectTypeID(const FXString& text, const FXint pos, const FXint lineS, const FXint lineE, std::string& id, std::string& type);
     const GUIGlObject* getActiveStringObject(const FXString& text, const FXint pos, const FXint lineS, const FXint lineE) const;
+    bool hasActiveStringObject(const FXString& text, const FXint pos) const;
 
     /// @brief get time string object
     SUMOTime getTimeString(const FXString& text, const FXint pos) const;

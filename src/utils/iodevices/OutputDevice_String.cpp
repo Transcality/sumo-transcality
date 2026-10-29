@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -29,14 +29,25 @@
 // ===========================================================================
 OutputDevice_String::OutputDevice_String(const int defaultIndentation)
     : OutputDevice(defaultIndentation) {
-    myStreamDevice = std::make_unique<OStreamDevice>(new std::ostringstream());
-    myStreamDevice->setOSFlags(std::ios::fixed);
-    myStreamDevice->setPrecision(2);
+    setPrecision();
+    myStream << std::setiosflags(std::ios::fixed);
 }
+
+
+OutputDevice_String::~OutputDevice_String() {
+}
+
 
 std::string
 OutputDevice_String::getString() const {
-    return myStreamDevice->str();
+    return myStream.str();
 }
+
+
+std::ostream&
+OutputDevice_String::getOStream() {
+    return myStream;
+}
+
 
 /****************************************************************************/

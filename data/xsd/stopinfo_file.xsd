@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 
-    <xsd:include schemaLocation="baseTypes.xsd"/>
+    <xsd:include schemaLocation="types/base.xsd"/>
 
     <xsd:element name="stops">
         <xsd:complexType>
@@ -38,6 +38,8 @@
             <xsd:attribute name="split" use="optional" type="xsd:string"/>
             <xsd:attribute name="usedEnded" use="optional" type="boolType"/>
             <xsd:attribute name="blockedDuration" use="optional" type="timeType"/>
+            <xsd:attribute name="state" use="optional" type="xsd:string"/>
+            <xsd:attribute name="actType" use="optional" type="xsd:string"/>
         </xsd:complexType>
     </xsd:element>
 

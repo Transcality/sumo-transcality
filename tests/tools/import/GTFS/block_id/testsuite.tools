@@ -1,0 +1,9 @@
+# handle missing block_id (#17750)
+missing
+noJoin
+
+# join trips that have the same block_id
+join
+
+# join trips that have the same block_id but also include trips that are not joined
+join2

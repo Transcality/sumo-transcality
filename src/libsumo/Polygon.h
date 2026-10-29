@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -46,6 +46,7 @@ public:
     static libsumo::TraCIColor getColor(const std::string& polygonID);
     static bool getFilled(const std::string& polygonID);
     static double getLineWidth(const std::string& polygonID);
+    static double getHeight(const std::string& polygonID);
 
     LIBSUMO_ID_PARAMETER_API
     LIBSUMO_SUBSCRIPTION_API
@@ -60,6 +61,7 @@ public:
 
     static void setFilled(std::string polygonID, bool filled);
     static void setLineWidth(std::string polygonID, double lineWidth);
+    static void setHeight(std::string polygonID, double height);
 
 #ifndef LIBTRACI
 #ifndef SWIG

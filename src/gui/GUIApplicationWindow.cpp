@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -31,19 +31,25 @@
 
 #include <guisim/GUILane.h>
 #include <guisim/GUINet.h>
+#include <guisim/GUITrafficLightLogicWrapper.h>
 #include <microsim/MSEdgeControl.h>
+#include <microsim/MSGlobals.h>
 #include <microsim/MSInsertionControl.h>
 #include <microsim/MSStateHandler.h>
 #include <microsim/transportables/MSTransportableControl.h>
+#include <microsim/devices/MSRoutingEngine.h>
+#include <microsim/traffic_lights/MSTLLogicControl.h>
 #include <netload/NLHandler.h>
 #include <traci-server/TraCIServer.h>
 #include <utils/common/MsgHandler.h>
 #include <utils/common/StringUtils.h>
 #include <utils/foxtools/MFXButtonTooltip.h>
+#include <utils/foxtools/MFXCheckableButton.h>
 #include <utils/foxtools/MFXLabelTooltip.h>
 #include <utils/foxtools/MFXLCDLabel.h>
 #include <utils/foxtools/MFXLinkLabel.h>
 #include <utils/foxtools/MFXRealSpinner.h>
+#include <utils/foxtools/MFXStaticToolTip.h>
 #include <utils/gui/cursors/GUICursorSubSys.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
@@ -80,6 +86,12 @@
 #define MIN_DRAW_DELAY 20
 //#define HAVE_DANGEROUS_SOUNDS
 
+#define STAT_VEHS 0
+#define STAT_DELAYED 1
+#define STAT_TELEPORTS 2
+#define STAT_PERSONS 3
+#define STAT_CONTAINERS 4
+
 // ===========================================================================
 // FOX-declarations
 // ===========================================================================
@@ -105,6 +117,7 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_F9_EDIT_VIEWSCHEME,                      GUIApplicationWindow::onCmdEditViewScheme),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_I_EDITVIEWPORT,                     GUIApplicationWindow::onCmdEditViewport),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_T_OPENNETEDIT_OPENSUMO,             GUIApplicationWindow::onCmdOpenInNetedit),
+    FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET,                   GUIApplicationWindow::onCmdOpenInNetedit),
     // gaming
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_H_APPSETTINGS_OPENEDGETYPES,    GUIApplicationWindow::onCmdAppSettings),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_G_GAMINGMODE_TOGGLEGRID,        GUIApplicationWindow::onCmdGaming),
@@ -121,9 +134,11 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_NEW_OSGVIEW,    GUIApplicationWindow::onUpdAddView),
 
 #endif
+    FXMAPFUNC(SEL_COMMAND,  MID_SHOWTOOLTIPS_VIEW,                              GUIApplicationWindow::onCmdShowToolTipsView),
+    FXMAPFUNC(SEL_COMMAND,  MID_SHOWTOOLTIPS_MENU,                              GUIApplicationWindow::onCmdShowToolTipsMenu),
     // Time
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_A_MODE_STARTSIMULATION_ADDITIONALS_STOPS,        GUIApplicationWindow::onCmdStart),
-    FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS,          GUIApplicationWindow::onCmdStart),
+    FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS,   GUIApplicationWindow::onCmdStart),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_S_MODE_STOPSIMULATION_SELECT,                    GUIApplicationWindow::onCmdStop),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_S_STOPSIMULATION_SAVENETWORK,               GUIApplicationWindow::onCmdStop),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_D_MODE_SINGLESIMULATIONSTEP_DELETE,              GUIApplicationWindow::onCmdStep),
@@ -152,7 +167,7 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_QUICK_RELOAD,                               GUIApplicationWindow::onUpdReload),
     FXMAPFUNC(SEL_UPDATE,   MID_RECENTFILE,                                             GUIApplicationWindow::onUpdOpenRecent),
     FXMAPFUNC(SEL_UPDATE,   MID_NEW_MICROVIEW,                                          GUIApplicationWindow::onUpdAddView),
-    FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS,          GUIApplicationWindow::onUpdStart),
+    FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS,   GUIApplicationWindow::onUpdStart),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_S_STOPSIMULATION_SAVENETWORK,               GUIApplicationWindow::onUpdStop),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_D_SINGLESIMULATIONSTEP_OPENDEMANDELEMENTS,  GUIApplicationWindow::onUpdStep),
     FXMAPFUNC(SEL_UPDATE,   MID_SIMSAVE,                                                GUIApplicationWindow::onUpdNeedsNetwork),
@@ -164,6 +179,7 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_F9_EDIT_VIEWSCHEME,                              GUIApplicationWindow::onUpdNeedsNetwork),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_I_EDITVIEWPORT,                             GUIApplicationWindow::onUpdNeedsNetwork),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_T_OPENNETEDIT_OPENSUMO,                     GUIApplicationWindow::onUpdNeedsNetwork),
+    FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET,                           GUIApplicationWindow::onUpdNeedsNetwork),
     FXMAPFUNC(SEL_UPDATE,   MID_TOOLBAREDIT_LOADADDITIONALS,                            GUIApplicationWindow::onUpdNeedsSumoConfig),
     FXMAPFUNC(SEL_UPDATE,   MID_TOOLBAREDIT_LOADDEMAND,                                 GUIApplicationWindow::onUpdNeedsSumoConfig),
     FXMAPFUNC(SEL_UPDATE,   MID_DEMAND_SCALE,                                           GUIApplicationWindow::onUpdNeedsNetwork),
@@ -213,10 +229,17 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_ZHT,   GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_TR,    GUIApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_TR,    GUIApplicationWindow::onUpdChangeLanguage),
-    FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_HU,    GUIApplicationWindow::onCmdChangeLanguage),
-    FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_HU,    GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_JA,    GUIApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_JA,    GUIApplicationWindow::onUpdChangeLanguage),
+    FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_KO,    GUIApplicationWindow::onCmdChangeLanguage),
+    FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_KO,    GUIApplicationWindow::onUpdChangeLanguage),
+    // coordinate inputs
+    FXMAPFUNC(SEL_COMMAND,  MID_GEO_COORDINATE,          GUIApplicationWindow::onCmdSetGeoCoordinate),
+    FXMAPFUNC(SEL_COMMAND,  MID_CARTESIAN_COORDINATE,    GUIApplicationWindow::onCmdSetCartesianCoordinate),
+    FXMAPFUNC(SEL_FOCUSIN,  MID_GEO_COORDINATE,          GUIApplicationWindow::onCmdFocusCoordinate),
+    FXMAPFUNC(SEL_FOCUSIN,  MID_CARTESIAN_COORDINATE,    GUIApplicationWindow::onCmdFocusCoordinate),
+    FXMAPFUNC(SEL_FOCUSOUT, MID_GEO_COORDINATE,          GUIApplicationWindow::onCmdUnfocusCoordinate),
+    FXMAPFUNC(SEL_FOCUSOUT, MID_CARTESIAN_COORDINATE,    GUIApplicationWindow::onCmdUnfocusCoordinate),
     // keys
     FXMAPFUNC(SEL_KEYPRESS,              0,     GUIApplicationWindow::onKeyPress),
     FXMAPFUNC(SEL_KEYRELEASE,            0,     GUIApplicationWindow::onKeyRelease),
@@ -304,15 +327,47 @@ GUIApplicationWindow::dependentBuild(const bool isLibsumo) {
         }
         // build geo coordiantes
         myGeoFrame = new FXHorizontalFrame(myStatusbar, GUIDesignHorizontalFrameStatusBar);
-        myGeoCoordinate = GUIDesigns::buildFXLabel(myGeoFrame, TL("N/A"), "", TL("Original coordinate (before coordinate transformation in netconvert)"), nullptr, LAYOUT_CENTER_Y);
+        myGeoCoordinate = new FXTextField(myGeoFrame, 26, this, MID_GEO_COORDINATE, FRAME_NONE | LAYOUT_CENTER_Y | TEXTFIELD_ENTER_ONLY, 0, 0, 0, GUIDesignHeight, 2, 2, 1, 1);
+        myGeoCoordinate->setHelpText(TL("Original coordinate (before coordinate transformation in netconvert). Enter 'lat, lon' or 'lat:... lon:...' to center view"));
+        myGeoCoordinate->setTipText(TL("Enter 'lat, lon' to center view"));
+        myGeoCoordinate->setBackColor(myGeoFrame->getBackColor());
+        myGeoCoordinate->setText(TL("N/A"));
+        myGeoCoordinate->disable();
+        myGeoCoordinate->setEditable(false);
         // build cartesian coordinates
         myCartesianFrame = new FXHorizontalFrame(myStatusbar, GUIDesignHorizontalFrameStatusBar);
-        myCartesianCoordinate = GUIDesigns::buildFXLabel(myCartesianFrame, TL("N/A"), "", TL("Network coordinate"), nullptr, LAYOUT_CENTER_Y);
+        myCartesianCoordinate = new FXTextField(myCartesianFrame, 22, this, MID_CARTESIAN_COORDINATE, FRAME_NONE | LAYOUT_CENTER_Y | TEXTFIELD_ENTER_ONLY, 0, 0, 0, GUIDesignHeight, 2, 2, 1, 1);
+        myCartesianCoordinate->setHelpText(TL("Network coordinate. Enter 'x, y' to center view"));
+        myCartesianCoordinate->setTipText(TL("Enter 'x, y' to center view"));
+        myCartesianCoordinate->setBackColor(myCartesianFrame->getBackColor());
+        myCartesianCoordinate->setText(TL("N/A"));
         // build buttons
-        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", "", "", GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE), this, MID_SHOWVEHSTATS));
-        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", "", "", GUIIconSubSys::getIcon(GUIIcon::GREENPERSON), this, MID_SHOWPERSONSTATS));
+        std::vector<std::string> help({
+            TL("number of running vehicles"),
+            TL("number of insertion backlogged vehicles"),
+            TL("percentage of teleports per departed vehicles"),
+            TL("number of active persons"),
+            TL("number of active containers")});
+
+        const GUIIcon greenVehIcon = (OptionsCont::getOptions().isSet("mesosim") && OptionsCont::getOptions().getBool("mesosim")) ?
+                                     GUIIcon::GREEN_VEHICLE_MESO : GUIIcon::GREENVEHICLE;
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_VEHS], help[STAT_VEHS], GUIIconSubSys::getIcon(greenVehIcon), this, MID_SHOWVEHSTATS));
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_DELAYED], help[STAT_DELAYED], GUIIconSubSys::getIcon(GUIIcon::INSERTION_DELAY), this, MID_SHOWVEHSTATS));
         myStatButtons.back()->hide();
-        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", "", "", GUIIconSubSys::getIcon(GUIIcon::GREENCONTAINER), this, MID_SHOWVEHSTATS));
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_TELEPORTS], help[STAT_TELEPORTS], GUIIconSubSys::getIcon(GUIIcon::TELEPORT), this, MID_SHOWVEHSTATS));
+        myStatButtons.back()->hide();
+        GUIIcon greenPersonIcon = GUIIcon::GREENPERSON;
+        if (OptionsCont::getOptions().isSet("pedestrian.model")) {
+            const std::string pedModel = OptionsCont::getOptions().getString("pedestrian.model");
+            if (StringUtils::to_lower_case(pedModel) == "noninteracting") {
+                greenPersonIcon = GUIIcon::GREEN_PERSON_NON_INTERACTING;
+            } else if (StringUtils::to_lower_case(pedModel) == "jupedsim") {
+                greenPersonIcon = GUIIcon::GREEN_PERSON_JUPEDSIM;
+            }
+        }
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_PERSONS], help[STAT_PERSONS], GUIIconSubSys::getIcon(greenPersonIcon), this, MID_SHOWPERSONSTATS));
+        myStatButtons.back()->hide();
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_CONTAINERS], help[STAT_CONTAINERS], GUIIconSubSys::getIcon(GUIIcon::GREENCONTAINER), this, MID_SHOWVEHSTATS));
         myStatButtons.back()->hide();
     }
     // make the window a mdi-window
@@ -391,7 +446,7 @@ GUIApplicationWindow::create() {
     }
     if (myOnlineMaps.empty()) {
         myOnlineMaps["GeoHack"] = "https://geohack.toolforge.org/geohack.php?params=%lat;%lon_scale:1000";
-        myOnlineMaps["Google Maps"] = "https://www.google.com/maps?ll=%lat,%lon&t=h&z=18";
+        myOnlineMaps["Google Maps"] = "https://www.google.com/maps/search/?api=1&query=%lat,%lon&zoom=19";
         myOnlineMaps["OSM"] = "https://www.openstreetmap.org/?mlat=%lat&mlon=%lon&zoom=18&layers=M";
     }
     updateTimeLCDTooltip();
@@ -520,7 +575,7 @@ GUIApplicationWindow::fillMenuBar() {
                                            TL("Edit Breakpoints"), "Ctrl+B", TL("Opens a dialog for editing breakpoints."),
                                            GUIIconSubSys::getIcon(GUIIcon::APP_BREAKPOINTS), this, MID_HOTKEY_CTRL_B_EDITBREAKPOINT_OPENDATAELEMENTS);
     GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
-                                           TL("Edit Visualisation"), "F9", TL("Opens a dialog for editing visualization settings."),
+                                           TL("Edit Visualization"), "F9", TL("Opens a dialog for editing visualization settings."),
                                            GUIIconSubSys::getIcon(GUIIcon::COLORWHEEL), this, MID_HOTKEY_F9_EDIT_VIEWSCHEME);
     GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
                                            TL("Edit Viewport"), "Ctrl+I", TL("Opens a dialog for editing viewing area, zoom and rotation."),
@@ -534,6 +589,9 @@ GUIApplicationWindow::fillMenuBar() {
     myOpenInNetedit = GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
                       TL("Open in netedit"), "Ctrl+T", TL("Opens current simulation in NETEDIT."),
                       GUIIconSubSys::getIcon(GUIIcon::NETEDIT_MINI), this, MID_HOTKEY_CTRL_T_OPENNETEDIT_OPENSUMO);
+    myOpenNetInNetedit = GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
+                         TL("Open network in netedit"), "Ctrl+Shift+T", TL("Opens current network in NETEDIT."),
+                         GUIIconSubSys::getIcon(GUIIcon::NETEDIT_MINI), this, MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET);
     // build settings menu
     mySettingsMenu = new FXMenuPane(this);
     GUIDesigns::buildFXMenuTitle(myMenuBar, TL("&Settings"), nullptr, mySettingsMenu);
@@ -761,6 +819,18 @@ GUIApplicationWindow::buildToolBars() {
         new MFXButtonTooltip(myToolBar5, myStaticTooltipMenu, (std::string("\t") + TL("Open new 3D view") + std::string("\t") + TL("Open a new 3D view.")).c_str(),
                              GUIIconSubSys::getIcon(GUIIcon::OSGVIEW), this, MID_NEW_OSGVIEW, GUIDesignButtonToolbar);
 #endif
+        // add toggle button for tooltips in view on/off (by default unchecked)
+        myShowToolTipsView = new MFXCheckableButton(false, myToolBar5,
+                myStaticTooltipMenu, (std::string("\t") + TL("Toggle View Tooltips") + std::string("\t") + TL("Toggles whether tooltips in the view shall be shown.")).c_str(),
+                GUIIconSubSys::getIcon(GUIIcon::SHOWTOOLTIPS_VIEW), this, MID_SHOWTOOLTIPS_VIEW, GUIDesignMFXCheckableButtonSquare);
+        myShowToolTipsView->setChecked(getApp()->reg().readIntEntry("gui", "viewToolTips", 0) == 1);
+        myStaticTooltipView->enableStaticToolTip(myShowToolTipsView->amChecked());
+        // add toggle button for tooltips in menu on/off (by default checked)
+        myShowToolTipsMenu = new MFXCheckableButton(false, myToolBar5,
+                myStaticTooltipMenu, (std::string("\t") + TL("Toggle Menu Tooltips") + std::string("\t") + TL("Toggles whether tooltips in the menu shall be shown.")).c_str(),
+                GUIIconSubSys::getIcon(GUIIcon::SHOWTOOLTIPS_MENU), this, MID_SHOWTOOLTIPS_MENU, GUIDesignMFXCheckableButtonSquare);
+        myShowToolTipsMenu->setChecked(getApp()->reg().readIntEntry("gui", "menuToolTips", 0) != 1);
+        myStaticTooltipMenu->enableStaticToolTip(myShowToolTipsMenu->amChecked());
     }
     /// game specific stuff
     {
@@ -875,8 +945,7 @@ long
 GUIApplicationWindow::onCmdEditChosen(FXObject* menu, FXSelector, void*) {
     FXMenuCommand* mc = dynamic_cast<FXMenuCommand*>(menu);
     if (mc->getText() == StringUtils::replace(TL("Edit Selected..."), "&", "").c_str()) {
-        GUIDialog_GLChosenEditor* chooser =
-            new GUIDialog_GLChosenEditor(this, &gSelected);
+        GUIDialog_GLChosenEditor* chooser = new GUIDialog_GLChosenEditor(this, &gSelected);
         chooser->create();
         chooser->show();
     } else {
@@ -967,9 +1036,20 @@ GUIApplicationWindow::onCmdTutorial(FXObject*, FXSelector, void*) {
 
 
 long
-GUIApplicationWindow::onCmdOpenInNetedit(FXObject*, FXSelector, void*) {
+GUIApplicationWindow::onCmdOpenInNetedit(FXObject* sender, FXSelector, void* ptr) {
     if (myGLWindows.empty()) {
         return 1;
+    }
+    bool onlyNet;
+    if (sender == myOpenNetInNetedit) {
+        onlyNet = true;
+    } else if (sender == myOpenInNetedit) {
+        onlyNet = false;
+    } else {
+        // we have to check (menu-item) sender first because ptr is only valid when
+        // triggered via hotkey
+        FXEvent* e = (FXEvent*) ptr;
+        onlyNet = (e->state & SHIFTMASK) != 0;
     }
     FXRegistry reg("SUMO netedit", "netedit");
     reg.read();
@@ -989,7 +1069,7 @@ GUIApplicationWindow::onCmdOpenInNetedit(FXObject*, FXSelector, void*) {
     // declare command for calling netedit using the viewport saved in registry
     std::string cmd = netedit + " --registry-viewport";
     // continue depending if we're loading only a network or the entire sumo config
-    if (myLoadAdditionalsInNetedit->shown()) {
+    if (myLoadAdditionalsInNetedit->shown() && !onlyNet) {
         cmd += " --sumocfg-file \"" + OptionsCont::getOptions().getString("configuration-file") + "\"";
         // check if ignore additional or demand elements
         if (myLoadAdditionalsInNetedit->getCheck() == FALSE) {
@@ -1142,7 +1222,7 @@ GUIApplicationWindow::onCmdOpenEdgeData(FXObject*, FXSelector, void*) {
 
 long
 GUIApplicationWindow::onCmdReload(FXObject* sender, FXSelector sel, void*) {
-    if (!myAmLoading && (sender == nullptr || TraCIServer::getInstance() == nullptr)) {
+    if (!myAmLoading && (sender == nullptr || (myRunThread->networkAvailable() && myLoadThread->getFileName() != "" && TraCIServer::getInstance() == nullptr))) {
         storeWindowSizeAndPos();
         getApp()->beginWaitCursor();
         myAmLoading = true;
@@ -1196,7 +1276,7 @@ GUIApplicationWindow::onCmdSaveConfig(FXObject*, FXSelector, void*) {
         return 1;
     }
     const std::string file = MFXUtils::assureExtension(opendialog).text();
-    std::ofstream out(StringUtils::transcodeToLocal(file));
+    std::ofstream out(XMLSubSys::transcodeToLocal(file));
     if (out.good()) {
         OptionsCont::getOptions().writeConfiguration(out, true, false, false, file, true);
         setStatusBarText(TLF("Configuration saved to %.", file));
@@ -1227,7 +1307,7 @@ GUIApplicationWindow::onUpdOpen(FXObject* sender, FXSelector, void* ptr) {
 long
 GUIApplicationWindow::onUpdReload(FXObject* sender, FXSelector, void* ptr) {
     sender->handle(this,
-                   myAmLoading || myLoadThread->getFileName() == "" || TraCIServer::getInstance() != nullptr
+                   myAmLoading || !myRunThread->networkAvailable() || TraCIServer::getInstance() != nullptr
                    ? FXSEL(SEL_COMMAND, ID_DISABLE) : FXSEL(SEL_COMMAND, ID_ENABLE),
                    ptr);
     return 1;
@@ -1718,6 +1798,30 @@ GUIApplicationWindow::onCmdNewOSG(FXObject*, FXSelector, void*) {
 
 
 long
+GUIApplicationWindow::onCmdShowToolTipsView(FXObject*, FXSelector, void*) {
+    // invert check
+    myShowToolTipsView->setChecked(!myShowToolTipsView->amChecked());
+    // update parent
+    myStaticTooltipView->enableStaticToolTip(myShowToolTipsView->amChecked());
+    // save in registry
+    getApp()->reg().writeIntEntry("gui", "viewToolTips", myShowToolTipsView->amChecked() ? 1 : 0);
+    return 1;
+}
+
+
+long
+GUIApplicationWindow::onCmdShowToolTipsMenu(FXObject*, FXSelector, void*) {
+    // invert check
+    myShowToolTipsMenu->setChecked(!myShowToolTipsMenu->amChecked());
+    // update parent
+    myStaticTooltipMenu->enableStaticToolTip(myShowToolTipsMenu->amChecked());
+    // save in registry
+    getApp()->reg().writeIntEntry("gui", "menuToolTips", myShowToolTipsMenu->amChecked() ? 0 : 1);
+    return 1;
+}
+
+
+long
 GUIApplicationWindow::onCmdFeedback(FXObject*, FXSelector, void*) {
     // create and open feedback dialog
     GUIDialog_Feedback* feedback = new GUIDialog_Feedback(this);
@@ -1827,7 +1931,7 @@ void
 GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
     myAmLoading = false;
     GUIEvent_SimulationLoaded* ec = static_cast<GUIEvent_SimulationLoaded*>(e);
-    // check whether the loading was successfull
+    // check whether the loading was successful
     if (ec->myNet == nullptr) {
         // report failure
         setStatusBarText(TLF("Loading of '%' failed!", ec->myFile));
@@ -1865,7 +1969,7 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
             if (ec->mySettingsFiles.size() > 0 && (!myIsReload || myGuiSettingsFileMTime < mTime || ec->mySettingsFiles.size() > 1)) {
                 // open a view for each file and apply settings
                 for (std::string fname : ec->mySettingsFiles) {
-                    GUISettingsHandler settings(fname);
+                    GUISettingsHandler settings(getApp(), fname);
                     GUISUMOViewParent::ViewType vt = defaultType;
                     if (settings.getViewType() == "osg" || settings.getViewType() == "3d") {
                         vt = GUISUMOViewParent::VIEW_3D_OSG;
@@ -1900,6 +2004,17 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
                     myCollisionSounds = settings.getEventDistribution("collision");
                     if (settings.getJamSoundTime() > 0) {
                         myJamSoundTime = settings.getJamSoundTime();
+                    }
+                    for (const std::string& tlsID : settings.getTrackers()) {
+                        if (MSNet::getInstance()->getTLSControl().knows(tlsID)) {
+                            MSTrafficLightLogic* tll = MSNet::getInstance()->getTLSControl().get(tlsID).getActive();
+                            GUITrafficLightLogicWrapper* tllW = GUINet::getGUIInstance()->getTLLWrapper(tll);
+                            if (tllW) {
+                                tllW->begin2TrackPhases(this);
+                            }
+                        } else {
+                            WRITE_WARNINGF("Tracker for unknown tlLogic '%' in settings file '%'", tlsID, fname);
+                        }
                     }
                 }
             } else {
@@ -1967,6 +2082,18 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
             }
             // set simulation step begin information
             myLCDLabel->setText("----------------");
+            const GUIIcon greenVehIcon = MSGlobals::gUseMesoSim ? GUIIcon::GREEN_VEHICLE_MESO : GUIIcon::GREENVEHICLE;
+            myStatButtons[STAT_VEHS]->setIcon(GUIIconSubSys::getIcon(greenVehIcon));
+
+            const std::string pedModel = OptionsCont::getOptions().getString("pedestrian.model");
+            if (StringUtils::to_lower_case(pedModel) == "noninteracting") {
+                myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREEN_PERSON_NON_INTERACTING));
+            } else if (StringUtils::to_lower_case(pedModel) == "jupedsim") {
+                myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREEN_PERSON_JUPEDSIM));
+            } else {
+                myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENPERSON));
+            }
+
             for (std::vector<FXButton*>::const_iterator it = myStatButtons.begin(); it != myStatButtons.end(); ++it) {
                 (*it)->setText("-");
             }
@@ -1998,29 +2125,54 @@ GUIApplicationWindow::handleEvent_SimulationStep(GUIEvent*) {
     myLastStepEventMillis = t;
 #endif
     updateTimeLCD(myRunThread->getNet().getCurrentTimeStep());
+    FXButton* vehStats = myStatButtons[STAT_VEHS];
+    FXButton* delayStats = myStatButtons[STAT_DELAYED];
+    FXButton* teleStats = myStatButtons[STAT_TELEPORTS];
+    FXButton* personStats = myStatButtons[STAT_PERSONS];
+    FXButton* containerStats = myStatButtons[STAT_CONTAINERS];
+
     const int running = myRunThread->getNet().getVehicleControl().getRunningVehicleNo();
     const int backlog = myRunThread->getNet().getInsertionControl().getWaitingVehicleNo();
+    const int teleports = myRunThread->getNet().getVehicleControl().getTeleportCount();
+    const int departed = myRunThread->getNet().getVehicleControl().getDepartedVehicleNo();
+    const GUIIcon greenVehIcon = MSGlobals::gUseMesoSim ? GUIIcon::GREEN_VEHICLE_MESO : GUIIcon::GREENVEHICLE;
     if (backlog > running) {
-        if (myStatButtons.front()->getIcon() == GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE)) {
-            myStatButtons.front()->setIcon(GUIIconSubSys::getIcon(GUIIcon::YELLOWVEHICLE));
+        if (vehStats->getIcon() == GUIIconSubSys::getIcon(greenVehIcon)) {
+            vehStats->setIcon(GUIIconSubSys::getIcon(GUIIcon::YELLOWVEHICLE));
         }
     } else {
-        if (myStatButtons.front()->getIcon() == GUIIconSubSys::getIcon(GUIIcon::YELLOWVEHICLE)) {
-            myStatButtons.front()->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE));
+        if (vehStats->getIcon() == GUIIconSubSys::getIcon(GUIIcon::YELLOWVEHICLE)) {
+            vehStats->setIcon(GUIIconSubSys::getIcon(greenVehIcon));
         }
     }
-    myStatButtons.front()->setText(toString(running).c_str());
-    if (myRunThread->getNet().hasPersons()) {
-        if (!myStatButtons[1]->shown()) {
-            myStatButtons[1]->show();
+    vehStats->setText(toString(running).c_str());
+    if (backlog > 0) {
+        if (!delayStats->shown()) {
+            delayStats->show();
         }
-        myStatButtons[1]->setText(toString(myRunThread->getNet().getPersonControl().getRunningNumber()).c_str());
+        delayStats->setText(toString(backlog).c_str());
+    } else {
+        if (delayStats->shown()) {
+            delayStats->hide();
+        }
+    }
+    if (teleports > 0) {
+        if (!teleStats->shown()) {
+            teleStats->show();
+        }
+        teleStats->setText((toString(100.00 * teleports / departed) + "%").c_str());
+    }
+    if (myRunThread->getNet().hasPersons()) {
+        if (!personStats->shown()) {
+            personStats->show();
+        }
+        personStats->setText(toString(myRunThread->getNet().getPersonControl().getRunningNumber()).c_str());
     }
     if (myRunThread->getNet().hasContainers()) {
-        if (!myStatButtons[2]->shown()) {
-            myStatButtons[2]->show();
+        if (!containerStats->shown()) {
+            containerStats->show();
         }
-        myStatButtons[2]->setText(toString(myRunThread->getNet().getContainerControl().getRunningNumber()).c_str());
+        containerStats->setText(toString(myRunThread->getNet().getContainerControl().getRunningNumber()).c_str());
     }
     if (myAmGaming) {
         if (myTLSGame) {
@@ -2238,16 +2390,36 @@ void
 GUIApplicationWindow::closeAllWindows() {
     myTrackerLock.lock();
     myLCDLabel->setText("----------------");
+    myStatButtons[STAT_VEHS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE));
+    myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENPERSON));
     for (std::vector<FXButton*>::const_iterator it = myStatButtons.begin(); it != myStatButtons.end(); ++it) {
         (*it)->setText("-");
         if (it != myStatButtons.begin()) {
             (*it)->hide();
         }
     }
+    // save decals and viewport
+    for (GUIGlChildWindow* window : myGLWindows) {
+        GUISUMOAbstractView* view = window->getView();
+        gSchemeStorage.saveDecals(view->getDecals());
+        gSchemeStorage.saveViewport(view->getChanger().getXPos(), view->getChanger().getYPos(),
+                                    view->getChanger().getZPos(), view->getChanger().getRotation());
+    }
     // delete the simulation
     myRunThread->deleteSim();
     // reset the caption
     setTitle(MFXUtils::getTitleText("SUMO " VERSION_STRING));
+    // clear decals and release GPU textures
+    for (GUIGlChildWindow* window : myGLWindows) {
+        GUISUMOAbstractView* view = window->getView();
+        if (view->makeCurrent()) {
+            view->clearDecals();
+            view->processPendingTextureDeletes();
+            GUITextureSubSys::resetTextures();
+            GLHelper::resetFont();
+            view->makeNonCurrent();
+        }
+    }
     // remove trackers and other external windows (must be delayed until deleteSim)
     while (!myGLWindows.empty()) {
         delete myGLWindows.front();
@@ -2265,13 +2437,12 @@ GUIApplicationWindow::closeAllWindows() {
     myTrackerLock.unlock();
     // remove coordinate information
     myGeoCoordinate->setText(TL("N/A"));
+    myGeoCoordinate->disable();
+    myGeoCoordinate->setEditable(false);
     myCartesianCoordinate->setText(TL("N/A"));
     if (myTestCoordinate) {
         myTestCoordinate->setText(TL("N/A"));
     }
-    //
-    GUITexturesHelper::clearTextures();
-    GLHelper::resetFont();
     update();
 }
 
@@ -2359,16 +2530,16 @@ GUIApplicationWindow::updateTimeLCD(SUMOTime time) {
     str << std::setfill('0');
     const bool hideFraction = myAmGaming || DELTA_T % 1000 == 0;
     if (myShowTimeAsHMS) {
-        SUMOTime day = time / 86400000;
+        SUMOTime day = time / SUMOTime_DAY;
         if (day > 0) {
             str << day << '-';
-            time %= 86400000;
+            time %= SUMOTime_DAY;
         }
         str << std::setw(2);
-        str << time / 3600000 << '-';
-        time %= 3600000;
-        str << std::setw(2) << time / 60000 << '-';
-        time %= 60000;
+        str << time / SUMOTime_HOUR << '-';
+        time %= SUMOTime_HOUR;
+        str << std::setw(2) << time / SUMOTime_MINUTE << '-';
+        time %= SUMOTime_MINUTE;
     }
     str << std::setw(2) << time / 1000;
     if (!hideFraction) {
@@ -2392,6 +2563,22 @@ GUIApplicationWindow::addHotkey(int key, Command* press, Command* release) {
 long
 GUIApplicationWindow::onKeyPress(FXObject* o, FXSelector sel, void* ptr) {
     FXEvent* e = (FXEvent*) ptr;
+    if (e->code == KEY_Escape) {
+        if (myGeoCoordinate && myGeoCoordinate->hasFocus()) {
+            myGeoCoordinate->killFocus();
+            if (getActiveView()) {
+                getActiveView()->updatePositionInformationLabel();
+            }
+            return 1;
+        }
+        if (myCartesianCoordinate && myCartesianCoordinate->hasFocus()) {
+            myCartesianCoordinate->killFocus();
+            if (getActiveView()) {
+                getActiveView()->updatePositionInformationLabel();
+            }
+            return 1;
+        }
+    }
     // PgUp and PgDown switch between widgets by default and binding them via menu shortcuts does not work reliably
     // so we must intercept them before FXMainWindow can handle it
     if (e->code == FX::KEY_Page_Up) {

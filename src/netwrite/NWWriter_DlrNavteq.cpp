@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -573,5 +573,62 @@ NWWriter_DlrNavteq::writeConnectedLanes(const OptionsCont& oc, NBNodeCont& nc) {
     device.close();
 }
 
+double
+NWWriter_DlrNavteq::getMaxLaneWidth(const NBEdge* const edge) {
+    double result = 0;
+    for (int i = 0; i < edge->getNumLanes(); i++) {
+        result = MAX2(result, edge->getLaneWidth(i));
+    }
+    return result;
+}
+
+
+void
+NWWriter_DlrNavteq::writeEdgeAttrs(OutputDevice& device, const NBEdge* edge) {
+    const int kph = speedInKph(edge->getSpeed());
+    device.writeAttr("speedCategory", getSpeedCategory(kph));
+    device.writeAttr("speedRestriction", getSpeedCategoryUpperBound(kph));
+    device.writeAttr("maxWidth", getMaxLaneWidth(edge));
+    device.writeAttr("FRC", getRoadClass(edge));
+    device.writeAttr("vehicleTypeCode", getAllowedTypes(edge->getPermissions()));
+    device.writeAttr("formOfWay", getFormOfWay(edge));
+    device.writeAttr("isRamp", edge->isOffRamp());
+    device.writeAttr("brunnelType", getBrunnelType(edge));
+    device.writeAttr("postalCode", getSinglePostalCode(edge->getParameter("postal_code", UNDEFINED), edge->getID()));
+    device.writeAttr("surface", edge->getParameter("surface", UNDEFINED));
+}
+
+
+void
+NWWriter_DlrNavteq::writeConnectionAttrs(OutputDevice& device, const NBEdge::Connection& c) {
+    device.writeAttr(SUMO_ATTR_NODE, c.toEdge->getFromNode()->getID());
+    device.writeAttr("vehicleTypeCode", getAllowedTypes(c.permissions));
+}
+
+
+void
+NWWriter_DlrNavteq::writeProhibitedManoeuvresAttrs(OutputDevice& device, const NBNodeCont& nc) {
+    // similar to writeProhibitedManoeuvres but as xml/csv/parquet
+    for (std::map<std::string, NBNode*>::const_iterator i = nc.begin(); i != nc.end(); ++i) {
+        NBNode* n = (*i).second;
+        const EdgeVector& incoming = n->getIncomingEdges();
+        const EdgeVector& outgoing = n->getOutgoingEdges();
+        for (EdgeVector::const_iterator j = incoming.begin(); j != incoming.end(); ++j) {
+            NBEdge* inEdge = *j;
+            const SVCPermissions inPerm = inEdge->getPermissions();
+            for (EdgeVector::const_iterator k = outgoing.begin(); k != outgoing.end(); ++k) {
+                NBEdge* outEdge = *k;
+                const SVCPermissions outPerm = outEdge->getPermissions();
+                const SVCPermissions commonPerm = inPerm & outPerm;
+                if (commonPerm != 0 && commonPerm != SVC_PEDESTRIAN && !inEdge->isConnectedTo(outEdge)) {
+                    device.openTag(SUMO_TAG_PROHIBITED_CONNECTION);
+                    device.writeAttr(SUMO_ATTR_FROM, inEdge->getID());
+                    device.writeAttr(SUMO_ATTR_TO, outEdge->getID());
+                    device.closeTag();
+                }
+            }
+        }
+    }
+}
 
 /****************************************************************************/

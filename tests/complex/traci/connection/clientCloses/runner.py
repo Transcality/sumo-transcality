@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -31,8 +31,10 @@ import traci  # noqa
 PORT = sumolib.miscutils.getFreeSocketPort()
 DELTA_T = 1000
 
-sumoBinary = sumolib.checkBinary(sys.argv[1])
-if sys.argv[1] == "sumo":
+sumoOptions = [a for a in sys.argv[1:] if a.startswith('--')]
+positionalArgs = [a for a in sys.argv[1:] if not a.startswith('--')]
+sumoBinary = sumolib.checkBinary(positionalArgs[0])
+if positionalArgs[0] == "sumo":
     addOption = []
 else:
     addOption = ["-S", "-Q"]
@@ -41,9 +43,9 @@ else:
 def runSingle(traciEndTime, sumoEndTime=None):
     step = 0
     if sumoEndTime is None:
-        opt = addOption
+        opt = addOption + sumoOptions
     else:
-        opt = addOption + ["--end", str(sumoEndTime)]
+        opt = addOption + ["--end", str(sumoEndTime)] + sumoOptions
     sumoProcess = subprocess.Popen([sumoBinary, "-c", "sumo.sumocfg", "--remote-port", str(PORT)] + opt,
                                    stdout=sys.stdout)
     traci.init(PORT)

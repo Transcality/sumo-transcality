@@ -16,6 +16,9 @@ delete_node_joinedTLS
 # delete a node (but not all incident edges)
 delete_node_invalid
 
+# see #18142
+delete_railsignal_edge
+
 # test the diff after applying --junctions.join to a network
 join_junctions
 
@@ -34,8 +37,14 @@ remove_tll_connection
 
 # remove connection and keep fewer than before
 remove_tll_connection2
+
+# deleting all connections from an edge should not trigger turn-around guessing
+remove_all_connections
 patch_crossing
 remove_crossing
+
+# remove the only crossing
+remove_crossing2
 rename_node
 remove_roundabout
 change_tlType

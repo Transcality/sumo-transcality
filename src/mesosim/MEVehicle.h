@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -74,6 +74,11 @@ public:
      * @return The slope
      */
     double getSlope() const;
+
+    /** @brief Returns the edge the vehicle is currently at (possibly an
+     * internal edge)
+     */
+    const MSEdge* getCurrentEdge() const;
 
     /** @brief Returns the lane the vehicle is on
     * @return The vehicle's current lane
@@ -167,6 +172,13 @@ public:
         return 0;
     }
 
+    bool instantStopping() const {
+        return true;
+    }
+
+    /// @brief process triggered stops and return true if all stops on the current segment are completed
+    bool endTriggeredStop();
+
     ///@brief ends the current stop and performs loading/unloading
     void processStop();
 
@@ -205,6 +217,29 @@ public:
      */
     inline SUMOTime getEventTime() const {
         return myEventTime;
+    }
+
+    /// @brief Sets the index of the vehicle's event (orders events with the same time)
+    inline void setEventIndex(long long int index) {
+        myEventIndex = index;
+    }
+
+    /// @brief Returns the index of the vehicle's event
+    inline long long int getEventIndex() const {
+        return myEventIndex;
+    }
+
+    /** @brief Sets the minimum time at which the vehicle leaves its current segment (this includes planned stops)
+     * @param[in] t The leaving time
+     */
+    inline void setUnqueuedEventTime(SUMOTime t) {
+        myUnqueuedEventTime = t;
+    }
+    /** @brief Returns the minimum time at which the vehicle leaves its current segment
+     * @return The minimum time the vehicle could leave its segment at
+     */
+    inline SUMOTime getUnqueuedEventTime() const {
+        return myUnqueuedEventTime;
     }
 
 
@@ -286,6 +321,11 @@ public:
         return MAX2(SUMOTime(0), myEventTime - myBlockTime);
     }
 
+    /// @brief Returns the time lost compare to free flow
+    inline SUMOTime getQueuingTimeLoss() const {
+        return MAX2(SUMOTime(0), myEventTime - myUnqueuedEventTime);
+    }
+
     inline SUMOTime getTimeLoss() const {
         // slow-downs while driving are not modelled
         return getWaitingTime();
@@ -326,7 +366,7 @@ public:
 
     /** @brief Updates all vehicle detectors
      */
-    void updateDetectors(SUMOTime currentTime, const bool isLeave,
+    void updateDetectors(const SUMOTime currentTime, const SUMOTime exitTime, const bool isLeave,
                          const MSMoveReminder::Notification reason = MSMoveReminder::NOTIFICATION_JUNCTION);
 
     /** @brief Returns the velocity/lane influencer
@@ -340,6 +380,14 @@ public:
 
     bool hasInfluencer() const {
         return myInfluencer != nullptr;
+    }
+
+    void markJammed(bool jammed) {
+        myWasJammed = jammed;
+    }
+
+    bool wasJammed() const {
+        return myWasJammed;
     }
 
     /// @name state io
@@ -364,11 +412,20 @@ protected:
     /// @brief The (planned) time of leaving the segment (cell)
     SUMOTime myEventTime;
 
+    /// @brief The index of the vehicle's event (orders events with the same time)
+    long long int myEventIndex;
+
     /// @brief The time the vehicle entered its current segment
     SUMOTime myLastEntryTime;
 
     /// @brief The time at which the vehicle was blocked on its current segment
     SUMOTime myBlockTime;
+
+    /// @brief The expected time of leaving the segment when following the leader at free-flow headway
+    SUMOTime myUnqueuedEventTime;
+
+    /// @brief Whether this vehicle was jammed on it's previous normal segment
+    bool myWasJammed;
 
     /// @brief An instance of a velocity/lane influencing instance; built in "getInfluencer"
     BaseInfluencer* myInfluencer;

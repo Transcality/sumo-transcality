@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -22,7 +22,8 @@
 /****************************************************************************/
 
 #include <netedit/GNETagProperties.h>
-#include <netedit/dialogs/GNEDialogACChooser.h>
+#include <netedit/dialogs/basic/GNEErrorBasicDialog.h>
+#include <netedit/dialogs/GNEACChooserDialog.h>
 #include <netedit/elements/network/GNEWalkingArea.h>
 #include <netedit/frames/common/GNEDeleteFrame.h>
 #include <netedit/frames/common/GNEInspectorFrame.h>
@@ -405,7 +406,7 @@ GNEViewParent::getGNEAppWindows() const {
 
 
 void
-GNEViewParent::eraseACChooserDialog(GNEDialogACChooser* chooserDialog) {
+GNEViewParent::eraseACChooserDialog(GNEACChooserDialog* chooserDialog) {
     if (chooserDialog == nullptr) {
         throw ProcessError("ChooserDialog already deleted");
     } else if (chooserDialog == myACChoosers.ACChooserJunction) {
@@ -449,6 +450,102 @@ GNEViewParent::updateUndoRedoButtons() {
 }
 
 
+std::vector<GUIGlID>
+GNEViewParent::getObjectIDs(int messageId) const {
+    std::vector<GUIGlID> ids;
+    GNEViewNet* viewNet = dynamic_cast<GNEViewNet*>(myView);
+    if (viewNet == nullptr || viewNet->getNet() == nullptr) {
+        return ids;
+    }
+    switch (messageId) {
+        case MID_HOTKEY_SHIFT_J_LOCATEJUNCTION:
+            for (const auto& junction : viewNet->getNet()->getAttributeCarriers()->getJunctions()) {
+                ids.push_back(junction.second->getGUIGlObject()->getGlID());
+            }
+            break;
+        case MID_HOTKEY_SHIFT_E_LOCATEEDGE:
+            for (const auto& edge : viewNet->getNet()->getAttributeCarriers()->getEdges()) {
+                ids.push_back(edge.second->getGUIGlObject()->getGlID());
+            }
+            break;
+        case MID_HOTKEY_SHIFT_W_LOCATEWALKINGAREA:
+            for (const auto& walkingArea : viewNet->getNet()->getAttributeCarriers()->getWalkingAreas()) {
+                ids.push_back(walkingArea.second->getGUIGlObject()->getGlID());
+            }
+            break;
+        case MID_HOTKEY_SHIFT_V_LOCATEVEHICLE: {
+            for (const auto& vehicleTag : NamespaceIDs::vehicles) {
+                for (const auto& vehicle : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(vehicleTag)) {
+                    ids.push_back(vehicle.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        }
+        case MID_HOTKEY_SHIFT_P_LOCATEPERSON:
+            for (const auto& personTag : NamespaceIDs::persons) {
+                for (const auto& person : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(personTag)) {
+                    ids.push_back(person.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        case MID_HOTKEY_SHIFT_C_LOCATECONTAINER:
+            for (const auto& containerTag : NamespaceIDs::containers) {
+                for (const auto& container : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(containerTag)) {
+                    ids.push_back(container.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        case MID_HOTKEY_SHIFT_R_LOCATEROUTE:
+            for (const auto& route : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(SUMO_TAG_ROUTE)) {
+                ids.push_back(route.second->getGUIGlObject()->getGlID());
+            }
+            break;
+        case MID_HOTKEY_SHIFT_S_LOCATESTOP: {
+            for (const auto& stopTag : NamespaceIDs::stops) {
+                for (const auto& flowTAZ : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(stopTag)) {
+                    ids.push_back(flowTAZ.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        }
+        case MID_HOTKEY_SHIFT_T_LOCATETLS:
+            for (const auto& junction : viewNet->getNet()->getAttributeCarriers()->getJunctions()) {
+                if (junction.second->getNBNode()->getControllingTLS().size() > 0) {
+                    ids.push_back(junction.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        case MID_HOTKEY_SHIFT_A_LOCATEADDITIONAL:
+            for (const auto& additionalTag : viewNet->getNet()->getAttributeCarriers()->getAdditionals()) {
+                const auto tagProperty = viewNet->getNet()->getTagPropertiesDatabase()->getTagProperty(additionalTag.first, true);
+                if (!tagProperty->isShapeElement() && !tagProperty->isTAZElement()) {
+                    for (const auto& additional : additionalTag.second) {
+                        ids.push_back(additional.second->getGUIGlObject()->getGlID());
+                    }
+                }
+            }
+            break;
+        case MID_HOTKEY_SHIFT_O_LOCATEPOI:
+            for (const auto& POITag : NamespaceIDs::POIs) {
+                for (const auto& poi : viewNet->getNet()->getAttributeCarriers()->getAdditionals().at(POITag)) {
+                    ids.push_back(poi.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        case MID_HOTKEY_SHIFT_L_LOCATEPOLY:
+            for (const auto& polygonTag : NamespaceIDs::polygons) {
+                for (const auto& polygon : viewNet->getNet()->getAttributeCarriers()->getAdditionals().at(polygonTag)) {
+                    ids.push_back(polygon.second->getGUIGlObject()->getGlID());
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    return ids;
+}
+
+
 FXVerticalFrame*
 GNEViewParent::getFramesArea() const {
     return myFramesArea;
@@ -487,10 +584,10 @@ GNEViewParent::onCmdMakeSnapshot(FXObject*, FXSelector, void*) {
         file.append(".png");
         WRITE_MESSAGE(TL("No file extension was specified - saving Snapshot as PNG."));
     }
-    std::string error = myView->makeSnapshot(file);
-    if (error != "") {
-        // open message box
-        FXMessageBox::error(this, MBOX_OK, TL("Saving failed."), "%s", error.c_str());
+    const std::string error = myView->makeSnapshot(file);
+    if (error.size() > 0) {
+        // open error message box
+        GNEErrorBasicDialog(myGNEAppWindows, TL("Saving failed."), error.c_str());
     } else {
         WRITE_MESSAGE(TL("Snapshot successfully saved!"));
     }
@@ -511,30 +608,30 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
     // check that viewNet exist
     if (viewNet) {
         // declare a vector in which save attribute carriers to locate
-        std::vector<GNEAttributeCarrier*> ACsToLocate;
+        std::map<std::string, GNEAttributeCarrier*> ACsToLocate;
         int messageId = FXSELID(sel);
-        GNEDialogACChooser** chooserLoc = nullptr;
+        GNEACChooserDialog** chooserLoc = nullptr;
         std::string locateTitle;
         switch (messageId) {
             case MID_HOTKEY_SHIFT_J_LOCATEJUNCTION:
                 chooserLoc = &myACChoosers.ACChooserJunction;
                 locateTitle = TL("Junction Chooser");
                 for (const auto& junction : viewNet->getNet()->getAttributeCarriers()->getJunctions()) {
-                    ACsToLocate.push_back(junction.second);
+                    ACsToLocate[junction.second->getID()] = junction.second;
                 }
                 break;
             case MID_HOTKEY_SHIFT_E_LOCATEEDGE:
                 chooserLoc = &myACChoosers.ACChooserEdges;
                 locateTitle = TL("Edge Chooser");
                 for (const auto& edge : viewNet->getNet()->getAttributeCarriers()->getEdges()) {
-                    ACsToLocate.push_back(edge.second);
+                    ACsToLocate[edge.second->getID()] = edge.second;
                 }
                 break;
             case MID_HOTKEY_SHIFT_W_LOCATEWALKINGAREA:
                 chooserLoc = &myACChoosers.ACChooserWalkingAreas;
                 locateTitle = TL("WalkingArea Chooser");
                 for (const auto& walkingArea : viewNet->getNet()->getAttributeCarriers()->getWalkingAreas()) {
-                    ACsToLocate.push_back(walkingArea.second);
+                    ACsToLocate[walkingArea.second->getID()] = walkingArea.second;
                 }
                 break;
             case MID_HOTKEY_SHIFT_V_LOCATEVEHICLE: {
@@ -543,7 +640,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 // fill ACsToLocate with all vehicles
                 for (const auto& vehicleTag : NamespaceIDs::vehicles) {
                     for (const auto& vehicle : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(vehicleTag)) {
-                        ACsToLocate.push_back(vehicle.second);
+                        ACsToLocate[vehicle.second->getID()] = vehicle.second;
                     }
                 }
                 break;
@@ -554,7 +651,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 // fill ACsToLocate with all persons
                 for (const auto& personTag : NamespaceIDs::persons) {
                     for (const auto& person : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(personTag)) {
-                        ACsToLocate.push_back(person.second);
+                        ACsToLocate[person.second->getID()] = person.second;
                     }
                 }
                 break;
@@ -564,7 +661,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 // fill ACsToLocate with all containers
                 for (const auto& containerTag : NamespaceIDs::containers) {
                     for (const auto& container : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(containerTag)) {
-                        ACsToLocate.push_back(container.second);
+                        ACsToLocate[container.second->getID()] = container.second;
                     }
                 }
                 break;
@@ -572,7 +669,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 chooserLoc = &myACChoosers.ACChooserRoutes;
                 locateTitle = TL("Route Chooser");
                 for (const auto& route : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(SUMO_TAG_ROUTE)) {
-                    ACsToLocate.push_back(route.second);
+                    ACsToLocate[route.second->getID()] = route.second;
                 }
                 break;
             case MID_HOTKEY_SHIFT_S_LOCATESTOP: {
@@ -581,7 +678,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 // fill ACsToLocate with all vehicles
                 for (const auto& stopTag : NamespaceIDs::stops) {
                     for (const auto& flowTAZ : viewNet->getNet()->getAttributeCarriers()->getDemandElements().at(stopTag)) {
-                        ACsToLocate.push_back(flowTAZ.second);
+                        ACsToLocate[flowTAZ.second->getID()] = flowTAZ.second;
                     }
                 }
                 break;
@@ -592,7 +689,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 // fill ACsToLocate with junctions that haven TLS
                 for (const auto& junction : viewNet->getNet()->getAttributeCarriers()->getJunctions()) {
                     if (junction.second->getNBNode()->getControllingTLS().size() > 0) {
-                        ACsToLocate.push_back(junction.second);
+                        ACsToLocate[junction.second->getID()] = junction.second;
                     }
                 }
                 break;
@@ -604,7 +701,7 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                     // avoid shapes and TAZs
                     if (!tagProperty->isShapeElement() && !tagProperty->isTAZElement()) {
                         for (const auto& additional : additionalTag.second) {
-                            ACsToLocate.push_back(additional.second);
+                            ACsToLocate[additional.second->getID()] = additional.second;
                         }
                     }
                 }
@@ -614,8 +711,8 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 locateTitle = TL("POI Chooser");
                 // fill ACsToLocate with all POIs
                 for (const auto& POITag : NamespaceIDs::POIs) {
-                    for (const auto& flowTAZ : viewNet->getNet()->getAttributeCarriers()->getAdditionals().at(POITag)) {
-                        ACsToLocate.push_back(flowTAZ.second);
+                    for (const auto& poi : viewNet->getNet()->getAttributeCarriers()->getAdditionals().at(POITag)) {
+                        ACsToLocate[poi.second->getID()] = poi.second;
                     }
                 }
                 break;
@@ -624,8 +721,8 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
                 locateTitle = TL("Poly Chooser");
                 // fill ACsToLocate with all polygons
                 for (const auto& polygonTag : NamespaceIDs::polygons) {
-                    for (const auto& flowTAZ : viewNet->getNet()->getAttributeCarriers()->getAdditionals().at(polygonTag)) {
-                        ACsToLocate.push_back(flowTAZ.second);
+                    for (const auto& polygon : viewNet->getNet()->getAttributeCarriers()->getAdditionals().at(polygonTag)) {
+                        ACsToLocate[polygon.second->getID()] = polygon.second;
                     }
                 }
                 break;
@@ -634,12 +731,12 @@ GNEViewParent::onCmdLocate(FXObject*, FXSelector sel, void*) {
         }
         if (*chooserLoc) {
             // restore focus in the existent chooser dialog
-            GNEDialogACChooser* chooser = *chooserLoc;
+            GNEACChooserDialog* chooser = *chooserLoc;
             chooser->restore();
             chooser->setFocus();
             chooser->raise();
         } else {
-            GNEDialogACChooser* chooser = new GNEDialogACChooser(this, messageId, GUIIconSubSys::getIcon(GUIIcon::LOCATEJUNCTION), locateTitle, ACsToLocate);
+            GNEACChooserDialog* chooser = new GNEACChooserDialog(this, messageId, GUIIconSubSys::getIcon(GUIIcon::LOCATEJUNCTION), locateTitle, ACsToLocate);
             *chooserLoc = chooser;
         }
         // update locator popup

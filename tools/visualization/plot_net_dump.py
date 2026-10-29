@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -239,8 +239,8 @@ def main(args=None):
         # drawing the legend, at least for the colors
         if options.colormapCenter is not None:
             norm = matplotlib.colors.TwoSlopeNorm(
-                    vmin=minColorValue, vcenter=options.colormapCenter,
-                    vmax=maxColorValue)
+                vmin=minColorValue, vcenter=options.colormapCenter,
+                vmax=maxColorValue)
         elif options.logColors:
             norm = matplotlib.colors.LogNorm(vmin=minColorValue, vmax=maxColorValue)
         else:

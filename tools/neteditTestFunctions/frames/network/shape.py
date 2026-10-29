@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,9 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
+from ...general.functions import focusOnFrame
+from ...input.mouse import leftClick, leftClickOffset
+from ...input.keyboard import typeKey
 
 
 def createSquaredShape(referencePosition, position, size, close):
@@ -37,9 +39,9 @@ def createRectangledShape(referencePosition, position, sizex, sizey, close):
     typeKey('enter')
     # create polygon
     leftClick(referencePosition, position)
-    leftClick(referencePosition, position, 0, (sizey / -2))
-    leftClick(referencePosition, position, (sizex / -2), (sizey / -2))
-    leftClick(referencePosition, position, (sizex / -2), 0)
+    leftClickOffset(referencePosition, position, 0, int(float(sizey) / -2))
+    leftClickOffset(referencePosition, position, int(sizex / float(-2)), int(float(sizey) / -2))
+    leftClickOffset(referencePosition, position, int(sizex / float(-2)), 0)
     # check if polygon has to be closed
     if (close is True):
         leftClick(referencePosition, position)
@@ -57,33 +59,12 @@ def createLineShape(referencePosition, position, sizex, sizey, close):
     typeKey('enter')
     # create polygon
     leftClick(referencePosition, position)
-    leftClick(referencePosition, position, (sizex / -2), (sizey / -2))
+    leftClickOffset(referencePosition, position, (sizex / -2), (sizey / -2))
     # check if polygon has to be closed
     if (close is True):
         leftClick(referencePosition, position)
     # finish draw
     typeKey('enter')
-
-
-def changeColorUsingDialog(attributeIndex, color):
-    """
-    @brief modify default color using dialog
-    """
-    # focus current frame
-    focusOnFrame()
-    # go to length TextField
-    for _ in range(attributeIndex):
-        typeKey('tab')
-    typeKey('space')
-    # go to list of colors TextField
-    for _ in range(2):
-        typeTwoKeys('shift', 'tab')
-    # select color
-    for _ in range(1 + color):
-        typeKey('down')
-    # go to accept button and press it
-    typeKey('tab')
-    typeKey('space')
 
 
 def createGEOPOI():

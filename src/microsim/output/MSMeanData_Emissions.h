@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -89,7 +89,7 @@ public:
          * @param[in] length The length of the object for which the data was collected
          * @exception IOError If an error on writing occurs (!!! not yet implemented)
          */
-        void write(OutputDevice& dev, long long int attributeMask, const SUMOTime period,
+        void write(OutputDevice& dev, const SumoXMLAttrMask& attributeMask, const SUMOTime period,
                    const int numLanes, const double speedLimit, const double defaultTravelTime,
                    const int numVehicles = -1) const;
 
@@ -125,8 +125,7 @@ public:
      * @param[in] dumpBegin Begin time of dump
      * @param[in] dumpEnd End time of dump
      * @param[in] useLanes Information whether lane-based or edge-based dump shall be generated
-     * @param[in] withEmpty Information whether empty lanes/edges shall be written
-     * @param[in] printDefaults Information whether defaults for empty lanes/edges shall be written
+     * @param[in] excludeEmpty Information if and which empty lanes/edges shall be written
      * @param[in] withInternal Information whether internal lanes/edges shall be written
      * @param[in] trackVehicles Information whether vehicles shall be tracked
      * @param[in] maxTravelTime the maximum travel time to use when calculating per vehicle output
@@ -135,20 +134,25 @@ public:
      */
     MSMeanData_Emissions(const std::string& id,
                          const SUMOTime dumpBegin, const SUMOTime dumpEnd,
-                         const bool useLanes, const bool withEmpty,
-                         const bool printDefaults, const bool withInternal,
+                         const bool useLanes, const std::string& excludeEmpty, const bool withInternal,
                          const bool trackVehicles,
                          const double minSamples, const double maxTravelTime,
                          const std::string& vTypes,
                          const std::string& writeAttributes,
                          const std::vector<MSEdge*>& edges,
-                         bool aggregate);
+                         AggregateType aggregate);
 
 
     /// @brief Destructor
     virtual ~MSMeanData_Emissions();
 
+    /// @brief return all attributes that are (potentially) written by this output
+    std::vector<std::string> getAttributeNames() const;
 
+    /// @brief  check whether any of the given attributes can be calculated by this meandata
+    /// @param attributeMask the attributes to check
+    /// @return whether any given attribute is supported
+    static bool supports(const SumoXMLAttrMask& attributeMask);
 
 protected:
     /** @brief Create an instance of MeanDataValues

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2010-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2010-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -27,17 +27,15 @@ import random
 from collections import defaultdict
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from sumolib.output import parse, parse_fast  # noqa
-from sumolib.options import ArgumentParser  # noqa
 import sumolib  # noqa
 
 
 def get_options(args=None):
-    op = ArgumentParser()
-    op.add_option("-n", "--net-file", category='input', dest="netfile", type=op.net_file,
+    op = sumolib.options.ArgumentParser()
+    op.add_option("-n", "--net-file", category='input', dest="netfile", type=op.net_file, required=True,
                   help="define the net filename (mandatory)")
     op.add_option("-r", "--route-files", category='input', dest="routefiles", type=op.route_file,
-                  help="define the route file separated by comma (mandatory)")
+                  help="define the route files separated by comma (mandatory)")
     op.add_option("-o", "--output-file", category='output', dest="outfile", type=op.route_file,
                   help="define the output filename")
     op.add_option("-t", "--typesfile", category='input', dest="typesfile",
@@ -50,23 +48,31 @@ def get_options(args=None):
                   help="Define a waypoint with the given maximum speed")
     op.add_option("-p", "--parking", dest="parking", action="store_true",
                   default=False, help="Let the vehicle stop beside the road")
+    op.add_option("--length", type=float,
+                  help="length of the stopping position")
     op.add_option("--relpos",
                   help="relative stopping position along the edge [0,1] or 'random'")
+    op.add_option("--edges",
+                  help="comma separated list of edges to consider for stopping")
+    op.add_option("--color",
+                  help="change color of stopping vehicles")
     op.add_option("--lane", default="0",
                   help="set index of stop lane or 'random' (unusable lanes are not counted)")
     op.add_option("--reledge", default="1",
                   help="relative stopping position along the route [0,1] or 'random' (1 indicates the last edge)")
+    op.add_option("--via-index", dest="viaIndex",
+                  help="index of stop edge along the route (0-based, negative allowed) or 'random'")
     op.add_option("--probability", type=float, default=1,
-                  help="app stop with the given probability ]0, 1]")
-    op.add_option("--parking-areas", dest="parkingareas", default=False, type=op.additional_file,
+                  help="add stop with the given probability ]0, 1]")
+    op.add_option("--parking-areas", default=False, type=op.additional_file,
                   help="load parkingarea definitions and stop at parkingarea on the arrival edge if possible")
-    op.add_option("--start-at-stop", dest="startAtStop", action="store_true",
+    op.add_option("--start-at-stop", action="store_true",
                   default=False, help="shorten route so it starts at stop")
-    op.add_option("--rel-occupancy", dest="relOccupancy", type=float,
-                  help="fill all parkingAreas to relative occupancy")
-    op.add_option("--abs-occupancy", dest="absOccupancy", type=int, default=1,
+    op.add_option("--rel-occupancy", type=float,
+                  help="fill all parkingAreas to relative occupancy [0,1]")
+    op.add_option("--abs-occupancy", type=int, default=1,
                   help="fill all parkingAreas to absolute occupancy")
-    op.add_option("--abs-free", dest="absFree", type=int,
+    op.add_option("--abs-free", type=int,
                   help="fill all parkingAreas to absolute remaining capacity")
     op.add_option("-D", "--person-duration", dest="pDuration",
                   help="Define duration of person stop (setting 'X-Y' picks randomly from [X,Y[)")
@@ -76,29 +82,25 @@ def get_options(args=None):
     op.add_option("-v", "--verbose", dest="verbose", action="store_true",
                   default=False, help="tell me what you are doing")
 
-    options = op.parse_args()
+    options = op.parse_args(args)
 
-    if options.parkingareas:
-        options.parkingareas = options.parkingareas.split(",")
+    if options.edges:
+        options.edges = options.edges.split(",")
+    if options.parking_areas:
+        options.parking_areas = options.parking_areas.split(",")
 
     if not options.routefiles:
-        if not options.startAtStop:
-            op.print_help()
-            sys.exit("--route-files missing")
-        elif not options.parkingareas:
-            sys.exit("--parking-areas needed to generation stationary traffic without route-files")
-        else:
+        if options.parking_areas:
+            options.start_at_stop = True
             options.routefiles = []
             if not options.outfile:
-                options.outfile = options.parkingareas[0][:-4] + ".stops.xml"
+                options.outfile = options.parking_areas[0][:-4] + ".stops.xml"
+        else:
+            sys.exit("--parking-areas needed to generation stationary traffic without route-files")
     else:
         options.routefiles = options.routefiles.split(',')
         if not options.outfile:
             options.outfile = options.routefiles[0][:-4] + ".stops.xml"
-
-    if not options.netfile:
-        op.print_help()
-        sys.exit("--net-file missing")
 
     if not options.typesfile:
         options.typesfile = options.routefiles
@@ -111,29 +113,34 @@ def get_options(args=None):
 
     if options.relpos is not None:
         try:
-            options.relpos = max(0, min(1, float(options.relpos)))
+            options.relpos = float(options.relpos)
+            if options.relpos < 0 or options.relpos > 1:
+                raise ValueError
         except ValueError:
             if options.relpos != 'random':
                 sys.exit("option --relpos must be set to 'random' or to a float value from [0,1]")
-            pass
-
     if options.lane is not None:
         try:
             options.lane = int(options.lane)
             if options.lane < 0:
-                sys.exit("option --lane must be set to 'random' or to a non-negative integer value")
+                raise ValueError
         except ValueError:
             if options.lane != 'random':
-                sys.exit("option --lane must be set to 'random' or to an integer value")
-            pass
-
+                sys.exit("option --lane must be set to 'random' or to a non-negative integer value")
     if options.reledge is not None:
         try:
-            options.reledge = max(0, min(1, float(options.reledge)))
+            options.reledge = float(options.reledge)
+            if options.reledge < 0 or options.reledge > 1:
+                raise ValueError
         except ValueError:
             if options.reledge != 'random':
                 sys.exit("option --reledge must be set to 'random' or to a float value from [0,1]")
-            pass
+    if options.viaIndex is not None:
+        try:
+            options.viaIndex = int(options.viaIndex)
+        except ValueError:
+            if options.viaIndex != 'random':
+                sys.exit("option --via-index must be set to 'random' or to an integer value")
 
     return options
 
@@ -141,7 +148,7 @@ def get_options(args=None):
 def readTypes(options):
     vtypes = {None: "passenger"}
     for file in options.typesfile:
-        for vtype in sumolib.output.parse(file, 'vType'):
+        for vtype in sumolib.xml.parse(file, 'vType'):
             vtypes[vtype.id] = vtype.getAttributeSecure("vClass", "passenger")
     # print(vtypes)
     return vtypes
@@ -153,6 +160,9 @@ def getEdgeIDs(obj):
         return obj.route[0].edges.split()
     if obj.attr_from:
         result.append(obj.attr_from)
+    via = getattr(obj, "via", None)
+    if via:
+        result += via.split()
     if obj.to:
         result.append(obj.to)
     return result
@@ -171,21 +181,46 @@ def loadRouteFiles(options, routefile, edge2parking, outf):
     vtypes = readTypes(options)
     numSkipped = defaultdict(lambda: 0)
 
+    if options.viaIndex is not None and options.reledge not in (None, 1, 1.0):
+        print("Warning: --via-index overrides --reledge", file=sys.stderr)
+
     for routefile in options.routefiles:
         for obj in sumolib.xml.parse(routefile, ['vehicle', 'trip', 'flow', 'person', 'vType']):
-            if (obj.name == 'vType' or
-                    options.probability < 1 and random.random() > options.probability):
+            if obj.name == 'vType':
                 outf.write(obj.toXML(' '*4))
                 continue
             edgeIDs = getEdgeIDs(obj)
-            reledge = options.reledge
-            if reledge == 'random':
-                reledge = random.random()
-            lastEdgeID = None
+            stopEdgeID = None
             if edgeIDs:
-                lastEdgeID = edgeIDs[int(round(reledge * (len(edgeIDs) - 1)))]
+                if options.viaIndex is not None:
+                    if options.viaIndex == 'random':
+                        edgeIndex = random.randrange(len(edgeIDs))
+                    else:
+                        viaIndex = options.viaIndex
+                        if viaIndex < -len(edgeIDs) or viaIndex >= len(edgeIDs):
+                            numSkipped[obj.name] += 1
+                            print("Warning: via-index %s out of range for %s '%s' (route length %s); no stop added" % (
+                                options.viaIndex, obj.name, obj.id, len(edgeIDs)), file=sys.stderr)
+                            outf.write(obj.toXML(' '*4))
+                            continue
+                        edgeIndex = viaIndex if viaIndex >= 0 else len(edgeIDs) + viaIndex
+                    stopEdgeID = edgeIDs[edgeIndex]
+                elif options.edges:
+                    for e in options.edges:
+                        if e in edgeIDs:
+                            stopEdgeID = e
+                            break
+                else:
+                    reledge = options.reledge
+                    if reledge == 'random':
+                        reledge = random.random()
+                    stopEdgeID = edgeIDs[int(round(reledge * (len(edgeIDs) - 1)))]
+            if ((stopEdgeID is not None or obj.name == 'person') and
+                    options.probability < 1 and random.random() > options.probability):
+                outf.write(obj.toXML(' '*4))
+                continue
 
-            if lastEdgeID is None:
+            if stopEdgeID is None:
                 if obj.name == 'person' and (
                         options.pDuration is not None
                         or options.pUntil is not None):
@@ -201,21 +236,28 @@ def loadRouteFiles(options, routefile, edge2parking, outf):
                 outf.write(obj.toXML(' '*4))
                 continue
 
-            lastEdge = net.getEdge(lastEdgeID)
+            try:
+                stopEdge = net.getEdge(stopEdgeID)
+            except Exception:
+                numSkipped[obj.name] += 1
+                print("Warning: edge '%s' not found in net for %s '%s'; no stop added" % (
+                    stopEdgeID, obj.name, obj.id), file=sys.stderr)
+                outf.write(obj.toXML(' '*4))
+                continue
             skip = False
             stopAttrs = {}
-            if options.parkingareas:
-                if lastEdgeID in edge2parking:
-                    stopAttrs["parkingArea"] = edge2parking[lastEdgeID]
+            if options.parking_areas:
+                if stopEdgeID in edge2parking:
+                    stopAttrs["parkingArea"] = edge2parking[stopEdgeID]
                 else:
                     skip = True
                     numSkipped[obj.name] += 1
                     print("Warning: no parkingArea found on edge '%s' for vehicle '%s'" % (
-                        lastEdgeID, obj.id), file=sys.stderr)
+                        stopEdgeID, obj.id), file=sys.stderr)
             else:
                 # find usable lane
                 skip = True
-                lanes = lastEdge.getLanes()
+                lanes = stopEdge.getLanes()
                 usable = [lane for lane in lanes if lane.allows(vtypes[obj.type])]
                 if usable:
                     lane = None
@@ -223,19 +265,23 @@ def loadRouteFiles(options, routefile, edge2parking, outf):
                         lane = random.choice(usable)
                     elif options.lane < len(usable):
                         lane = usable[options.lane]
-
                     if lane:
                         skip = False
                         stopAttrs["lane"] = lane.getID()
+                        endPos = lane.getLength()
                         if options.relpos:
                             relpos = options.relpos
                             if options.relpos == 'random':
                                 relpos = random.random()
-                            stopAttrs["endPos"] = "%.2f" % (lane.getLength() * relpos)
+                            endPos *= relpos
+                            stopAttrs["endPos"] = "%.2f" % endPos
+                        if options.length:
+                            stopAttrs["startPos"] = "%.2f" % (endPos - options.length)
+                            stopAttrs["friendlyPos"] = "true"
                 if skip:
                     numSkipped[obj.name] += 1
                     print("Warning: no allowed lane found on edge '%s' for vehicle '%s' (%s)" % (
-                        lastEdgeID, obj.id, vtypes[obj.type]), file=sys.stderr)
+                        stopEdgeID, obj.id, vtypes[obj.type]), file=sys.stderr)
 
             if options.parking:
                 stopAttrs["parking"] = "true"
@@ -247,12 +293,14 @@ def loadRouteFiles(options, routefile, edge2parking, outf):
                 stopAttrs["until"] = interpretDuration(options.until)
             if not skip:
                 obj.addChild("stop", attrs=stopAttrs)
-                if options.startAtStop:
+                if options.start_at_stop:
                     obj.setAttribute("departPos", "stop")
                     if obj.route:
-                        obj.route[0].setAttribute("edges", lastEdgeID)
+                        obj.route[0].setAttribute("edges", stopEdgeID)
                     elif obj.attr_from:
                         obj.attr_from = obj.to
+                if options.color:
+                    obj.setAttribute("color", options.color)
 
             outf.write(obj.toXML(' '*4))
 
@@ -262,8 +310,8 @@ def loadRouteFiles(options, routefile, edge2parking, outf):
 
 def generateStationary(options, edge2parking, outf):
     paCapacity = {}
-    if options.parkingareas:
-        for pafile in options.parkingareas:
+    if options.parking_areas:
+        for pafile in options.parking_areas:
             for pa in sumolib.xml.parse(pafile, "parkingArea"):
                 paCapacity[pa.id] = int(pa.getAttributeSecure("roadsideCapacity", 0))
 
@@ -275,17 +323,18 @@ def generateStationary(options, edge2parking, outf):
 
     for edge, pa in edge2parking.items():
         n = 0
-        if options.relOccupancy:
-            n = paCapacity[pa] * options.relOccupancy
-        elif options.absFree:
-            n = paCapacity[pa] - options.absFree
+        if options.rel_occupancy:
+            n = int(paCapacity[pa] * options.rel_occupancy)
+        elif options.abs_free:
+            n = paCapacity[pa] - options.abs_free
         else:
-            n = options.absOccupancy
+            n = options.abs_occupancy
+        color = ' color="%s"' % options.color if options.color else ''
         for i in range(n):
             id = "%s.%s" % (pa, i)
-            outf.write('    <vehicle id="%s" depart="0" departPos="stop">\n' % id)
-            outf.write('       <route edges="%s"/>\n' % edge)
-            outf.write('       <stop parkingArea="%s"%s/>\n' % (pa, attrs))
+            outf.write('    <vehicle id="%s" depart="0" departPos="stop"%s>\n' % (id, color))
+            outf.write('        <route edges="%s"/>\n' % edge)
+            outf.write('        <stop parkingArea="%s"%s/>\n' % (pa, attrs))
             outf.write('    </vehicle>\n')
 
 
@@ -293,8 +342,8 @@ def main(options):
     random.seed(options.seed)
 
     edge2parking = {}
-    if options.parkingareas:
-        for pafile in options.parkingareas:
+    if options.parking_areas:
+        for pafile in options.parking_areas:
             for pa in sumolib.xml.parse(pafile, "parkingArea"):
                 edge = '_'.join(pa.lane.split('_')[:-1])
                 edge2parking[edge] = pa.id

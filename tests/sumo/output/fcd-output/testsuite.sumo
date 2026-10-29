@@ -7,8 +7,23 @@ cartesian
 # output fcd data in geo-coordinates
 geo
 
+# output fcd data in geo-coordinates
+geo_csv
+
+# output fcd data in geo-coordinates
+geo_parquet
+
+# output fcd data in utm-coordinates
+utm
+
+# write vectorized speed and acceleration
+vectorized
+
 # check whether slope works
 cartesian_slope
+
+# test option --slope-centered
+cartesian_slope_centered
 cartesian_slope_geom
 cartesian_slope_length
 
@@ -67,13 +82,22 @@ precision
 # filter written attributes
 attributes
 
+# see #17767
+delay
+
 # filter written attributes, using those that must otherwise be activated by extra options
 extended_attributes
 
 # filter written attributes with "all"
 all_attributes
 
+# filter written attributes with "emissions"
+emissions
+
 # filter output with shape
 shape_filter
+
+# do not print empty timesteps
+skipEmpty
 begin
 period_begin

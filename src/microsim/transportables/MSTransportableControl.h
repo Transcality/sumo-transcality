@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -83,11 +83,24 @@ public:
     /// removes a single transportable
     virtual void erase(MSTransportable* transportable);
 
+    /// @removes all transportables
+    void eraseAll();
+
     /// sets the arrival time for a waiting transportable
     void setWaitEnd(SUMOTime time, MSTransportable* transportable);
 
     /// checks whether any transportables waiting time is over
     void checkWaiting(MSNet* net, const SUMOTime time);
+
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+    /// adds a transportable to the list with a pending routing task
+    void addPendingRouting(MSTransportable* transportable);
+
+    /// resumes proceed for all transportables whose routing task has completed
+    void processPendingRouting(MSNet* net, const SUMOTime time);
+#endif
+#endif
 
     /// adds a transportable to the list of transportables waiting for a vehicle on the specified edge
     void addWaiting(const MSEdge* edge, MSTransportable* person);
@@ -244,6 +257,12 @@ public:
         return myArrivedNumber;
     }
 
+    /** @brief Returns the number of discarded transportables
+     */
+    int getDiscardedNumber() const {
+        return myDiscardedNumber;
+    }
+
     /// @brief return the number of teleports due to excessive waiting for a ride
     int getTeleportsAbortWait() const {
         return myTeleportsAbortWait;
@@ -358,6 +377,13 @@ protected:
 
     /// @brief whether a new transportable waiting for a vehicle has been added in the last step
     bool myHaveNewWaiting;
+
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+    /// @brief transportables waiting for an asynchronous routing task to complete
+    TransportableVector myPendingRouting;
+#endif
+#endif
 
     /// @brief maximum transportable count
     int myMaxTransportableNumber;

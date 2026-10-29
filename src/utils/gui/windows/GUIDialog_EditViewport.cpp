@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2005-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2005-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,7 @@
 #include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/settings/GUISettingsHandler.h>
 #include <utils/options/OptionsCont.h>
+#include <utils/geom/GeoConvHelper.h>
 
 #include "GUISUMOAbstractView.h"
 #include "GUIDialog_EditViewport.h"
@@ -104,6 +105,22 @@ GUIDialog_EditViewport::GUIDialog_EditViewport(GUISUMOAbstractView* parent, cons
     new FXLabel(rotationFrame, "A:", nullptr, GUIDesignLabelThick(JUSTIFY_NORMAL));
     myRotation = new FXRealSpinner(rotationFrame, 16, this, MID_CHANGED, GUIDesignSpinDialViewPort);
 
+    // create Latitude elements
+    FXHorizontalFrame* latFrame = new FXHorizontalFrame(lookFromFrame, GUIDesignAuxiliarHorizontalFrame);
+    new FXLabel(latFrame, "Lat:", nullptr, GUIDesignLabelThick(JUSTIFY_NORMAL));
+    myLatitude = new FXRealSpinner(latFrame, 16, this, MID_CHANGED, GUIDesignSpinDialViewPort);
+    myLatitude->setRange(-90.0, 90.0);
+    myLatitude->setIncrement(0.001);
+    myLatitude->setGranularity(1e-6);
+
+    // create Longitude elements
+    FXHorizontalFrame* lonFrame = new FXHorizontalFrame(lookFromFrame, GUIDesignAuxiliarHorizontalFrame);
+    new FXLabel(lonFrame, "Lon:", nullptr, GUIDesignLabelThick(JUSTIFY_NORMAL));
+    myLongitude = new FXRealSpinner(lonFrame, 16, this, MID_CHANGED, GUIDesignSpinDialViewPort);
+    myLongitude->setRange(-180.0, 180.0);
+    myLongitude->setIncrement(0.001);
+    myLongitude->setGranularity(1e-6);
+
     // create vertical frame for OSG
     FXVerticalFrame* lookAtFrame = new FXVerticalFrame(editElementsFrame, GUIDesignAuxiliarVerticalFrame);
     new FXLabel(lookAtFrame, "OSG", nullptr, GUIDesignLabelThick(JUSTIFY_NORMAL));
@@ -134,8 +151,8 @@ GUIDialog_EditViewport::GUIDialog_EditViewport(GUISUMOAbstractView* parent, cons
     new FXHorizontalSeparator(contentsFrame, GUIDesignHorizontalSeparator);
     FXHorizontalFrame* frameButtons = new FXHorizontalFrame(contentsFrame, GUIDesignAuxiliarHorizontalFrame);
     new FXHorizontalFrame(frameButtons, GUIDesignAuxiliarHorizontalFrame);
-    myOKButton = GUIDesigns::buildFXButton(frameButtons, TL("&OK"), "", TL("accept"), GUIIconSubSys::getIcon(GUIIcon::ACCEPT), this, GUIDialog_EditViewport::MID_OK, GUIDesignButtonOK);
-    myCancelButton = GUIDesigns::buildFXButton(frameButtons, TL("&Cancel"), "", TL("close"), GUIIconSubSys::getIcon(GUIIcon::CANCEL), this, GUIDialog_EditViewport::MID_CANCEL, GUIDesignButtonCancel);
+    myOKButton = GUIDesigns::buildFXButton(frameButtons, TL("&OK"), "", TL("accept"), GUIIconSubSys::getIcon(GUIIcon::ACCEPT), this, GUIDialog_EditViewport::MID_OK, GUIDesignButtonDialog);
+    myCancelButton = GUIDesigns::buildFXButton(frameButtons, TL("&Cancel"), "", TL("close"), GUIIconSubSys::getIcon(GUIIcon::CANCEL), this, GUIDialog_EditViewport::MID_CANCEL, GUIDesignButtonDialog);
     new FXHorizontalFrame(frameButtons, GUIDesignAuxiliarHorizontalFrame);
     // set dialog icon
     setIcon(GUIIconSubSys::getIcon(GUIIcon::EDITVIEWPORT));
@@ -196,6 +213,21 @@ GUIDialog_EditViewport::onCmdChanged(FXObject* o, FXSelector, void*) {
         } else {
             myZOff->setValue(myParent->getChanger().zoom2ZPos(myZoom->getValue()));
         }
+    } else if (o == myLatitude || o == myLongitude) {
+        if (GeoConvHelper::getFinal().usingGeoProjection()) {
+            Position geo(myLongitude->getValue(), myLatitude->getValue());
+            if (GeoConvHelper::getFinal().x2cartesian_const(geo)) {
+                myXOff->setValue(geo.x());
+                myYOff->setValue(geo.y());
+            }
+        }
+    } else if (o == myXOff || o == myYOff) {
+        if (GeoConvHelper::getFinal().usingGeoProjection()) {
+            Position pos(myXOff->getValue(), myYOff->getValue());
+            GeoConvHelper::getFinal().cartesian2geo(pos);
+            myLatitude->setValue(pos.y());
+            myLongitude->setValue(pos.x());
+        }
     }
     myParent->setViewportFromToRot(Position(myXOff->getValue(), myYOff->getValue(), myZOff->getValue()),
 #ifdef HAVE_OSG
@@ -220,7 +252,7 @@ GUIDialog_EditViewport::onCmdLoad(FXObject*, FXSelector, void*) {
     }
     if (opendialog.execute()) {
         gCurrentFolder = opendialog.getDirectory();
-        GUISettingsHandler handler(opendialog.getFilename().text());
+        GUISettingsHandler handler(getApp(), opendialog.getFilename().text());
         handler.applyViewport(myParent);
         setValues(myParent->getChanger().getZoom(), myParent->getChanger().getXPos(), myParent->getChanger().getYPos(), myParent->getChanger().getRotation());
     }
@@ -281,6 +313,19 @@ GUIDialog_EditViewport::setValues(double zoom, double xoff, double yoff, double 
     myYOff->setValue(yoff);
     myZOff->setValue(myParent->getChanger().zoom2ZPos(zoom));
     myRotation->setValue(rotation);
+    if (GeoConvHelper::getFinal().usingGeoProjection()) {
+        Position pos(xoff, yoff);
+        GeoConvHelper::getFinal().cartesian2geo(pos);
+        myLatitude->setValue(pos.y());
+        myLongitude->setValue(pos.x());
+        myLatitude->enable();
+        myLongitude->enable();
+    } else {
+        myLatitude->setValue(0);
+        myLongitude->setValue(0);
+        myLatitude->disable();
+        myLongitude->disable();
+    }
 }
 
 
@@ -300,6 +345,19 @@ GUIDialog_EditViewport::setValues(const Position& lookFrom, const Position& look
     UNUSED_PARAMETER(lookAt);
 #endif
     myRotation->setValue(rotation);
+    if (GeoConvHelper::getFinal().usingGeoProjection()) {
+        Position pos(lookFrom.x(), lookFrom.y());
+        GeoConvHelper::getFinal().cartesian2geo(pos);
+        myLatitude->setValue(pos.y());
+        myLongitude->setValue(pos.x());
+        myLatitude->enable();
+        myLongitude->enable();
+    } else {
+        myLatitude->setValue(0);
+        myLongitude->setValue(0);
+        myLatitude->disable();
+        myLongitude->disable();
+    }
 }
 
 

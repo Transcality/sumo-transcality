@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -469,10 +469,11 @@ GUIBaseVehicle::drawOnPos(const GUIVisualizationSettings& s, const Position& pos
         */
     // draw the vehicle
     bool drawCarriages = false;
+    // do not upscale vehicles on physically impossible geometry factors > 1
     const double geometryFactor = (s.scaleLength ?
-                                   ((myVehicle.getLane() != nullptr
-                                     ? myVehicle.getLane()->getLengthGeometryFactor(s2)
-                                     : (myVehicle.getEdge()->getLanes().size() > 0 ? myVehicle.getEdge()->getLanes()[0]->getLengthGeometryFactor(s2) : 1)))
+                                   MIN2(1.0, (myVehicle.getLane() != nullptr
+                                           ? myVehicle.getLane()->getLengthGeometryFactor(s2)
+                                           : (myVehicle.getEdge()->getLanes().size() > 0 ? myVehicle.getEdge()->getLanes()[0]->getLengthGeometryFactor(s2) : 1)))
                                    : 1);
     double scaledLength = length * geometryFactor;
     if (col.alpha() != 0) {
@@ -676,10 +677,10 @@ GUIBaseVehicle::drawGLAdditional(GUISUMOAbstractView* const parent, const GUIVis
     }
     bool noLoop = hasActiveAddVisualisation(parent, VO_SHOW_ROUTE_NOLOOP);
     if (hasActiveAddVisualisation(parent, VO_SHOW_ROUTE)) {
-        drawRoute(s, 0, 0.25, false, noLoop);
+        drawRoute(s, 0, 0.15, false, noLoop);
     }
     if (hasActiveAddVisualisation(parent, VO_SHOW_FUTURE_ROUTE)) {
-        drawRoute(s, 0, 0.25, true, noLoop);
+        drawRoute(s, 0, 0.15, true, noLoop);
     }
     if (hasActiveAddVisualisation(parent, VO_SHOW_ALL_ROUTES)) {
         if (myVehicle.getNumberReroutes() > 0) {
@@ -689,7 +690,7 @@ GUIBaseVehicle::drawGLAdditional(GUISUMOAbstractView* const parent, const GUIVis
                 drawRoute(s, i, darken);
             }
         } else {
-            drawRoute(s, 0, 0.25, false, noLoop);
+            drawRoute(s, 0, 0.15, false, noLoop);
         }
     }
     if (hasActiveAddVisualisation(parent, VO_SHOW_LFLINKITEMS)) {
@@ -1095,6 +1096,7 @@ GUIBaseVehicle::getContainerPosition(int containerIndex) const {
 
 void
 GUIBaseVehicle::drawAction_drawPersonsAndContainers(const GUIVisualizationSettings& s) const {
+    FXMutexLock locker(myLock);
     if (myVehicle.myPersonDevice != nullptr) {
         const std::vector<MSTransportable*>& ps = myVehicle.myPersonDevice->getTransportables();
         int personIndex = 0;

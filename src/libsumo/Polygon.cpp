@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -76,10 +76,18 @@ Polygon::getFilled(const std::string& polygonID) {
     return getPolygon(polygonID)->getFill();
 }
 
+
 double
 Polygon::getLineWidth(const std::string& polygonID) {
     return getPolygon(polygonID)->getLineWidth();
 }
+
+
+double
+Polygon::getHeight(const std::string& polygonID) {
+    return getPolygon(polygonID)->getHeight();
+}
+
 
 TraCIColor
 Polygon::getColor(const std::string& polygonID) {
@@ -209,14 +217,19 @@ Polygon::remove(const std::string& polygonID, int /* layer */) {
 
 void
 Polygon::setFilled(std::string polygonID, bool filled) {
-    SUMOPolygon* p = getPolygon(polygonID);
-    p->setFill(filled);
+    getPolygon(polygonID)->setFill(filled);
 }
+
 
 void
 Polygon::setLineWidth(std::string polygonID, double lineWidth) {
-    SUMOPolygon* p = getPolygon(polygonID);
-    p->setLineWidth(lineWidth);
+    getPolygon(polygonID)->setLineWidth(lineWidth);
+}
+
+
+void
+Polygon::setHeight(std::string polygonID, double height) {
+    getPolygon(polygonID)->setHeight(height);
 }
 
 
@@ -308,6 +321,8 @@ Polygon::handleVariable(const std::string& objID, const int variable, VariableWr
             return wrapper->wrapInt(objID, variable, getFilled(objID));
         case VAR_WIDTH:
             return wrapper->wrapDouble(objID, variable, getLineWidth(objID));
+        case VAR_HEIGHT:
+            return wrapper->wrapDouble(objID, variable, getHeight(objID));
         case VAR_SHAPE:
             return wrapper->wrapPositionVector(objID, variable, getShape(objID));
         case libsumo::VAR_PARAMETER:

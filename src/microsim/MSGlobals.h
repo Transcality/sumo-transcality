@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2003-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2003-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -108,6 +108,9 @@ public:
     /** Information whether limited junction control shall be used */
     static bool gMesoLimitedJunctionControl;
 
+    /** Information whether positions will be interpolated */
+    static bool gMesoInterpolatePos;
+
     /// mesoscopic simulation infrastructure
     static MELoop* gMesoNet;
 
@@ -123,15 +126,15 @@ public:
     // whether recuperation into the overhead wire is allowed
     static bool gOverheadWireRecuperation;
 
-    // whether traction substation current limits are taken into account when solving the overhead wire circuit
-    static bool gOverheadWireCurrentLimits;
-
     /// encoding of the string-option default.emergencydecel
     static double gDefaultEmergencyDecel;
 
     /// whether the simulation should replay previous stop times
     static bool gUseStopEnded;
     static bool gUseStopStarted;
+
+    /// whether to use a simplified slope computation (for compatibility with other simulations)
+    static bool gSlopeCentered;
 
     /// whether unit tests are being run
     static bool gUnitTests;

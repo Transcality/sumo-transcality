@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -44,6 +44,7 @@ class GUIParameterTableWindow;
 class GUIDialog_Breakpoints;
 class MFXLCDLabel;
 class MFXLabelTooltip;
+class MFXCheckableButton;
 
 
 // ===========================================================================
@@ -263,6 +264,22 @@ public:
     long onCmdNewOSG(FXObject*, FXSelector, void*);
 #endif
 
+    /// @brief Called on "show tool tips in view"
+    long onCmdShowToolTipsView(FXObject*, FXSelector, void*);
+
+    /// @brief Called on "show tool tips in menu"
+    long onCmdShowToolTipsMenu(FXObject*, FXSelector, void*);
+
+    /// @brief get checkable button for menu tooltips
+    MFXCheckableButton* getShowToolTipsMenu() const {
+        return myShowToolTipsMenu;
+    }
+
+    /// @brief get checkable button for view tooltips
+    MFXCheckableButton* getShowToolTipsView() const {
+        return myShowToolTipsView;
+    }
+
     /// @brief Determines whether opening is enabled
     long onUpdOpen(FXObject*, FXSelector, void*);
 
@@ -417,8 +434,10 @@ protected:
     /// @brief menuCheck for enable/disable load demand elements in netedit
     FXMenuCheck* myLoadDemandInNetedit = nullptr;
 
-    /// @brief menuCommand for open simulation/network in netedit
+    /// @brief menuCommand for opening simulation/network in netedit
     FXMenuCommand* myOpenInNetedit = nullptr;
+    /// @brief menuCommand for opening only the network in netedit
+    FXMenuCommand* myOpenNetInNetedit = nullptr;
 
     /// @brief Buttons showing and running values and triggering statistic windows
     std::vector<FXButton*> myStatButtons;
@@ -455,6 +474,12 @@ protected:
 
     /// @brief the demand scale
     FXRealSpinner* myDemandScaleSpinner = nullptr;
+
+    /// @brief checkable button for show tool tips in view
+    MFXCheckableButton* myShowToolTipsView = nullptr;
+
+    /// @brief checkable button for show tool tips in menu
+    MFXCheckableButton* myShowToolTipsMenu = nullptr;
 
     /// @brief The alternate simulation delay in milliseconds for toggling
     double myAlternateSimDelay = 0;

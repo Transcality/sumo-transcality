@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -57,6 +57,7 @@ public:
     static double getSlope(const std::string& vehID);
     static std::string getRoadID(const std::string& vehID);
     static std::string getLaneID(const std::string& vehID);
+    static std::string getShadowLaneID(const std::string& vehID);
     static int getLaneIndex(const std::string& vehID);
     static std::string getSegmentID(const std::string& vehID);
     static int getSegmentIndex(const std::string& vehID);
@@ -98,6 +99,7 @@ public:
     static double getDistance(const std::string& vehID);
     static double getDrivingDistance(const std::string& vehID, const std::string& edgeID, double pos, int laneIndex = 0);
     static double getDrivingDistance2D(const std::string& vehID, double x, double y);
+    static double getReferenceDistance(const std::string& vehID);
     static double getAllowedSpeed(const std::string& vehID);
     static int getSpeedMode(const std::string& vehID);
     static int getLaneChangeMode(const std::string& vehID);

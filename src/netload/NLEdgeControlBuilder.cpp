@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -52,6 +52,9 @@ NLEdgeControlBuilder::NLEdgeControlBuilder()
 
 NLEdgeControlBuilder::~NLEdgeControlBuilder() {
     delete myLaneStorage;
+    if (myActiveEdge != nullptr && MSEdge::dictionary(myActiveEdge->getID()) != myActiveEdge) {
+        delete myActiveEdge;
+    }
 }
 
 
@@ -60,15 +63,22 @@ NLEdgeControlBuilder::beginEdgeParsing(
     const std::string& id, const SumoXMLEdgeFunc function,
     const std::string& streetName,
     const std::string& edgeType,
+    const std::string& routingType,
     int priority,
     const std::string& bidi,
     double distance) {
     // closeEdge might not have been called because the last edge had an error, so we clear the lane storage
     myLaneStorage->clear();
-    myActiveEdge = buildEdge(id, function, streetName, edgeType, priority, distance);
+    // if the previous edge was broken (never registered in the static dict), remove and delete it
+    if (myActiveEdge != nullptr && MSEdge::dictionary(myActiveEdge->getID()) != myActiveEdge) {
+        myEdges.pop_back();
+        delete myActiveEdge;
+        myActiveEdge = nullptr;
+    }
     if (MSEdge::dictionary(id) != nullptr) {
         throw InvalidArgument("Another edge with the id '" + id + "' exists.");
     }
+    myActiveEdge = buildEdge(id, function, streetName, edgeType, routingType, priority, distance);
     myEdges.push_back(myActiveEdge);
     if (bidi != "") {
         myBidiEdges[myActiveEdge] = bidi;
@@ -169,7 +179,9 @@ NLEdgeControlBuilder::closeEdge() {
     myLaneStorage->clear();
     myActiveEdge->initialize(lanes);
     myCurrentDefaultStopOffset.reset();
-    return myActiveEdge;
+    MSEdge* result = myActiveEdge;
+    myActiveEdge = nullptr;
+    return result;
 }
 
 
@@ -194,10 +206,20 @@ NLEdgeControlBuilder::build(const MMVersion& networkVersion) {
         }
     }
     // consistency check
+    std::set<const MSLane*> checked;
     for (auto item : myOppositeLanes) {
-        if (item.first->getOpposite() != nullptr && item.first->getOpposite()->getOpposite() != item.first) {
-            WRITE_WARNINGF(TL("Asymmetrical neigh lane '%' for lane '%'"), item.second, item.first->getID());
-            item.first->getOpposite()->setOpposite(item.first);
+        if (item.first->getOpposite() != nullptr) {
+            if (item.first->getOpposite()->getOpposite() != item.first) {
+                if (checked.count(item.first->getOpposite()) == 0) {
+                    WRITE_WARNINGF(TL("Asymmetrical neigh lane '%' for lane '%'"), item.second, item.first->getID());
+                    item.first->getOpposite()->setOpposite(item.first);
+                } else {
+                    throw ProcessError(TLF("Mutually inconsistent neigh lane definitions for lanes '%', '%' and '%'",
+                                           item.first->getID(), item.first->getOpposite()->getID(), Named::getIDSecure(item.first->getOpposite()->getOpposite())));
+                }
+            }
+            checked.insert(item.first);
+            checked.insert(item.first->getOpposite());
         }
     }
     for (MSEdge* const edge : myEdges) {
@@ -205,10 +227,6 @@ NLEdgeControlBuilder::build(const MMVersion& networkVersion) {
     }
     for (MSEdge* const edge : myEdges) {
         edge->rebuildAllowedTargets(false);
-        // segment building depends on the finished list of successors (for multi-queue)
-        if (MSGlobals::gUseMesoSim && !edge->getLanes().empty()) {
-            MSGlobals::gMesoNet->buildSegmentsFor(*edge, OptionsCont::getOptions());
-        }
     }
     // mark internal edges belonging to a roundabout (after all edges are build)
     if (MSGlobals::gUsingInternalLanes) {
@@ -249,13 +267,23 @@ NLEdgeControlBuilder::build(const MMVersion& networkVersion) {
 
 MSEdge*
 NLEdgeControlBuilder::buildEdge(const std::string& id, const SumoXMLEdgeFunc function,
-                                const std::string& streetName, const std::string& edgeType, const int priority, const double distance) {
-    return new MSEdge(id, myCurrentNumericalEdgeID++, function, streetName, edgeType, priority, distance);
+                                const std::string& streetName, const std::string& edgeType, const std::string& routingType,
+                                const int priority, const double distance) {
+    return new MSEdge(id, myCurrentNumericalEdgeID++, function, streetName, edgeType, routingType, priority, distance);
 }
 
 void NLEdgeControlBuilder::addCrossingEdges(const std::vector<std::string>& crossingEdges) {
     myActiveEdge->setCrossingEdges(crossingEdges);
 }
 
+
+SumoXMLEdgeFunc
+NLEdgeControlBuilder::getCurrentEdgeFunction() const {
+    if (myActiveEdge == nullptr) {
+        return SumoXMLEdgeFunc::UNKNOWN;
+    } else {
+        return myActiveEdge->getFunction();
+    }
+}
 
 /****************************************************************************/

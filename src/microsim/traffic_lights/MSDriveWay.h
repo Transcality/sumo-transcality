@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -23,13 +23,13 @@
 #include <utils/common/Named.h>
 #include <microsim/MSMoveReminder.h>
 #include <microsim/MSRoute.h>
+#include <microsim/MSLink.h>
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 class SUMOVehicle;
 class MSLane;
-class MSLink;
 class MSRailSignal;
 
 // ===========================================================================
@@ -80,19 +80,19 @@ public:
     bool notifyLeaveBack(SUMOTrafficObject& veh, Notification reason, const MSLane* leftLane);
     bool notifyReroute(SUMOTrafficObject& veh);
 
-    /// @brief Wether there is a flank conflict with the given driveway
+    /// @brief Whether there is a flank conflict with the given driveway
     bool flankConflict(const MSDriveWay& other) const;
 
-    /// @brief Wether there is a crossing conflict with the given driveway
+    /// @brief Whether there is a crossing conflict with the given driveway
     bool crossingConflict(const MSDriveWay& other) const;
 
-    /// @brief Wether there is a bidi conflict with the given driveway
+    /// @brief Whether there is a bidi conflict with the given driveway
     bool bidiBlockedBy(const MSDriveWay& other) const;
 
-    /// @brief Wether there is a bidi conflict with the end of the given driveway
+    /// @brief Whether there is a bidi conflict with the end of the given driveway
     bool bidiBlockedByEnd(const MSDriveWay& other) const;
 
-    /// @brief Wether the route of other passes into the forward section of this driveway
+    /// @brief Whether the route of other passes into the forward section of this driveway
     bool forwardRouteConflict(std::set<const MSEdge*> forward, const MSDriveWay& other, bool secondCheck = false);
 
     /// @brief whether any of myConflictLanes is occupied (vehicles that are the target of a join must be ignored)
@@ -100,6 +100,9 @@ public:
 
     /// @brief whether any of myFoes is occupied (vehicles that are the target of a join must be ignored)
     bool foeDriveWayOccupied(bool store, const SUMOVehicle* ego, MSEdgeVector& occupied) const;
+
+    /// @brief whether insertion on this driveway would cause deadlock in an approached siding
+    bool sidingDeadlock(const SUMOVehicle* veh) const;
 
     /// @brief whether any of my Foes is being approached
     bool foeDriveWayApproached() const;
@@ -143,6 +146,10 @@ public:
         myFirstVehicle = vehID;
     }
 
+    const std::string& getFirstVehicle() const {
+        return myFirstVehicle;
+    }
+
     const std::vector<MSDriveWay*>& getFoes() const {
         return myFoes;
     }
@@ -171,6 +178,21 @@ public:
         return mySubDriveWays;
     }
 
+    bool foundSignal() const {
+        return myFoundSignal;
+    }
+
+    bool isSubDriveWay() const {
+        return myParent != nullptr;
+    }
+
+    const MSDriveWay* getParent() const {
+        return myParent;
+    }
+
+    /// @brief return for how much longer the parent driveway continues after the end of this subdriveway
+    double getParentRemainingLength() const;
+
     static void init();
 
     static bool hasRS(const MSEdge* cur, const MSEdge* next);
@@ -185,6 +207,8 @@ public:
     static std::string getClickableTLLinkID(const MSLink* link);
 
     static const MSDriveWay* getDepartureDriveway(const SUMOVehicle* veh, bool init = false);
+
+    static const std::vector<MSDriveWay*>& getEndingDriveWays(const MSEdge* edge);
 
     static void writeDepatureBlocks(OutputDevice& od, bool writeVehicles);
 
@@ -220,7 +244,8 @@ protected:
     bool myAbortedBuild;
     /// @brief whether driveway building was aborted when no further bidi edge was found
     bool myBidiEnded;
-    bool myIsSubDriveway;
+    /// @brief set to parent driveway if this is a subDriveway, nullptr otherwise
+    MSDriveWay* myParent;
 
     /* @brief the actual driveway part up to the next railsignal (halting position)
      * This must be free of other trains */
@@ -234,6 +259,7 @@ protected:
     /* @brief the list of bidirectional edges that can enter the forward
      * section and which might contain deadlock-relevant traffic */
     std::vector<const MSLane*> myBidiExtended;
+    std::vector<const MSLane*> myBidiExtendedSorted;
 
     /* @brief the list of edges that merge with the forward section
      * (found via backward search, up to the first element that could give protection) */
@@ -250,7 +276,7 @@ protected:
     /// @brief Whether the approaching vehicle is prevent from driving by another vehicle approaching the given link
     bool hasLinkConflict(const Approaching& closest, const MSLink* foeLink) const;
 
-    /// @brief Wether this driveway (route) overlaps with the given one
+    /// @brief Whether this driveway (route) overlaps with the given one
     bool overlap(const MSDriveWay& other) const;
 
     /* @brief determine route that identifies this driveway (a subset of the
@@ -263,22 +289,23 @@ protected:
      *
      * returns edge that is assumed to safe from oncoming-deadlock or nullptr
      */
-    void buildRoute(const MSLink* origin, MSRouteIterator next, MSRouteIterator end, LaneVisitedMap& visited, std::set<MSLink*>&);
+    void buildRoute(const MSLink* origin, MSRouteIterator next, MSRouteIterator end, LaneVisitedMap& visited, std::set<MSLink*, MSLink::ComparatorNumericalLaneIdLess>&);
 
     /* @brief find switches that threaten this driveway
      * @param[out] flankSwitches collect the switches
      */
-    void checkFlanks(const MSLink* originLink, const std::vector<const MSLane*>& lanes, const LaneVisitedMap& visited, bool allFoes, std::set<MSLink*>& flankSwitches) const;
+    void checkFlanks(const MSLink* originLink, const std::vector<const MSLane*>& lanes, const LaneVisitedMap& visited,
+                     bool allFoes, bool movingBlock, std::set<MSLink*, MSLink::ComparatorNumericalLaneIdLess>& flankSwitches) const;
 
     /* @brief find links that cross the driveway without entering it
      * @param[out] flankSwitches collect the switches
      */
-    void checkCrossingFlanks(MSLink* dwLink, const LaneVisitedMap& visited, std::set<MSLink*>& flankSwitches) const;
+    void checkCrossingFlanks(MSLink* dwLink, const LaneVisitedMap& visited, std::set<MSLink*, MSLink::ComparatorNumericalLaneIdLess>& flankSwitches) const;
 
     /* @brief find upstream protection from the given link
      * @param[out] flank: the stored flank lanes
      */
-    void findFlankProtection(MSLink* link, MSLink* origLink, std::vector<const MSLane*>& flank);
+    void findFlankProtection(MSLink* link, MSLink* origLink, const std::vector<const MSLane*>& flank);
 
     /// @brief add all driveWays that start at the given link as foes
     void addFoes(const MSLink* link);
@@ -293,7 +320,7 @@ protected:
     void addParallelFoes(const MSLink* link, const MSEdge* first);
 
     /// @brief derive foe driveways that enter the bidi section by reversing
-    void addReversalFoes();
+    void addReversalFoes(bool movingBlock);
 
     /* @brief build shortened driveway that ends where the foe train leaves the conflict zone of this driveway
      * @return whether the foe has received a new entry in myFoes
@@ -304,15 +331,19 @@ protected:
     void addConflictLink(const MSLink* link);
 
     /// @brief return whether a siding can be used. If a siding exist but is occupied, also return the occupied driveway in the siding
-    std::pair<bool, const MSDriveWay*> canUseSiding(const SUMOVehicle* ego, const MSDriveWay* foe, bool recurse = true) const;
+    std::pair<bool, const MSDriveWay*> canUseSiding(const SUMOVehicle* ego, const MSDriveWay* foe, const MSEdge* recurseSidingEnd = nullptr) const;
 
-    bool isFoeOrSubFoe(const MSDriveWay* foe) const;
+    /// @brief return dw if it is a foe or a subDrivway of dw if it is a foe
+    const MSDriveWay* getFoeOrSubFoe(const MSDriveWay* dw) const;
 
     bool forwardEndOnRoute(const MSDriveWay* foe) const;
 
     void addSwitchFoes(MSLink* link);
 
     bool haveSubTrains() const;
+
+    /// @brief compute distance along the forward section up to lastIndex
+    double getForwardDistance(int lastIndex) const;
 
     /* @brief whether the train would have matched this driveway in it's past
      * @return If matching, returns the number of edges the vehicle has gone past the start of the driveway,
@@ -343,14 +374,15 @@ protected:
 private:
 
     struct Siding {
-        Siding(int s, int e, double l) : start(s), end(e), length(l) {}
+        Siding(int s, int e, double l, std::vector<int> iEnds) : start(s), end(e), length(l), intermediateEnds(iEnds) {}
         // indices along route
         int start;
         int end;
         double length;
+        std::vector<int> intermediateEnds;
     };
 
-    std::set<SUMOVehicle*> myTrains;
+    std::set<SUMOVehicle*, ComparatorNumericalIdLess> myTrains;
 
     std::vector<VehicleEvent> myVehicleEvents;
     std::vector<MSDriveWay*> myFoes;
@@ -370,6 +402,7 @@ private:
 
     static int myGlobalDriveWayIndex;
     static bool myWriteVehicles;
+    static double myMovingBlockMaxDist;
     static std::set<const MSEdge*> myBlockLengthWarnings;
 
     /// @brief all driveways passing the given switch (used to look up flank foes)
@@ -386,9 +419,13 @@ private:
 
     /// @brief all driveways that end on the given edge
     static std::map<const MSEdge*, std::vector<MSDriveWay*>, ComparatorNumericalIdLess> myEndingDriveways;
+    /// @brief all driveways that use a siding which ends on this edge as pair (dw, foe)
+    static std::map<const MSEdge*, std::vector<std::pair<MSDriveWay*, MSDriveWay*> >, ComparatorNumericalIdLess> mySidingDriveways;
+    static std::vector<const MSEdge*> myCurrentSidingCheck;
 
     /// @brief lookup table for state loading
     static std::map<ConstMSEdgeVector, MSDriveWay*> myDriveWayRouteLookup;
     static std::map<std::string, MSDriveWay*> myDriveWayLookup;
+    static const std::vector<MSDriveWay*> EMPTY_DRIVEWAY_VECTOR;
 
 };

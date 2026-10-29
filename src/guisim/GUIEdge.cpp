@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -36,6 +36,7 @@
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIGlobalSelection.h>
 #include <utils/gui/globjects/GLIncludes.h>
+#include <gui/GUIGlobals.h>
 #include <microsim/MSBaseVehicle.h>
 #include <microsim/MSEdge.h>
 #include <microsim/MSJunction.h>
@@ -62,9 +63,10 @@
 
 GUIEdge::GUIEdge(const std::string& id, int numericalID,
                  const SumoXMLEdgeFunc function,
-                 const std::string& streetName, const std::string& edgeType, int priority,
+                 const std::string& streetName, const std::string& edgeType,
+                 const std::string& routingType, int priority,
                  double distance) :
-    MSEdge(id, numericalID, function, streetName, edgeType, priority, distance),
+    MSEdge(id, numericalID, function, streetName, edgeType, routingType, priority, distance),
     GUIGlObject(GLO_EDGE, id, GUIIconSubSys::getIcon(GUIIcon::EDGE)),
     myLock(true)
 {}
@@ -132,9 +134,10 @@ GUIEdge::getTotalLength(bool includeInternal, bool eachLane) {
 Boundary
 GUIEdge::getBoundary() const {
     Boundary ret;
+    const bool s2 = GUIGlobals::gSecondaryShape;
     if (!isTazConnector()) {
         for (std::vector<MSLane*>::const_iterator i = myLanes->begin(); i != myLanes->end(); ++i) {
-            ret.add((*i)->getShape().getBoxBoundary());
+            ret.add((*i)->getShape(s2).getBoxBoundary());
         }
     } else {
         // take the starting coordinates of all follower edges and the endpoints
@@ -142,13 +145,13 @@ GUIEdge::getBoundary() const {
         for (MSEdgeVector::const_iterator it = mySuccessors.begin(); it != mySuccessors.end(); ++it) {
             const std::vector<MSLane*>& lanes = (*it)->getLanes();
             for (std::vector<MSLane*>::const_iterator it_lane = lanes.begin(); it_lane != lanes.end(); ++it_lane) {
-                ret.add((*it_lane)->getShape().front());
+                ret.add((*it_lane)->getShape(s2).front());
             }
         }
         for (MSEdgeVector::const_iterator it = myPredecessors.begin(); it != myPredecessors.end(); ++it) {
             const std::vector<MSLane*>& lanes = (*it)->getLanes();
             for (std::vector<MSLane*>::const_iterator it_lane = lanes.begin(); it_lane != lanes.end(); ++it_lane) {
-                ret.add((*it_lane)->getShape().back());
+                ret.add((*it_lane)->getShape(s2).back());
             }
         }
     }
@@ -165,7 +168,19 @@ GUIEdge::getPopUpMenu(GUIMainWindow& app, GUISUMOAbstractView& parent) {
     buildNameCopyPopupEntry(ret);
     buildSelectionPopupEntry(ret);
     if (MSGlobals::gUseMesoSim) {
-        buildShowParamsPopupEntry(ret);
+        buildShowParamsPopupEntry(ret, false);
+        // find lane under cursor for building a lane-param menu entry
+        // @note: cannot use getLaneUnderCursor because this returns nullptr in meso
+        GUILane* lane = dynamic_cast<GUILane*>(myLanes->front());
+        const Position pos = parent.getPositionInformation();
+        for (MSLane* l : *myLanes) {
+            GUILane* cand = dynamic_cast<GUILane*>(l);
+            if (cand->getCenter().distanceTo2D(pos) < lane->getCenter().distanceTo2D(pos)) {
+                lane = cand;
+            }
+        }
+        setGLObjectParent(lane);
+        GUIDesigns::buildFXMenuCommand(ret, "Show Lane Param", GUIIconSubSys::getIcon(GUIIcon::APP_TABLE), ret, MID_SHOWPARS_PARENT);
         buildShowTypeParamsPopupEntry(ret);
     }
     MESegment* segment = getSegmentAtPosition(parent.getPositionInformation());
@@ -190,7 +205,7 @@ GUIEdge::getParameterWindow(GUIMainWindow& app,
     ret->mkItem(TL("routing speed [m/s]"), true, new FunctionBinding<MSEdge, double>(this, &MSEdge::getRoutingSpeed));
     ret->mkItem(TL("time penalty [s]"), true, new FunctionBinding<MSEdge, double>(this, &MSEdge::getTimePenalty));
     ret->mkItem(TL("brutto occupancy [%]"), true, new FunctionBinding<GUIEdge, double>(this, &GUIEdge::getBruttoOccupancy, 100.));
-    ret->mkItem(TL("flow [veh/h/lane]"), true, new FunctionBinding<GUIEdge, double>(this, &GUIEdge::getFlow));
+    ret->mkItem(TL("edge flow [veh/h/m]"), true, new FunctionBinding<GUIEdge, double>(this, &GUIEdge::getFlow));
     ret->mkItem(TL("vehicles [#]"), true, new CastingFunctionBinding<GUIEdge, int, int>(this, &MSEdge::getVehicleNumber));
     // add segment items
     MESegment* segment = getSegmentAtPosition(parent.getPositionInformation());
@@ -201,7 +216,7 @@ GUIEdge::getParameterWindow(GUIMainWindow& app,
     ret->mkItem(TL("segment jam threshold [%]"), false, segment->getRelativeJamThreshold() * 100);
     ret->mkItem(TL("segment brutto occupancy [%]"), true, new FunctionBinding<MESegment, double>(segment, &MESegment::getRelativeOccupancy, 100));
     ret->mkItem(TL("segment mean vehicle speed [m/s]"), true, new FunctionBinding<MESegment, double>(segment, &MESegment::getMeanSpeed));
-    ret->mkItem(TL("segment flow [veh/h/lane]"), true, new FunctionBinding<MESegment, double>(segment, &MESegment::getFlow));
+    ret->mkItem(TL("segment flow [veh/h/m]"), true, new FunctionBinding<MESegment, double>(segment, &MESegment::getFlow));
     ret->mkItem(TL("segment vehicles [#]"), true, new CastingFunctionBinding<MESegment, int, int>(segment, &MESegment::getCarNumber));
     ret->mkItem(TL("segment leader leave time"), true, new FunctionBinding<MESegment, double>(segment, &MESegment::getEventTimeSeconds));
     ret->mkItem(TL("segment headway [s]"), true, new FunctionBinding<MESegment, double>(segment, &MESegment::getLastHeadwaySeconds));
@@ -225,6 +240,7 @@ GUIEdge::getTypeParameterWindow(GUIMainWindow& app,
     // add items
     ret->mkItem(TL("Type Information:"), false, "");
     ret->mkItem(TL("type [id]"), false, getEdgeType());
+    ret->mkItem(TL("routing type [id]"), false, getRoutingType());
     ret->mkItem(TL("tauff"), false, STEPS2TIME(edgeType.tauff));
     ret->mkItem(TL("taufj"), false, STEPS2TIME(edgeType.taufj));
     ret->mkItem(TL("taujf"), false, STEPS2TIME(edgeType.taujf));
@@ -276,7 +292,7 @@ GUIEdge::drawGL(const GUIVisualizationSettings& s) const {
     GLHelper::popName();
     // (optionally) draw the name and/or the street name
     GUILane* lane2 = dynamic_cast<GUILane*>((*myLanes).back());
-    const GUIGlObject* selCheck = gSelected.isSelected(this) ? (GUIGlObject*)this : (GUIGlObject*)lane2;
+    const GUIGlObject* selCheck = gSelected.isSelected(this) ? (GUIGlObject*)this : (GUIGlObject*)anySelectedLane();
     const bool drawEdgeName = s.edgeName.show(selCheck) && myFunction == SumoXMLEdgeFunc::NORMAL;
     const bool drawInternalEdgeName = s.internalEdgeName.show(selCheck) && myFunction == SumoXMLEdgeFunc::INTERNAL;
     const bool drawCwaEdgeName = s.cwaEdgeName.show(selCheck) && (myFunction == SumoXMLEdgeFunc::CROSSING || myFunction == SumoXMLEdgeFunc::WALKINGAREA);
@@ -390,51 +406,16 @@ GUIEdge::drawGL(const GUIVisualizationSettings& s) const {
 void
 GUIEdge::drawMesoVehicles(const GUIVisualizationSettings& s) const {
     GUIMEVehicleControl* vehicleControl = GUINet::getGUIInstance()->getGUIMEVehicleControl();
-    const double now = SIMTIME;
     if (vehicleControl != nullptr) {
-        // draw the meso vehicles
         vehicleControl->secureVehicles();
         FXMutexLock locker(myLock);
-        int laneIndex = 0;
-        for (std::vector<MSLane*>::const_iterator msl = myLanes->begin(); msl != myLanes->end(); ++msl, ++laneIndex) {
-            GUILane* l = static_cast<GUILane*>(*msl);
-            // go through the vehicles
-            double segmentOffset = 0; // offset at start of current segment
-            for (MESegment* segment = MSGlobals::gMesoNet->getSegmentForEdge(*this);
-                    segment != nullptr; segment = segment->getNextSegment()) {
-                const double length = segment->getLength();
-                if (laneIndex < segment->numQueues()) {
-                    // make a copy so we don't have to worry about synchronization
-                    std::vector<MEVehicle*> queue = segment->getQueue(laneIndex);
-                    const int queueSize = (int)queue.size();
-                    double vehiclePosition = segmentOffset + length;
-                    // draw vehicles beginning with the leader at the end of the segment
-                    double latOff = 0.;
-                    for (int i = 0; i < queueSize; ++i) {
-                        const GUIMEVehicle* const veh = static_cast<GUIMEVehicle*>(queue[queueSize - i - 1]);
-                        const double intendedLeave = MIN2(veh->getEventTimeSeconds(), veh->getBlockTimeSeconds());
-                        const double entry = veh->getLastEntryTimeSeconds();
-                        const double relPos = segmentOffset + length * (now - entry) / (intendedLeave - entry);
-                        if (relPos < vehiclePosition) {
-                            vehiclePosition = relPos;
-                        }
-                        while (vehiclePosition < segmentOffset) {
-                            // if there is only a single queue for a
-                            // multi-lane edge shift vehicles and start
-                            // drawing again from the end of the segment
-                            vehiclePosition += length;
-                            latOff += 0.2;
-                        }
-                        /// @fixme use correct shape for geometryPositionAtOffset
-                        const Position p = l->geometryPositionAtOffset(vehiclePosition, latOff);
-                        const double angle = l->getShape(s.secondaryShape).rotationAtOffset(l->interpolateLanePosToGeometryPos(vehiclePosition));
-                        veh->drawOnPos(s, p, angle);
-                        vehiclePosition -= veh->getVehicleType().getLengthWithGap();
-                    }
-                }
-                segmentOffset += length;
-            }
-            GLHelper::popMatrix();
+        for (const auto& item : getMesoPositions()) {
+            const GUIMEVehicle* const veh = static_cast<const GUIMEVehicle*>(item.first);
+            const GUILane* const lane = static_cast<GUILane*>((*myLanes)[veh->getQueIndex()]);
+            assert(this == &veh->getSegment()->getEdge());
+            const Position p = lane->geometryPositionAtOffset(item.second.first, (double)item.second.second * 0.5);
+            const double angle = lane->getShape(s.secondaryShape).rotationAtOffset(lane->interpolateLanePosToGeometryPos(item.second.first));
+            veh->drawOnPos(s, p, angle);
         }
         vehicleControl->releaseVehicles();
     }
@@ -458,6 +439,7 @@ void
 GUIEdge::setColor(const GUIVisualizationSettings& s) const {
     myMesoColor = RGBColor(0, 0, 0); // default background color when using multiColor
     const GUIColorer& c = s.edgeColorer;
+    mySegmentColors.clear();
     if (!setFunctionalColor(c) && !setMultiColor(c)) {
         myMesoColor = c.getScheme().getColor(getColorValue(s, c.getActive()));
     }
@@ -489,7 +471,6 @@ GUIEdge::setFunctionalColor(const GUIColorer& c) const {
 bool
 GUIEdge::setMultiColor(const GUIColorer& c) const {
     const int activeScheme = c.getActive();
-    mySegmentColors.clear();
     switch (activeScheme) {
         case 10: // alternating segments
             for (MESegment* segment = MSGlobals::gMesoNet->getSegmentForEdge(*this);
@@ -668,5 +649,18 @@ GUIEdge::getClickPriority() const {
         return INVALID_PRIORITY;
     }
     return GLO_EDGE;
+}
+
+
+GUILane*
+GUIEdge::anySelectedLane() const {
+    MSLane* result = myLanes->back();
+    for (MSLane* lane : *myLanes) {
+        if (lane->isSelected()) {
+            result = lane;
+            break;
+        }
+    }
+    return dynamic_cast<GUILane*>(result);
 }
 /****************************************************************************/

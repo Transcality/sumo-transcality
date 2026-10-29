@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -157,8 +157,10 @@ private:
     };
 
 private:
-    static FCDHandler* myHandler;
-    static SUMOSAXReader* myParser;
+    static std::vector<std::unique_ptr<FCDHandler> > myHandlers;
+    static std::vector<std::unique_ptr<SUMOSAXReader> > myParsers;
+    /// @brief bit mask for checking attributes to be used
+    static SumoXMLAttrMask myUsedAttributes;
     const Trajectory* myTrajectory = nullptr;
     int myTrajectoryIndex = 0;
 

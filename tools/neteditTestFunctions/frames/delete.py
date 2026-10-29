@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,11 @@
 # @date    28-05-25
 
 # imports
-from ..general.functions import *
+import time
+from ..enums.attributesEnum import attrs
+from ..constants import DELAY_REMOVESELECTION, DELAY_QUESTION
+from ..general.modes import changeMode
+from ..input.keyboard import typeKey
 
 
 def delete():
@@ -35,7 +39,7 @@ def protectElements():
     # select delete mode again to set mode
     changeMode("delete")
     # jump to checkbox
-    for _ in range(4):
+    for _ in range(attrs.frames.delete.protectElements):
         typeKey('tab')
     # type SPACE to change value
     typeKey('space')

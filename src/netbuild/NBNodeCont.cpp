@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -123,8 +123,9 @@ NBNodeCont::retrieve(const std::string& id) const {
 }
 
 
-NBNode*
-NBNodeCont::retrieve(const Position& position, const double offset) const {
+std::vector<NBNode*>
+NBNodeCont::retrieveByPos(const Position& position, const double offset) const {
+    std::vector<NBNode*> result;
     const double extOffset = offset + POSITION_EPS;
     const float cmin[2] = {(float)(position.x() - extOffset), (float)(position.y() - extOffset)};
     const float cmax[2] = {(float)(position.x() + extOffset), (float)(position.y() + extOffset)};
@@ -136,10 +137,10 @@ NBNodeCont::retrieve(const Position& position, const double offset) const {
         if (fabs(node->getPosition().x() - position.x()) <= offset
                 &&
                 fabs(node->getPosition().y() - position.y()) <= offset) {
-            return node;
+            result.push_back(node);
         }
     }
-    return nullptr;
+    return result;
 }
 
 
@@ -462,10 +463,10 @@ NBNodeCont::removeUnwishedNodes(NBDistrictCont& dc, NBEdgeCont& ec,
                                 NBPTLineCont& lc,
                                 NBParkingCont& pc,
                                 bool removeGeometryNodes) {
+    const OptionsCont& oc = OptionsCont::getOptions();
     // load edges that shall not be modified
     std::set<std::string> edges2keep;
     if (removeGeometryNodes) {
-        const OptionsCont& oc = OptionsCont::getOptions();
         if (oc.isSet("geometry.remove.keep-edges.input-file")) {
             NBHelpers::loadEdgesFromFile(oc.getString("geometry.remove.keep-edges.input-file"), edges2keep);
         }
@@ -489,7 +490,7 @@ NBNodeCont::removeUnwishedNodes(NBDistrictCont& dc, NBEdgeCont& ec,
             tlsLookup[e] = to->getControllingTLS();
         }
     }
-
+    const bool outputRemoved = oc.getBool("output.removed-nodes");
     std::vector<NBNode*> toRemove;
     for (const auto& i : myNodes) {
         NBNode* const current = i.second;
@@ -524,6 +525,9 @@ NBNodeCont::removeUnwishedNodes(NBDistrictCont& dc, NBEdgeCont& ec,
             sc.replaceEdge(continuation->getID(), { begin });
             lc.replaceEdge(continuation->getID(), { begin });
             ec.extract(dc, continuation, true);
+            if (outputRemoved) {
+                begin->updateRemovedNodes(current->getID());
+            }
         }
         toRemove.push_back(current);
     }
@@ -703,6 +707,17 @@ NBNodeCont::addJoinExclusion(const std::vector<std::string>& ids) {
 
 
 std::string
+NBNodeCont::createUnusedID(const std::string& base, const std::string& sep) {
+    std::string result = base;
+    int i = 0;
+    while (myNodes.find(result) != myNodes.end()) {
+        result = base + sep + toString(i++);
+    }
+    return result;
+}
+
+
+std::string
 NBNodeCont::createClusterId(const std::set<std::string>& cluster, const std::string& prefix) {
     int maxIds = OptionsCont::getOptions().getInt("max-join-ids");
     if (maxIds <= 0) {
@@ -722,9 +737,9 @@ NBNodeCont::createClusterId(const std::set<std::string>& cluster, const std::str
 
 
 void
-NBNodeCont::addCluster2Join(const std::set<std::string>& cluster, NBNode* node) {
+NBNodeCont::addCluster2Join(const std::set<std::string>& cluster, NBNode* node, const bool resetConnections) {
     // error handling has to take place here since joins could be loaded from multiple files
-    std::set<std::string> validCluster;
+    JoinCluster join{{}, node, resetConnections};
     for (std::string nodeID : cluster) {
         if (myJoinExclusions.count(nodeID) > 0) {
             WRITE_WARNINGF(TL("Ignoring join-cluster because junction '%' was already excluded from joining."), nodeID);
@@ -734,17 +749,17 @@ NBNodeCont::addCluster2Join(const std::set<std::string>& cluster, NBNode* node) 
             return;
         } else {
             if (retrieve(nodeID) != nullptr) {
-                validCluster.insert(nodeID);
+                join.cluster.insert(nodeID);
             } else {
                 WRITE_ERRORF(TL("Unknown junction '%' in join-cluster."), nodeID);
             }
         }
     }
-    if (validCluster.size() > 1) {
-        myJoined.insert(validCluster.begin(), validCluster.end());
-        myClusters2Join.push_back(std::make_pair(validCluster, node));
+    if (join.cluster.size() > 1) {
+        myJoined.insert(join.cluster.begin(), join.cluster.end());
+        myClusters2Join.emplace_back(join);
     } else {
-        WRITE_WARNINGF(TL("Ignoring join-cluster '%' because it has size '%'."), node->getID(), validCluster.size());
+        WRITE_WARNINGF(TL("Ignoring join-cluster '%' because it has size '%'."), node->getID(), join.cluster.size());
     }
 }
 
@@ -752,10 +767,10 @@ NBNodeCont::addCluster2Join(const std::set<std::string>& cluster, NBNode* node) 
 int
 NBNodeCont::joinLoadedClusters(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc) {
     int numJoined = 0;
-    for (auto& item : myClusters2Join) {
+    for (JoinCluster& item : myClusters2Join) {
         // verify loaded cluster
         NodeSet cluster;
-        for (std::string nodeID : item.first) {
+        for (std::string nodeID : item.cluster) {
             NBNode* node = retrieve(nodeID);
             if (node == nullptr) {
                 WRITE_ERRORF(TL("unknown junction '%' while joining."), nodeID);
@@ -764,9 +779,9 @@ NBNodeCont::joinLoadedClusters(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLigh
             }
         }
         if (cluster.size() > 1) {
-            joinNodeCluster(cluster, dc, ec, tlc, item.second);
+            joinNodeCluster(cluster, dc, ec, tlc, item.node, item.resetConnections);
             numJoined++;
-            myJoinExclusions.insert(item.second->getID());
+            myJoinExclusions.insert(item.node->getID());
         }
     }
     myClusters2Join.clear(); // make save for recompute
@@ -936,29 +951,27 @@ NBNodeCont::joinJunctions(double maxDist, NBDistrictCont& dc, NBEdgeCont& ec, NB
 
 
 int
-NBNodeCont::joinSameJunctions(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc) {
+NBNodeCont::joinSameJunctions(NBDistrictCont& dc, NBEdgeCont& ec, NBTrafficLightLogicCont& tlc, double maxDist) {
 #ifdef DEBUG_JOINJUNCTIONS
     std::cout << "joinSameJunctions...\n";
 #endif
-    std::map<std::string, NodeSet> positions;
-    for (auto& item : myNodes) {
-        Position pos = item.second->getPosition();
-        std::string rounded = (OutputDevice::realString(pos.x(), gPrecision)
-                               + "_" + OutputDevice::realString(pos.y(), gPrecision)
-                               + "_" + OutputDevice::realString(pos.z(), gPrecision));
-        positions[rounded].insert(item.second);
-    }
+    std::set<NBNode*> checked;
     NodeClusters clusters;
-    for (auto& item : positions) {
-        if (item.second.size() > 1) {
-            for (NBNode* n : item.second) {
-                if (myJoinExclusions.count(n->getID()) > 0) {
-                    item.second.erase(n);
-                }
+    for (auto& item : myNodes) {
+        NBNode* n = item.second;
+        if (myJoinExclusions.count(item.first) > 0) {
+            continue;
+        }
+        std::vector<NBNode*> nearby = retrieveByPos(n->getPosition(), maxDist);
+        NodeSet cluster;
+        for (NBNode* n2 : nearby) {
+            if (myJoinExclusions.count(n2->getID()) == 0 && checked.count(n2) == 0) {
+                cluster.insert(n2);
             }
-            if (item.second.size() > 1) {
-                clusters.push_back(item.second);
-            }
+        }
+        if (cluster.size() > 1) {
+            checked.insert(cluster.begin(), cluster.end());
+            clusters.push_back(cluster);
         }
     }
     joinNodeClusters(clusters, dc, ec, tlc, true);
@@ -1832,6 +1845,7 @@ NBNodeCont::joinNodeCluster(NodeSet cluster, NBDistrictCont& dc, NBEdgeCont& ec,
     if (predefined != nullptr) {
         if (predefined->getType() != SumoXMLNodeType::UNKNOWN) {
             nodeType = predefined->getType();
+            setTL = predefined->isTLControlled();
         }
         Position ppos = predefined->getPosition();
         if (ppos.x() != Position::INVALID.x()) {
@@ -2787,7 +2801,7 @@ NBNodeCont::discardRailSignals() {
 
 
 int
-NBNodeCont::remapIDs(bool numericaIDs, bool reservedIDs, const std::string& prefix, NBTrafficLightLogicCont& tlc) {
+NBNodeCont::remapIDs(bool numericaIDs, bool reservedIDs, bool keptIDs, const std::string& prefix, NBTrafficLightLogicCont& tlc) {
     bool startGiven = !OptionsCont::getOptions().isDefault("numerical-ids.node-start");
     if (!numericaIDs && !reservedIDs && prefix == "" && !startGiven) {
         return 0;
@@ -2822,6 +2836,18 @@ NBNodeCont::remapIDs(bool numericaIDs, bool reservedIDs, const std::string& pref
             toChange.insert(it->second);
         }
     }
+    std::set<std::string> keep;
+    if (keptIDs) {
+        NBHelpers::loadPrefixedIDsFomFile(OptionsCont::getOptions().getString("kept-ids"), "node:", keep); // backward compatibility
+        NBHelpers::loadPrefixedIDsFomFile(OptionsCont::getOptions().getString("kept-ids"), "junction:", keep); // selection format
+        for (auto it = toChange.begin(); it != toChange.end();) {
+            if (keep.count((*it)->getID()) != 0) {
+                it = toChange.erase(it++);
+            } else {
+                it++;
+            }
+        }
+    }
     const bool origNames = OptionsCont::getOptions().getBool("output.original-names");
     for (NBNode* node : toChange) {
         myNodes.erase(node->getID());
@@ -2843,7 +2869,7 @@ NBNodeCont::remapIDs(bool numericaIDs, bool reservedIDs, const std::string& pref
         // make a copy because we will modify the map
         auto oldNodes = myNodes;
         for (auto item : oldNodes) {
-            if (!StringUtils::startsWith(item.first, prefix)) {
+            if (!StringUtils::startsWith(item.first, prefix) && keep.count(item.first) == 0) {
                 rename(item.second, prefix + item.first);
                 for (NBTrafficLightDefinition* tlDef : item.second->getControllingTLS()) {
                     if (!StringUtils::startsWith(tlDef->getID(), prefix)) {

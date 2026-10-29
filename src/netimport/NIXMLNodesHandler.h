@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -69,6 +69,7 @@ public:
      */
     static NBNode* processNodeType(const SUMOSAXAttributes& attrs, NBNode* node, const std::string& nodeID, const Position& position,
                                    bool updateEdgeGeometries,
+                                   SumoXMLNodeType type,
                                    NBNodeCont& nc, NBEdgeCont& ec,
                                    NBTrafficLightLogicCont& tlc,
                                    GeoConvHelper* from_srs = nullptr);
@@ -154,6 +155,9 @@ private:
 
     /// @brief The coordinate transformation which was used compute the node coordinates
     GeoConvHelper* myLocation;
+
+    /// @brief the default node type
+    SumoXMLNodeType myDefaultNodeType;
 
     /// @brief last item the could receive parameters
     Parameterised* myLastParameterised;

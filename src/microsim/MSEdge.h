@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -27,6 +27,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <iostream>
 #ifdef HAVE_FOX
 #include <utils/foxtools/fxheader.h>
@@ -98,8 +99,8 @@ public:
      * @param[in] streetName The street name for that edge
      */
     MSEdge(const std::string& id, int numericalID, const SumoXMLEdgeFunc function,
-           const std::string& streetName, const std::string& edgeType, int priority,
-           double distance);
+           const std::string& streetName, const std::string& edgeType,
+           const std::string& routingType, int priority, double distance);
 
 
     /// @brief Destructor.
@@ -122,11 +123,11 @@ public:
     /// @todo Has to be called after all edges were built and all connections were set...; Still, is not very nice
     virtual void closeBuilding();
 
-    /// Has to be called after all sucessors and predecessors have been set (after closeBuilding())
+    /// Has to be called after all successors and predecessors have been set (after closeBuilding())
     void buildLaneChanger();
 
-    /* @brief returns whether initizliaing a lane change is permitted on this edge
-     * @note Has to be called after all sucessors and predecessors have been set (after closeBuilding())
+    /* @brief returns whether initializing a lane change is permitted on this edge
+     * @note Has to be called after all successors and predecessors have been set (after closeBuilding())
      */
     bool allowsLaneChanging() const;
 
@@ -187,10 +188,10 @@ public:
 
     double getBruttoOccupancy() const;
 
-    /// @brief return flow based on meanSpead @note: may produced incorrect results when jammed
+    /// @brief return flow based on meanSpeed @note: may produce incorrect results when jammed
     double getFlow() const;
 
-    /// @brief return accumated waiting time for all vehicles on this edges lanes or segments
+    /// @brief return accumulated waiting time for all vehicles on this edges lanes or segments
     double getWaitingSeconds() const;
 
     /// @brief return mean occupancy on this edges lanes or segments
@@ -239,6 +240,7 @@ public:
      * @return The lanes that may be used by the given vclass
      */
     const std::vector<MSLane*>* allowedLanes(SUMOVehicleClass vclass = SVC_IGNORING) const;
+    const std::vector<MSLane*>* allowedLanes(SUMOVehicleClass vclass, bool ignoreTransientPermissions) const;
 
     inline bool isConnectedTo(const MSEdge& destination, SUMOVehicleClass vclass, bool ignoreTransientPermissions = false) const {
         const std::vector<MSLane*>* const lanes = allowedLanes(destination, vclass, ignoreTransientPermissions);
@@ -319,6 +321,14 @@ public:
     const std::string& getEdgeType() const {
         return myEdgeType;
     }
+
+    /** @brief Returns the type of the edge
+     */
+    const std::string& getRoutingType() const {
+        return myRoutingType.empty() ? myEdgeType : myRoutingType;
+    }
+
+    double getPreference(const SUMOVTypeParameter& pars) const;
 
     // @brief try to infer edge type for internal edges
     void inferEdgeType();
@@ -505,7 +515,7 @@ public:
     double getRoutingSpeed() const;
 
 
-    /// @name Methods releated to vehicle insertion
+    /// @name Methods related to vehicle insertion
     /// @{
 
     /** @brief Tries to insert the given vehicle into the network
@@ -538,7 +548,7 @@ public:
      *
      * If there are no vehicles before departPos, then the lane with the largest
      * gap between departPos and the last vehicle is
-     * Otheriwise the lane with lowes occupancy is selected
+     * Otherwise the lane with lowest occupancy is selected
      * If there is more than one, the first according to its
      *  index in the lane container is chosen.
      *
@@ -584,7 +594,7 @@ public:
     /* @brief get the rightmost lane that allows the given vClass or nullptr
      * @param[in] defaultFirst Whether the first lane should be returned if all lanes are forbidden
      */
-    MSLane* getFirstAllowed(SUMOVehicleClass vClass, bool defaultFirst = false) const;
+    MSLane* getFirstAllowed(SUMOVehicleClass vClass, bool defaultFirst = false, int routingMode = 0) const;
 
     /// @brief consider given departLane parameter (only for validating speeds)
     MSLane* getDepartLaneMeso(SUMOVehicle& veh) const;
@@ -687,19 +697,31 @@ public:
     }
 
 
+    /// @brief return the minimum length of all lanes (only differs from getLength for curved internal lanes)
+    double getMinLength() const;
+
+
     /** @brief Returns the speed limit of the edge
-     * @caution The speed limit of the first lane is retured; should probably be the fastest edge
+     * @caution The speed limit of the first lane is returned; should probably be the fastest lane
      * @return The maximum speed allowed on this edge
      */
     double getSpeedLimit() const;
+
+    /** @brief Returns the speed limit of the edge
+     * @caution The speed limit of the first lane is returned; should probably be the fastest lane
+     * @return The maximum speed allowed on this edge
+     */
+    double getSpeedLimit(SUMOVehicleClass svc) const;
 
     /// @brief return shape.length() / myLength
     double getLengthGeometryFactor() const;
 
     /** @brief Sets a new maximum speed for all lanes (used by TraCI and MSCalibrator)
      * @param[in] val the new speed in m/s
+     * @param[in] modified whether this modifies the original speed
+     * @param[in] jamThreshold also set a new jamThreshold
      */
-    void setMaxSpeed(double val, double jamThreshold = -1);
+    void setMaxSpeed(const double val, const bool modified = true, const double jamThreshold = -1);
 
     /** @brief Sets a new friction coefficient COF for all lanes [*later to be (used by TraCI and MSCalibrator)*]
     * @param[in] val the new coefficient in [0..1]
@@ -738,6 +760,9 @@ public:
     bool hasLaneChanger() const {
         return myLaneChanger != nullptr;
     }
+
+    /// @brief retrieve properties of a blocked vehicle that wants to chane to the lane with the given index
+    std::pair<double, SUMOTime> getLastBlocked(int index) const;
 
     /// @brief whether this edge allows changing to the opposite direction edge
     bool canChangeToOpposite() const;
@@ -791,8 +816,15 @@ public:
     /** @brief Remove all transportables before quick-loading state */
     void clearState();
 
-    /// @brief update meso segment parameters
-    void updateMesoType();
+    void postLoadInitLaneChanger();
+
+    static DepartLaneDefinition& getDefaultDepartLaneDefinition() {
+        return myDefaultDepartLaneDefinition;
+    }
+
+    static int& getDefaultDepartLane() {
+        return myDefaultDepartLane;
+    }
 
     /** @brief Inserts edge into the static dictionary
         Returns true if the key id isn't already in the dictionary. Otherwise
@@ -800,7 +832,7 @@ public:
     static bool dictionary(const std::string& id, MSEdge* edge);
 
     /** @brief Returns the MSEdge associated to the key id if it exists, otherwise returns nullptr. */
-    static MSEdge* dictionary(const std::string& id);
+    static MSEdge* dictionary(const std::string_view& id);
 
     /** @brief Returns the MSEdge associated to the key id giving a hint with a numerical id. */
     static MSEdge* dictionaryHint(const std::string& id, const int startIdx);
@@ -859,6 +891,12 @@ public:
             myRailwayRoutingEdge = new RailEdge<MSEdge, SUMOVehicle>(this);
         }
         return myRailwayRoutingEdge;
+    }
+
+    const std::map<const MEVehicle*, std::pair<double, int> >& getMesoPositions() const;
+
+    inline void invalidateMesoCache() const {
+        myLastCacheUpdate = -1;
     }
 
 protected:
@@ -959,7 +997,7 @@ protected:
     /// @brief The original intersection of lane permissions for this edge (before temporary modifications)
     SVCPermissions myOriginalMinimumPermissions = SVCAll;
     /// @brief The original union of lane permissions for this edge (before temporary modifications)
-    SVCPermissions myOriginalCombinedPermissions;
+    SVCPermissions myOriginalCombinedPermissions = SVCAll;
 
     /// @brief whether transient permission changes were applied to this edge or a predecessor
     bool myHaveTransientPermissions;
@@ -973,6 +1011,9 @@ protected:
 
     /// @brief the type of the edge (optionally used during network creation)
     std::string myEdgeType;
+
+    /// @brief the routing type of the edge (used to look up vType and vClass specific routing preferences)
+    std::string myRoutingType;
 
     /// @brief the priority of the edge (used during network creation)
     const int myPriority;
@@ -1014,6 +1055,7 @@ protected:
      * @deprecated Move to MSEdgeControl, make non-static
      */
     static DictType myDict;
+    static std::unordered_map<std::string_view, MSEdge*> myHashDict;
 
     /** @brief Static list of edges
      * @deprecated Move to MSEdgeControl, make non-static
@@ -1021,6 +1063,9 @@ protected:
     static MSEdgeVector myEdges;
 
     static SVCPermissions myMesoIgnoredVClasses;
+
+    static DepartLaneDefinition myDefaultDepartLaneDefinition;
+    static int myDefaultDepartLane;
     /// @}
 
 
@@ -1036,6 +1081,12 @@ protected:
 
     /// @brief List of waiting vehicles
     mutable std::vector<SUMOVehicle*> myWaiting;
+
+    /// @brief Mesoscopic vehicle positions
+    mutable std::map<const MEVehicle*, std::pair<double, int> > myCachedMesoPos;
+
+    /// @brief time stamp of mesoscopic vehicle positions
+    mutable SUMOTime myLastCacheUpdate = -1;
 
 #ifdef HAVE_FOX
     /// @brief Mutex for accessing waiting vehicles

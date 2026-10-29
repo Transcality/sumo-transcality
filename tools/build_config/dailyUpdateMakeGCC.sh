@@ -1,6 +1,6 @@
 #!/bin/bash
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -35,18 +35,20 @@ export LSAN_OPTIONS=suppressions=$PREFIX/sumo/build_config/clang_memleak_suppres
 export UBSAN_OPTIONS=suppressions=$PREFIX/sumo/build_config/clang_ubsan_suppressions.txt
 
 rm -f $STATUSLOG
-echo -n "$FILEPREFIX " > $STATUSLOG
+echo -n "$(uname -s)_$(uname -m)_$FILEPREFIX " > $STATUSLOG
 date >> $STATUSLOG
 echo "--" >> $STATUSLOG
-if test -e $PREFIX/sumo_test_env/bin/activate; then
-  # activate the virtual environment containing the python packages which are not available via apt
-  source $PREFIX/sumo_test_env/bin/activate
-fi
 cd $PREFIX/sumo
 basename $MAKELOG >> $STATUSLOG
 git clean -f -x -d -q . &> $MAKELOG || (echo "git clean failed" | tee -a $STATUSLOG; tail -10 $MAKELOG)
 git pull >> $MAKELOG 2>&1 || (echo "git pull failed" | tee -a $STATUSLOG; tail -10 $MAKELOG)
 git submodule update >> $MAKELOG 2>&1 || (echo "git submodule update failed" | tee -a $STATUSLOG; tail -10 $MAKELOG)
+if test -e ../sumo_test_env/bin/activate; then
+  # activate the virtual environment containing the python packages which are not available via apt
+  source ../sumo_test_env/bin/activate
+  # only-binary to make sonar happy
+  pip install --only-binary :all: -r docs/web/requirements.txt -r tools/req_test_server.txt >> $MAKELOG 2>&1
+fi
 GITREV=`tools/build_config/version.py -`
 date >> $MAKELOG
 mkdir -p wheelhouse build/$FILEPREFIX && cd build/$FILEPREFIX
@@ -55,8 +57,9 @@ if make -j32 >> $MAKELOG 2>&1; then
   date >> $MAKELOG
   make lisum >> $MAKELOG 2>&1
   if make install >> $MAKELOG 2>&1; then
-    if test "$FILEPREFIX" == "gcc4_64"; then
+    if test "$FILEPREFIX" == "gcc"; then
       make -j distcheck >> $MAKELOG 2>&1 || (echo "make distcheck failed" | tee -a $STATUSLOG; tail -10 $MAKELOG)
+      for f in ../../*.gz ../../*.zip; do sha256sum $f > $f.sha256; done
     fi
   else
     echo "make install failed" | tee -a $STATUSLOG; tail -10 $MAKELOG
@@ -85,17 +88,14 @@ if test -e $SUMO_BINDIR/sumo && test $SUMO_BINDIR/sumo -nt build/$FILEPREFIX/Mak
   TESTLABEL=`LANG=C date +%d%b%y`r$GITREV
   rm -rf $TEXTTEST_TMP/*
   if test ${FILEPREFIX::6} == "extra_"; then
+    if test -e ../cadyts.jar; then
+      cp ../cadyts.jar $SUMO_BINDIR
+    fi
     tests/runExtraTests.py --gui "b $FILEPREFIX" &> $TESTLOG
-  elif test "$FILEPREFIX" == "extraNetedit"; then
-    tests/runTests.sh -a neteditoutput -b $FILEPREFIX -name $TESTLABEL >> $TESTLOG 2>&1
   else
     tests/runTests.sh -b $FILEPREFIX -name $TESTLABEL &> $TESTLOG
     if which Xvfb &>/dev/null; then
-      if test ${FILEPREFIX::10} == "clangMacOS"; then
-        tests/runTests.sh -a sumo.gui.mac -b $FILEPREFIX -name $TESTLABEL >> $TESTLOG 2>&1
-      else
-        tests/runTests.sh -a sumo.gui -b $FILEPREFIX -name $TESTLABEL >> $TESTLOG 2>&1
-      fi
+      tests/runTests.sh -a sumo.gui -b $FILEPREFIX -name $TESTLABEL >> $TESTLOG 2>&1
     fi
   fi
   tests/runTests.sh -b $FILEPREFIX -name $TESTLABEL -coll >> $TESTLOG 2>&1
@@ -139,10 +139,28 @@ echo "--" >> $STATUSLOG
 
 # netedit tests
 if test -e $SUMO_BINDIR/netedit && test $SUMO_BINDIR/netedit -nt build/$FILEPREFIX/Makefile; then
-  if test "$FILEPREFIX" == "gcc4_64" || test "$FILEPREFIX" == "extraNetedit"; then
-    killall -9 -q fluxbox
-    tests/runNeteditInternalTests.sh -b ${FILEPREFIX}netedit -name $TESTLABEL >> $TESTLOG 2>&1
-    tests/runNeteditExternalDailyTests.sh -b ${FILEPREFIX}netedit -name $TESTLABEL >> $TESTLOG 2>&1
+  if test "$FILEPREFIX" == "gcc"; then
+    # send SIGTERM to the netedit tests after some time and SIGKILL sometime later
+    timeout -k 90m 60m tests/runTests.sh -a netedit.internal -b ${FILEPREFIX} -name $TESTLABEL >> $TESTLOG 2>&1
+    tests/runTests.sh -b ${FILEPREFIX} -name $TESTLABEL -coll >> $TESTLOG 2>&1
+    export SUMO_BATCH_RESULT=$PREFIX/${FILEPREFIX}netedit_ext_batch_result
+    export SUMO_REPORT=$PREFIX/${FILEPREFIX}netedit_ext_report
+    timeout -k 540m 510m tests/runNeteditExternalDailyTests.sh -b ${FILEPREFIX} -name $TESTLABEL >> $TESTLOG 2>&1
+    tests/runTests.sh -b ${FILEPREFIX} -name $TESTLABEL -coll >> $TESTLOG 2>&1
+    killall -9 -q fluxbox Xvfb
+  fi
+  if test "$FILEPREFIX" == "clangMacOS_M1"; then
+    # This will not work on macOS unless "brew install coreutils" has been executed
+    timeout -k 90m 60m tests/runTests.sh -a netedit.internal -b ${FILEPREFIX} -name $TESTLABEL >> $TESTLOG 2>&1
     tests/runTests.sh -b ${FILEPREFIX} -name $TESTLABEL -coll >> $TESTLOG 2>&1
   fi
+fi
+
+# macOS upload
+if test -e $PREFIX/upload.sh && test ${FILEPREFIX::10} == "clangMacOS"; then
+  cd $PREFIX
+  base=$(basename $SUMO_REPORT)
+  # --disable-copyfile prevents some ._-files to be added by macOS; find -L copies symlinks
+  tar --disable-copyfile -czhf $base.tar.gz ${FILEPREFIX}*.log $(find -L $base -type f -mtime -2)
+  ./upload.sh $base.tar.gz
 fi

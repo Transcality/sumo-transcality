@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,7 @@ from sumolib.net import lane2edge, lane2index  # noqa
 
 
 def get_options(args=None):
-    ap = sumolib.options.ArgumentParser(description="Remap infrastructure from one network to another")
+    ap = sumolib.options.ArgumentParser(description="Remap routes, infrastructure or selections from one network to another based on the 'origId' attribute")  # noqa
     # ap.add_argument("--orig-net", dest="origNet", required=False, category="input", type=ap.net_file,
     #                 help="SUMO network for loading infrastructure", metavar="FILE")
     ap.add_argument("-n", "--net-file", dest="targetNet", required=True, category="input", type=ap.net_file,

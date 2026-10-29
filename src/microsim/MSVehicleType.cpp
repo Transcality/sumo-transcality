@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -24,6 +24,8 @@
 #include <config.h>
 
 #include <cassert>
+#include <memory>
+#include <utils/common/MsgHandler.h>
 #include <utils/options/OptionsCont.h>
 #include <utils/common/FileHelpers.h>
 #include <utils/common/RandHelper.h>
@@ -48,6 +50,7 @@
 #include "MSInsertionControl.h"
 #include "MSVehicleControl.h"
 #include "cfmodels/MSCFModel_CC.h"
+#include "cfmodels/MSCFModel_NaSch.h"
 #include "MSVehicleType.h"
 
 
@@ -86,8 +89,10 @@ MSVehicleType::~MSVehicleType() {
 
 
 double
-MSVehicleType::computeChosenSpeedDeviation(SumoRNG* rng, const double minDev) const {
-    return roundDecimal(MAX2(minDev, myParameter.speedFactor.sample(rng)), gPrecisionRandom);
+MSVehicleType::computeChosenSpeedDeviation(double speedFactorOverride, SumoRNG* rng, const double minDev) const {
+    return speedFactorOverride < 0
+        ? roundDecimal(MAX2(minDev, myParameter.speedFactor.sample(rng)), gPrecisionRandom)
+        : speedFactorOverride;
 }
 
 
@@ -164,6 +169,12 @@ MSVehicleType::setVClass(SUMOVehicleClass vclass) {
     myParameter.parametersSet |= VTYPEPARS_VEHICLECLASS_SET;
 }
 
+
+void
+MSVehicleType::setGUIShape(SUMOVehicleShape shape) {
+    myParameter.shape = shape;
+    myParameter.parametersSet |= VTYPEPARS_SHAPE_SET;
+}
 
 void
 MSVehicleType::setPreferredLateralAlignment(const LatAlignmentDefinition& latAlignment, double latAlignmentOffset) {
@@ -333,7 +344,9 @@ MSVehicleType::build(SUMOVTypeParameter& from, const std::string& fileName) {
             from.parametersSet |= VTYPEPARS_MASS_SET;
         }
     }
-    MSVehicleType* vtype = new MSVehicleType(from);
+    // the unique_ptr ensures the type is deleted if an exception occurs
+    std::unique_ptr<MSVehicleType> vtypeOwner(new MSVehicleType(from));
+    MSVehicleType* vtype = vtypeOwner.get();
     const double decel = from.getCFParam(SUMO_ATTR_DECEL, SUMOVTypeParameter::getDefaultDecel(from.vehicleClass));
     const double emergencyDecel = from.getCFParam(SUMO_ATTR_EMERGENCYDECEL, SUMOVTypeParameter::getDefaultEmergencyDecel(from.vehicleClass, decel, MSGlobals::gDefaultEmergencyDecel));
     // by default decel and apparentDecel are identical
@@ -395,6 +408,10 @@ MSVehicleType::build(SUMOVTypeParameter& from, const std::string& fileName) {
         case SUMO_TAG_CF_CC:
             vtype->myCarFollowModel = new MSCFModel_CC(vtype);
             break;
+        case SUMO_TAG_CF_NASCH:
+            vtype->myCarFollowModel = new MSCFModel_NaSch(vtype,
+                    from.getCFParam(SUMO_ATTR_SIGMA, SUMOVTypeParameter::getDefaultImperfection(from.vehicleClass)));
+            break;
         case SUMO_TAG_CF_KRAUSS:
         default:
             vtype->myCarFollowModel = new MSCFModel_Krauss(vtype);
@@ -402,7 +419,7 @@ MSVehicleType::build(SUMOVTypeParameter& from, const std::string& fileName) {
     }
     // init Rail visualization parameters
     vtype->myParameter.initRailVisualizationParameters(fileName);
-    return vtype;
+    return vtypeOwner.release();
 }
 
 SUMOTime
@@ -430,8 +447,8 @@ MSVehicleType::duplicateType(const std::string& id, bool persistent) const {
         vtype->myOriginalType = this;
     }
     if (!MSNet::getInstance()->getVehicleControl().addVType(vtype)) {
-        std::string singular = persistent ? "" : "singular ";
-        throw ProcessError("could not add " + singular + "type " + vtype->getID());
+        std::string singular = persistent ? "" : TL("singular ");
+        throw ProcessError(TLF("could not add %type %", singular, vtype->getID()));
     }
     return vtype;
 }

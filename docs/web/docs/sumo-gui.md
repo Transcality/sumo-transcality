@@ -236,7 +236,7 @@ as a group in [netedit](Netedit/index.md).
 ### Loading a selection automatically
 
 By setting option **--selection-file FILE** a selection file as described above can be given to **sumo-gui** at startup.
-Any objects that are loaded at the start of the simulation will be selected immediately. 
+Any objects that are loaded at the start of the simulation will be selected immediately.
 Any persons, vehicles or containers that were not loaded will be selected once they are loaded at a later simulation time.
 
 ## Locating Objects
@@ -473,7 +473,7 @@ This will color each edge according to the travel time from the point of origin.
 The following coloring options are useful in this regard:
 
 - Recalibrate Rainbow: Configure colors to the data range of encountered travel times
-- 'hide below threshold' (0): color unreachable edges grey as their value is set to -1. (must be activated before using 'Recalibrate Rainbow')
+- 'hide below threshold' (0): color unreachable edges gray as their value is set to -1. (must be activated before using 'Recalibrate Rainbow')
 - 'show edge color value': show the actual travel times for each edge
 - disable 'constant text size' for 'show edge color value': avoid cluttering the display when zoomed out
 
@@ -487,7 +487,7 @@ The following coloring options are useful in this regard:
 - If specific models are used, e.g. sublane and IDM, the respective information can be seen by right-clicking
   a road user (vehicle, pedestrian,train...) and further choosing "Show Parameter".
 
-# Changing the appearance/visualisation of the simulation
+# Changing the appearance/visualization of the simulation
 
 The View Settings menu allows to change and customize the simulations'
 appearance and visualization. To open the visualization settings use
@@ -531,7 +531,7 @@ value/range
   - Show color value: show the numerical value that is used for
     coloring (text configuration options as for the id)
 
-## Vehicle Visualisation Settings
+## Vehicle Visualization Settings
 
 ### Vehicle shape schemes
 
@@ -617,13 +617,13 @@ The following textual annotations are supported:
 
 Each text can be configured with regard to its size color and background color. By activating the option *Only for selected*, The textual annotation is limited to vehicles with the [*selected*](#selecting_objects) status.
 
-## Edge/Lane Visualisation Settings
+## Edge/Lane Visualization Settings
 
 **Table 2.1 Lane coloring schemes**
 
 | Name                                     | Measure | Description                                                                                   |
 | ---------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| uniform                                  | \-      | All road edges are drawn using the same color. Bicycle lanes are drawn in brown, sidewalks in grey and prohibited lanes (allowing no vehicle classes) are transparent. |
+| uniform                                  | \-      | All road edges are drawn using the same color. Bicycle lanes are drawn in brown, sidewalks in gray and prohibited lanes (allowing no vehicle classes) are transparent. |
 | by selection (lane-/streetwise)          | \-      | selected lanes are drawn different than those that are not                                                                                                             |
 | by permission code                       | \-      | all lanes are colored according to the permitted vehicle classes. The code for each lane can be retrieved from the lane parameter dialog (permission code).            |
 | by allowed speed (lanewise)              | m/s     | The maximum velocity allowed on this lane                                                                                                                              |
@@ -708,7 +708,7 @@ option in the *File*-menu.
 Shapes and POIs can be [located based on their unique
 ID](#locating_objects) and their appearance can be
 [customized as
-well](#changing_the_appearancevisualisation_of_the_simulation).
+well](#changing_the_appearancevisualization_of_the_simulation).
 
 ## Showing Background Images
 
@@ -776,6 +776,9 @@ The following attributes are supported
 !!! note
     When loading an image file with an embedded geo-reference (i.e. [GeoTIFF](https://en.wikipedia.org/wiki/GeoTIFF)) and the simulation network also has a geo-reference, then the image will be positioned automatically.
 
+!!! caution
+    When loading an image with an associated [world file](https://en.wikipedia.org/wiki/World_file), that file must be encoded in WGS84 (lon,lat).
+
 !!! note
     Background images for a network can be downloaded with the [tileGet tool](Tools/Misc.md#tilegetpy) or by using the [osmWebWizard](Tools/Import/OSM.md#osmwebwizardpy).
 
@@ -783,9 +786,9 @@ The following attributes are supported
 
 All image files in the visualization support transparency. For vehicles,
 pois and polygons, this transparency can be set dynamically by changing
-the color via [TraCI](TraCI.md) and setting the alpha-channel.
+the color via [TraCI](TraCI/index.md) and setting the alpha-channel.
 
-All objects that have their color set (via input files or visualisation
+All objects that have their color set (via input files or visualization
 settings) support (Red,Green,Blue,Alpha) color values.
 
 ## 3D-specific Settings
@@ -826,11 +829,11 @@ or by using the command-line `sumo-gui -c example.sumocfg`.
 
 You may use a XML schema definition file for setting up a sumo-gui
 configuration:
-[sumoConfiguration.xsd](https://sumo.dlr.de/xsd/sumoConfiguration.xsd).****
+[sumoConfiguration.xsd](https://sumo.dlr.de/xsd/sumoConfiguration.xsd).
 
 # GUI-settings Files
 
-All the settings configured in the *View Settings* dialog can be saved to a file and re-used for a new simulation. We refer to such files as gui-settings files. Such a file can also include information about breakpoints, screenshots, simulation delay and background images.
+All the settings configured in the *View Settings* dialog can be saved to a file and reused for a new simulation. We refer to such files as gui-settings files. Such a file can also include information about breakpoints, tls trackers, screenshots, simulation delay and background images.
 The easiest way to obtain a gui-settings file is via the *View Settings*-Dialog
 ![icon_colorwheel.png](images/icon_colorwheel.png
 "Open viewsettings editor"). Simply modify the settings and
@@ -868,7 +871,7 @@ It possible to reference a predefined scheme by its name alone:
 </viewsettings>
 ```
 
-The name may either be one of the "native" schemas ("standard", "real world", ...) or any schema [stored in the registry](#changing_the_appearancevisualisation_of_the_simulation) by the user.
+The name may either be one of the "native" schemas ("standard", "real world", ...) or any schema [stored in the registry](#changing_the_appearancevisualization_of_the_simulation) by the user.
 
 ## Breakpoints
 
@@ -890,6 +893,17 @@ breakpoints in the gui and using the menu-option for saving (Edit-\>Edit
 Breakpoints-\>save).
 
 A further way to set breakpoints is by using the sumo option **--breakpoints** to load a comma-separated list of time values (shortcut **-B**). This circumvents the need for a gui-settings file.
+
+## TLS Tracking
+
+The [TLS phase tracker](Simulation/Traffic_Lights.md#track_phases) for one or more traffic lights can be opened at simulation start by loading items of the following form
+
+```xml
+<viewsettings>
+    ...
+    <tracker tl="TLSID"/>
+</viewsettings>
+```
 
 ## Screenshots
 
@@ -965,7 +979,7 @@ Only some of the regular network components have been ported to the 3D view (yet
 - traffic lights
 
 Automatically generated traffic lights come in different variants and can be shown/hidden independently of each other
-through the 3D part of the [GUI settings](#changing_the_appearancevisualisation_of_the_simulation):
+through the 3D part of the [GUI settings](#changing_the_appearancevisualization_of_the_simulation):
 
 - bubbles above the stop line which change their color according to the connection they belong to
 - detailed model with pole(s) and signals (either a cantilever beam or a signal bridge for large roads; single pedestrian signals are placed across the street)
@@ -1048,15 +1062,29 @@ By using the option **--edgedata-output FILE** or **--lanedata-output FILE** you
 
 To make use of the loaded data, street coloring must be set to **color by
 edgeData** in the visualization settings dialog.
+
 The button *Recalibrate Rainbow* can be used to generate a
 coloring scheme that spans the loaded data range for the selected attribute.
+Using the checkboxes min, max, center and 'fix range' it is also possible make the colors span a custom range.
+When defining a color scheme, a dedicated color for missing data ('No Data') can always be configured.
 
-!!! note
-    In the gui-settings dialog, the function 'Recalibrate Rainbow' can be used to adapt the coloring to the data range of the current attribute.
-!!! note
+
+!!! caution
     edgeData is time based so it will only be shown when the simulation time has advance to the begin time of the respective data interval. Make sure to advance the simulation to time 0 (step once) or to whatever begin time was used for edgeData generation before using *Recalibrate Rainbow*. To see further data frames, advance the simulation by using delay or breakpoints.
 
-When defining a color scheme, a dedicated color for missing data ('No Data') can always be configured.
+!!! note
+    In order to efficiently step through a range of data intervals, it is helpful to set a custom simulaton **--step-length**. (i.e. 3600 for hourly data). In this way, pressing the simulation step button once, will advance to the next interval.
+
+## Coloring by lane data
+
+The color scheme "by param (numerical, lanewise)" permits coloring individual lanes by their custom [parameters](Simulation/GenericParameters.md) as long as the values can be interpreted as numbers.
+While it is possible to define such params with [netedit](Netedit/index.md) or to load them into the network from [plain-xml](Networks/PlainXML.md) it is often desirable to show values that are independent of the *.net.xml* file.
+
+This can be accomplished by using [Traci](TraCI/index.md):
+
+1. `traci.lane.setParameter(lane, "customAttribute", str(value))`
+2. in sumo-gui set street coloring to "by param (numerical, lanewise)" and select "customAttribute" in the little dropdown menu that says "LANE_KEY"
+3. press the "Recalibrate Rainbow" button to set up a color scheme for the value range
 
 ## Scaling by Data
 
@@ -1106,7 +1134,7 @@ The [background images (decals)](#showing_background_images) support attribute `
   Walkingarea Path*.
 - To highlight an arbitrary set of edges in the simulation create a
   [selection file](#selecting_objects) and [color edges *by
-  selection*](#edgelane_visualisation_settings)
+  selection*](#edgelane_visualization_settings)
 - To Visualize all routes in a route file use the tool
   [Tools/Routes\#route2poly.py](Tools/Routes.md#route2polypy)
   or

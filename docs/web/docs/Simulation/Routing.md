@@ -61,9 +61,15 @@ Setting the routing mode (to ignore blockage) can be accomplished in the followi
 # Travel-time values for routing
 
 By default, the route with the least travel time is chosen. The travel
-time depends on the current routing mode (configurable via
-*traci.vehicle.setRoutingMode*) or via the explicit *routingMode*
-argument to *traci.simulation.findRoute*.
+time depends on the current routing mode which is set via any of the following:
+
+- *traci.vehicle.setRoutingMode*
+- the explicit *routingMode* argument to *traci.simulation.findRoute*.
+- [generic vehicle param](GenericParameters.md) `key="device.rerouting.mode"`
+- option **--device.rerouting.mode**
+
+!!! note
+    when a vehicle is using ROUTING_MODE_AGGREGATED or ROUTING_MODE_AGGREGATED_CUSTOM, collection of [aggregated/smoothed travel times](../Demand/Automatic_Routing.md#edge_weights) will be activated and used for [location triggered rerouting](Rerouter.md) and [event triggered rerouting](Stationfinder.md).
 
 ## Routing Mode *traci.constants.ROUTING_MODE_DEFAULT*
 
@@ -85,6 +91,16 @@ The following order of steps is taken to retrieve the travel time for each edge.
 
 The [smoothed travel times](../Demand/Automatic_Routing.md#edge_weights) computed for
 the *rerouting device* are used. Note, that these can also be modified via TraCI.
+
+## Routing Mode *traci.constants.ROUTING_MODE_AGGREGATED_CUSTOM*
+
+The [smoothed travel times](../Demand/Automatic_Routing.md#edge_weights) computed for
+the *rerouting device* are used. Note, that these can also be modified via TraCI. Additionally, the following features are applied if configured:
+
+- **--weights.random-factor** (randomized noise for traveltimes)
+- **--weights.priority-factor** ([factoring edge priority into route choice](#routing_by_travel_time_and_edge_priority))
+- using edge routingType according to [routing preferences](#routing_by_travel_time_and_routingtype)
+
 
 ## Randomized travel times
 
@@ -123,6 +139,36 @@ As a consequence:
 - the highest priority edge will get no penalty
 - the travel time of the lowest priority edge is multiplied with 1+PriorityFactor,
 - edges with in-between priorities will get a scaled penalty
+
+!!! caution
+    option **-weights.priority-factor** does not apply to pedestrian and intermodal routing. To customize edge preferences for this kind of routing use [preferences](#routing_by_travel_time_and_routingtype).
+
+# Routing by Travel time and routingType
+
+Sometimes it is useful to customize route search for different [vehicle classes](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#abstract_vehicle_class) or [vehicle types](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#vehicle_types) with additional information while still taking travel times into account.
+
+For this use case the element `<preference>` can be loaded from additional files (with option **--additional-files**).
+Preferences are defined with the following attributes
+
+| Attribute Name  | Value Type        | Description                            |
+| --------------- | ----------------- | -------------------------------------- |
+| **routingType** | id (string)       | The routingType or type of edges       |
+| **priority**    | float > 0         | The priority value for edges with that routingType |
+| vTypes          | id list           | A list of [vehicle types](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#vehicle_types) to which this preference applies   |
+| vClasses        | id list           | A list of [vehicle types](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#abstract_vehicle_class) to which this preference applies   |
+
+When the `<preference>` element is loaded, all listed `vTypes` and `vClasses` will have their edge travelTime divided by the defined `priority` value for all edges that have the given `routingType`. If an edge does not define attribute `routingType` it's `type` is used for matching preferences.
+
+Example:
+
+```xml
+<additional >
+    <preference routingType="typeB" vClasses="wheelchair" priority="4"/>
+</additional>
+```
+
+!!! note
+    If a `<preference>` element defines neither `vTypes` nor `vClasses` it will apply the `priority` to all vehicles/persons.
 
 # Routing by *effort*
 
@@ -183,59 +229,10 @@ shortestDistance = stage.length
 
 # Routing Algorithms
 
-Applications that perform routing ([sumo](../sumo.md),
-[sumo-gui](../sumo-gui.md), [duarouter](../duarouter.md),
-[marouter](../marouter.md)) support the option **--routing-algorithm** for selecting among
-the following values:
-
-## dijkstra
-
-[Dijkstras](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
-algorithm is the simplest and slowest of routing algorithms. It is
-well suited to routing in time-dependent networks (i.e. when the
-travel time on an edge depends on the time of day)
-
-!!! note
-    This is the default algorithm
-
-## astar (A*)
-
-The [A\*](https://en.wikipedia.org/wiki/A*_search_algorithm) routing
-algorithm uses a metric for bounding travel time to direct the
-search and is often faster than dijkstra. Here, the metric *euclidean distance / maximumVehicleSpeed*) is used.
-
-## ALT
-
-By using *astar* together with the option **--astar.landmark-distances** {{DT_FILE}} the ALT-Algorithm is activated.
-The name ALT stands for: **A**\*, **L**andmarks, **t**riangle inequality.
-It uses a precomputed distance table to selected network edges (so-called landmarks) to speed up the search, often by a significant factor.
-
-- A lookup table can be generated by creating a file with one landmark edge id per line (e.g. landmarks.txt)
-and then setting the options **--astar.landmark-distances landmarks.txt --astar.save-landmark-distances lookuptable.txt**.
-  - an alternative input for generating a distance table is one geo-coordinate in the form `LON LAT` per line
-  - the tool [generateLandmarks.py](../Tools/Misc.md#generatelandmarkspy) can be used to generate a landmark input file by distributing edges around the rim of the network in all directions
-- As a rule of thumb using 8-16 edges distributed around the main roads that border the network achieve good ALT-performance. Using more edges is not recommended because each landmark adds a fixed overhead).
-- by using *astar* together with the option **--astar.all-distances** {{DT_FILE}} the A\* algorithm is
-  used together with a complete (and often huge) distance table to allow for blazing fast search. This is only recommended for medium sized networks with a high number of routing queries
-
-!!! caution
-    pre-computed distance tables are not useful when planning to perform routing with either one of the options **--weights.priority-factor** or **--weights.random-factor** as these change the actual distances.
-
-## CH (Contraction Hierarchies)
-
-[Contraction Hierarchies](https://en.wikipedia.org/wiki/Contraction_hierarchies)
-is a preprocessing-based routing algorithm. This is very efficient
-when a large number of queries is expected. The algorithm does not
-consider time-dependent weights. Instead, new preprocessing can be
-performed for time-slices of fixed size by setting the option **--weight-period** {{DT_TIME}}.
-
-- When used with [duarouter](../duarouter.md), edge permissions are ignored so this should only be used in unimodal networks.
-- When used with [sumo](../sumo.md), the computed routes are only valid for the default 'passenger' class.
-
-## CHWrapper
-
-This works like *CH* but performs separate preprocessing for every vehicle class that is encountered, thereby
-enabling routing in multi modal scenarios
+See [Routing Algorithms](../Routing_Algorithms.md) for a description of the
+available **--routing-algorithm** values (dijkstra, astar, ALT, CH, CHWrapper,
+CCH) and a feature-support matrix (time-dependent weights, permissions,
+prohibitions, priority-factor, random-factor, routing preferences, ...).
 
 # Further Options that affect routing
 

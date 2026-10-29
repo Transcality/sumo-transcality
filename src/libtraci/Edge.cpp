@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -155,6 +155,12 @@ Edge::getMeanFriction(const std::string& edgeID) {
 
 
 double
+Edge::getMaxSpeed(const std::string& edgeID) {
+    return Dom::getDouble(libsumo::VAR_MAXSPEED, edgeID);
+}
+
+
+double
 Edge::getLastStepOccupancy(const std::string& edgeID) {
     return Dom::getDouble(libsumo::LAST_STEP_OCCUPANCY, edgeID);
 }
@@ -289,7 +295,7 @@ Edge::setMaxSpeed(const std::string& edgeID, double speed) {
 
 void
 Edge::setFriction(const std::string& edgeID, double friction) {
-    Dom::setDouble(libsumo::VAR_MAXSPEED, edgeID, friction);
+    Dom::setDouble(libsumo::VAR_FRICTION, edgeID, friction);
 }
 
 }

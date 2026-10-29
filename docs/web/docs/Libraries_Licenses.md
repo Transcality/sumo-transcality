@@ -29,7 +29,7 @@ license files but we strive to list them here as well:
 
 ### [JSON for Modern C++](https://github.com/nlohmann/json) - JSON parsing for PHEMlight
 
- - Version: 3.10.5
+ - Version: 3.12.0 (the single json.hpp file)
  - License: [MIT](http://opensource.org/licenses/MIT)
 
 ### [Font Stash](https://github.com/memononen/fontstash) - Text rendering in openGL
@@ -39,7 +39,7 @@ license files but we strive to list them here as well:
 - Modifications: only included necessary files fontstash.h,
   glfontstash.h, stb_truetype.h
 - License: [zlib License](https://github.com/memononen/fontstash/blob/master/LICENSE.txt),
-  includes std_truetype which is in the public domain
+  includes stb_truetype which is in the public domain
 
 ### [RTree](https://www.superliminal.com/sources/RTreeTemplate.zip) - Improved tiling for the drawing area
 
@@ -64,6 +64,13 @@ license files but we strive to list them here as well:
 - Modifications: only needed header files, includes fixed
 - License: MIT, see [license
   file](https://github.com/eclipse-sumo/sumo/blob/main/src/foreign/zstr/LICENSE)
+
+### [RoutingKit](https://github.com/RoutingKit/RoutingKit) - A C++ library that provides advanced route planning functionality
+
+- Version: [HEAD of master branch](https://github.com/RoutingKit/RoutingKit/commit/54d49bb0cdea56dde182357522e4e86a03c57852) as of 2026-08-23
+- Modifications: only retained necessary files, added CMakeLists.txt
+- License: BSD-2-Clause, see [license
+  file](https://github.com/eclipse-sumo/sumo/blob/main/src/foreign/RoutingKit/LICENSE)
 
 # Referenced Libraries
 

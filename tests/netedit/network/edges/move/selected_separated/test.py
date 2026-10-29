@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -31,21 +31,21 @@ netedit.changeMode("createEdge")
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionF)
 netedit.leftClick(referencePosition, netedit.positions.network.junction.positionE)
 
-netedit.leftClick(referencePosition, netedit.positions.network.junction.positionE, offsetY=100)
-netedit.leftClick(referencePosition, netedit.positions.network.junction.positionF, offsetY=100)
+netedit.leftClickOffset(referencePosition, netedit.positions.network.junction.positionE, 0, 100)
+netedit.leftClickOffset(referencePosition, netedit.positions.network.junction.positionF, 0, 100)
 
 # go to select mode
 netedit.changeMode("select")
 
 netedit.leftClick(referencePosition, netedit.positions.network.edge.move.top)
-netedit.leftClick(referencePosition, netedit.positions.network.edge.move.bot, offsetY=100)
+netedit.leftClickOffset(referencePosition, netedit.positions.network.edge.move.bot, 0, 100)
 
 # rebuild network
 netedit.changeMode("move")
 
 # move
 netedit.moveElementVertical(referencePosition, netedit.positions.network.edge.move.top,
-                            netedit.positions.elements.movementEdgeTop)
+                            netedit.movements.edgeTop)
 
 # Check undo and redo
 netedit.checkUndoRedo(referencePosition)
@@ -54,7 +54,7 @@ netedit.checkUndoRedo(referencePosition)
 netedit.computeJunctions()
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <netedit/frames/GNEFrame.h>
+#include <netedit/frames/common/GNEGroupBoxModule.h>
 
 // ===========================================================================
 // class declaration
@@ -41,7 +42,7 @@ public:
     // class EdgeTypeSelector
     // ===========================================================================
 
-    class EdgeTypeSelector : public MFXGroupBoxModule {
+    class EdgeTypeSelector : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNECreateEdgeFrame::EdgeTypeSelector)
 
@@ -70,9 +71,6 @@ public:
         /// @brief void enable checkbox for disable pedestrians
         void enableCheckBoxDisablePedestrians();
 
-        /// @brief get default edgeType
-        GNEEdgeType* getDefaultEdgeType() const;
-
         /// @brief get edgeType selected
         GNEEdgeType* getEdgeTypeSelected() const;
 
@@ -93,6 +91,9 @@ public:
 
         /// @brief use template
         void useTemplate();
+
+        /// @brief check if show default short edge checkbox (only in JuPedSim view)
+        void showDefaultShortEdgeCheckBox(const bool value);
 
         /// @name FOX-callbacks
         /// @{
@@ -126,9 +127,6 @@ public:
     private:
         /// @brief pointer to createEdgeFrameParent
         GNECreateEdgeFrame* myCreateEdgeFrameParent;
-
-        /// @brief default edge type
-        GNEEdgeType* myDefaultEdgeType;
 
         /// @brief selected edgeType
         GNEEdgeType* myEdgeTypeSelected = nullptr;
@@ -171,7 +169,7 @@ public:
     // class LaneTypeSelector
     // ===========================================================================
 
-    class LaneTypeSelector : public MFXGroupBoxModule {
+    class LaneTypeSelector : public GNEGroupBoxModule {
         /// @brief FOX-declaration
         FXDECLARE(GNECreateEdgeFrame::LaneTypeSelector)
 
@@ -231,7 +229,7 @@ public:
     // class Legend
     // ===========================================================================
 
-    class Legend : public MFXGroupBoxModule {
+    class Legend : public GNEGroupBoxModule {
 
     public:
         /// @brief constructor

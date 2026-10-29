@@ -123,7 +123,7 @@ Further options:
 - **--angle-tolerance**: avoid matching if edge and shape angle are too different (default 20 degrees)
 
 !!! note
-    polygons can be obtained from OSM, shapefiles or geojson with the help of [../polyconvert.md]
+    polygons can be obtained from OSM, shapefiles or geojson with the help of [polyconvert](../polyconvert.md)
 
 ## patches
 Option **--patchfile** loads instructions to modify the matching in special cases.
@@ -135,7 +135,7 @@ The following syntax is supported in the patch file (one patch per line):
 rev EDGEID REVEDGEID
 # edg overrides the edge to assign for POLYID to be EDGEID
 edg POLYID EDGEID
-# dat overrrides the data attribute ATTR for POLYID to take on value VALUE
+# dat overrides the data attribute ATTR for POLYID to take on value VALUE
 dat POLYID ATTR VALUE
 ```
 
@@ -144,4 +144,3 @@ any ID or VALUE may bet set to 'None' to signify that
 - a reverse edge should not be assigned
 - a polygon should not be mapped
 - data should be ignored
-

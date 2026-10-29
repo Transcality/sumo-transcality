@@ -12,13 +12,13 @@ governing the intersection model.
 # Internal links
 
 The most important configuration aspect is whether the dynamics within
-an intersection shall be modelled or not. This is configured while building the network or alternatively when launching the simulation.
+an intersection shall be modeled or not. This is configured while building the network or alternatively when launching the simulation.
 When simulating without internal links, Vehicles are still subject to right-of-way rules (waiting at traffic lights and at minor roads)
 but they will appear instantly on the other side of the intersection after passing the stop line.
 They cannot block the intersection, wait within the intersection for left turns nor collide on the intersection.
 
 !!! note
-    The easiest way to check whether the network contains internal links is to load it in [sumo-gui](../sumo-gui.md) and press <kbd>CTRL</kbd> + <kbd>J</kbd> to hide the junction shape. If there are narrow lanes within the junction, the network contains internal links (The same setting is also available in the *Junctions* tab of the [gui-settings dialog](../sumo-gui.md#changing_the_appearancevisualisation_of_the_simulation)).
+    The easiest way to check whether the network contains internal links is to load it in [sumo-gui](../sumo-gui.md) and press <kbd>CTRL</kbd> + <kbd>J</kbd> to hide the junction shape. If there are narrow lanes within the junction, the network contains internal links (The same setting is also available in the *Junctions* tab of the [gui-settings dialog](../sumo-gui.md#changing_the_appearancevisualization_of_the_simulation)).
 
 ## [netconvert](../netconvert.md)-option **--no-internal-links**
 
@@ -84,7 +84,7 @@ or `<lane>` element. This will shorten the edge/lane by a set amount.
 
 Vehicles from a minor road wait exactly at the end of the lane in order
 to minimize the distance they have to cover when a suitable gap in
-traffic is found. Vehicles waiting at at a traffic light wait with an
+traffic is found. Vehicles waiting at a traffic light wait with an
 offset of 1m ahead of the lane end.
 
 ## Vehicle Class

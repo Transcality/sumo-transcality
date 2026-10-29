@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -42,6 +42,7 @@
 #include <microsim/MSLane.h>
 #include <microsim/MSLink.h>
 #include <microsim/MSStop.h>
+#include <microsim/MSStoppingPlace.h>
 #include <microsim/MSDriverState.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/devices/MSDevice_Bluelight.h>
@@ -143,6 +144,10 @@ MSAbstractLaneChangeModel::MSAbstractLaneChangeModel(MSVehicle& v, const LaneCha
                          (v.getVClass() & (SVC_BICYCLE | SVC_MOTORCYCLE | SVC_MOPED)) != 0 ? std::numeric_limits<double>::max() : 1.6)),
     mySigma(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_SIGMA, 0.0)),
     myOvertakeRightParam(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_OVERTAKE_RIGHT, 0)),
+    myAssertive(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_ASSERTIVE, 1)),
+    myCooperativeHelpTime(TIME2STEPS(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_HELPTIME, 60))),
+    myCooperativeHelpThreshold(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_HELPTHRESHOLD, -1)),
+    myCooperativeMinSpeed(v.getVehicleType().getParameter().getLCParam(SUMO_ATTR_LCA_COOPERATIVE_MINSPEED, 0)),
     myHaveBlueLight(v.getDevice(typeid(MSDevice_Bluelight)) != nullptr), // see MSVehicle::initDevices
     myLastLaneChangeOffset(0),
     myAmOpposite(false),
@@ -282,11 +287,14 @@ MSAbstractLaneChangeModel::congested(const MSVehicle* const neighLeader) {
 
 
 bool
-MSAbstractLaneChangeModel::avoidOvertakeRight() const {
-    return (!myAllowOvertakingRight
+MSAbstractLaneChangeModel::avoidOvertakeRight(const MSVehicle* const neighLeader, const bool allowProb) const {
+    return (!myAllowOvertakingRight  // the highway case
             && !myVehicle.congested()
             && myVehicle.getVehicleType().getVehicleClass() != SVC_EMERGENCY
-            && (myOvertakeRightParam == 0 || myOvertakeRightParam < RandHelper::rand(myVehicle.getRNG())));
+            && (!allowProb || myOvertakeRightParam == 0 || myOvertakeRightParam < RandHelper::rand(myVehicle.getRNG()))) ||
+           (neighLeader != nullptr && neighLeader->isStopped()  // the bus stop case
+            && neighLeader->getStops().front().busstop != nullptr
+            && !StringUtils::toBool(neighLeader->getStops().front().busstop->getParameter("allowOvertakeRight", "true")));
 }
 
 bool
@@ -386,18 +394,18 @@ MSAbstractLaneChangeModel::laneChangeOutput(const std::string& tag, MSLane* sour
                                             | LCA_AMBLOCKINGLEADER | LCA_AMBLOCKINGFOLLOWER
                                             | LCA_MRIGHT | LCA_MLEFT
                                             | LCA_AMBACKBLOCKER | LCA_AMBACKBLOCKER_STANDING))) + myVehicle.getParameter().getParameter("lcReason"));
-        of.writeAttr("leaderGap", myLastLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderGap));
-        of.writeAttr("leaderSecureGap", myLastLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderSecureGap));
-        of.writeAttr("leaderSpeed", myLastLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastLeaderSpeed));
-        of.writeAttr("followerGap", myLastFollowerGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerGap));
-        of.writeAttr("followerSecureGap", myLastFollowerSecureGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerSecureGap));
-        of.writeAttr("followerSpeed", myLastFollowerSpeed == NO_NEIGHBOR ? "None" : toString(myLastFollowerSpeed));
-        of.writeAttr("origLeaderGap", myLastOrigLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderGap));
-        of.writeAttr("origLeaderSecureGap", myLastOrigLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSecureGap));
-        of.writeAttr("origLeaderSpeed", myLastOrigLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSpeed));
+        of.writeAttr("leaderGap", myLastLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderGap), myLastLeaderGap == NO_NEIGHBOR);
+        of.writeAttr("leaderSecureGap", myLastLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastLeaderSecureGap), myLastLeaderSecureGap == NO_NEIGHBOR);
+        of.writeAttr("leaderSpeed", myLastLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastLeaderSpeed), myLastLeaderSpeed == NO_NEIGHBOR);
+        of.writeAttr("followerGap", myLastFollowerGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerGap), myLastFollowerGap == NO_NEIGHBOR);
+        of.writeAttr("followerSecureGap", myLastFollowerSecureGap == NO_NEIGHBOR ? "None" : toString(myLastFollowerSecureGap), myLastFollowerSecureGap == NO_NEIGHBOR);
+        of.writeAttr("followerSpeed", myLastFollowerSpeed == NO_NEIGHBOR ? "None" : toString(myLastFollowerSpeed), myLastFollowerSpeed == NO_NEIGHBOR);
+        of.writeAttr("origLeaderGap", myLastOrigLeaderGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderGap), myLastOrigLeaderGap == NO_NEIGHBOR);
+        of.writeAttr("origLeaderSecureGap", myLastOrigLeaderSecureGap == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSecureGap), myLastOrigLeaderSecureGap == NO_NEIGHBOR);
+        of.writeAttr("origLeaderSpeed", myLastOrigLeaderSpeed == NO_NEIGHBOR ? "None" : toString(myLastOrigLeaderSpeed), myLastOrigLeaderSpeed == NO_NEIGHBOR);
         if (MSGlobals::gLateralResolution > 0) {
             const double latGap = direction < 0 ? myLastLateralGapRight : myLastLateralGapLeft;
-            of.writeAttr("latGap", latGap == NO_NEIGHBOR ? "None" : toString(latGap));
+            of.writeAttr("latGap", latGap == NO_NEIGHBOR ? "None" : toString(latGap), latGap == NO_NEIGHBOR);
             if (maneuverDist != 0) {
                 of.writeAttr("maneuverDistance", toString(maneuverDist));
             }
@@ -524,11 +532,14 @@ MSAbstractLaneChangeModel::cleanupShadowLane() {
         myShadowLane->resetPartialOccupation(&myVehicle);
         myShadowLane = nullptr;
     }
-    for (std::vector<MSLane*>::const_iterator it = myShadowFurtherLanes.begin(); it != myShadowFurtherLanes.end(); ++it) {
+    for (MSLane* further : myShadowFurtherLanes) {
         if (debugVehicle()) {
             std::cout << SIMTIME << " cleanupShadowLane2\n";
         }
-        (*it)->resetPartialOccupation(&myVehicle);
+        further->resetPartialOccupation(&myVehicle);
+        if (further->getBidiLane() != nullptr) {
+            further->getBidiLane()->resetPartialOccupation(&myVehicle);
+        }
     }
     myShadowFurtherLanes.clear();
     myNoPartiallyOccupatedByShadow.clear();
@@ -1100,31 +1111,114 @@ MSAbstractLaneChangeModel::getNormalizedLaneIndex() {
 }
 
 void
-MSAbstractLaneChangeModel::addLCSpeedAdvice(const double vSafe, bool ownAdvice) {
+MSAbstractLaneChangeModel::addLCSpeedAdvice(const double vSafe, int flag) {
     const double accel = SPEED2ACCEL(vSafe - myVehicle.getSpeed());
-    myLCAccelerationAdvices.push_back({accel, ownAdvice});
+    myLCAccelerationAdvices.push_back({accel, flag});
+}
+
+
+bool
+MSAbstractLaneChangeModel::canOvertakeRight(const MSVehicle* const nv, const double dist, const double maxSpeedDiff, const double helpOvertakeSpeed, double& vSafe, double& deltaV) const {
+    deltaV = MAX2(maxSpeedDiff, myVehicle.getSpeed() - nv->getSpeed());
+    if (deltaV > 0) {
+        const double vMaxDecel = getCarFollowModel().getSpeedAfterMaxDecel(myVehicle.getSpeed());
+        const double vSafeFollow = getCarFollowModel().followSpeed(
+                                        &myVehicle, myVehicle.getSpeed(), dist, nv->getSpeed(), nv->getCarFollowModel().getMaxDecel());
+        const double vStayBehind = nv->getSpeed() - helpOvertakeSpeed;
+        if (vSafeFollow >= vMaxDecel) {
+            vSafe = vSafeFollow;
+        } else {
+            vSafe = MAX2(vMaxDecel, vStayBehind);
+        }
+        return true;
+    }
+    return false;
 }
 
 
 void
 MSAbstractLaneChangeModel::saveState(OutputDevice& out) const {
-    std::vector<std::string> lcState;
-    if (MSGlobals::gLaneChangeDuration > 0) {
-        lcState.push_back(toString(mySpeedLat));
-        lcState.push_back(toString(myLaneChangeCompletion));
-        lcState.push_back(toString(myLaneChangeDirection));
+    std::vector<double> lcState;
+    lcState.push_back((double)myOwnState);
+    for (const auto& item : myLCAccelerationAdvices) {
+        lcState.push_back(item.first);
+        lcState.push_back((double)item.second);
     }
-    if (lcState.size() > 0) {
-        out.writeAttr(SUMO_ATTR_LCSTATE, lcState);
+    out.writeAttr(SUMO_ATTR_LCSTATE_BASE, lcState);
+
+    if (MSGlobals::gLaneChangeDuration > 0) {
+        out.writeAttr(SUMO_ATTR_LCSTATE, std::vector<double> {mySpeedLat, myLaneChangeCompletion, (double)myLaneChangeDirection});
     }
 }
 
 void
 MSAbstractLaneChangeModel::loadState(const SUMOSAXAttributes& attrs) {
+    if (attrs.hasAttribute(SUMO_ATTR_LCSTATE_BASE)) {
+        std::istringstream bis(attrs.getString(SUMO_ATTR_LCSTATE_BASE));
+        double token;
+        bis >> token;
+        myOwnState = (int)token; // double is suffciently precise
+        double prev = std::numeric_limits<double>::max();
+        while (bis >> token) {
+            if (prev != std::numeric_limits<double>::max()) {
+                myLCAccelerationAdvices.push_back(std::make_pair(prev, (int)token));
+                prev = std::numeric_limits<double>::max();
+            }
+            prev = token;
+        }
+    }
     if (attrs.hasAttribute(SUMO_ATTR_LCSTATE)) {
         std::istringstream bis(attrs.getString(SUMO_ATTR_LCSTATE));
         bis >> mySpeedLat;
         bis >> myLaneChangeCompletion;
         bis >> myLaneChangeDirection;
     }
+}
+
+
+double
+MSAbstractLaneChangeModel::getExtraReservation(int bestLaneOffset, double neighExtraDist) const {
+    if (neighExtraDist > myVehicle.getVehicleType().getLengthWithGap()) {
+        return 0;
+    }
+    if (bestLaneOffset < -1) {
+        return 20;
+    } else if (bestLaneOffset > 1) {
+        return 40;
+    }
+    return 0;
+}
+
+
+double
+MSAbstractLaneChangeModel::getCooperativeHelpSpeed(const MSLane* lane, double distToLaneEnd) const {
+    if (myCooperativeHelpTime >= 0) {
+        std::pair<double, SUMOTime> backAndWaiting = lane->getEdge().getLastBlocked(lane->getIndex());
+        if (backAndWaiting.second >= myCooperativeHelpTime) {
+            double gap = distToLaneEnd - lane->getLength() + backAndWaiting.first - myVehicle.getVehicleType().getMinGap() - NUMERICAL_EPS;
+            if (backAndWaiting.first < 0) {
+                if (myVehicle.getLane()->getToJunction() == lane->getFromJunction()) {
+                    if (myVehicle.getLane()->isInternal()) {
+                        // already on the junction, potentially blocking lane change, do not stop
+                        gap = -1;
+                    } else {
+                        // stop before entering the junction
+                        gap = myVehicle.getLane()->getLength() - myVehicle.getPositionOnLane();
+                    }
+                }
+            }
+            if (gap > 0) {
+                double stopSpeed = myVehicle.getCarFollowModel().stopSpeed(&myVehicle, myVehicle.getSpeed(), gap);
+                //if (myVehicle.isSelected() && stopSpeed < myVehicle.getSpeed()) {
+                //    std::cout << SIMTIME << " veh=" << myVehicle.getID() << " lane=" << lane->getID() << " dte=" << distToLaneEnd << " gap=" << gap << " backPos=" << backAndWaiting.first << " waiting=" << backAndWaiting.second << " helpTime=" << myCooperativeHelpTime << " stopSpeed=" << stopSpeed << " minNext=" << myVehicle.getCarFollowModel().minNextSpeed(myVehicle.getSpeed(), &myVehicle) << "\n";
+                //}
+                if (stopSpeed >= myVehicle.getCarFollowModel().minNextSpeed(myVehicle.getSpeed(), &myVehicle)) {
+                    // regular braking is helpful
+                    return stopSpeed;
+                }
+            }
+        }
+    }
+    // do not restrict speed
+    return std::numeric_limits<double>::max();
 }

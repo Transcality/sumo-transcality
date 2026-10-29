@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -41,7 +41,7 @@ netedit.changeMode("additional")
 netedit.changeElement("additionalFrame", "busStop")
 
 # create busStop in mode "reference left"
-netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center, offsetY=20)
+netedit.leftClickOffset(referencePosition, netedit.positions.network.junction.cross.center, 0, 20)
 
 # go to demand mode
 netedit.changeSupermode("demand")
@@ -50,10 +50,10 @@ netedit.changeSupermode("demand")
 netedit.changeMode("route")
 
 # create route using three edges
-netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center, offsetY=20)
+netedit.leftClickOffset(referencePosition, netedit.positions.network.junction.cross.center, 0, 20)
 
 # press enter to create route
-netedit.typeKey('enter')
+netedit.typeKey("enter")
 
 # Go to data supermode
 netedit.changeSupermode("data")
@@ -68,7 +68,7 @@ netedit.createDataSet()
 netedit.createDataInterval()
 
 # create edgeData
-netedit.leftClick(referencePosition, netedit.positions.network.junction.cross.center, offsetY=20)
+netedit.leftClickOffset(referencePosition, netedit.positions.network.junction.cross.center, 0, 20)
 
 # change to edgeData
 netedit.changeMode("meanData")

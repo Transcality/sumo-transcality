@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -27,14 +27,7 @@
 #include <vector>
 #include <map>
 #include <utils/foxtools/fxheader.h>
-// fx3d includes windows.h so we need to guard against macro pollution
-#ifdef WIN32
-#define NOMINMAX
-#endif
 #include <fx3d.h>
-#ifdef WIN32
-#undef NOMINMAX
-#endif
 
 #include <utils/geom/Boundary.h>
 #include <utils/geom/Position.h>
@@ -113,7 +106,7 @@ public:
      * @param[in] zoomDist The distance in m to use for the zoom, values < 0 means: use the centeringBoundary
      * @note caller is responsible for calling update
      */
-    virtual void centerTo(const Position& pos, bool applyZoom, double zoomDist = 20);
+    virtual void centerToPos(const Position& pos, bool applyZoom, double zoomDist = 20);
 
     /// @brief centers to the chosen artifact
     void centerTo(const Boundary& bound);
@@ -201,6 +194,9 @@ public:
 
     /// @brief A method that updates the tooltip
     void updateToolTip();
+
+    /// @brief update position information labels
+    virtual void updatePositionInformationLabel() const;
 
     /// @brief @name Dealing with snapshots
     ///@{
@@ -417,8 +413,6 @@ public:
         /// @brief whether the decal shall be drawn in screen coordinates, rather than network coordinates
         int glID = -1;
 
-        /// @brief The image pointer for later cleanup
-        FXImage* image = nullptr;
     };
 
     /// @brief The list of decals to show
@@ -426,6 +420,15 @@ public:
 
     /// @brief The mutex to use before accessing the decals list in order to avoid thread conflicts
     FXMutex& getDecalsLockMutex();
+
+    /// @brief queue a texture for deletion
+    void queueTextureDelete(unsigned int textureId);
+
+    /// @brief process pending texture deletions
+    void processPendingTextureDeletes();
+
+    /// @brief clear all decals
+    void clearDecals();
 
     /// @brief get coloring schemes combo
     MFXComboBoxIcon* getColoringSchemesCombo();
@@ -479,9 +482,6 @@ protected:
     /// @brief performs the painting of the simulation
     void paintGL();
 
-    /// @brief update position information labels
-    virtual void updatePositionInformationLabel() const;
-
     /// @brief paint GL
     virtual int doPaintGL(int /*mode*/, const Boundary& /*boundary*/);
 
@@ -510,7 +510,7 @@ protected:
     virtual GUIGlID getToolTipID();
 
     /// @brief returns the id of the front object under the cursor using GL_SELECT
-    GUIGlID getObjectUnderCursor();
+    GUIGlID getObjectUnderCursor(double sensitivity = SENSITIVITY);
 
     /// @brief returns the id of the objects under the cursor using GL_SELECT (including overlapped objects)
     std::vector<GUIGlID> getObjectsUnderCursor();
@@ -522,7 +522,7 @@ protected:
     std::vector<GUIGlObject*> getGUIGlObjectsUnderSnappedCursor();
 
     /// @brief returns the id of the object at position using GL_SELECT
-    GUIGlID getObjectAtPosition(Position pos);
+    GUIGlID getObjectAtPosition(Position pos, double sensitivity = SENSITIVITY);
 
     /// @brief returns the ids of the object at position within the given (rectangular) radius using GL_SELECT
     std::vector<GUIGlID> getObjectsAtPosition(Position pos, double radius);
@@ -613,6 +613,12 @@ protected:
     /// @brief The mutex to use before accessing the decals list in order to avoid thread conflicts
     FXMutex myDecalsLockMutex;
 
+    /// @brief texture IDs pending deletion
+    std::vector<unsigned int> myPendingTextureDeletes;
+
+    /// @brief mutex for pending texture deletes
+    FXMutex myTextureDeleteMutex;
+
     ///@}
 
     /// @brief Snapshots
@@ -633,6 +639,9 @@ protected:
     /// @brief counter for measuring rendering time
     long myFrameDrawTime = 0;
 
+    // @brief sensitivity for "<>AtPosition(...) functions
+    static const double SENSITIVITY;
+
 private:
     /// @brief struct used for sorting objects by layer
     struct LayerObject : public std::pair<double, std::pair<GUIGlObjectType, std::string> > {
@@ -652,6 +661,4 @@ private:
         GUIGlObject* myGLObject;
     };
 
-    // @brief sensitivity for "<>AtPosition(...) functions
-    static const double SENSITIVITY;
 };

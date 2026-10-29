@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,11 @@
 #include <config.h>
 
 #include <microsim/transportables/MSStage.h>
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+#include <utils/foxtools/MFXWorkerThread.h>
+#endif
+#endif
 
 
 // ===========================================================================
@@ -121,7 +126,7 @@ public:
     * @param[in] os The stream to write the information into
     * @exception IOError not yet implemented
     */
-    void routeOutput(const bool isPerson, OutputDevice& os, const bool withRouteLength, const MSStage* const previous) const;
+    void routeOutput(const bool isPerson, OutputDevice& os, const bool withRouteLength, const MSStage* const previous, const bool withTiming, const bool saveState = false) const;
 
     /// @brief Whether the transportable is walking
     bool isWalk() const {
@@ -159,11 +164,44 @@ private:
     /// @brief whether an arrivalPos was in the input
     const bool myHaveArrivalPos;
 
+    /// @brief stages pre-computed in proceed() (serial) or by TripRoutingTask (parallel)
+    std::vector<MSStage*> myComputedStages;
+
+    /// @brief routing error stored alongside myComputedStages
+    std::string myRoutingError;
+
+    /// @brief personal vehicle to add to simulation after parallel routing completes
+    SUMOVehicle* myVehicleToAdd = nullptr;
+
 private:
     /// @brief Invalidated copy constructor.
     MSStageTrip(const MSStageTrip&);
 
     /// @brief Invalidated assignment operator.
     MSStageTrip& operator=(const MSStageTrip&);
+
+#ifndef THREAD_POOL
+#ifdef HAVE_FOX
+    static FXMutex myVehCtrlMutex;
+
+public:
+    /**
+     * @class TripRoutingTask
+     * @brief Computes the intermodal route for a transportable in a worker thread
+     */
+    class TripRoutingTask : public MFXWorkerThread::Task {
+    public:
+        TripRoutingTask(MSStageTrip& stage, MSTransportable* transportable, SUMOTime time, MSStage* previous)
+            : myStage(stage), myTransportable(transportable), myTime(time), myPrevious(previous) {}
+        void run(MFXWorkerThread* context);
+    private:
+        MSStageTrip& myStage;
+        MSTransportable* const myTransportable;
+        const SUMOTime myTime;
+        MSStage* const myPrevious;
+        TripRoutingTask& operator=(const TripRoutingTask&) = delete;
+    };
+#endif
+#endif
 
 };

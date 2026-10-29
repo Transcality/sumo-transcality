@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -149,6 +149,12 @@ MSSimpleTrafficLightLogic::getCurrentPhaseDef() const {
 }
 
 
+void
+MSSimpleTrafficLightLogic::resetLastSwitch(SUMOTime t) {
+    myPhases[myStep]->myLastSwitch = t;
+}
+
+
 // ------------ Conversion between time and phase
 SUMOTime
 MSSimpleTrafficLightLogic::getPhaseIndexAtTime(SUMOTime simStep) const {
@@ -292,7 +298,10 @@ MSSimpleTrafficLightLogic::changeStepAndDuration(MSTLLogicControl& tlcontrol,
     if (step >= 0 && step != myStep) {
         myStep = step;
         myPhases[myStep]->myLastSwitch = MSNet::getInstance()->getCurrentTimeStep();
-        setTrafficLightSignals(simStep);
+        if (myAmActive) {
+            // when loading from state, the last loaded program isn't always the active one
+            setTrafficLightSignals(simStep);
+        }
         tlcontrol.get(getID()).executeOnSwitchActions();
     }
     MSNet::getInstance()->getBeginOfTimestepEvents()->addEvent(
@@ -319,15 +328,33 @@ MSSimpleTrafficLightLogic::deletePhases() {
     }
 }
 
+
 void
-MSSimpleTrafficLightLogic::saveState(OutputDevice& out) const {
-    out.openTag(SUMO_TAG_TLLOGIC);
+MSSimpleTrafficLightLogic::saveStateAttrs(OutputDevice& out) const {
     out.writeAttr(SUMO_ATTR_ID, getID());
     out.writeAttr(SUMO_ATTR_PROGRAMID, getProgramID());
     out.writeAttr(SUMO_ATTR_PHASE, getCurrentPhaseIndex());
     out.writeAttr(SUMO_ATTR_DURATION, getSpentDuration());
+    out.writeAttr(SUMO_ATTR_UNTIL, getNextSwitchTime());
+    out.writeAttr(SUMO_ATTR_CYCLETIME, getTimeInCycle());
+    out.writeAttr(SUMO_ATTR_ACTIVE, myAmActive);
+}
+
+
+void
+MSSimpleTrafficLightLogic::saveState(OutputDevice& out) const {
+    out.openTag(SUMO_TAG_TLLOGIC);
+    saveStateAttrs(out);
     out.closeTag();
 }
+
+
+void
+MSSimpleTrafficLightLogic::loadState(MSTLLogicControl& tlcontrol, SUMOTime t, int step, SUMOTime spentDuration, SUMOTime nextSwitch, SUMOTime timeInCycle, bool active) {
+    MSTrafficLightLogic::loadState(tlcontrol, t, step, spentDuration, nextSwitch, timeInCycle, active);
+    myPhases[myStep]->myLastSwitch = t - spentDuration;
+}
+
 
 const std::string
 MSSimpleTrafficLightLogic::getParameter(const std::string& key, const std::string defaultValue) const {

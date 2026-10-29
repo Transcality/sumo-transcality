@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -116,7 +116,7 @@ NBRailwayTopologyAnalyzer::repairTopology(NBEdgeCont& ec, NBPTStopCont& sc, NBPT
     int addedBidi = 0;
     if (!minimal) {
         addedBidi += extendBidiEdges(ec);
-        addedBidi += reverseEdges(ec, sc); // technically not bidi but new edges nevertheless
+        addedBidi += reverseEdges(ec, sc, lc); // technically not bidi but new edges nevertheless
         addedBidi += addBidiEdgesForBufferStops(ec);
         addedBidi += addBidiEdgesBetweenSwitches(ec);
     }
@@ -192,6 +192,11 @@ NBRailwayTopologyAnalyzer::addBidiEdge(NBEdgeCont& ec, NBEdge* edge, bool update
                                 edge, edge->getGeometry().reverse());
         if (edge->getParameter(NBTrafficLightDefinition::OSM_DIRECTION) == "forward") {
             e2->setParameter(NBTrafficLightDefinition::OSM_DIRECTION, "backward");
+        } else if (edge->getParameter(NBTrafficLightDefinition::OSM_DIRECTION) == "backward") {
+            e2->setParameter(NBTrafficLightDefinition::OSM_DIRECTION, "forward");
+        }
+        if (edge->getDistance() != 0) {
+            e2->setDistance(-edge->getDistance() - edge->getLoadedLength());
         }
         ec.insert(e2);
         if (ec.retrieve(id2) == nullptr) {
@@ -569,16 +574,19 @@ NBRailwayTopologyAnalyzer::extendBidiEdges(NBEdgeCont& ec, NBNode* node, NBEdge*
 
 
 int
-NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc) {
+NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc, NBPTLineCont& lc) {
     std::set<NBNode*> brokenNodes = getBrokenRailNodes(ec);
     // find reversible edge sequences between broken nodes
     std::vector<EdgeVector> seqsToReverse;
+    EdgeSet lineEdges;
+    for (auto item : lc.getLines()) {
+        const EdgeVector& route = item.second->getEdges();
+        lineEdges.insert(route.begin(), route.end());
+    }
     for (NBNode* n : brokenNodes) {
         EdgeVector inRail, outRail;
         getRailEdges(n, inRail, outRail);
         for (NBEdge* start : outRail) {
-            EdgeVector tmp;
-            tmp.push_back(start);
             // only reverse edges where the node would be unbroken afterwards
             if (!allBroken(n, start, inRail, outRail)
                     || (inRail.size() == 1 && outRail.size() == 1)) {
@@ -593,6 +601,18 @@ NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc) {
             bool forward = true;
             EdgeVector seq;
             while (forward) {
+                if (lineEdges.count(start)) {
+                    // ptline edges should never be reversed. They are fixed by a different algorithm which requires their original ids and orientation
+                    break;
+                } else if (start->hasParameter(NBTrafficLightDefinition::OSM_DIRECTION)) {
+                    // do not reverse edges where direction was explicitly set in OSM (including via signal direction)
+#ifdef DEBUG_SEQSTOREVERSE
+                    if (n->getID() == DEBUGNODEID) {
+                        std::cout << " abort at edge=" << start->getID() << " (has OSM_DIRECTION " << start->getParameter(NBTrafficLightDefinition::OSM_DIRECTION) << ")\n";
+                    }
+#endif
+                    break;
+                }
                 seq.push_back(start);
                 //std::cout << " seq=" << toString(seq) << "\n";
                 NBNode* n2 = start->getToNode();
@@ -657,12 +677,8 @@ NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc) {
             affectedEndpoints.insert(seqEnd);
             //WRITE_MESSAGE("  reversed seq=" + toString(seq));
             for (NBEdge* e : seq) {
-                e->reinitNodes(e->getToNode(), e->getFromNode());
-                e->setGeometry(e->getGeometry().reverse());
+                reverseEdge(e);
                 reversedIDs.insert(e->getID());
-                if (e->getParameter(NBTrafficLightDefinition::OSM_DIRECTION) == "forward") {
-                    e->setParameter(NBTrafficLightDefinition::OSM_DIRECTION, "backward");
-                }
             }
             seqLengths[(int)seq.size()]++;
             numReversed++;
@@ -677,6 +693,16 @@ NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc) {
         }
     }
     return numReversed;
+}
+
+
+void
+NBRailwayTopologyAnalyzer::reverseEdge(NBEdge* e) {
+    e->reinitNodes(e->getToNode(), e->getFromNode());
+    e->setGeometry(e->getGeometry().reverse());
+    if (e->getParameter(NBTrafficLightDefinition::OSM_DIRECTION) == "forward") {
+        e->setParameter(NBTrafficLightDefinition::OSM_DIRECTION, "backward");
+    }
 }
 
 
@@ -947,7 +973,8 @@ NBRailwayTopologyAnalyzer::addBidiEdgesForStops(NBEdgeCont& ec, NBPTLineCont& lc
 
     int added = 0;
     int numDisconnected = 0;
-    std::set<NBEdge*, ComparatorIdLess> addBidiStops;
+    std::set<std::shared_ptr<NBPTStop>> addBidiStops;
+    std::set<NBEdge*, ComparatorIdLess> addBidiStopEdges;
     std::set<NBEdge*, ComparatorIdLess> addBidiEdges;
     std::set<std::pair<std::string, std::string> > visited;
 
@@ -958,18 +985,18 @@ NBRailwayTopologyAnalyzer::addBidiEdgesForStops(NBEdgeCont& ec, NBPTLineCont& lc
 
     for (const auto& item : lc.getLines()) {
         NBPTLine* line = item.second;
-        std::vector<std::pair<NBEdge*, std::string> > stops = line->getStopEdges(ec);
+        std::vector<NBPTLine::PTStopInfo> stops = line->getStopEdges(ec);
         std::vector<NBEdge*> stopEdges;
         for (auto it : stops) {
-            stopEdges.push_back(it.first);
+            stopEdges.push_back(it.edge);
         }
         NBEdge* routeStart = line->getRouteStart(ec);
         NBEdge* routeEnd = line->getRouteEnd(ec);
-        if (routeStart != nullptr) {
-            stops.insert(stops.begin(), {routeStart, routeStart->getID()});
+        if (routeStart != nullptr && (stopEdges.empty() || routeStart != stopEdges.front())) {
+            stops.insert(stops.begin(), NBPTLine::PTStopInfo(routeStart, routeStart->getID(), 0, false));
         }
-        if (routeEnd != nullptr) {
-            stops.push_back({routeEnd, routeEnd->getID()});
+        if (routeEnd != nullptr && (stopEdges.empty() || routeEnd != stopEdges.back())) {
+            stops.push_back(NBPTLine::PTStopInfo(routeEnd, routeEnd->getID(), routeEnd->getLength(), false));
         }
         if (stops.size() < 2) {
             continue;
@@ -979,13 +1006,19 @@ NBRailwayTopologyAnalyzer::addBidiEdgesForStops(NBEdgeCont& ec, NBPTLineCont& lc
             continue;
         }
         for (auto it = stops.begin(); it + 1 != stops.end(); ++it) {
-            NBEdge* fromEdge = it->first;
-            NBEdge* toEdge = (it + 1)->first;
-            const std::string fromStop = it->second;
-            const std::string toStop = (it + 1)->second;
+            NBEdge* fromEdge = it->edge;
+            NBEdge* toEdge = (it + 1)->edge;
+            const std::string fromStop = it->stopID;
+            const std::string toStop = (it + 1)->stopID;
+            const double fromPos = it->pos;
+            const double toPos = (it + 1)->pos;
+            bool fromRevised = it->revised;
+            bool toRevised = (it + 1)->revised;
             std::pair<std::string, std::string> trip(fromStop, toStop);
             std::pair<std::string, std::string> reverseTrip(toStop, fromStop);
-            //std::cout << " line=" << line->getLineID() << " trip=" << Named::getIDSecure(fromEdge) << "->" << Named::getIDSecure(toEdge) << " visited=" << (visited.count(trip) != 0) << " fromStop=" << fromStop << " toStop=" << toStop << "\n";
+            //if (line->getLineID() == "147471") {
+            //    std::cout << " line=" << line->getLineID() << " trip=" << Named::getIDSecure(fromEdge) << "->" << Named::getIDSecure(toEdge) << " visited=" << (visited.count(trip) != 0) << " fromStop=" << fromStop << " toStop=" << toStop << " fromRevised=" << fromRevised << " toRevised=" << toRevised << "\n";
+            //}
             if (visited.count(trip) != 0) {
                 continue;
             } else {
@@ -995,49 +1028,55 @@ NBRailwayTopologyAnalyzer::addBidiEdgesForStops(NBEdgeCont& ec, NBPTLineCont& lc
                     || stopTracks.count(toEdge) == 0) {
                 continue;
             }
-            const bool needBidi = visited.count(reverseTrip) != 0;
+            bool needBidi = visited.count(reverseTrip) != 0;
             NBVehicle veh(line->getRef(), (SUMOVehicleClass)(fromEdge->getPermissions() & SVC_RAIL_CLASSES));
             std::vector<const Track*> route;
-            router->compute(stopTracks[fromEdge].first, stopTracks[toEdge].second, &veh, 0, route);
-            //if (fromEdge->getID() == "356053025#1" && toEdge->getID() == "23256161") {
+            Track* from = fromRevised ? tracks[fromEdge->getNumericalID()] : stopTracks[fromEdge].first;
+            Track* to = toRevised ? tracks[toEdge->getNumericalID()] : stopTracks[toEdge].second;
+            int iStart = fromRevised ? 0 : 1;
+            int iDeltaEnd = toRevised ? 0 : 1;
+            if (fromEdge == toEdge && fromPos > toPos) {
+                // must use reverse edge
+                route.push_back(tracks[fromEdge->getNumericalID() + numEdges]);
+                iStart = 0;
+                iDeltaEnd = 0;
+                needBidi = true;
+            } else {
+                router->compute(from, to, &veh, 0, route);
+            }
+            //if (line->getLineID() == "147471") {
             //    std::cout << "DEBUG: route=" << toString(route) << "\n";
             //}
             if (route.size() > 0) {
-                assert(route.size() > 2);
-                for (int i = 1; i < (int)route.size() - 1; ++i) {
-                    if (route[i]->getNumericalID() >= numEdges || needBidi) {
+                assert((int)route.size() > iStart + iDeltaEnd);
+                for (int i = iStart; i < (int)route.size() - iDeltaEnd; ++i) {
+                    const bool isBidi = route[i]->getNumericalID() >= numEdges;
+                    bool isStop = i == iStart || i == (int)route.size() - 1 - iDeltaEnd;
+                    if (isBidi || needBidi) {
                         NBEdge* edge = route[i]->edge;
                         if (addBidiEdges.count(edge) == 0) {
-                            bool isStop = i == 1 || i == (int)route.size() - 2;
                             if (!edge->isBidiRail(true)) {
                                 if (edge->getLaneSpreadFunction() == LaneSpreadFunction::CENTER) {
                                     addBidiEdges.insert(edge);
                                     if (isStop) {
-                                        addBidiStops.insert(edge);
+                                        addBidiStopEdges.insert(edge);
                                     }
                                 } else {
                                     if (isStop) {
                                         WRITE_WARNINGF(TL("Stop on edge '%' can only be reached in reverse but edge has the wrong spreadType."), fromEdge->getID());
                                     }
                                 }
-                            } else if (isStop && needBidi) {
-                                std::shared_ptr<NBPTStop> fs = sc.get(fromStop);
-                                if (fs) {
-                                    std::shared_ptr<NBPTStop> fromReverse = sc.getReverseStop(fs, ec);
-                                    if (fromReverse) {
-                                        sc.insert(fromReverse);
-                                        fs->setBidiStop(fromReverse);
-                                    }
-                                }
-                                std::shared_ptr<NBPTStop> ts = sc.get(toStop);
-                                if (ts) {
-                                    std::shared_ptr<NBPTStop> toReverse = sc.getReverseStop(ts, ec);
-                                    if (toReverse) {
-                                        sc.insert(toReverse);
-                                        ts->setBidiStop(toReverse);
-                                    }
-                                }
                             }
+                        }
+                    }
+                    if (isStop && isBidi) {
+                        std::shared_ptr<NBPTStop> fs = sc.get(fromStop);
+                        if (fs) {
+                            addBidiStops.insert(fs);
+                        }
+                        std::shared_ptr<NBPTStop> ts = sc.get(toStop);
+                        if (ts) {
+                            addBidiStops.insert(ts);
                         }
                     }
                 }
@@ -1049,20 +1088,32 @@ NBRailwayTopologyAnalyzer::addBidiEdgesForStops(NBEdgeCont& ec, NBPTLineCont& lc
     }
     for (NBEdge* edge : addBidiEdges) {
         if (!edge->isBidiRail()) {
-            NBEdge* e2 = addBidiEdge(ec, edge);
-            //std::cout << " add bidiEdge for stop at edge " << edge->getID() << "\n";
-            if (e2 != nullptr) {
-                added++;
-                if (!minimal) {
-                    added += extendBidiEdges(ec, edge->getToNode(), edge);
-                    added += extendBidiEdges(ec, edge->getFromNode(), e2);
+            if (edge->getFromNode()->getIncomingEdges().size() == 0
+                    && edge->getToNode()->getOutgoingEdges().size() == 0) {
+                // flip a single broken edge instead of adding the reverse
+                reverseEdge(edge);
+            } else {
+                NBEdge* e2 = addBidiEdge(ec, edge);
+                //std::cout << " add bidiEdge for stop at edge " << edge->getID() << "\n";
+                if (e2 != nullptr) {
+                    added++;
+                    if (!minimal) {
+                        added += extendBidiEdges(ec, edge->getToNode(), edge);
+                        added += extendBidiEdges(ec, edge->getFromNode(), e2);
+                    }
                 }
             }
         }
     }
-
+    for (std::shared_ptr<NBPTStop> stop : addBidiStops) {
+        std::shared_ptr<NBPTStop> fromReverse = sc.getReverseStop(stop, ec);
+        if (fromReverse) {
+            sc.insert(fromReverse);
+            stop->setBidiStop(fromReverse);
+        }
+    }
     if (addBidiEdges.size() > 0 || numDisconnected > 0) {
-        WRITE_MESSAGE("Added " + toString(addBidiStops.size()) + " bidi-edges for public transport stops and a total of "
+        WRITE_MESSAGE("Added " + toString(addBidiStopEdges.size()) + " bidi-edges for public transport stops and a total of "
                       + toString(added) + " bidi-edges to ensure connectivity of stops ("
                       + toString(numDisconnected) + " stops remain disconnected)");
     }
@@ -1175,6 +1226,32 @@ NBRailwayTopologyAnalyzer::getTravelTimeStatic(const Track* const track, const N
 
 
 void
+NBRailwayTopologyAnalyzer::setPTLinePriority(NBEdgeCont& ec, NBPTLineCont& lc, SVCPermissions vClasses) {
+    for (NBEdge* edge : ec.getAllEdges()) {
+        SVCPermissions p = edge->getPermissions();
+        if (isRailway(p) && (p & vClasses) != 0) {
+            if (edge->getRoutingType() == "") {
+                edge->setPriority(-1);
+            } else if (StringUtils::isInt(edge->getRoutingType())) {
+                edge->setPriority(StringUtils::toInt(edge->getRoutingType()));
+            }
+        }
+    }
+    for (const auto& item : lc.getLines()) {
+        if ((item.second->getVClass() & vClasses) == 0) {
+            continue;
+        }
+        for (NBEdge* edge : item.second->getEdges()) {
+            if (edge->getRoutingType() == "") {
+                edge->setPriority(4);
+                edge->setRoutingType("4");
+            }
+        }
+    }
+}
+
+
+void
 NBRailwayTopologyAnalyzer::extendDirectionPriority(NBEdgeCont& ec, bool fromUniDir) {
     // if fromUniDir=true, assign priority value for each railway edge:
     // 4: edge is unidirectional
@@ -1198,6 +1275,7 @@ NBRailwayTopologyAnalyzer::extendDirectionPriority(NBEdgeCont& ec, bool fromUniD
             if (fromUniDir) {
                 if (!edge->isBidiRail()) {
                     edge->setPriority(4);
+                    edge->setRoutingType("4");
                     uni.insert(edge);
                 } else {
                     bidi.insert(edge);
@@ -1280,9 +1358,11 @@ NBRailwayTopologyAnalyzer::extendDirectionPriority(NBEdgeCont& ec, bool fromUniD
         }
         if (edge->getPriority() < 0) {
             edge->setPriority(prio);
+            edge->setRoutingType(toString(prio));
         }
         if (bidiEdge != nullptr && bidiEdge->getPriority() < 0) {
             bidiEdge->setPriority(bidiPrio);
+            bidiEdge->setRoutingType(toString(bidiPrio));
         }
     }
     std::map<int, int> numPrios;
@@ -1301,13 +1381,19 @@ NBRailwayTopologyAnalyzer::extendDirectionPriority(NBEdgeCont& ec, bool fromUniD
 // ---------------------------------------------------------------------------
 
 int
-NBRailwaySignalGuesser::guessRailSignals(NBEdgeCont& ec, NBPTStopCont& sc) {
+NBRailwaySignalGuesser::guessRailSignals(NBNodeCont& nc, NBEdgeCont& ec, NBPTStopCont& sc, NBDistrictCont& dc) {
     const OptionsCont& oc = OptionsCont::getOptions();
     int addedSignals = 0;
     if (oc.exists("railway.signal.guess.by-stops")) {
         if (oc.getBool("railway.signal.guess.by-stops")) {
+            NBTurningDirectionsComputer::computeTurnDirections(nc, false);
             const double minLength = oc.getFloat("osm.stop-output.length.train");
-            addedSignals += guessByStops(ec, sc, minLength);
+            const bool split = oc.getBool("railway.signal.guess.by-stops.split");
+            if (split) {
+                // needed for finding and splitting bidi-edges
+                NBTurningDirectionsComputer::computeTurnDirections(nc, false);
+            }
+            addedSignals += guessByStops(nc, ec, sc, dc, minLength, split);
         }
     }
     return addedSignals;
@@ -1316,46 +1402,92 @@ NBRailwaySignalGuesser::guessRailSignals(NBEdgeCont& ec, NBPTStopCont& sc) {
 
 bool
 NBRailwaySignalGuesser::canBeSignal(const NBNode* node) {
-    return (node->getType() != SumoXMLNodeType::RAIL_SIGNAL && node->geometryLike());
+    return (node->getType() != SumoXMLNodeType::RAIL_SIGNAL
+            && node->getIncomingEdges().size() >= 1
+            && node->getOutgoingEdges().size() >= 1
+            && (node->getEdges().size() > 2
+                || node->getIncomingEdges().front()->getFromNode() != node->getOutgoingEdges().front()->getToNode()));
 }
 
+
 int
-NBRailwaySignalGuesser::guessByStops(NBEdgeCont& ec, NBPTStopCont& sc, double minLength) {
+NBRailwaySignalGuesser::guessByStops(NBNodeCont& nc, NBEdgeCont& ec, NBPTStopCont& sc, NBDistrictCont& dc, double minLength, bool split) {
+    const double splitOffset = 10;
+    const double splitOffsetSlack = 200;
     int addedSignals = 0;
-    for (auto& item : sc.getStops()) {
-        const NBEdge* stopEdge = ec.retrieve(item.second->getEdgeId());
+    for (const auto& item : sc.getStops()) {
+        NBEdge* stopEdge = ec.retrieve(item.second->getEdgeId());
         if (stopEdge != nullptr && isRailway(stopEdge->getPermissions())) {
             NBNode* to = stopEdge->getToNode();
             if (canBeSignal(to)) {
-                to->reinit(to->getPosition(), SumoXMLNodeType::RAIL_SIGNAL);
-                addedSignals++;
-            }
-            NBNode* from = stopEdge->getFromNode();
-            if (stopEdge->getLoadedLength() >= minLength) {
-                /// XXX should split edge if it is too long
-                if (canBeSignal(from)) {
-                    from->reinit(from->getPosition(), SumoXMLNodeType::RAIL_SIGNAL);
+                const double stopEnd = item.second->getEndPos();
+                if (split && (!to->geometryLike() || stopEdge->getLength() - stopEnd > splitOffsetSlack)) {
+                    const double splitPos = MIN2(stopEnd + 1, MAX2(stopEdge->getLength() - splitOffset, stopEdge->getLength() / 2));
+                    const std::string nodeID = nc.createUnusedID(stopEdge->getID() + "_" + item.first, "#");
+                    NBNode* n = new NBNode(nodeID, stopEdge->getGeometry().positionAtOffset(splitPos), SumoXMLNodeType::RAIL_SIGNAL);
+                    nc.insert(n);
+                    const std::string edgeID = ec.createUnusedID(stopEdge->getID() + "." + toString(int(splitPos)), "#");
+                    const std::string stopEdgeID = stopEdge->getID();
+                    NBEdge* bidi = const_cast<NBEdge*>(stopEdge->getBidiEdge());
+                    if (ec.splitAt(dc, stopEdge, n, stopEdgeID, edgeID, stopEdge->getNumLanes(), stopEdge->getNumLanes())) {
+                        if (bidi != nullptr) {
+                            const std::string edgeID2 = ec.createUnusedID(bidi->getID() + "." + toString(int(splitPos)), "#");
+                            ec.splitAt(dc, bidi, n, edgeID2, bidi->getID(), bidi->getNumLanes(), bidi->getNumLanes());
+                        }
+                        addedSignals++;
+                        item.second->findLaneAndComputeBusStopExtent(stopEdge);
+                        stopEdge = ec.retrieve(stopEdgeID);
+                        NBTurningDirectionsComputer::computeTurnDirectionsForNode(stopEdge->getFromNode(), false);
+                        NBTurningDirectionsComputer::computeTurnDirectionsForNode(stopEdge->getToNode(), false);
+                    }
+                } else {
+                    to->reinit(to->getPosition(), SumoXMLNodeType::RAIL_SIGNAL);
                     addedSignals++;
                 }
-            } else {
-                double searchDist = minLength - stopEdge->getLoadedLength();
-                while (searchDist > 0 && from->geometryLike()) {
-                    for (const NBEdge* in : from->getIncomingEdges()) {
-                        if (in->getFromNode() != stopEdge->getToNode()) {
-                            // found edge that isn't a bidi predecessor
-                            stopEdge = in;
-                            break;
-                        }
-                    }
-                    if (stopEdge->getFromNode() == from) {
-                        // bidi edge without predecessor
+            }
+            NBNode* from = stopEdge->getFromNode();
+            NBEdge* curr = stopEdge;
+            double searchDist = minLength - stopEdge->getLoadedLength();
+            while (searchDist > 0 && from->geometryLike() && from->getType() != SumoXMLNodeType::RAIL_SIGNAL) {
+                for (NBEdge* in : from->getIncomingEdges()) {
+                    if (in->getFromNode() != curr->getToNode()) {
+                        // found edge that isn't a bidi predecessor
+                        curr = in;
                         break;
-                    } else {
-                        from = stopEdge->getFromNode();
                     }
-                    searchDist -= stopEdge->getLoadedLength();
                 }
-                if (searchDist <= 0 && canBeSignal(from)) {
+                if (curr->getFromNode() == from) {
+                    // bidi edge without predecessor
+                    break;
+                } else {
+                    from = curr->getFromNode();
+                }
+                searchDist -= curr->getLoadedLength();
+            }
+            if (canBeSignal(from)) {
+                const double minPos = MIN2(splitOffset, curr->getLength() / 2);
+                const double splitPos = searchDist >= 0
+                                        ? minPos
+                                        : MAX2(minPos, MIN2(item.second->getStartPos(), -searchDist - 10));
+                if (split && (!from->geometryLike() || splitPos > splitOffsetSlack)) {
+                    const std::string nodeID = nc.createUnusedID(curr->getID() + "_" + item.first, "#");
+                    NBNode* n = new NBNode(nodeID, curr->getGeometry().positionAtOffset(splitPos), SumoXMLNodeType::RAIL_SIGNAL);
+                    nc.insert(n);
+                    const std::string edgeID = ec.createUnusedID(curr->getID() + "." + toString(int(splitPos)), "#");
+                    const std::string currID = curr->getID();
+                    NBEdge* bidi = const_cast<NBEdge*>(curr->getBidiEdge());
+                    if (ec.splitAt(dc, curr, n, edgeID, curr->getID(), curr->getNumLanes(), curr->getNumLanes())) {
+                        if (bidi != nullptr) {
+                            const std::string edgeID2 = ec.createUnusedID(bidi->getID() + "." + toString(int(splitPos)), "#");
+                            ec.splitAt(dc, bidi, n, bidi->getID(), edgeID2, bidi->getNumLanes(), bidi->getNumLanes());
+                        }
+                        addedSignals++;
+                        item.second->findLaneAndComputeBusStopExtent(stopEdge);
+                        curr = ec.retrieve(currID);
+                        NBTurningDirectionsComputer::computeTurnDirectionsForNode(curr->getFromNode(), false);
+                        NBTurningDirectionsComputer::computeTurnDirectionsForNode(curr->getToNode(), false);
+                    }
+                } else {
                     from->reinit(from->getPosition(), SumoXMLNodeType::RAIL_SIGNAL);
                     addedSignals++;
                 }

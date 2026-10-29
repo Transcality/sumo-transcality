@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -45,7 +45,7 @@ GNEChange_DemandElement::GNEChange_DemandElement(GNEDemandElement* demandElement
 
 GNEChange_DemandElement::~GNEChange_DemandElement() {
     // only continue we have undo-redo mode enabled
-    if (myDemandElement->getNet()->getViewNet()->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed()) {
+    if (myDemandElement->getNet()->getGNEApplicationWindow()->isUndoRedoAllowed()) {
         myDemandElement->decRef("GNEChange_DemandElement");
         if (myDemandElement->unreferenced()) {
             // make sure that element isn't in net before removing
@@ -66,10 +66,10 @@ GNEChange_DemandElement::undo() {
         if (mySelectedElement) {
             myDemandElement->unselectAttributeCarrier();
         }
-        // delete demand element from net
-        myDemandElement->getNet()->getAttributeCarriers()->deleteDemandElement(myDemandElement, true);
         // remove element from parent and children
         removeElementFromParentsAndChildren(myDemandElement);
+        // delete demand element from net
+        myDemandElement->getNet()->getAttributeCarriers()->deleteDemandElement(myDemandElement, true);
     } else {
         // select if mySelectedElement is enabled
         if (mySelectedElement) {
@@ -81,15 +81,22 @@ GNEChange_DemandElement::undo() {
         myDemandElement->getNet()->getAttributeCarriers()->insertDemandElement(myDemandElement);
     }
     // update vehicle type selector if demand element is a VType and vehicle type Frame is shown
-    if ((myDemandElement->getTagProperty()->getTag() == SUMO_TAG_VTYPE) && myDemandElement->getNet()->getViewNet()->getViewParent()->getTypeFrame()->shown()) {
-        myDemandElement->getNet()->getViewNet()->getViewParent()->getTypeFrame()->getTypeSelector()->refreshTypeSelector(true);
+    if ((myDemandElement->getTagProperty()->getTag() == SUMO_TAG_VTYPE) && myDemandElement->getNet()->getViewParent()->getTypeFrame()->shown()) {
+        myDemandElement->getNet()->getViewParent()->getTypeFrame()->getTypeSelector()->refreshTypeSelector(true);
     }
-    // update stack labels
+    // update stack labels for parent edges
     const auto parentEdges = myParents.get<GNEEdge*>();
     if (parentEdges.size() > 0) {
         parentEdges.front()->updateVehicleStackLabels();
         parentEdges.front()->updatePersonStackLabels();
         parentEdges.front()->updateContainerStackLabels();
+    }
+    // update stack labels also for route elements
+    if (myDemandElement->getTagProperty()->vehicleRoute()) {
+        const auto firstRouteEdge = myParents.get<GNEDemandElement*>().at(1)->getParentEdges().front();
+        firstRouteEdge->updateVehicleStackLabels();
+        firstRouteEdge->updatePersonStackLabels();
+        firstRouteEdge->updateContainerStackLabels();
     }
     // require always save elements
     myDemandElement->getNet()->getSavingStatus()->requireSaveDemandElements();
@@ -112,21 +119,28 @@ GNEChange_DemandElement::redo() {
         if (mySelectedElement) {
             myDemandElement->unselectAttributeCarrier();
         }
-        // delete demand element from net
-        myDemandElement->getNet()->getAttributeCarriers()->deleteDemandElement(myDemandElement, true);
         // remove element from parent and children
         removeElementFromParentsAndChildren(myDemandElement);
+        // delete demand element from net
+        myDemandElement->getNet()->getAttributeCarriers()->deleteDemandElement(myDemandElement, true);
     }
     // update vehicle type selector if demand element is a VType and vehicle type Frame is shown
-    if ((myDemandElement->getTagProperty()->getTag() == SUMO_TAG_VTYPE) && myDemandElement->getNet()->getViewNet()->getViewParent()->getTypeFrame()->shown()) {
-        myDemandElement->getNet()->getViewNet()->getViewParent()->getTypeFrame()->getTypeSelector()->refreshTypeSelector(true);
+    if ((myDemandElement->getTagProperty()->getTag() == SUMO_TAG_VTYPE) && myDemandElement->getNet()->getViewParent()->getTypeFrame()->shown()) {
+        myDemandElement->getNet()->getViewParent()->getTypeFrame()->getTypeSelector()->refreshTypeSelector(true);
     }
-    // update stack labels
+    // update stack labels for parent edges
     const auto parentEdges = myParents.get<GNEEdge*>();
     if (parentEdges.size() > 0) {
         parentEdges.front()->updateVehicleStackLabels();
         parentEdges.front()->updatePersonStackLabels();
         parentEdges.front()->updateContainerStackLabels();
+    }
+    // update stack labels also for route elements
+    if (myDemandElement->getTagProperty()->vehicleRoute()) {
+        const auto firstRouteEdge = myParents.get<GNEDemandElement*>().at(1)->getParentEdges().front();
+        firstRouteEdge->updateVehicleStackLabels();
+        firstRouteEdge->updatePersonStackLabels();
+        firstRouteEdge->updateContainerStackLabels();
     }
     // require always save elements
     myDemandElement->getNet()->getSavingStatus()->requireSaveDemandElements();

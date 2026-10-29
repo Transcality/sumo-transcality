@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -22,7 +22,6 @@
 #include <config.h>
 
 #include <vector>
-#include <random>
 
 #include "Distribution.h"
 
@@ -40,6 +39,9 @@
 class Distribution_Parameterized : public Distribution {
 
 public:
+    /// @brief Dummy Constructor for a default distribution
+    Distribution_Parameterized();
+
     /// @brief Constructor for any temporary distribution parsed directly from the description
     Distribution_Parameterized(const std::string& description);
 
@@ -81,11 +83,19 @@ public:
     /// @brief check whether the distribution is valid
     const std::string isValid() const;
 
+    bool isDummy() const {
+        return myParameter.empty();
+    }
+
+    bool isVariable() const {
+        return !myParameter.empty() && getMin() != getMax();
+    }
+
     /// @brief Returns the string representation of this distribution
     std::string toStr(std::streamsize accuracy) const;
 
     /// @brief validate input description
-    static bool isValidDescription(const std::string& description);
+    static bool isValidDescription(const std::string& description, std::string& error);
 
 private:
     /// @brief The distribution's parameters

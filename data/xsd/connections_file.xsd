@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
-    <xsd:include schemaLocation="baseTypes.xsd" />
+    <xsd:include schemaLocation="types/base.xsd" />
 
     <xsd:element name="connections" type="connectionsType"/>
 
@@ -48,6 +48,11 @@
         <xsd:attribute name="changeLeft" type="xsd:string" use="optional"/>
         <xsd:attribute name="indirect" type="boolType" use="optional"/>
         <xsd:attribute name="type" type="xsd:string" use="optional"/>
+        <xsd:attribute name="reset" type="boolType" use="optional"/>
+        <!-- attributes for dlr-navteq.plain -->
+        <xsd:attribute name="node" type="xsd:string" use="optional"/>
+        <xsd:attribute name="vehicleTypeCode" type="xsd:string" use="optional"/>
+
     </xsd:complexType>
 
     <xsd:complexType name="prohibitionType">
@@ -82,11 +87,11 @@
         <xsd:attribute name="edges" type="xsd:string" use="optional"/>
         <xsd:attribute name="priority" type="xsd:int" use="optional"/>
         <xsd:attribute name="width" type="positiveFloatType" use="optional"/>
+        <xsd:attribute name="linkIndex" type="xsd:integer" use="optional"/>
+        <xsd:attribute name="linkIndex2" type="xsd:integer" use="optional"/>
         <xsd:attribute name="discard" type="boolType" use="optional"/>
         <xsd:attribute name="shape" type="shapeType" use="optional"/>
         <xsd:attribute name="outlineShape" type="shapeType" use="optional"/>
-        <xsd:attribute name="linkIndex" type="xsd:integer" use="optional"/>
-        <xsd:attribute name="linkIndex2" type="xsd:integer" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="walkingAreaType">

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -99,6 +99,13 @@ class ChargingStationDomain(Domain):
         """
         return self._getUniversal(tc.VAR_CS_CHARGE_IN_TRANSIT, stopID)
 
+    def getTotalPower(self, stopID):
+        """getTotalPower(string) -> double
+
+        Get the total charging power limit for all vehicles.
+        """
+        return self._getUniversal(tc.VAR_CS_TOTAL_POWER, stopID)
+
     def setChargingPower(self, stopID, power):
         """setChargingPower(string, double) -> None
 
@@ -121,8 +128,15 @@ class ChargingStationDomain(Domain):
         self._setCmd(tc.VAR_CS_CHARGE_DELAY, stopID, "d", delay)
 
     def setChargeInTransit(self, stopID, inTransit):
-        """setEfficiency(string, integer) -> None
+        """setChargeInTransit(string, integer) -> None
 
         Sets whether this charging station allows charging while still driving (0=no, 1=yes).
         """
         self._setCmd(tc.VAR_CS_CHARGE_IN_TRANSIT, stopID, "i", inTransit)
+
+    def setTotalPower(self, stopID, totalPower):
+        """setTotalPower(string, double) -> None
+
+        Sets the total charging power limit for all vehicles in this charging station.
+        """
+        self._setCmd(tc.VAR_CS_TOTAL_POWER, stopID, "d", totalPower)

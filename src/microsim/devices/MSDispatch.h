@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2007-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2007-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -74,7 +74,7 @@ struct Reservation {
     {}
 
     std::string id;
-    std::set<const MSTransportable*> persons;
+    std::set<const MSTransportable*, ComparatorNumericalIdLess> persons;
     SUMOTime reservationTime;
     SUMOTime pickupTime;
     SUMOTime earliestPickupTime;
@@ -101,8 +101,10 @@ struct Reservation {
                && line == other.line;
     }
 
-    /// @brief debug identification
-    std::string getID() const;
+    /// @brief for sorting by id
+    std::string getID() const {
+        return id;
+    }
 };
 
 /**
@@ -175,8 +177,13 @@ public:
         return myHasServableReservations;
     }
 
+    virtual SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouter() const;
+
     ///@brief compute time to pick up the given reservation
     static SUMOTime computePickupTime(SUMOTime t, const MSDevice_Taxi* taxi, const Reservation& res, SUMOAbstractRouter<MSEdge, SUMOVehicle>& router);
+
+    ///@brief compute whether the reservation is servable
+    bool isReachable(SUMOTime t, const MSDevice_Taxi* taxi, const Reservation& res, SUMOAbstractRouter<MSEdge, SUMOVehicle>& router);
 
     ///@brief compute directTime and detourTime
     static double computeDetourTime(SUMOTime t, SUMOTime viaTime, const MSDevice_Taxi* taxi,
@@ -190,19 +197,44 @@ public:
     /// @brief whether the last call to computeDispatch has left servable reservations
     bool myHasServableReservations = false;
 
-protected:
+    void swappedRunning(const Reservation* res, MSDevice_Taxi* taxi);
+
+    /** @brief Saves the state of the device
+     *
+     * @param[in] out The OutputDevice to write the information into
+     */
+    virtual void saveState(OutputDevice& out, SUMOTime nextDispatch) const;
+
+    /** @brief Loads the state of the device from the given description
+     *
+     * The default implementation does nothing.
+     * @param[in] attrs XML attributes describing the current state
+     */
+    virtual void loadState(const SUMOSAXAttributes& attrs);
+
     void servedReservation(const Reservation* res, MSDevice_Taxi* taxi);
+
+protected:
 
     /// @brief whether the given taxi has sufficient capacity to serve the reservation
     int remainingCapacity(const MSDevice_Taxi* taxi, const Reservation* res);
 
     // reservations that are currently being served (could still be used during re-dispatch)
-    std::map<std::string, std::map<const Reservation*, MSDevice_Taxi*> > myRunningReservations;
+    std::map<std::string, std::map<const Reservation*, MSDevice_Taxi*, ComparatorIdLess> > myRunningReservations;
 
     /// @brief optional file output for dispatch information
     OutputDevice* myOutput;
 
     int myReservationCount;
+
+    /// @brief the duration before canceling unreachable reservations
+    SUMOTime myKeepUnreachableResTime;
+
     std::map<std::string, std::vector<Reservation*> > myGroupReservations;
 
+    /// @brief which router/edge weights to use
+    const int myRoutingMode;
+
+    /// @brief reservations loaded from state
+    std::map<std::string, std::string> myLoadedReservations;
 };

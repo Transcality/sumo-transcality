@@ -40,8 +40,14 @@ car_walk_arrivalpos
 # car and walk possible with departPos > 0
 car_walk_departPos
 
+# see #17178
+car_with_busStop
+
 # public transport and walk possible
 public_walk
+
+# public transport with distict stop sequences that have the same line id
+public_walk_ambiguous_line
 
 # public transport and walk possible
 public_walk_singleveh
@@ -223,4 +229,7 @@ pt_looped_need_transfer
 # 
 # the passenger must switch between two trains running on the same line
 pt_looped_need_transfer2
+
+# Copy of basic
+max-traveltime
 errors

@@ -35,7 +35,7 @@ figure).
 
 ![TimelineToC.png](images/TimelineToC.png "Timeline ToC")
 
-*Figure 1: Timeline of a ToC as modelled by the ToC Device*
+*Figure 1: Timeline of a ToC as modeled by the ToC Device*
 
 ## Configuration
 
@@ -92,7 +92,7 @@ performed during the ToC preparation phase.
 
 To induce a switch between the manual and automated vehicle types, the
 user has to issue a take-over request (TOR) via
-[TraCI](TraCI.md). The corresponding command is (here exemplary
+[TraCI](TraCI/index.md). The corresponding command is (here exemplary
 for the python client)
 
 ```python

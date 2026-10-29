@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -296,6 +296,7 @@ public:
     }
     ///@}
 
+    virtual void updateMesoGUISegments() {}
 
     /// @name interaction with MSMoveReminder
     /// @{
@@ -439,7 +440,7 @@ public:
      * @param[in] allowCached Whether the cached value may be used
      * @return Information about the last vehicles
      */
-    const MSLeaderInfo getLastVehicleInformation(const MSVehicle* ego, double latOffset, double minPos = 0, bool allowCached = true) const;
+    const MSLeaderInfo getLastVehicleInformation(const MSVehicle* ego, double latOffset, double minPos = 0, bool allowCached = true, const MSVehicle* ignore = nullptr) const;
 
     /// @brief analogue to getLastVehicleInformation but in the upstream direction
     const MSLeaderInfo getFirstVehicleInformation(const MSVehicle* ego, double latOffset, bool onlyFrontOnLane, double maxPos = std::numeric_limits<double>::max(), bool allowCached = true) const;
@@ -572,17 +573,26 @@ public:
      * @return This lane's resulting max. speed
      */
     inline double getVehicleMaxSpeed(const SUMOTrafficObject* const veh) const {
+        return getVehicleMaxSpeed(veh, veh->getMaxSpeed());
+    }
+
+
+    inline double getVehicleMaxSpeed(const SUMOTrafficObject* const veh, double vehMaxSpeed) const {
         if (myRestrictions != nullptr) {
             std::map<SUMOVehicleClass, double>::const_iterator r = myRestrictions->find(veh->getVClass());
             if (r != myRestrictions->end()) {
-                if (mySpeedByVSS || mySpeedByTraCI) {
-                    return MIN2(myMaxSpeed, MIN2(veh->getMaxSpeed(), r->second * veh->getChosenSpeedFactor()));
+                if (mySpeedModified) {
+                    return MIN2(myMaxSpeed, MIN2(vehMaxSpeed, r->second * veh->getChosenSpeedFactor()));
                 } else {
-                    return MIN2(veh->getMaxSpeed(), r->second * veh->getChosenSpeedFactor());
+                    return MIN2(vehMaxSpeed, r->second * veh->getChosenSpeedFactor());
                 }
             }
         }
-        return MIN2(veh->getMaxSpeed(), myMaxSpeed * veh->getChosenSpeedFactor());
+        return MIN2(vehMaxSpeed, myMaxSpeed * veh->getChosenSpeedFactor());
+    }
+
+    inline bool isSpeedModified() const {
+        return mySpeedModified;
     }
 
 
@@ -592,6 +602,22 @@ public:
     inline double getSpeedLimit() const {
         return myMaxSpeed;
     }
+
+
+    inline double getSpeedLimit(SUMOVehicleClass svc) const {
+        if (myRestrictions != nullptr) {
+            std::map<SUMOVehicleClass, double>::const_iterator r = myRestrictions->find(svc);
+            if (r != myRestrictions->end()) {
+                if (mySpeedModified) {
+                    return MIN2(myMaxSpeed, r->second);
+                } else {
+                    return r->second;
+                }
+            }
+        }
+        return myMaxSpeed;
+    }
+
 
     /** @brief Returns the lane's friction coefficient
     * @return This lane's friction coefficient
@@ -681,7 +707,7 @@ public:
      *
      * This method goes through all vehicles calling their executeMove method
      * which causes vehicles to update their positions and speeds.
-     * Vehicles wich move to the next lane are stored in the targets lane buffer
+     * Vehicles which move to the next lane are stored in the targets lane buffer
      *
      * @return Returns true, if all vehicles left the lane.
      *
@@ -701,7 +727,7 @@ public:
     ///@}
 
 
-    /// @brief short-circut collision check if nothing changed since the last check
+    /// @brief short-circuit collision check if nothing changed since the last check
     inline bool needsCollisionCheck() const {
         return myNeedsCollisionCheck;
     }
@@ -741,12 +767,12 @@ public:
         return myVehicles.empty();
     }
 
-    /** @brief Sets a new maximum speed for the lane (used by TraCI and MSCalibrator)
+    /** @brief Sets a new maximum speed for the lane (used by TraCI, MSLaneSpeedTrigger (VSS) and MSCalibrator)
      * @param[in] val the new speed in m/s
-     * @param[in] whether a variable speed sign (VSS) imposes the speed limit
-     * @param[in] whether TraCI imposes the speed limit
+     * @param[in] modified whether this modifies the original speed
+     * @param[in] jamThreshold also set a new jamThreshold
      */
-    void setMaxSpeed(double val, bool byVSS = false, bool byTraCI = false, double jamThreshold = -1);
+    void setMaxSpeed(const double val, const bool modified = true, const double jamThreshold = -1);
 
     /** @brief Sets a new friction coefficient for the lane [*to be later (used by TraCI and MSCalibrator)*]
     * @param[in] val the new friction coefficient [0..1]
@@ -765,6 +791,8 @@ public:
         return *myEdge;
     }
 
+    const MSJunction* getFromJunction() const;
+    const MSJunction* getToJunction() const;
 
     /** @brief Returns the lane's follower if it is an internal lane, the edge of the lane otherwise
      * @return This lane's follower
@@ -875,6 +903,9 @@ public:
     /** Returns whether the lane pertains to a crossing edge*/
     bool isCrossing() const;
 
+    /** Returns whether the lane pertains to a crossing edge*/
+    bool isPriorityCrossing() const;
+
     /** Returns whether the lane pertains to a walkingarea*/
     bool isWalkingArea() const;
 
@@ -956,7 +987,7 @@ public:
     inline bool isApproachedFrom(MSEdge* const edge) {
         return myApproachingLanes.find(edge) != myApproachingLanes.end();
     }
-    bool isApproachedFrom(MSEdge* const edge, MSLane* const lane);
+    bool isApproachedFrom(MSLane* const lane, SUMOVehicleClass svc);
 
     /// @brief Returns vehicle class specific stopOffset for the vehicle
     double getVehicleStopOffset(const MSVehicle* veh) const;
@@ -978,7 +1009,7 @@ public:
 
     /// @brief return the sublane followers with the largest missing rear gap among all predecessor lanes (within dist)
     MSLeaderDistanceInfo getFollowersOnConsecutive(const MSVehicle* ego, double backOffset,
-            bool allSublanes, double searchDist = -1, MinorLinkMode mLinkMode = FOLLOW_ALWAYS) const;
+            bool allSublanes, double searchDist = -1, MinorLinkMode mLinkMode = FOLLOW_ALWAYS, bool maxSearchDist = false) const;
 
     /// @brief return by how much further the leader must be inserted to avoid rear end collisions
     double getMissingRearGap(const MSVehicle* leader, double backOffset, double leaderSpeed) const;
@@ -1080,7 +1111,7 @@ public:
     /// @brief Returns all upcoming links within given range along the given (non-internal) continuation lanes measured from given position
     std::vector<const MSLink*> getUpcomingLinks(double pos, double range, const std::vector<MSLane*>& contLanes) const;
 
-    /** @brief get the most likely precedecessor lane (sorted using by_connections_to_sorter).
+    /** @brief get the most likely predecessor lane (sorted using by_connections_to_sorter).
      * The result is cached in myLogicalPredecessorLane
      */
     MSLane* getLogicalPredecessorLane() const;
@@ -1241,7 +1272,7 @@ public:
      * @param[in] ignoreMinorLinks Whether backward search should stop at minor links
      * @return the follower vehicle and its gap to ego
      */
-    std::pair<MSVehicle* const, double> getFollower(const MSVehicle* ego, double egoPos, double dist, MinorLinkMode mLinkMode) const;
+    std::pair<MSVehicle* const, double> getFollower(const MSVehicle* ego, double egoPos, double dist, MinorLinkMode mLinkMode, bool maxSearchDist = false) const;
 
 
     ///@brief add parking vehicle. This should only used during state loading
@@ -1362,6 +1393,15 @@ public:
         return myIntermodalCollisionAction;
     }
 
+    static DepartSpeedDefinition& getDefaultDepartSpeedDefinition() {
+        return myDefaultDepartSpeedDefinition;
+    }
+
+    static double& getDefaultDepartSpeed() {
+        return myDefaultDepartSpeed;
+    }
+
+
     static const long CHANGE_PERMISSIONS_PERMANENT = 0;
     static const long CHANGE_PERMISSIONS_GUI = 1;
 
@@ -1431,6 +1471,12 @@ protected:
 
     /// @brief return length of fractional vehicles on this lane
     double getFractionalVehicleLength(bool brutto) const;
+
+    /// @brief whether the route of the give vehicle might be extended on insertion
+    bool mayContinue(const MSVehicle* veh) const;
+
+    /// @brief whether any link from this lane is unsafe
+    bool hasUnsafeLink() const;
 
     /// @brief detect frontal collisions
     static bool isFrontalCollision(const MSVehicle* collider, const MSVehicle* victim);
@@ -1512,11 +1558,8 @@ protected:
     /// Lane-wide friction coefficient [0..1]
     double myFrictionCoefficient;
 
-    /// @brief Whether the current speed limit is set by a variable speed sign (VSS)
-    bool mySpeedByVSS;
-
-    /// @brief Whether the current speed limit has been set through TraCI
-    bool mySpeedByTraCI;
+    /// @brief Whether the current speed limit is set by a variable speed sign (VSS), TraCI or a MSCalibrator
+    bool mySpeedModified;
 
     /// The vClass permissions for this lane
     SVCPermissions myPermissions;
@@ -1607,6 +1650,11 @@ protected:
     /// definition of the static dictionary type
     typedef std::map< std::string, MSLane* > DictType;
 
+#ifdef HAVE_FOX
+    /// @brief Mutex for access to the cached follower info value
+    mutable FXMutex myPartialOccupatorMutex;
+#endif
+
     /// Static dictionary to associate string-ids with objects.
     static DictType myDict;
 
@@ -1625,7 +1673,8 @@ private:
     static SUMOTime myIntermodalCollisionStopTime;
     static double myCollisionMinGapFactor;
     static bool myExtrapolateSubstepDepart;
-
+    static DepartSpeedDefinition myDefaultDepartSpeedDefinition;
+    static double myDefaultDepartSpeed;
     /**
      * @class vehicle_position_sorter
      * @brief Sorts vehicles by their position (descending)
@@ -1775,8 +1824,6 @@ private:
     mutable FXMutex myLeaderInfoMutex;
     /// @brief Mutex for access to the cached follower info value
     mutable FXMutex myFollowerInfoMutex;
-    /// @brief Mutex for access to the cached follower info value
-    mutable FXMutex myPartialOccupatorMutex;
 #endif
     std::vector<StopWatch<std::chrono::nanoseconds> > myStopWatch;
 

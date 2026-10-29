@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -30,14 +30,14 @@ import sumolib  # noqa
 
 try:
     sumoBinary = sumolib.checkBinary('sumo')
-    traci.start([sumoBinary, "-c", "sumo.sumocfg"])
+    traci.start([sumoBinary, "-c", "sumo.sumocfg"] + sys.argv[1:])
     conn = traci.getConnection('default')
     conn.simulationStep()
     conn.close()
-    traci.start([sumoBinary, "-c", "sumo.sumocfg"])
+    traci.start([sumoBinary, "-c", "sumo.sumocfg"] + sys.argv[1:])
     traci.close()
-    traci.start([sumoBinary, "-c", "sumo.sumocfg"], label="2nd")
+    traci.start([sumoBinary, "-c", "sumo.sumocfg"] + sys.argv[1:], label="2nd")
     traci.close()
-    traci.start([sumoBinary, "-c", "sumo.sumocfg"], label="2nd")
+    traci.start([sumoBinary, "-c", "sumo.sumocfg"] + sys.argv[1:], label="2nd")
 finally:
     traci.close()

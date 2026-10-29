@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-04-02 14:11:34 by Eclipse SUMO netconvert Version v1_19_0+1620-8aaf8f08ffd
+<!-- generated on 2026-02-26T09:08:27.891043+01:00 by Eclipse SUMO netconvert v1_26_0+0334-fe2209085d0
 This data file and the accompanying materials
 are made available under the terms of the Eclipse Public License v2.0
 which accompanies this distribution, and is available at
@@ -11,10 +11,10 @@ Public License 2.0 are satisfied: GNU General Public License, version 2
 or later which is available at
 https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html
 SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
-<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+<netconvertConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
     <input>
-        <osm-files value="osm.xml"/>
+        <osm-files value="osm2.xml"/>
     </input>
 
     <output>
@@ -46,7 +46,7 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
         <xml-validation value="never"/>
     </report>
 
-</configuration>
+</netconvertConfiguration>
 -->
 
 <edges version="1.20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/edges_file.xsd">
@@ -81,9 +81,9 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
     <edge id="27445019" from="294831566" to="294168710" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="566.45,321.65 585.57,339.15" allow="pedestrian delivery bicycle"/>
     <edge id="27445020" from="294169339" to="294831566" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="544.28,302.42 558.41,308.54" allow="pedestrian delivery bicycle"/>
     <edge id="27445021" from="294169342" to="294169339" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="495.08,307.55 510.49,306.01 544.28,302.42" allow="pedestrian delivery bicycle"/>
-    <edge id="27445022" from="294830184" to="294829881" priority="1" type="highway.service" numLanes="1" speed="5.56" allow="pedestrian delivery bicycle"/>
-    <edge id="27445023" from="294830188" to="294830184" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="970.58,476.14 943.81,451.65 921.09,477.93" allow="pedestrian delivery bicycle"/>
-    <edge id="27445024" from="294830184" to="294830188" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="921.09,477.93 945.99,501.67 970.58,476.14" allow="pedestrian delivery bicycle"/>
+    <edge id="27445022" from="294830184" to="294829881" priority="1" type="highway.service" routingType="narrow" numLanes="1" speed="5.56" width="1.60" allow="pedestrian delivery bicycle"/>
+    <edge id="27445023" from="294830188" to="294830184" priority="1" type="highway.service" routingType="narrow" numLanes="1" speed="5.56" shape="970.58,476.14 943.81,451.65 921.09,477.93" width="1.60" allow="pedestrian delivery bicycle"/>
+    <edge id="27445024" from="294830184" to="294830188" priority="1" type="highway.service" routingType="narrow" numLanes="1" speed="5.56" shape="921.09,477.93 945.99,501.67 970.58,476.14" width="1.60" allow="pedestrian delivery bicycle"/>
     <edge id="27445025" from="294831560" to="294169339" priority="1" type="highway.service" numLanes="1" speed="5.56" allow="pedestrian delivery bicycle"/>
     <edge id="27445026" from="294831562" to="294831560" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="501.77,245.17 539.68,243.24 543.50,292.50" allow="pedestrian delivery bicycle"/>
     <edge id="27445027" from="294831560" to="294831562" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="543.50,292.50 505.71,295.17 501.77,245.17" allow="pedestrian delivery bicycle"/>
@@ -159,15 +159,15 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
     <edge id="27445097" from="294168710" to="294831566" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="585.57,339.15 566.45,321.65" allow="pedestrian delivery bicycle"/>
     <edge id="27445098" from="294831566" to="294169339" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="558.41,308.54 544.28,302.42" allow="pedestrian delivery bicycle"/>
     <edge id="27445099" from="294169339" to="294169342" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="544.28,302.42 510.49,306.01 495.08,307.55" allow="pedestrian delivery bicycle"/>
-    <edge id="27445100" from="294829881" to="294830184" priority="1" type="highway.service" numLanes="1" speed="5.56" allow="pedestrian delivery bicycle"/>
-    <edge id="27445101" from="294830184" to="294830188" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="921.09,477.93 943.81,451.65 970.58,476.14" allow="pedestrian delivery bicycle"/>
-    <edge id="27445102" from="294830188" to="294830184" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="970.58,476.14 945.99,501.67 921.09,477.93" allow="pedestrian delivery bicycle"/>
+    <edge id="27445100" from="294829881" to="294830184" priority="1" type="highway.service" routingType="narrow" numLanes="1" speed="5.56" width="1.60" allow="pedestrian delivery bicycle"/>
+    <edge id="27445101" from="294830184" to="294830188" priority="1" type="highway.service" routingType="narrow" numLanes="1" speed="5.56" shape="921.09,477.93 943.81,451.65 970.58,476.14" width="1.60" allow="pedestrian delivery bicycle"/>
+    <edge id="27445102" from="294830188" to="294830184" priority="1" type="highway.service" routingType="narrow" numLanes="1" speed="5.56" shape="970.58,476.14 945.99,501.67 921.09,477.93" width="1.60" allow="pedestrian delivery bicycle"/>
     <edge id="27445103" from="294169339" to="294831560" priority="1" type="highway.service" numLanes="1" speed="5.56" allow="pedestrian delivery bicycle"/>
     <edge id="27445104" from="294831560" to="294831562" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="543.50,292.50 539.68,243.24 501.77,245.17" allow="pedestrian delivery bicycle"/>
     <edge id="27445105" from="294831562" to="294831560" priority="1" type="highway.service" numLanes="1" speed="5.56" shape="501.77,245.17 505.71,295.17 543.50,292.50" allow="pedestrian delivery bicycle"/>
     <edge id="27445106" from="38918157" to="294831568" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="1" speed="22.22" shape="1068.74,767.39 1041.64,740.05 984.17,684.68 957.65,657.32 939.78,639.63 926.70,628.25 908.96,616.96 891.80,605.66" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
-    <edge id="27445107" from="294831568" to="294831563" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="1" speed="22.22" shape="891.80,605.66 803.74,552.14 766.37,525.27" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
-    <edge id="27445108" from="294831563" to="38919668" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="2" speed="22.22" shape="765.43,526.57 732.30,502.75 684.86,467.31" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
+    <edge id="27445107" from="294831568" to="294831563" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="1" speed="22.22" shape="891.80,605.66 803.74,552.14 766.37,525.28" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
+    <edge id="27445108" from="294831563" to="38919668" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="2" speed="22.22" shape="765.44,526.58 732.29,502.75 684.86,467.31" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
     <edge id="27445109" from="38919668" to="38919703" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="1" speed="22.22" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
     <edge id="27445110" from="38919703" to="294831571" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="1" speed="22.22" shape="664.49,450.74 650.91,443.45 614.99,427.87" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>
     <edge id="27445111" from="294831571" to="294831567" name="Rudower Chaussee" priority="10" type="highway.tertiary" numLanes="1" speed="22.22" shape="614.99,427.87 497.67,399.45" spreadType="center" disallow="tram rail_urban rail rail_electric rail_fast ship container cable_car subway aircraft wheelchair scooter drone"/>

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <vector>
+#include <queue>
 #include <map>
 #include <utils/common/SUMOTime.h>
 #include <microsim/MSMoveReminder.h>
@@ -35,7 +36,6 @@ class MSEdge;
 class MSLink;
 class MSVehicleControl;
 class OptionsCont;
-
 
 // ===========================================================================
 // class definitions
@@ -63,14 +63,15 @@ public:
      *
      * @param[in] veh the car which became a leading one
      * @param[in] link the link on which the car shall register its approach
+     * @param[in] fromState whether the event is restored from a loaded state (keeping the vehicle's event index)
      */
-    void addLeaderCar(MEVehicle* veh, MSLink* link);
+    void addLeaderCar(MEVehicle* veh, MSLink* link, const bool fromState = false);
 
     /** @brief Removes the given car from the leading vehicles
      *
      * @param[in] v the car which was a leading one
      */
-    bool removeLeaderCar(MEVehicle* v);
+    void removeLeaderCar(MEVehicle* v);
 
     /** @brief remove the given car and clean up the relevant data structures */
     void vaporizeCar(MEVehicle* v, MSMoveReminder::Notification reason);
@@ -86,12 +87,6 @@ public:
      * @param[in] e the edge to build for
      */
     void buildSegmentsFor(const MSEdge& e, const OptionsCont& oc);
-
-    /** @brief Update segments after loading meso edge type parameters from
-     * additional file
-     * @param[in] e the edge to update
-     */
-    void updateSegmentsForEdge(const MSEdge& e);
 
     /** @brief Get the segment for a given edge at a given position
      *
@@ -110,6 +105,15 @@ public:
 
     /** @brief Remove all vehicles before quick-loading state */
     void clearState();
+
+    /// @brief the number of leader events so far (for saving and loading state)
+    static long long int getEventCounter() {
+        return LeaderEvent::myEventCounter;
+    }
+
+    static void setEventCounter(long long int counter) {
+        LeaderEvent::myEventCounter = counter;
+    }
 
 private:
     /** @brief Check whether the vehicle may move
@@ -142,8 +146,39 @@ private:
     void teleportVehicle(MEVehicle* veh, MESegment* const toSegment, bool disconnected);
 
 private:
+
+    struct LeaderEvent {
+        LeaderEvent(MEVehicle* v);
+
+        SUMOTime time;
+        // eventIndex ensures stable sorting of vehicles with the same event time
+        long long int eventIndex;
+        // nid allows safely comparing events for deleted vehicles (myInvalidatedLeaderCars)
+        long long int nid;
+        MEVehicle* veh;
+
+        bool operator<(const LeaderEvent& b) const {
+            if (time == b.time) {
+                return eventIndex > b.eventIndex;
+            }
+            return time > b.time;
+        }
+
+        bool operator==(const LeaderEvent& b) const {
+            return time == b.time && nid == b.nid;
+        }
+
+        static long long int myEventCounter;
+    };
+
+    /// @brief check whether the current car was invalidated and remove it from myInvalidatedLeaderCars
+    bool wasInvalidated(const LeaderEvent& e);
+
+
     /// @brief leader cars in the segments sorted by exit time
-    std::map<SUMOTime, std::vector<MEVehicle*> > myLeaderCars;
+    typedef std::priority_queue<LeaderEvent> LeaderEventQeue;
+    LeaderEventQeue myLeaderCars;
+    LeaderEventQeue myInvalidatedLeaderCars;
 
     /// @brief mapping from internal edge ids to their initial segments
     std::vector<MESegment*> myEdges2FirstSegments;

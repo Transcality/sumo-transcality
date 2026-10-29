@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -34,9 +34,6 @@
 #include <mesosim/MESegment.h>
 #include "MSRouteProbe.h"
 
-// ===========================================================================
-// static members
-// ===========================================================================
 
 // ===========================================================================
 // method definitions
@@ -66,12 +63,14 @@ MSRouteProbe::MSRouteProbe(const std::string& id, const MSEdge* edge, const std:
 MSRouteProbe::~MSRouteProbe() {
 }
 
+
 void
 MSRouteProbe::clearState(SUMOTime step) {
     UNUSED_PARAMETER(step);
     myCurrentRouteDistribution = nullptr;
     myLastRouteDistribution = nullptr;
 }
+
 
 void
 MSRouteProbe::initDistributions() {
@@ -84,6 +83,7 @@ MSRouteProbe::initDistributions() {
         myLastRouteDistribution = MSRoute::distDictionary(myLastID);
     }
 }
+
 
 bool
 MSRouteProbe::notifyEnter(SUMOTrafficObject& veh, MSMoveReminder::Notification reason, const MSLane* /* enteredLane */) {
@@ -105,20 +105,12 @@ void
 MSRouteProbe::writeXMLOutput(OutputDevice& dev,
                              SUMOTime startTime, SUMOTime stopTime) {
     if (myCurrentRouteDistribution && myCurrentRouteDistribution->getOverallProb() > 0) {
-        dev.openTag("routeDistribution") << " id=\"" << getID() + "_" + time2string(startTime) << "\"";
+        dev.openTag(SUMO_TAG_ROUTE_DISTRIBUTION).writeAttr(SUMO_ATTR_ID, getID() + "_" + time2string(startTime, false));
         const std::vector<ConstMSRoutePtr>& routes = myCurrentRouteDistribution->getVals();
         const std::vector<double>& probs = myCurrentRouteDistribution->getProbs();
         for (int j = 0; j < (int)routes.size(); ++j) {
-            ConstMSRoutePtr r = routes[j];
-            dev.openTag("route") << " id=\"" << r->getID() + "_" + time2string(startTime) << "\" edges=\"";
-            for (MSRouteIterator i = r->begin(); i != r->end(); ++i) {
-                if (i != r->begin()) {
-                    dev << " ";
-                }
-                dev << (*i)->getID();
-            }
-            dev << "\" probability=\"" << probs[j] << "\"";
-            dev.closeTag();
+            dev.openTag(SUMO_TAG_ROUTE).writeAttr(SUMO_ATTR_ID, routes[j]->getID() + "_" + time2string(startTime, false))
+            .writeAttr(SUMO_ATTR_EDGES, toString(routes[j]->getEdges())).writeAttr(SUMO_ATTR_PROB, probs[j]).closeTag();
         }
         dev.closeTag();
         if (myLastRouteDistribution != 0) {

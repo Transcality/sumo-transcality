@@ -113,6 +113,7 @@ The attributes used within such definitions are:
 | **id**         | id (string)             | The id of the closed edge; the id must be the id of an edge within the network                                                                                                                                             |
 | allow          | list of vehicle classes | The (optional) ' '-separated list of [vehicle classes](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#abstract_vehicle_class) which are still allowed to drive on the closed edge. All others are forbidden. |
 | disallow       | list of vehicle classes | The (optional) ' '-separated list of [vehicle classes](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#abstract_vehicle_class) which are forbidden from driving on the closed edge. All others are allowed.   |
+| until       | time | optional estimated end time of the closing. Vehicles will stay on their old route and wait if a detour would take more time than waiting for the closing to end. |
 
 When using a `<closingReroute>` without attributes `allow` and `disallow`, vehicles that cannot reach their
 destination by an alternative route simply continue on their old route
@@ -123,7 +124,13 @@ until the defined interval ends. This may be used to simulate traffic
 jams, caused by spontaneous road closing.
 
 !!! caution
-      When using modified permissions, it may be necessary to use the option **--ignore-route-errors** as vehicles which are inserted while the closing is active may raise a route error otherwise. Furthermore, permissions may cause emergency braking. This can be mitigated by placing [VariableSpeedSigns](../Simulation/Variable_Speed_Signs.md) ahead of the closing and slowing down traffic briefly before the closing.
+      When using modified permissions, one of the options **--ignore-route-errors** or **--device.rerouting-mode 8** must be set. Otherwise, vehicles which are inserted while the closing is active may raise a route error. Ignoring all route errors runs the risk of masking problems that are not related to rerouters, and thus mode=8 is recommended. It is also possible to set the rerouting mode with [generic parameters](GenericParameters.md).
+
+!!! caution
+    When using modified permissions together with option/param **device.rerouting.mode=8**, there should be at most one rerouter definition at any one time in the simulation that contains all closings. Otherwise vehicles may loop endlessly between two closed edges (because all closings other than the current rerouter are ignored).
+
+!!! note
+    Closing lanes or edges by setting attribute 'allow' or 'disallow' may cause emergency braking. This can be mitigated by placing [VariableSpeedSigns](../Simulation/Variable_Speed_Signs.md) ahead of the closing and slowing down traffic briefly before the closing.
 
 ## Closing a Lane
 
@@ -162,15 +169,18 @@ The attributes used within such definitions are:
 Two `closingLaneReroute` definitions may be used to simulate a reversible lane in the following way:
 
 - Define two edges in reverse directions with at least 2 lanes each
-- [prohibit driving on one of the central lanes](../Netedit/editModesCommon.md#inspecting_lanes) (disallow="all")
--  and modify the edge geometry so that the central lanes occupy the same space.
+- and modify the edge geometry so that the central lanes occupy the same space.
   - by shifting geometry of [both edges sideways (-1.6 for default lane width)](../Netedit/editModesCommon.md#frame_operation)
   - or by [setting the geometry directly](../Netedit/neteditUsageExamples.md#specifying_the_complete_geometry_of_an_edge_including_endpoints)
 
-To change their direction for a specific duration, the following rerouter may be used:
+Use a rerouter interval to prohibit one direction of the central overlapping lanes and then further intervals to change the direction:
 
 ```xml
 <rerouter id="example" edges="E1 -E1">
+     <interval begin="0:0:0" end="7:00:0">
+            <closingLaneReroute id="E1_1" disallow="all"/>
+            <closingLaneReroute id="-E1_1" allow="all"/>
+      </interval>
       <interval begin="7:0:0" end="8:30:0">
             <closingLaneReroute id="E1_1" allow="all"/>
             <closingLaneReroute id="-E1_1" disallow="all"/>
@@ -181,6 +191,9 @@ To change their direction for a specific duration, the following rerouter may be
 
 Alternatively to changing lane permissions with a rerouter, the traci functions [`traci.lane.setAllowed` and `setDisallowed`](../TraCI/Change_Lane_State.md) may also be used.
 
+!!! caution
+    When using rerouters to extend the original permissions of a network (allowing more vehicles than permitted by default) requires explicit handling of [internal edges](Intersections.md#internal_links). For this reason it is easier to allow both lanes in the network and set the initial restriction with a rerouter.
+    
 ## Assigning a new Destination
 
 A "destProbReroute" forces the rerouter to assign a new route to
@@ -222,13 +235,55 @@ The attributes used within a destProbReroute are:
 | **probability** | float (should be between 0 and 1) | The probability with which a vehicle will use the given edge as destination; the probabilities are automatically normalized to sum to 1             |
 
 !!! note
-      It is possible to combine **closingReroute** and **destProbReroute** within the same interval. In this case, only vehicles which cannot reach their original destination draw new destinations from the probability distribution.
+      It is possible to combine **closingReroute** and **destProbReroute** within the same interval. In this case, only vehicles which cannot reach their original destination (because it is closed or disconnected by the closing) draw new destinations from the probability distribution. Alternative destinations will be drawn until a reachable destination is found or the special value `terminateRoute` (see below) is drawn. The latter will force the vehicle to wait before the closed edge until the closing ends.
 
 ### Special Destination Values
 
 - *keepDestination*: the vehicle continues on its current route
 - *terminateRoute*: the vehicle immediately leaves the simulation and
    counts as arrived at its current position on the rerouter edge
+
+## Assigning an intermediate waypoint
+
+A "viaProbReroute" forces the rerouter to assign an intermediate (via) edge to
+vehicles that pass one of the edges defined in the edges-attribute of
+the rerouter's declaration. A probability distribution of multiple via edges is defined as follows (only one will be chosen per vehicle):
+
+```xml
+<rerouter>
+   <interval begin="<BEGIN_TIME>" end="<END_TIME>">
+      <viaProbReroute id="<EDGE_ID1>" probability="<PROBABILITY1>"/>
+      <viaProbReroute id="<EDGE_ID2>" probability="<PROBABILITY2>"/>
+   </interval>
+
+   ... further intervals ...
+
+</rerouter>
+```
+
+The fastest route is computed automatically using the Dijkstra-algorithm
+and starting at the edge the vehicle is located at, to the chosen via edge and ending at the original destination.
+The following travel times are considered for routing (the
+first applicable value is used):
+
+- the current (smoothed) travel times in the network are used if the
+   vehicle is equipped with a [rerouting
+   device](../Demand/Automatic_Routing.md)
+- subjective edge costs for the current vehicle if set via [TraCI
+   command *change edge travel time
+   information*](../TraCI/Change_Vehicle_State.md#change_edge_travel_time_information_0x58)
+- edge weights loaded via the [sumo](../sumo.md) option **--weight-files**
+- travel times in the empty network
+
+The attributes used within a viaProbReroute are:
+
+| Attribute Name  | Value Type                        | Description                                                                                                                                         |
+| --------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **id**          | id (string)                       | The id of the via edge; the id must be the id of an edge within the network |
+| **probability** | float (should be between 0 and 1) | The probability with which a vehicle will use the given edge as intermediate waypoint; the probabilities are automatically normalized to sum to 1   |
+
+!!! note
+      It is possible to combine **closingReroute** and **viaProbReroute** within the same interval. In this case, only vehicles which cannot use their original route because it passed one of the closed edges draw a via edge from the probability distribution.
 
 ## Assigning a new Route
 
@@ -356,6 +411,10 @@ Parameter Name         | Default value | Description                            
 | parking.frustration  | 100           | increases the preference for visibly free parkingAreas over time (after x unsuccessful parkingAreaReroutes, targets with unknown occupancy will assumed to be *almost* full)                                 |
 | parking.knowledge    | 0             | Let driver "guess" the exact occupancy of invisible parkingAreas with probability x                   |
 
+### Reserving a parking space
+
+Whenever a [parkingArea] defines attribute `reservable="true"`, vehicles that reroute to such a parkingArea will reserve a parking space which acts to decrease the remaining capacity of that parkingArea and prevents other vehicles from taking the spot.
+
 ### Destination after rerouting
 
 Generally, vehicles that reroute to a new parking area will continue to
@@ -376,6 +435,59 @@ The current state of the parkingSearch can be accessed via calls to `traci.vehic
 ### Example scenarios for parkingSearch
 
 Test cases can be downloaded [here](https://sumo.dlr.de/extractTest.php?path=sumo/extended/rerouter/parking/parkingSearch)
+
+## Rerouting to a railroad siding to be overtaken by a faster train
+
+```xml
+<rerouter>
+   <interval begin="<BEGIN_TIME>" end="<END_TIME>">
+      <overtakingReroute main="E4 E5 E6" siding="E4b E5b E6b"/>
+   </interval>
+</rerouter>
+```
+
+The attributes used within such definitions are:
+
+| Attribute Name | Value Type              | Description                                                                                                                                                                                                                |
+| -------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **main**       | edge ids (stringList)   | The ids of consecutive edges that a train must take at some point after the rerouter edge to be considered for being overtaken |
+| **siding**     | edge ids (stringList)   | The ids of consecutive edges that will be used instead of the main edges for waiting to be overtaken.    |
+| minSaving      | float                   | The minimum time saving in seconds to trigger an overtaking maneuver (see below for the saving computation)  |
+| defer          | bool                    | Whether a slow train may elect to be overtaking at some downstream location (defaults to *true* if more than one `<overtakingReroute>` element is defined within the rerouter)   |
+
+Requirements for the siding:
+- one of the edges of the saiding must have a rail_signal at it's end
+- the siding must be long enough to accommodate the train being overtaken ahead of the rail signal
+
+Definitions for `<overtakingReroute>` can be created with the tool [createOvertakingReroutes.py](../Tools/Railways.md#createovertakingreroutespy).
+
+### Computing the time saved by an overtaking maneuver
+
+To be overtaken, a train A must be followed by a **faster** train B. Train B may not be delayed by more than a delay threshold. This threshold is configured with [generic param](GenericParameters.md) `key="overtakingReroute.maxDelay"` (default 7200s). The savings computation compares two cases:
+
+1. train A continues along the main track and train B must follow until the routes of A and B diverge. This implies that the speed of train B is reduced to that of train A after train B has caught up.
+2. train B diverges onto the siding and waits until train B has caught up and passed the main edges. Train A can continue at it's full speed and potentially reaches it's destination faster whereas train B must wait at the exit signal of the siding and suffers timeLoss
+
+When comparing both cases, train A may save some time while train B typically loses some time in case 2. The savings and timeLoss are weighted according to the respective train priorities defined with [generic param](GenericParameters.md) `key="overtakingReroute.prio"` (which defaults to *1* for the faster train and to *0.001* for the slower train).
+The net saving is computed as:
+
+```
+netSaving = prioFast * (savingFast - accelTimeLossFast) - prioSlow * (lossSlow + accelTimeLossSlow);
+```
+
+The value of *accelTimeLossFast* is non-zero, only if the faster train reaches the signal block of the slow train before that latter has fully entered the siding. The value of *accelTimeLossSlow* is non-zero if the fast train has not left the main section before the slow train reaches the siding signal (this ignores the impact of the length of the block after the siding).
+
+## Rerouting to an alternative stop of the same station
+
+```xml
+<rerouter>
+   <interval begin="<BEGIN_TIME>" end="<END_TIME>">
+      <stationReroute id="ts_5"/>
+      <stationReroute id="ts_5b"/>
+      <stationReroute id="ts_5c"/>
+   </interval>
+</rerouter>
+```
 
 # Vehicle Behavior when closing a street
 The interaction of vehicles with reroutes is complex and depends on many
@@ -462,3 +574,14 @@ To following effects occur:
 
 When the departure edge for a vehicle is closed, vehicles will ignore this for
 'soft' closing. For a 'hard' closing the simulation will raise an error. If **--ignore-route-errors** is set, the vehicle will be discarded with a warning.
+
+## Skipping stops and optimizing reached stops
+
+When a vehicle reroutes that has one or more remainign stops on it's route, The default behavior is to find a route that reaches all stops. If some stops are unreachable, rerouting fails and the vehicle must wait at the closed edge until the closing ends.
+By setting attribute `priority` in the [stop definitions](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#stops_and_waypoints) of the vehicle, an algorithm that optimizes reachable stops is activated:
+
+- stops with priority >= 0 are skipped if they cannot be reached anymore
+- stops that define attribute `arrival` and which cannot be reached with an arrivalDelay below a configurable threshold (due to the required detour) are skipped. The threshold is configurable with a [generic vehicle param](GenericParameters.md) `key="closingReroute.maxDelay"` and defaults to 7200s
+- the chosen route minimizes the total priority value of all stops that can be reached within the delay threshold
+- stops without priority may never be skipped
+- a warning is issued for every stop that is skipped in this way

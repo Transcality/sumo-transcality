@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2003-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2003-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,10 @@
 #include <utils/gui/globjects/GUIGlObjectStorage.h>
 #include <utils/gui/windows/GUIGlChildWindow.h>
 #include <utils/gui/windows/GUIMainWindow.h>
+#include <utils/gui/windows/GUIAppEnum.h>
+#include <utils/gui/div/GUIDesigns.h>
 #include <utils/gui/div/GUIGlobalSelection.h>
+#include <utils/gui/images/GUIIconSubSys.h>
 #include <fxkeys.h>
 #include "GUIMessageWindow.h"
 
@@ -46,7 +49,10 @@ std::map<std::string, std::string> GUIMessageWindow::myTypeStrings;
 // ===========================================================================
 
 FXDEFMAP(GUIMessageWindow) GUIMessageWindowMap[] = {
-    FXMAPFUNC(SEL_KEYPRESS, 0, GUIMessageWindow::onKeyPress),
+    FXMAPFUNC(SEL_KEYPRESS,           0,                      GUIMessageWindow::onKeyPress),
+    FXMAPFUNC(SEL_RIGHTBUTTONRELEASE, 0,                      GUIMessageWindow::onRightBtnRelease),
+    FXMAPFUNC(SEL_COMMAND,            MID_CLEARMESSAGEWINDOW, GUIMessageWindow::onCmdClear),
+    FXMAPFUNC(SEL_UPDATE,             MID_CLEARMESSAGEWINDOW, GUIMessageWindow::onUpdClear),
 };
 
 FXIMPLEMENT_ABSTRACT(GUIMessageWindow, FXText, GUIMessageWindowMap, ARRAYNUMBER(GUIMessageWindowMap))
@@ -91,8 +97,8 @@ GUIMessageWindow::~GUIMessageWindow() {
 }
 
 
-const GUIGlObject*
-GUIMessageWindow::getActiveStringObject(const FXString& text, const FXint pos, const FXint lineS, const FXint lineE) const {
+bool
+GUIMessageWindow::findObjectTypeID(const FXString& text, const FXint pos, const FXint lineS, const FXint lineE, std::string& id, std::string& type) {
     const FXint idS = MAX2(text.rfind(" '", pos), text.rfind("='", pos));
     const FXint idE = text.find("'", pos);
     if (idS >= 0 && idE >= 0 && idS >= lineS && idE <= lineE) {
@@ -101,20 +107,49 @@ GUIMessageWindow::getActiveStringObject(const FXString& text, const FXint pos, c
             if (text.at(typeS + 1) == '(') {
                 typeS++;
             }
-            std::string type(text.mid(typeS + 1, idS - typeS - 1).lower().text());
+            type = std::string(text.mid(typeS + 1, idS - typeS - 1).lower().text());
             const auto& tsIt = myTypeStrings.find(type);
             if (tsIt != myTypeStrings.end()) {
                 type = tsIt->second;
             }
-            const std::string id(text.mid(idS + 2, idE - idS - 2).text());
-            const std::string typedID = type + ":" + id;
-            const GUIGlObject* o = GUIGlObjectStorage::gIDStorage.getObjectBlocking(typedID);
-            //std::cout << " getActiveStringObject '" << typedID << "' o=" << (o == nullptr ? "NULL" : o->getMicrosimID()) << "\n";
-            return o;
+            id = std::string(text.mid(idS + 2, idE - idS - 2).text());
+            return true;
         }
+    }
+    return false;
+}
+
+
+const GUIGlObject*
+GUIMessageWindow::getActiveStringObject(const FXString& text, const FXint pos, const FXint lineS, const FXint lineE) const {
+    std::string id, type;
+    if (findObjectTypeID(text, pos, lineS, lineE, id, type)) {
+        const std::string typedID = type + ":" + id;
+        const GUIGlObject* o = GUIGlObjectStorage::gIDStorage.getObjectBlocking(typedID);
+        //std::cout << " getActiveStringObject '" << typedID << "' o=" << (o == nullptr ? "NULL" : o->getMicrosimID()) << "\n";
+        return o;
     }
     return nullptr;
 }
+
+
+bool
+GUIMessageWindow::hasActiveStringObject(const FXString& text, const FXint pos) const {
+    std::string id, type;
+    if (findObjectTypeID(text, pos, 0, text.length(), id, type)) {
+        const std::string typedID = type + ":" + id;
+        const GUIGlObject* o = GUIGlObjectStorage::gIDStorage.getObjectBlocking(typedID);
+        if (o != nullptr) {
+            GUIGlObjectStorage::gIDStorage.unblockObject(o->getGlID());
+            return true;
+        } else if (type == "junction") {
+            // some messages may occur before junction GUIGlObjects are built
+            return true;
+        }
+    }
+    return false;
+}
+
 
 SUMOTime
 GUIMessageWindow::getTimeString(const FXString& text, const FXint pos) const {
@@ -224,9 +259,7 @@ GUIMessageWindow::appendMsg(GUIEventType eType, const std::string& msg) {
     if (myLocateLinks) {
         FXint pos = text.find("'");
         while (pos >= 0) {
-            const GUIGlObject* const glObj = getActiveStringObject(text, pos + 1, 0, text.length());
-            if (glObj != nullptr) {
-                GUIGlObjectStorage::gIDStorage.unblockObject(glObj->getGlID());
+            if (hasActiveStringObject(text, pos + 1)) {
                 FXString insText = text.left(pos + 1);
                 FXText::appendStyledText(insText, style + 1);
                 text.erase(0, pos + 1);
@@ -286,7 +319,7 @@ GUIMessageWindow::clear() {
     if (getLength() == 0) {
         return;
     }
-    FXText::removeText(0, getLength() - 1, true);
+    FXText::removeText(0, getLength(), true);
     if (isEnabled()) {
         layout();
         update();
@@ -324,6 +357,55 @@ GUIMessageWindow::onKeyPress(FXObject* o, FXSelector sel, void* ptr) {
         return FXText::onKeyPress(o, sel, ptr);
     }
     return 0;
+}
+
+
+long
+GUIMessageWindow::onRightBtnRelease(FXObject* o, FXSelector sel, void* ptr) {
+    FXText::onRightBtnRelease(o, sel, ptr);
+    if (!isEnabled()) {
+        return 0;
+    }
+    FXEvent* event = (FXEvent*)ptr;
+    if (event->moved) {
+        return 1;
+    }
+    setFocus();
+    FXMenuPane contextMenu(this);
+    FXMenuCommand* copyCmd = GUIDesigns::buildFXMenuCommandShortcut(&contextMenu, TL("Copy"), "Ctrl+C", TL("Copy selection to clipboard"),
+                             GUIIconSubSys::getIcon(GUIIcon::COPY), this, FXText::ID_COPY_SEL);
+    FXMenuCommand* selAllCmd = GUIDesigns::buildFXMenuCommandShortcut(&contextMenu, TL("Select all"), "Ctrl+A", TL("Select all text"),
+                               nullptr, this, FXText::ID_SELECT_ALL);
+    if (getSelStartPos() >= getSelEndPos()) {
+        copyCmd->disable();
+    }
+    if (getLength() == 0) {
+        selAllCmd->disable();
+    }
+    new FXMenuSeparator(&contextMenu);
+    FXMenuCommand* clearCmd = GUIDesigns::buildFXMenuCommand(&contextMenu, TL("Clear"), TL("Clear message window"),
+                              GUIIconSubSys::getIcon(GUIIcon::CLEARMESSAGEWINDOW), this, MID_CLEARMESSAGEWINDOW);
+    if (getLength() == 0) {
+        clearCmd->disable();
+    }
+    contextMenu.create();
+    contextMenu.popup(nullptr, event->root_x, event->root_y);
+    getApp()->runModalWhileShown(&contextMenu);
+    return 1;
+}
+
+
+long
+GUIMessageWindow::onCmdClear(FXObject*, FXSelector, void*) {
+    clear();
+    return 1;
+}
+
+
+long
+GUIMessageWindow::onUpdClear(FXObject* sender, FXSelector, void* ptr) {
+    sender->handle(this, getLength() > 0 ? FXSEL(SEL_COMMAND, ID_ENABLE) : FXSEL(SEL_COMMAND, ID_DISABLE), ptr);
+    return 1;
 }
 
 

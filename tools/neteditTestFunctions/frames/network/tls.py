@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,10 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
+import time
+from ...enums.attributesEnum import attrs
+from ...constants import DELAY_SELECT
+from ...general.functions import focusOnFrame, typeKey
 
 
 def createTLS():
@@ -34,7 +37,7 @@ def createTLS():
     time.sleep(DELAY_SELECT)
 
 
-def createTLSOverlapped(junction):
+def createTLSOverlapped():
     """
     @brief Create TLS in overlapped junction
     """
@@ -43,8 +46,8 @@ def createTLSOverlapped(junction):
     # type tab 2 times to jump to create TLS button
     for _ in range(attrs.TLS.createOverlapped):
         typeKey('tab')
-    for _ in range(junction):
-        typeKey('space')
+    # press space
+    typeKey('space')
     for _ in range(attrs.TLS.createOverlapped):
         typeKey('tab')
     # create TLS
@@ -143,150 +146,3 @@ def resetAllTLSPhases(joined):
             typeKey('tab')
     # create TLS
     typeKey('space')
-
-
-def pressTLSPhaseButton(position):
-    """
-    @brief add default phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-
-
-def addDefaultPhase(position):
-    """
-    @brief add default phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-
-
-def addDuplicatePhase(position):
-    """
-    @brief duplicate phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # move to button
-    typeKey('right')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-
-
-def addRedPhase(position):
-    """
-    @brief add red phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # go to button
-    for _ in range(2):
-        typeKey('right')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-
-
-def addYellowPhase(position):
-    """
-    @brief add yellow phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # go to button
-    for _ in range(3):
-        typeKey('right')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-
-
-def addGreenPhase(position):
-    """
-    @brief add green phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # go to button
-    for _ in range(4):
-        typeKey('right')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-
-
-def addGreenPriorityPhase(position):
-    """
-    @brief add priority phase
-    """
-    # focus current frame
-    focusOnFrame()
-    # type tab 2 times to jump to create TLS button
-    for _ in range(position):
-        typeKey('tab')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)
-    # go to button
-    for _ in range(5):
-        typeKey('right')
-    # add phase
-    typeKey('space')
-    # wait
-    time.sleep(DELAY_SELECT)

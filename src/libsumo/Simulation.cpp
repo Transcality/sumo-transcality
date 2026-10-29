@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -57,6 +57,9 @@
 #include <libsumo/Helper.h>
 #include <libsumo/StorageHelper.h>
 #include <libsumo/TraCIConstants.h>
+#ifdef HAVE_PARQUET
+#include <arrow/util/config.h>
+#endif
 #ifdef HAVE_LIBSUMOGUI
 #include "GUI.h"
 #endif
@@ -130,7 +133,7 @@ Simulation::load(const std::vector<std::string>& args) {
 #endif
     close("Libsumo issued load command.");
     try {
-        OptionsCont::getOptions().setApplicationName("libsumo", "Eclipse SUMO libsumo Version " VERSION_STRING);
+        OptionsCont::getOptions().setApplicationName("libsumo", "Eclipse SUMO libsumo " VERSION_STRING);
         gSimulation = true;
         XMLSubSys::init();
         OptionsIO::setArgs(args);
@@ -599,7 +602,8 @@ Simulation::getDistanceRoad(const std::string& edgeID1, double pos1, const std::
 
 
 TraCIStage
-Simulation::findRoute(const std::string& from, const std::string& to, const std::string& typeID, const double depart, const int routingMode) {
+Simulation::findRoute(const std::string& from, const std::string& to, const std::string& typeID,
+                      double depart, int routingMode, double departPos, double arrivalPos) {
     TraCIStage result(STAGE_DRIVING);
     const MSEdge* const fromEdge = MSEdge::dictionary(from);
     if (fromEdge == nullptr) {
@@ -617,7 +621,7 @@ Simulation::findRoute(const std::string& from, const std::string& to, const std:
     SUMOVehicleParameter* pars = new SUMOVehicleParameter();
     pars->id = "simulation.findRoute";
     try {
-        ConstMSRoutePtr const routeDummy = std::make_shared<MSRoute>("", ConstMSEdgeVector({ fromEdge }), false, nullptr, std::vector<SUMOVehicleParameter::Stop>());
+        ConstMSRoutePtr const routeDummy = std::make_shared<MSRoute>("", ConstMSEdgeVector({ fromEdge }), false, nullptr, StopParVector());
         vehicle = dynamic_cast<MSBaseVehicle*>(MSNet::getInstance()->getVehicleControl().buildVehicle(pars, routeDummy, type, false));
         std::string msg;
         if (!vehicle->hasValidRouteStart(msg)) {
@@ -631,14 +635,31 @@ Simulation::findRoute(const std::string& from, const std::string& to, const std:
     } catch (ProcessError& e) {
         throw TraCIException("Invalid departure edge for vehicle type '" + type->getID() + "' (" + e.what() + ")");
     }
+    if (abs(departPos) > fromEdge->getLength()) {
+        throw TraCIException("Invalid departPos " + toString(departPos) + " on edge '" + fromEdge->getID() + " (length " + toString(fromEdge->getLength()) + ")");
+    }
+    if (departPos < 0) {
+        departPos += fromEdge->getLength();
+    }
+    if (arrivalPos == INVALID_DOUBLE_VALUE) {
+        arrivalPos = toEdge->getLength();
+    }
+    if (abs(arrivalPos) > toEdge->getLength()) {
+        throw TraCIException("Invalid arrivalPos " + toString(arrivalPos) + " on edge '" + toEdge->getID() + " (length " + toString(toEdge->getLength()) + ")");
+    }
+    if (arrivalPos < 0) {
+        arrivalPos += toEdge->getLength();
+    }
     ConstMSEdgeVector edges;
     const SUMOTime dep = depart < 0 ? MSNet::getInstance()->getCurrentTimeStep() : TIME2STEPS(depart);
     SUMOAbstractRouter<MSEdge, SUMOVehicle>& router = routingMode == ROUTING_MODE_AGGREGATED ? MSRoutingEngine::getRouterTT(0, vehicle->getVClass()) : MSNet::getInstance()->getRouterTT(0);
-    router.compute(fromEdge, toEdge, vehicle, dep, edges);
+    router.compute(fromEdge, departPos, toEdge, arrivalPos, vehicle, dep, edges);
     for (const MSEdge* e : edges) {
         result.edges.push_back(e->getID());
     }
-    result.travelTime = result.cost = router.recomputeCosts(edges, vehicle, dep, &result.length);
+    result.travelTime = result.cost = router.recomputeCostsPos(edges, vehicle, departPos, arrivalPos, dep, &result.length);
+    result.arrivalPos = arrivalPos;
+    result.departPos = departPos;
     if (vehicle != nullptr) {
         MSNet::getInstance()->getVehicleControl().deleteVehicle(vehicle, true);
         MSNet::getInstance()->getVehicleControl().discountRoutingVehicle();
@@ -742,7 +763,7 @@ Simulation::findIntermodalRoute(const std::string& from, const std::string& to,
             if (type->getVehicleClass() != SVC_IGNORING && (fromEdge->getPermissions() & type->getVehicleClass()) == 0 && !isTaxi) {
                 WRITE_WARNINGF(TL("Ignoring vehicle type '%' when performing intermodal routing because it is not allowed on the start edge '%'."), type->getID(), from);
             } else {
-                ConstMSRoutePtr const routeDummy = std::make_shared<MSRoute>(vehPar->id, ConstMSEdgeVector({ fromEdge }), false, nullptr, std::vector<SUMOVehicleParameter::Stop>());
+                ConstMSRoutePtr const routeDummy = std::make_shared<MSRoute>(vehPar->id, ConstMSEdgeVector({ fromEdge }), false, nullptr, StopParVector());
                 vehicle = vehControl.buildVehicle(vehPar, routeDummy, type, !MSGlobals::gCheckRoutes);
                 // we need to fix the speed factor here for deterministic results
                 vehicle->setChosenSpeedFactor(type->getSpeedFactor().getParameter(0));
@@ -750,7 +771,7 @@ Simulation::findIntermodalRoute(const std::string& from, const std::string& to,
         }
         std::vector<MSTransportableRouter::TripItem> items;
         if (router.compute(fromEdge, toEdge, departPos, "", arrivalPos, destStop,
-                           speed * walkFactor, vehicle, modeSet, departStep, items, externalFactor)) {
+                           speed * walkFactor, vehicle, pedType->getParameter(), modeSet, departStep, items, externalFactor)) {
             double cost = 0;
             for (std::vector<MSTransportableRouter::TripItem>::iterator it = items.begin(); it != items.end(); ++it) {
                 if (!it->edges.empty()) {
@@ -786,6 +807,7 @@ Simulation::findIntermodalRoute(const std::string& from, const std::string& to,
 std::string
 Simulation::getParameter(const std::string& objectID, const std::string& key) {
     if (StringUtils::startsWith(key, "chargingStation.")) {
+        WRITE_WARNING("Retrieving chargingStation parameters via the simulation API is deprecated, please use traci.chargingstation.");
         const std::string attrName = key.substr(16);
         MSChargingStation* cs = static_cast<MSChargingStation*>(MSNet::getInstance()->getStoppingPlace(objectID, SUMO_TAG_CHARGING_STATION));
         if (cs == nullptr) {
@@ -803,6 +825,7 @@ Simulation::getParameter(const std::string& objectID, const std::string& key) {
             throw TraCIException("Invalid chargingStation parameter '" + attrName + "'");
         }
     } else if (StringUtils::startsWith(key, "overheadWire.")) {
+        WRITE_WARNING("Retrieving overheadWire parameters via the simulation API is deprecated, please use traci.overheadwire.");
         const std::string attrName = key.substr(16);
         MSOverheadWire* cs = static_cast<MSOverheadWire*>(MSNet::getInstance()->getStoppingPlace(objectID, SUMO_TAG_OVERHEAD_WIRE_SEGMENT));
         if (cs == 0) {
@@ -867,6 +890,7 @@ Simulation::getParameter(const std::string& objectID, const std::string& key) {
             throw TraCIException("Invalid stats parameter '" + attrName + "'");
         }
     } else if (StringUtils::startsWith(key, "parkingArea.")) {
+        WRITE_WARNING("Retrieving parkingArea parameters via the simulation API is deprecated, please use traci.parkingarea.");
         const std::string attrName = key.substr(12);
         MSParkingArea* pa = static_cast<MSParkingArea*>(MSNet::getInstance()->getStoppingPlace(objectID, SUMO_TAG_PARKING_AREA));
         if (pa == nullptr) {
@@ -886,6 +910,7 @@ Simulation::getParameter(const std::string& objectID, const std::string& key) {
             throw TraCIException("Invalid parkingArea parameter '" + attrName + "'");
         }
     } else if (StringUtils::startsWith(key, "busStop.")) {
+        WRITE_WARNING("Retrieving busStop parameters via the simulation API is deprecated, please use traci.busstop.");
         const std::string attrName = key.substr(8);
         MSStoppingPlace* bs = static_cast<MSStoppingPlace*>(MSNet::getInstance()->getStoppingPlace(objectID, SUMO_TAG_BUS_STOP));
         if (bs == nullptr) {
@@ -903,10 +928,31 @@ Simulation::getParameter(const std::string& objectID, const std::string& key) {
     } else if (StringUtils::startsWith(key, "device.tripinfo.")) {
         if (objectID != "") {
             throw TraCIException("Simulation parameter '" + key + "' is not supported for object id '" + objectID
-                                 + "'. Use empty id for global device parameers or vehicle domain for vehicle specific parameters");
+                                 + "'. Use empty id for global device parameters or vehicle domain for vehicle specific parameters");
         }
         const std::string attrName = key.substr(16);
         return MSDevice_Tripinfo::getGlobalParameter(attrName);
+    } else if (StringUtils::startsWith(key, "buildConfig.")) {
+        if (objectID != "") {
+            throw TraCIException("Simulation parameter '" + key + "' is not supported for object id '" + objectID
+                                 + "'. Use an empty id for buildConfig parameters");
+        }
+        if (key == "buildConfig.ARROW_SO_VERSION") {
+#ifdef HAVE_PARQUET
+            return ARROW_SO_VERSION;
+#else
+            return "";
+#endif
+        } else if (key == "buildConfig.JPS_VERSION") {
+#ifdef HAVE_JUPEDSIM_LEGACY
+            return toString(JPS_VERSION);
+#else
+            return "";
+#endif
+        } else if (key == "buildConfig.ENABLED") {
+            return HAVE_ENABLED;
+        }
+        throw TraCIException("Unknown parameter '" + key + "'");
     } else if (objectID == "") {
         return MSNet::getInstance()->getParameter(key, "");
     } else {

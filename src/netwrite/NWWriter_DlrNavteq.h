@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -66,6 +66,11 @@ public:
     /// @brief get the form of way
     static int getFormOfWay(const NBEdge* const edge);
 
+    /// @brief extra attributes into plain output
+    static void writeEdgeAttrs(OutputDevice& device, const NBEdge* edge);
+    static void writeConnectionAttrs(OutputDevice& device, const NBEdge::Connection& c);
+    static void writeProhibitedManoeuvresAttrs(OutputDevice& device, const NBNodeCont& nc);
+
 private:
     /** @brief Writes the nodes_unsplitted file
      * @param[in] oc The options to use
@@ -101,7 +106,7 @@ private:
      */
     static void writeConnectedLanes(const OptionsCont& oc, NBNodeCont& nc);
 
-    /// @brief write header comments (input paramters, date, etc...)
+    /// @brief write header comments (input parameters, date, etc...)
     static void writeHeader(OutputDevice& device, const OptionsCont& oc);
 
     /// @brief build the ascii-bit-vector for column vehicle_type
@@ -128,4 +133,7 @@ private:
     static inline int speedInKph(double metersPerSecond) {
         return (int)std::floor(metersPerSecond * 3.6 + 0.5);
     }
+
+    /// @brief get the maximum width of all lanes
+    static double getMaxLaneWidth(const NBEdge* const edge);
 };

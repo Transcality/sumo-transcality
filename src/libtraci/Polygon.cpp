@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -65,6 +65,12 @@ Polygon::getFilled(const std::string& polygonID) {
 double
 Polygon::getLineWidth(const std::string& polygonID) {
     return Dom::getDouble(libsumo::VAR_WIDTH, polygonID);
+}
+
+
+double
+Polygon::getHeight(const std::string& polygonID) {
+    return Dom::getDouble(libsumo::VAR_HEIGHT, polygonID);
 }
 
 
@@ -154,6 +160,12 @@ Polygon::setFilled(std::string polygonID, bool filled) {
 void
 Polygon::setLineWidth(std::string polygonID, double lineWidth) {
     Dom::setDouble(libsumo::VAR_WIDTH, polygonID, lineWidth);
+}
+
+
+void
+Polygon::setHeight(std::string polygonID, double height) {
+    Dom::setDouble(libsumo::VAR_HEIGHT, polygonID, height);
 }
 
 

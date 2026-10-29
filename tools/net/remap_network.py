@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -23,9 +23,6 @@ import sys
 if 'SUMO_HOME' in os.environ:
     sys.path.append(os.path.join(os.environ['SUMO_HOME'], 'tools'))
 import sumolib  # noqa
-from sumolib.geomhelper import distance  # noqa
-from sumolib.xml import parse  # noqa
-from sumolib.net import lane2edge  # noqa
 from sumolib.statistics import Statistics  # noqa
 import sumolib.geomhelper as gh  # noqa
 
@@ -51,7 +48,7 @@ def get_options(args=None):
                     help="only handle the given edges")
     ap.add_argument("-v", "--verbose", action="store_true", dest="verbose",
                     default=False, help="tell me what you are doing")
-    options = ap.parse_args()
+    options = ap.parse_args(args)
     if options.filterIds:
         options.filterIds = set(options.filterIds.split(','))
     if not options.successOutput:

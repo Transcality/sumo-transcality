@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -164,6 +164,7 @@ public:
     const MSPhaseDefinition& getCurrentPhaseDef() const override;
     /// @}
 
+    void resetLastSwitch(SUMOTime t) override;
 
     /// @name Conversion between time and phase
     /// @{
@@ -284,6 +285,11 @@ public:
         return myMovingBlock;
     }
 
+    /// @brief get the unique junction controlled by this signal
+    const MSJunction* getJunction() const;
+
+    const MSDriveWay& getExistingDriveWay(const MSLink* link, MSRouteIterator firstIt, MSRouteIterator endIt);
+
     static bool storeVehicles() {
         return myStoreVehicles;
     }
@@ -342,6 +348,9 @@ protected:
 
         SUMOTime myLastRerouteTime;
         SUMOVehicle* myLastRerouteVehicle;
+
+        /// @brief whether this link is used for railway operations
+        bool myControlled;
     };
 
     /// @brief data storage for every link at this node (more than one when directly guarding a switch)

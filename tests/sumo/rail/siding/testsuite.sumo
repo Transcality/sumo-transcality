@@ -21,6 +21,12 @@ siding_both_ways4
 # siding cannot be used because it is already occupied
 siding_deadlock
 
+# siding cannot be used because it is already occupied. See #17835
+siding_deadlock2
+
+# siding cannot be used because it is already occupied. See #17835
+siding_deadlock2b
+
 # driveway should be usable despite occupied siding if the other side is still usable
 siding_occupied_advance
 
@@ -41,6 +47,11 @@ long_siding_occupied_wait
 # 
 long_siding_occupied_wait2
 
+# no deadlock should be found because the sidings will clear up in time (even if the first siding is too short for the train)
+# 
+# different insertion order compared to the 'wait2' test
+long_siding_occupied_wait3
+
 # no deadlock should be found because the sidings accomodate multiple vehicles
 long_siding_occupied_advance
 
@@ -48,3 +59,17 @@ long_siding_occupied_advance
 loop_3veh
 siding_oneSide
 siding_oneSide_slow
+
+# required siding is not registered because the vehicle is on an intermediate driveway (#17834)
+siding_deadlock_intermediate_dw
+
+# required siding is beyond the current pre-registration limit (#17834)
+siding_deadlock_approaching_limit
+
+# insertion into siding must be delayed because it is already reserved for passing (#18415)
+siding_deadlock_insertion
+
+# insertion into siding must be delayed because it is already reserved for passing (#18415)
+# 
+# the inserted vehicle is long enough to blow two siding spots
+siding_deadlock_insertion2

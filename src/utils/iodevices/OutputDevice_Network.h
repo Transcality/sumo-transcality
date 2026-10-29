@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2006-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2006-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -63,6 +63,18 @@ public:
 protected:
     /// @name Methods that override/implement OutputDevice-methods
     /// @{
+
+    /** @brief Returns the associated ostream
+     *
+     * The stream is an ostringstream, actually, into which the message
+     *  is written. It is sent when postWriteHook is called.
+     *
+     * @return The used stream
+     * @see postWriteHook
+     */
+    std::ostream& getOStream();
+
+
     /** @brief Sends the data which was written to the string stream over the socket.
      *
      * Converts the stored message into a vector of chars and sends them via to
@@ -72,6 +84,9 @@ protected:
     /// @}
 
 private:
+    /// @brief packet buffer
+    std::ostringstream myMessage;
+
     /// @brief the socket to transfer the data
     tcpip::Socket* mySocket;
 

@@ -24,11 +24,10 @@ set_target_properties(testlibsumostatic PROPERTIES OUTPUT_NAME testlibsumostatic
 set_target_properties(testlibsumostatic PROPERTIES OUTPUT_NAME_DEBUG testlibsumostatic${BINARY_SUFFIX}D)
 set_property(TARGET testlibsumostatic PROPERTY FOLDER "test_exe")
 if (FOX_FOUND)
-    target_link_libraries(testlibsumostatic libsumoguistatic ${sumoguilibs})
+    target_link_libraries(testlibsumostatic ${sumoguilibs} libsumoguistatic)
 else ()
-    target_link_libraries(testlibsumostatic libsumostatic ${sumolibs})
+    target_link_libraries(testlibsumostatic ${sumolibs} libsumostatic)
 endif()
-target_link_libraries(testlibsumostatic traciserver libsumostatic microsim_traffic_lights microsim_lcmodels microsim_cfmodels microsim_devices microsim_engine microsim_output microsim_transportables)
 add_test(NAME libsumostatictest COMMAND $<TARGET_FILE:testlibsumostatic>)
 
 add_executable(testlibtraci testlibtraci_main.cpp)
@@ -37,3 +36,5 @@ set_target_properties(testlibtraci PROPERTIES OUTPUT_NAME_DEBUG testlibtraci${BI
 set_property(TARGET testlibtraci PROPERTY FOLDER "test_exe")
 target_link_libraries(testlibtraci libtracicpp)
 add_test(NAME libtracitest COMMAND $<TARGET_FILE:testlibtraci> $<TARGET_FILE:sumo> -c ${CMAKE_SOURCE_DIR}/docs/examples/sumo/hokkaido/test.sumocfg)
+
+set_tests_properties(libsumotest libsumostatictest libtracitest PROPERTIES TIMEOUT 60)

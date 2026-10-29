@@ -6,7 +6,11 @@ title: Docker
 
 Building and installing SUMO from source is not an easy task for beginner users.
 Docker is a popular tool to solve this issue.
-SUMO provides [Dockerfiles](https://github.com/eclipse-sumo/sumo/blob/main/build_config/docker) and [prebuilt Docker images](https://github.com/eclipse-sumo/sumo/pkgs/container/sumo/versions) to use.
+SUMO provides [Dockerfiles](https://github.com/eclipse-sumo/sumo/blob/main/build_config/docker) and [prebuilt Docker images](https://github.com/eclipse-sumo/sumo/pkgs/container/sumo) to use.
+
+!!! note
+    Until 2026-10-07 the tags for the containers v1_23_0, v1_23_1, v1_24_0, v1_25_0 and v1_26_0 pointed to containers which were either broken or contained two different SUMO versions. They have been fixed and republished.
+    Make sure you use the current version of those containers.
 
 ### Available Dockerfiles
 
@@ -14,7 +18,7 @@ There are several Dockerfiles available in the SUMO repository.
 To build them, check out [the SUMO repository](https://github.com/eclipse-sumo/sumo) and use the following command while in the `build_config/docker` directory of the repository:
 
 ```shell
-    docker build -f {NAME_OF_DOCKERFILE} .
+docker build -f {NAME_OF_DOCKERFILE} .
 ```
 
 !!! note
@@ -33,11 +37,11 @@ The following Dockerfiles provide build environments:
 | Dockerfile                 | Description                                                                                                                                 |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | `Dockerfile.jenkins-build` | Environment for building SUMO on Jenkins. Installs all packages required to build SUMO, but does not contain any SUMO binaries.             |
-| `Dockerfile.manylinux2014` | Build environment for creating [manylinux](https://github.com/pypa/manylinux) python wheels, adapted with additional preinstalled packages. |
+| `Dockerfile.manylinux`     | Build environment for creating [manylinux](https://github.com/pypa/manylinux) python wheels, adapted with additional preinstalled packages. |
 
 ### Available Images in the registry
 
-SUMO publishes images to the [GitHub container registry](https://ghcr.io/eclipse-sumo/sumo), which can be pulled and
+SUMO publishes images to the [GitHub container registry](https://github.com/eclipse-sumo/sumo/pkgs/container/sumo), which can be pulled and
 used immediately.
 The published images are built from the `Dockerfile.ubuntu.git` Dockerfile.
 
@@ -47,9 +51,11 @@ The following tags are available:
 
 | Tag                       | Description                                                                                                    |
 |---------------------------|----------------------------------------------------------------------------------------------------------------|
-| `main` `nightly`          | Nightly build containing the current version of SUMO from the repository.                                      |
-| `vX_Y_Z` (e.g. `v1_21_0`) | A version of the image created alongside the respective release. Contains SUMO in the matching stable version. |
-| `latest`                  | References the image of the latest stable release (e.g. `v1_21_0`)                                             |
+| `main` `nightly`          | Nightly build containing the current version of SUMO from the repository (``main` may be more recent if a build has been triggered manually). |
+| `vX_Y_Z`, `X.Y.Z` (e.g. `v1_21_0`, `1.21.0`) | A version of the image created alongside the respective release. Contains SUMO in the matching stable version. |
+| `latest`                  | References the image of the latest stable release (e.g. `1.21.0`)                                             |
+
+Note that only the containers from 1.22.0 to 1.25.0 include libsumo. Everywhere else it can be installed using pip.
 
 ### How to use dockerized SUMO
 
@@ -58,15 +64,15 @@ A complete example is available in [the tutorial on containerized SUMO](../Tutor
 A quick example for running a prepared simulation looks like this:
 
 ```shell
-   docker run \
-      -v /path/to/your/simulation/data:/data \
-      ghcr.io/eclipse-sumo/sumo:main \
-      sumo /data/simulation.sumocfg
+docker run \
+    -v /path/to/your/simulation/data:/data \
+    ghcr.io/eclipse-sumo/sumo:main \
+    sumo /data/simulation.sumocfg
 ```
 
 A use-case for this could be preparing the simulation data on a computer with SUMO installed and then running the simulation on a server without needing to install SUMO.
 
-The container images also contains the graphical applications.
+The container images also contain the graphical applications.
 However, configuring them for use depends on your operating system and graphical environment (e.g., X11, Wayland).
 For guidance, consult Docker's documentation on GUI application forwarding.
 Therefore, we cannot provide specific instructions here.

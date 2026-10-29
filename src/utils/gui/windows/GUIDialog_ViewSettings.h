@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -43,7 +43,7 @@ class MFXComboBoxIcon;
  *
  * @todo Check whether saving/loading settings should be done via XML
  */
-class GUIDialog_ViewSettings : public FXDialogBox, public GUIPersistentWindowPos {
+class GUIDialog_ViewSettings : public FXTopWindow, public GUIPersistentWindowPos {
     /// @brief FOX Declaration
     FXDECLARE(GUIDialog_ViewSettings)
 
@@ -179,14 +179,14 @@ public:
     GUIDialog_ViewSettings(GUISUMOAbstractView* parent, GUIVisualizationSettings* settings);
 
     /// @brief FOX need this
-    GUIDialog_ViewSettings() : myBackup("DUMMY") {}
+    GUIDialog_ViewSettings() : myBackup(nullptr, "DUMMY") {}
 
     /// @brief Destructor
     ~GUIDialog_ViewSettings();
 
     /// @brief show view settings dialog
     void show();
-    using FXDialogBox::show; // to silence the warning C4266 about a hidden function
+    using FXTopWindow::show; // to silence the warning C4266 about a hidden function
 
     /// @brief get GUISUMOAbstractView parent
     GUISUMOAbstractView* getSUMOAbstractView();
@@ -195,6 +195,11 @@ public:
      * @param[in, out] settings The current settings that can be changed
      */
     void setCurrent(GUIVisualizationSettings* settings);
+
+    /// @brief keyboard functions
+    //@{
+    long onKeyPress(FXObject* o, FXSelector sel, void* data);
+    //@}
 
     /// @name FOX-callbacks
     /// @{
@@ -305,6 +310,10 @@ protected:
     FXColorWell* myTrainStopColorSign = nullptr;
     FXColorWell* myContainerStopColor = nullptr;
     FXColorWell* myContainerStopColorSign = nullptr;
+    FXColorWell* myParkingAreaColor = nullptr;
+    FXColorWell* myParkingAreaColorSign = nullptr;
+    FXColorWell* myParkingSpaceColor = nullptr;
+    FXColorWell* myParkingSpaceColorSign = nullptr;
     FXColorWell* myChargingStationColor = nullptr;
     FXColorWell* myChargingStationColorSign = nullptr;
     FXColorWell* myStopColor = nullptr;
@@ -441,7 +450,7 @@ protected:
     FXCheckButton* myPolyUseCustomLayer = nullptr;
     FXRealSpinner* myPolyCustomLayer = nullptr;
 
-    /// @brief Data
+    /// @brief Data color
     MFXComboBoxIcon* myDataColorMode = nullptr;
     FXVerticalFrame* myDataColorSettingFrame = nullptr;
     std::vector<FXColorWell*> myDataColors;
@@ -451,6 +460,15 @@ protected:
     FXComboBox* myDataParamKey = nullptr;
     FXRealSpinner* myEdgeRelationUpscaleDialer = nullptr;
     FXRealSpinner* myTazRelationUpscaleDialer = nullptr;
+
+    /// @brief Data scaler
+    MFXComboBoxIcon* myDataScaleMode = nullptr;
+    FXVerticalFrame* myDataScaleSettingFrame = nullptr;
+    std::vector<FXRealSpinner*> myDataScales;
+    std::vector<FXRealSpinner*> myDataScaleThresholds;
+    std::vector<FXButton*> myDataScaleButtons;
+    FXCheckButton* myDataScaleInterpolation = nullptr;
+    FXComboBox* myDataScaleParamKey = nullptr;
 
     /// @brief buttons
     FXCheckButton* myShowLane2Lane = nullptr;
@@ -480,6 +498,7 @@ protected:
     FXCheckButton* myDisableDottedContours = nullptr;
     FXButton* myRecalculateBoundaries = nullptr;
     FXRealSpinner* myComboRows = nullptr;
+    FXRealSpinner* myUIScale = nullptr;
 
     /// @brief name panels
     NamePanel* myEdgeNamePanel = nullptr;

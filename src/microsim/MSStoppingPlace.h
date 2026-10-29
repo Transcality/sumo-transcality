@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2005-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2005-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -88,7 +88,8 @@ public:
                     const std::string name = "",
                     int capacity = 0,
                     double parkingLength = 0,
-                    const RGBColor& color = RGBColor::INVISIBLE);
+                    const RGBColor& color = RGBColor::INVISIBLE,
+                    double angle = 90);
 
 
 
@@ -116,6 +117,10 @@ public:
      */
     double getEndLanePosition() const;
 
+    double getAngle() const {
+        return myAngle;
+    }
+
     /// @brief the position in the middle of the stop shape
     Position getCenterPos() const;
 
@@ -125,12 +130,11 @@ public:
      *
      * Recomputes the free space using "computeLastFreePos" then.
      *
-     * @param[in] what The vehicle that enters the bus stop
-     * @param[in] beg The begin halting position of the vehicle
-     * @param[in] what The end halting position of the vehicle
+     * @param[in] veh The vehicle that enters the stopping place
+     * @param[in] parking whether this is offroad parking
      * @see computeLastFreePos
      */
-    void enter(SUMOVehicle* veh, bool parking);
+    virtual void enter(SUMOVehicle* veh, const bool parking);
 
 
     /** @brief Called if a vehicle leaves this stop
@@ -142,7 +146,7 @@ public:
      * @param[in] what The vehicle that leaves the bus stop
      * @see computeLastFreePos
      */
-    void leaveFrom(SUMOVehicle* what);
+    virtual void leaveFrom(SUMOVehicle* what);
 
 
     /** @brief Returns the last free position on this stop
@@ -152,6 +156,10 @@ public:
      * @return The last free position of this bus stop
      */
     virtual double getLastFreePos(const SUMOVehicle& forVehicle, double brakePos = 0) const;
+
+    virtual bool accepts(SUMOVehicle* /*veh*/) const {
+        return true;
+    }
 
     /// @brief return whether the given vehicle fits at the given position
     bool fits(double pos, const SUMOVehicle& veh) const;
@@ -199,10 +207,12 @@ public:
     bool hasSpaceForTransportable() const;
 
     /// @brief adds a transportable to this stop
-    bool addTransportable(const MSTransportable* p);
+    bool addTransportable(const MSTransportable* p, int spot = -1);
 
     /// @brief Removes a transportable from this stop
     void removeTransportable(const MSTransportable* p);
+
+    int checkWaitingSpot(const MSTransportable* p) const;
 
     /// @brief adds an access point to this stop
     virtual bool addAccess(MSLane* const lane, const double startPos, const double endPos, double length, const MSStoppingPlace::AccessExit exit);
@@ -248,6 +258,10 @@ public:
 
     /// @brief get IDs of persons waiting at this stop
     void getWaitingPersonIDs(std::vector<std::string>& into) const;
+
+    bool checkPersonCapacity() const {
+        return myElement == SUMO_TAG_BUS_STOP || myElement == SUMO_TAG_TRAIN_STOP;;
+    }
 
     /// @brief perform extra processing after element has been loaded
     virtual void finishedLoading();
@@ -304,8 +318,11 @@ protected:
     /// @brief The color of the stopping place
     const RGBColor myColor;
 
+    /// @brief The angle offset for waiting transportables
+    double myAngle;
+
     /// @brief row depth of waiting transportables
-    const double myTransportableDepth;
+    double myTransportableDepth;
     /// @brief the with of waiting transportables
     double myTransportableWidth;
 

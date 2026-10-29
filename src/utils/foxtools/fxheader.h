@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -19,16 +19,34 @@
 /****************************************************************************/
 #pragma once
 
-
-// Avoid warnings for external headers in MSVC
-#ifdef _MSC_VER
-// avoid warnings in clang
+// Avoid warnings for external headers
 #ifdef __clang__
-#pragma clang system_header
+#if __has_warning("-Wdeprecated-enum-enum-conversion")
+#pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
 #endif
-#include <fx.h>
-#else
-#include <fx.h>
+#if __has_warning("-Wdeprecated-anon-enum-enum-conversion")
+#pragma clang diagnostic ignored "-Wdeprecated-anon-enum-enum-conversion"
 #endif
+#elif defined(__GNUC__) && __GNUC__ >= 9
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1922
+#pragma warning(disable: 5054)
+#endif
+
+#include <fx.h>
 
 // More info: https://devblogs.microsoft.com/cppblog/broken-warnings-theory/
+
+
+/// Macro to set up class declaration including an override. We should update this whenever the original definition in FXObject.h changes.
+#define FXDECLARE_OVERRIDE(classname) \
+  public: \
+   struct FXMapEntry { FX::FXSelector keylo; FX::FXSelector keyhi; long (classname::* func)(FX::FXObject*,FX::FXSelector,void*); }; \
+   static const FX::FXMetaClass metaClass; \
+   static FX::FXObject* manufacture(); \
+   virtual long handle(FX::FXObject* sender,FX::FXSelector sel,void* ptr) override; \
+   virtual const FX::FXMetaClass* getMetaClass() const override { return &metaClass; } \
+   friend FX::FXStream& operator<<(FX::FXStream& store,const classname* obj){return store.saveObject((FX::FXObjectPtr)(obj));} \
+   friend FX::FXStream& operator>>(FX::FXStream& store,classname*& obj){return store.loadObject((FX::FXObjectPtr&)(obj));} \
+  private:

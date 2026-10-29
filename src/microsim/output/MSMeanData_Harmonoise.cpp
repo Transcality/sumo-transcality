@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -85,7 +85,7 @@ MSMeanData_Harmonoise::MSLaneMeanDataValues::notifyMoveInternal(const SUMOTraffi
 
 
 void
-MSMeanData_Harmonoise::MSLaneMeanDataValues::write(OutputDevice& dev, long long int attributeMask, const SUMOTime period,
+MSMeanData_Harmonoise::MSLaneMeanDataValues::write(OutputDevice& dev, const SumoXMLAttrMask& attributeMask, const SUMOTime period,
         const int /*numLanes*/, const double /*speedLimit*/, const double defaultTravelTime, const int /*numVehicles*/) const {
     const double noise = meanNTemp != 0 ? (double)(10. * log10(meanNTemp * TS / STEPS2TIME(period))) : (double) 0.;
     dev.writeOptionalAttr(SUMO_ATTR_NOISE, noise, attributeMask);
@@ -99,7 +99,6 @@ MSMeanData_Harmonoise::MSLaneMeanDataValues::write(OutputDevice& dev, long long 
         // @todo default value for noise
         dev.writeOptionalAttr(SUMO_ATTR_TRAVELTIME, defaultTravelTime, attributeMask);
     }
-    dev.closeTag();
 }
 
 
@@ -109,15 +108,14 @@ MSMeanData_Harmonoise::MSLaneMeanDataValues::write(OutputDevice& dev, long long 
 // ---------------------------------------------------------------------------
 MSMeanData_Harmonoise::MSMeanData_Harmonoise(const std::string& id,
         const SUMOTime dumpBegin, const SUMOTime dumpEnd,
-        const bool useLanes, const bool withEmpty,
-        const bool printDefaults, const bool withInternal,
+        const bool useLanes, const std::string& excludeEmpty, const bool withInternal,
         const bool trackVehicles,
         const double maxTravelTime, const double minSamples,
         const std::string& vTypes,
         const std::string& writeAttributes,
         const std::vector<MSEdge*>& edges,
-        bool aggregate) :
-    MSMeanData(id, dumpBegin, dumpEnd, useLanes, withEmpty, printDefaults,
+        AggregateType aggregate) :
+    MSMeanData(id, dumpBegin, dumpEnd, useLanes, excludeEmpty,
                withInternal, trackVehicles, 0, maxTravelTime, minSamples, vTypes, writeAttributes, edges, aggregate) {
 }
 
@@ -140,6 +138,18 @@ MSMeanData_Harmonoise::detectorUpdate(const SUMOTime step) {
             (*j)->update();
         }
     }
+}
+
+
+std::vector<std::string>
+MSMeanData_Harmonoise::getAttributeNames() const {
+    return std::vector<std::string> {toString(SUMO_ATTR_NOISE)};
+}
+
+
+bool
+MSMeanData_Harmonoise::supports(const SumoXMLAttrMask& attributeMask) {
+    return attributeMask.test(SUMO_ATTR_NOISE);
 }
 
 

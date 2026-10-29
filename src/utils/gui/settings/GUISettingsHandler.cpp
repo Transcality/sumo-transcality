@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -33,6 +33,7 @@
 #include <utils/gui/settings/GUICompleteSchemeStorage.h>
 #include <utils/gui/windows/GUIPerspectiveChanger.h>
 #include <utils/foxtools/MFXImageHelper.h>
+#include <utils/geom/GeoConvHelper.h>
 #include <utils/xml/SUMOSAXReader.h>
 #include <utils/xml/XMLSubSys.h>
 #include "GUISettingsHandler.h"
@@ -41,9 +42,10 @@
 // ===========================================================================
 // method definitions
 // ===========================================================================
-GUISettingsHandler::GUISettingsHandler(const std::string& content, bool isFile, bool netedit) :
+GUISettingsHandler::GUISettingsHandler(FXApp* app, const std::string& content, bool isFile, bool netedit) :
     SUMOSAXHandler(content),
-    mySettings("TEMPORARY_NAME", netedit),
+    myApp(app),
+    mySettings(nullptr, "TEMPORARY_NAME", netedit),
     myDelay(-1), myLookFrom(-1, -1, -1), myLookAt(-1, -1, -1), myZCoordSet(true),
     myRotation(0),
     myZoom(-1),
@@ -93,8 +95,15 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             myDelay = attrs.getOpt<double>(SUMO_ATTR_VALUE, nullptr, ok, myDelay);
             break;
         case SUMO_TAG_VIEWPORT: {
-            const double x = attrs.getOpt<double>(SUMO_ATTR_X, nullptr, ok, myLookFrom.x());
-            const double y = attrs.getOpt<double>(SUMO_ATTR_Y, nullptr, ok, myLookFrom.y());
+            double x = attrs.getOpt<double>(SUMO_ATTR_X, nullptr, ok, myLookFrom.x());
+            double y = attrs.getOpt<double>(SUMO_ATTR_Y, nullptr, ok, myLookFrom.y());
+            if (attrs.hasAttribute(SUMO_ATTR_LAT) && attrs.hasAttribute(SUMO_ATTR_LON)) {
+                Position geo(attrs.get<double>(SUMO_ATTR_LON, nullptr, ok), attrs.get<double>(SUMO_ATTR_LAT, nullptr, ok));
+                if (GeoConvHelper::getFinal().x2cartesian_const(geo)) {
+                    x = geo.x();
+                    y = geo.y();
+                }
+            }
             const double z = attrs.getOpt<double>(SUMO_ATTR_Z, nullptr, ok, myLookFrom.z());
             attrs.get<double>(SUMO_ATTR_Z, nullptr, myZCoordSet, false);
             myLookFrom.set(x, y, z);
@@ -159,6 +168,12 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             mySettings.showSublanes = StringUtils::toBool(attrs.getStringSecure("showSublanes", toString(mySettings.showSublanes)));
             mySettings.spreadSuperposed = StringUtils::toBool(attrs.getStringSecure("spreadSuperposed", toString(mySettings.spreadSuperposed)));
             mySettings.disableHideByZoom = StringUtils::toBool(attrs.getStringSecure("disableHideByZoom", toString(mySettings.disableHideByZoom)));
+
+            // disable hide by zoom is the only
+            if (myApp) {
+                myApp->reg().writeBoolEntry("NETEDIT", "disableHideByZoom", mySettings.disableHideByZoom);
+            }
+
             mySettings.edgeParam = attrs.getStringSecure("edgeParam", mySettings.edgeParam);
             mySettings.laneParam = attrs.getStringSecure("laneParam", mySettings.laneParam);
             mySettings.edgeData = attrs.getStringSecure("edgeData", mySettings.edgeData);
@@ -203,6 +218,9 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             if (myCurrentColorer == SUMO_TAG_VIEWSETTINGS_POLYS) {
                 myCurrentScheme = mySettings.polyColorer.getSchemeByName(name);
             }
+            if (myCurrentColorer == SUMO_TAG_VIEWSETTINGS_DATA) {
+                myCurrentScheme = mySettings.dataColorer.getSchemeByName(name);
+            }
             if (myCurrentScheme && !myCurrentScheme->isFixed()) {
                 myCurrentScheme->setInterpolated(attrs.getOpt<bool>(SUMO_ATTR_INTERPOLATED, nullptr, ok, false));
                 myCurrentScheme->clear();
@@ -227,6 +245,9 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             }
             if (myCurrentColorer == SUMO_TAG_VIEWSETTINGS_VEHICLES) {
                 myCurrentScaleScheme = mySettings.vehicleScaler.getSchemeByName(name);
+            }
+            if (myCurrentColorer == SUMO_TAG_VIEWSETTINGS_DATA) {
+                myCurrentScaleScheme = mySettings.dataScaler.getSchemeByName(name);
             }
             if (myCurrentScaleScheme && !myCurrentScaleScheme->isFixed()) {
                 myCurrentScaleScheme->setInterpolated(attrs.getOpt<bool>(SUMO_ATTR_INTERPOLATED, nullptr, ok, false));
@@ -276,7 +297,7 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             mySettings.vehicleParam = attrs.getStringSecure("vehicleParam", mySettings.vehicleParam);
             mySettings.vehicleScaleParam = attrs.getStringSecure("vehicleScaleParam", mySettings.vehicleScaleParam);
             mySettings.vehicleTextParam = attrs.getStringSecure("vehicleTextParam", mySettings.vehicleTextParam);
-            mySettings.vehicleValueRainBow = parseRainbowSettings("vehicleValue", attrs, mySettings.vehicleValueRainBow);
+            mySettings.vehicleValueRainBow = parseRainbowSettings("vehicleValueRainbow", attrs, mySettings.vehicleValueRainBow);
             myCurrentColorer = element;
             break;
         case SUMO_TAG_VIEWSETTINGS_PERSONS:
@@ -384,6 +405,17 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             mySettings.polyCustomLayer = StringUtils::toDouble(attrs.getStringSecure("polyCustomLayer", toString(mySettings.polyCustomLayer)));
             myCurrentColorer = element;
             break;
+        case SUMO_TAG_VIEWSETTINGS_DATA:
+            mySettings.dataColorer.setActive(StringUtils::toInt(attrs.getStringSecure("dataMode", "0")));
+            mySettings.dataScaler.setActive(StringUtils::toInt(attrs.getStringSecure("dataScaleMode", "0")));
+            mySettings.dataValueRainBow = parseRainbowSettings("dataValueRainbow", attrs, mySettings.dataValueRainBow);
+            mySettings.dataValue = parseTextSettings("dataValue", attrs, mySettings.dataValue);
+            mySettings.tazRelWidthExaggeration = StringUtils::toDouble(attrs.getStringSecure("tazRelExaggeration", toString(mySettings.tazRelWidthExaggeration)));
+            mySettings.edgeRelWidthExaggeration = StringUtils::toDouble(attrs.getStringSecure("edgeRelExaggeration", toString(mySettings.edgeRelWidthExaggeration)));
+            mySettings.relDataAttr = attrs.getStringSecure("relDataAttr", mySettings.relDataAttr);
+            mySettings.relDataScaleAttr = attrs.getStringSecure("relDataScaleAttr", mySettings.relDataScaleAttr);
+            myCurrentColorer = element;
+            break;
         case SUMO_TAG_VIEWSETTINGS_LEGEND:
             mySettings.showSizeLegend = StringUtils::toBool(attrs.getStringSecure("showSizeLegend", toString(mySettings.showSizeLegend)));
             mySettings.showColorLegend = StringUtils::toBool(attrs.getStringSecure("showColorLegend", toString(mySettings.showColorLegend)));
@@ -413,6 +445,10 @@ GUISettingsHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) 
             d.screenRelative = StringUtils::toBool(attrs.getStringSecure("screenRelative", toString(d.screenRelative)));
             d.initialised = false;
             myDecals.push_back(d);
+        }
+        break;
+        case SUMO_TAG_VIEWSETTINGS_TRACKER: {
+            myTrackers.push_back(attrs.get<std::string>(SUMO_ATTR_TLID, nullptr, ok));
         }
         break;
         case SUMO_TAG_VIEWSETTINGS_LIGHT: {

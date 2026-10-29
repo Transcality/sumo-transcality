@@ -79,6 +79,18 @@ follower_ends_before_reversal2
 # avoid spurious foe checks
 reversal_onRoute_beyond_core
 
+# avoid deadlock
+reversal_onRoute_beyond_core2
+
+# avoid deadlock (3 trains and an additional loop)
+reversal_onRoute_beyond_core3
+
+# avoid deadlock (3 trains and an additional loop), insertion in the loop
+reversal_onRoute_beyond_core3b
+
+# avoid deadlock (2 trains and 3 loops)
+reversal_onRoute_4
+
 # avoid spurious foe checks	
 reversal_in_first_block
 
@@ -108,3 +120,10 @@ consecutive_before_reversal
 
 # see #15608
 both_reverse
+
+# reverse with few edges remaining
+close_to_end
+
+# reverse a long train on a short edge where the back of the train is on a rail signal
+# (#17810)
+long_train_short_edge_back_railsignal

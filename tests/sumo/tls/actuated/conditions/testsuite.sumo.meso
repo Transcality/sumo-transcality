@@ -1,0 +1,23 @@
+# use custom switching rules to replicate the default behavior
+replicate_default
+
+# use custom switching rules to replicate the default behavior but permit skipping the exclusive left-turn-phase
+replicate_default_skip_left
+
+# use custom switching rules to replicate the default behavior
+replicate_default_simplified
+
+# override minDur, maxDur, earliestEnd, latestEnd with conditions
+override_phaseAttrs
+
+# override minDur with functions that rely on linkGreenTimes (should not crash)
+override_phaseAttrs2
+
+# use custom switching rules to add bus prioritization on top of the default behavior
+bus_prio
+
+# use custom switching rules to add bus prioritization on top of the default behavior
+bus_prio_once
+
+# use custom switching rules to add bus prioritization on top of the default behavior but only prioritize delayed busses
+bus_delay_prio

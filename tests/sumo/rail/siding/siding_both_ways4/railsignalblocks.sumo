@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-10-16 14:27:09 by Eclipse SUMO sumo Version v1_20_0+0696-f5985653822
+<!-- generated on 2026-04-08T12:38:40.269142+01:00 by Eclipse SUMO sumo v1_26_0+1017-680205a30db
 This data file and the accompanying materials
 are made available under the terms of the Eclipse Public License v2.0
 which accompanies this distribution, and is available at
@@ -11,7 +11,7 @@ Public License 2.0 are satisfied: GNU General Public License, version 2
 or later which is available at
 https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html
 SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
-<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
         <net-file value="net.net.xml"/>
@@ -35,7 +35,7 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
         <no-step-log value="true"/>
     </report>
 
-</configuration>
+</sumoConfiguration>
 -->
 
 <railsignal-block-output>
@@ -51,13 +51,16 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
             <subDriveWay id="A.0.0" vehicle="" edges="b">
                 <forward lanes=":A_1_0 b_0"/>
             </subDriveWay>
-            <driveWay id="A.1" vehicle="t0" edges="b c d e f g">
+            <driveWay id="A.1" vehicle="t0" edges="b c d e f g endR">
                 <forward lanes=":A_1_0 b_0 :B_2_0 c_0 :C_1_0 d_0"/>
                 <bidi lanes=":A_0_0 -b_0 :B_1_0 -c_0 :C_0_0 -d_0 :D_0_0 -e_0 :E_1_0"
                     deadlockCheck="-f_0 :F_0_0 -g_0"/>
                 <flank lanes=""/>
                 <conflictLinks signals="C2_0 F_0"/>
-                <foes driveWays="A.0.0 A.1 C2.0.0 F.0 F.d0 G.d0"/>
+                <foes driveWays="A.0.0 A.1 C2.0.0 F.0 F.1.0 F.d0 G.d0"/>
+                <sidings foe="F.1.0">
+                    <siding start="c" end="d" length="194.64"/>
+                </sidings>
                 <sidings foe="G.d0">
                     <siding start="c" end="d" length="194.64"/>
                 </sidings>
@@ -119,13 +122,16 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
             <subDriveWay id="F.0.0" vehicle="" edges="-f">
                 <forward lanes=":F_0_0 -f_0"/>
             </subDriveWay>
-            <driveWay id="F.1" vehicle="t1" edges="-f -e2 -d2 -c2 -b -a">
+            <driveWay id="F.1" vehicle="t1" edges="-f -e2 -d2 -c2 -b -a endL">
                 <forward lanes=":F_0_0 -f_0 :E_0_0 -e2_0 :D2_0_0 -d2_0"/>
                 <bidi lanes=":F_1_0 f_0 :E_3_0 e2_0 :D2_1_0 d2_0 :C2_1_0 c2_0 :B_3_0"
                     deadlockCheck="b_0 :A_1_0 a_0"/>
                 <flank lanes=""/>
                 <conflictLinks signals="A_0 D_0"/>
-                <foes driveWays="A.0 A.d0 D.0.0 F.0.0 F.1 J0.d0"/>
+                <foes driveWays="A.0 A.1.0 A.d0 D.0.0 F.0.0 F.1 J0.d0"/>
+                <sidings foe="A.1.0">
+                    <siding start="-e2" end="-d2" length="234.07"/>
+                </sidings>
                 <sidings foe="J0.d0">
                     <siding start="-e2" end="-d2" length="234.07"/>
                 </sidings>
@@ -145,26 +151,32 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
         </driveWay>
     </departJunction>
     <departJunction id="G">
-        <driveWay id="G.d0" vehicle="t1" edges="-g -f -e2 -d2 -c2 -b -a">
+        <driveWay id="G.d0" vehicle="t1" edges="-g -f -e2 -d2 -c2 -b -a endL">
             <forward lanes="-g_0"/>
             <bidi lanes="g_0 :F_1_0 f_0 :E_3_0 e2_0 :D2_1_0 d2_0 :C2_1_0 c2_0 :B_3_0"
                     deadlockCheck="b_0 :A_1_0 a_0"/>
             <flank lanes=""/>
             <conflictLinks signals="A_0 D_0"/>
-            <foes driveWays="D.0.2 G.d0 J0.d0"/>
+            <foes driveWays="A.1.0 D.0.2 G.d0 J0.d0"/>
+            <sidings foe="A.1.0">
+                <siding start="-e2" end="-d2" length="234.07"/>
+            </sidings>
             <sidings foe="J0.d0">
                 <siding start="-e2" end="-d2" length="234.07"/>
             </sidings>
         </driveWay>
     </departJunction>
     <departJunction id="J0">
-        <driveWay id="J0.d0" vehicle="t0" edges="a b c d e f g">
+        <driveWay id="J0.d0" vehicle="t0" edges="a b c d e f g endR">
             <forward lanes="a_0"/>
             <bidi lanes="-a_0 :A_0_0 -b_0 :B_1_0 -c_0 :C_0_0 -d_0 :D_0_0 -e_0 :E_1_0"
                     deadlockCheck="-f_0 :F_0_0 -g_0"/>
             <flank lanes=""/>
             <conflictLinks signals="C2_0 F_0"/>
-            <foes driveWays="C2.0.2 G.d0 J0.d0"/>
+            <foes driveWays="C2.0.2 F.1.0 G.d0 J0.d0"/>
+            <sidings foe="F.1.0">
+                <siding start="c" end="d" length="194.64"/>
+            </sidings>
             <sidings foe="G.d0">
                 <siding start="c" end="d" length="194.64"/>
             </sidings>

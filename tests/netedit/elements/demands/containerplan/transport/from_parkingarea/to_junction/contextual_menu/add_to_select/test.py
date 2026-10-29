@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -32,14 +32,14 @@ netedit.changeSupermode("demand")
 netedit.changeMode("container")
 
 # change container plan
-netedit.changeContainerPlan("tranship", False)
+netedit.changePlan("container", "tranship", False)
 
 # create route using one edge
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.parkingArea)
 
 # press enter to create route
-netedit.typeKey('enter')
+netedit.typeKey("enter")
 
 # go to transport.busStop.busStop mode
 netedit.changeMode("containerPlan")
@@ -51,7 +51,7 @@ netedit.changeElement("containerPlanFrame", "transport")
 netedit.leftClick(referencePosition, netedit.positions.elements.junction4)
 
 # press enter to create route
-netedit.typeKey('enter')
+netedit.typeKey("enter")
 
 # go to inspect mode
 netedit.changeMode("inspect")
@@ -61,7 +61,7 @@ netedit.contextualMenuOperation(referencePosition, netedit.positions.elements.de
                                 netedit.contextualMenu.addToSelected)
 
 # delete junction
-netedit.typeKey('delete')
+netedit.typeKey("delete")
 
 # Check undos
 netedit.undo(referencePosition, 2)
@@ -70,7 +70,7 @@ netedit.undo(referencePosition, 2)
 netedit.redo(referencePosition, 2)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

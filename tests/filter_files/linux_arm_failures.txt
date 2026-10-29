@@ -1,0 +1,25 @@
+-tp appdata=activitygen
+appdata=complex
+traas/simple
+traas/multiclient
+netconvert/plain_roundtrip/parquet
+appdata=dfrouter
+appdata=duarouter
+appdata=jtrrouter
+appdata=marouter
+appdata=netconvert
+import/XML/output_formats/parquet
+export/tabular/adlershof_parquet
+export/tabular/parquet_geo
+appdata=netedit
+appdata=neteditoutput
+appdata=netgen
+appdata=od2trips
+appdata=polyconvert
+appdata=sumo
+output/examples/cross3ltl_fcd_parquet
+output/fcd-output/geo_parquet
+output/fcd-output/persons/parquet
+output/fcd-output/persons/separate_parquet
+appdata=tools
+appdata=traci

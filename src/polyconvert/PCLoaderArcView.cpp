@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -42,6 +42,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
+#include <gdal_version.h>
 #include <ogrsf_frmts.h>
 #if __GNUC__ > 3
 #pragma GCC diagnostic pop
@@ -147,7 +148,11 @@ PCLoaderArcView::load(const std::string& file, OptionsCont& oc, PCPolyContainer&
     poLayer->ResetReading();
 
     // build coordinate transformation
+#if GDAL_VERSION_MAJOR < 3
     OGRSpatialReference* origTransf = poLayer->GetSpatialRef();
+#else
+    const OGRSpatialReference* origTransf = poLayer->GetSpatialRef();
+#endif
     OGRSpatialReference destTransf;
     // use wgs84 as destination
     destTransf.SetWellKnownGeogCS("WGS84");

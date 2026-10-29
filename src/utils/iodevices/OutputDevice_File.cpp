@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2004-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2004-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@
 #include <foreign/zstr/zstr.hpp>
 #endif
 #include <utils/common/StringUtils.h>
+#include <utils/xml/XMLSubSys.h>
 #include <utils/common/UtilExceptions.h>
 #include "OutputDevice_File.h"
 
@@ -35,12 +36,12 @@
 // ===========================================================================
 // method definitions
 // ===========================================================================
-OutputDevice_File::OutputDevice_File(const std::string& fullName, const bool compressed)
+OutputDevice_File::OutputDevice_File(const std::string& fullName, const bool binary)
     : OutputDevice(0, fullName) {
     if (fullName == "/dev/null") {
         myAmNull = true;
 #ifdef WIN32
-        myStreamDevice = std::make_unique<OStreamDevice>(new std::ofstream("NUL"));
+        myFileStream = new std::ofstream("NUL");
         if (!myFileStream->good()) {
             delete myFileStream;
             throw IOError(TLF("Could not redirect to NUL device (%).", std::string(std::strerror(errno))));
@@ -48,26 +49,40 @@ OutputDevice_File::OutputDevice_File(const std::string& fullName, const bool com
         return;
 #endif
     }
-    const std::string& localName = StringUtils::transcodeToLocal(fullName);
+    const std::string& localName = XMLSubSys::transcodeToLocal(fullName);
+    std::ios_base::openmode mode = std::ios_base::out;
+    if (binary) {
+        mode |= std::ios_base::binary;
+    }
 #ifdef HAVE_ZLIB
-    if (compressed) {
+    if (fullName.length() > 3 && fullName.substr(fullName.length() - 3) == ".gz") {
         try {
-            myStreamDevice = std::make_unique<OStreamDevice>(new zstr::ofstream(localName.c_str(), std::ios_base::out));
+            myFileStream = new zstr::ofstream(localName.c_str(), mode);
         } catch (strict_fstream::Exception& e) {
             throw IOError("Could not build output file '" + fullName + "' (" + e.what() + ").");
         } catch (zstr::Exception& e) {
             throw IOError("Could not build output file '" + fullName + "' (" + e.what() + ").");
         }
-    } else {
-        myStreamDevice = std::make_unique<OStreamDevice>(new std::ofstream(localName.c_str(), std::ios_base::out));
     }
 #else
     UNUSED_PARAMETER(compressed);
-    myStreamDevice = std::make_unique<OStreamDevice>(new std::ofstream(localName.c_str(), std::ios_base::out));
 #endif
-    if (!myStreamDevice->good()) {
-        myStreamDevice.reset();
+    if (myFileStream == nullptr) {
+        myFileStream = new std::ofstream(localName.c_str(), mode);
+    }
+    if (!myFileStream->good()) {
+        delete myFileStream;
         throw IOError("Could not build output file '" + fullName + "' (" + std::strerror(errno) + ").");
     }
 }
+
+
+OutputDevice_File::~OutputDevice_File() {
+    // we need to cleanup the formatter first, because it still might have cached data
+    delete myFormatter;
+    myFormatter = nullptr;
+    delete myFileStream;
+}
+
+
 /****************************************************************************/

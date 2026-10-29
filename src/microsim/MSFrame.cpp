@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -43,6 +43,7 @@
 #include <microsim/MSRoute.h>
 #include <microsim/MSNet.h>
 #include <microsim/MSLane.h>
+#include <microsim/MSEdge.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/lcmodels/MSAbstractLaneChangeModel.h>
 #include <microsim/devices/MSDevice.h>
@@ -51,6 +52,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <utils/common/RandHelper.h>
 #include <utils/common/SystemFrame.h>
+#include <utils/traction_wire/Circuit.h>
 #include "MSFrame.h"
 
 
@@ -60,9 +62,9 @@
 void
 MSFrame::fillOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
-    oc.addCallExample("-b 0 -e 1000 -n net.xml -r routes.xml", "start a simulation from time 0 to 1000 with given net and routes");
-    oc.addCallExample("-c munich_config.cfg", "start with a configuration file");
-    oc.addCallExample("--help", "print help");
+    oc.addCallExample("-b 0 -e 1000 -n net.xml -r routes.xml", TL("start a simulation from time 0 to 1000 with given net and routes"));
+    oc.addCallExample("-c munich_config.cfg", TL("start with a configuration file"));
+    oc.addCallExample("--help", TL("print help"));
 
     // insert options sub-topics
     SystemFrame::addConfigurationOptions(oc); // fill this subtopic, too
@@ -83,9 +85,15 @@ MSFrame::fillOptions() {
     oc.addSynonyme("route-files", "routes");
     oc.addDescription("route-files", "Input", TL("Load routes descriptions from FILE(s)"));
 
+    oc.doRegister("ignore.routeelements", new Option_Bool(false));
+    oc.addDescription("ignore.routeelements", "Input", TL("Ignore route elements during loading of sumo-configs"));
+
     oc.doRegister("additional-files", 'a', new Option_FileName());
     oc.addSynonyme("additional-files", "additional");
     oc.addDescription("additional-files", "Input", TL("Load further descriptions from FILE(s)"));
+
+    oc.doRegister("ignore.additionalelements", new Option_Bool(false));
+    oc.addDescription("ignore.additionalelements", "Input", TL("Ignore additional elements during loading of sumo-configs"));
 
     oc.doRegister("weight-files", 'w', new Option_FileName());
     oc.addSynonyme("weight-files", "weights");
@@ -98,7 +106,7 @@ MSFrame::fillOptions() {
     oc.addDescription("load-state", "Input", TL("Loads a network state from FILE"));
     oc.doRegister("load-state.offset", new Option_String("0", "TIME"));//!!! check, describe
     oc.addDescription("load-state.offset", "Input", TL("Shifts all times loaded from a saved state by the given offset"));
-    oc.doRegister("load-state.remove-vehicles", new Option_StringVector(StringVector({""})));
+    oc.doRegister("load-state.remove-vehicles", new Option_StringVector(StringVector({})));
     oc.addDescription("load-state.remove-vehicles", "Input", TL("Removes vehicles with the given IDs from the loaded state"));
 
     oc.doRegister("junction-taz", new Option_Bool(false));
@@ -124,14 +132,12 @@ MSFrame::fillOptions() {
     oc.addSynonyme("netstate-dump.precision", "dump-precision", true);
     oc.addDescription("netstate-dump.precision", "Output", TL("Write positions and speeds with the given precision (default 2)"));
 
-
     oc.doRegister("emission-output", new Option_FileName());
     oc.addDescription("emission-output", "Output", TL("Save the emission values of each vehicle"));
     oc.doRegister("emission-output.precision", new Option_Integer(2));
     oc.addDescription("emission-output.precision", "Output", TL("Write emission values with the given precision (default 2)"));
     oc.doRegister("emission-output.geo", new Option_Bool(false));
     oc.addDescription("emission-output.geo", "Output", TL("Save the positions in emission output using geo-coordinates (lon/lat)"));
-
     oc.doRegister("emission-output.step-scaled", new Option_Bool(false));
     oc.addDescription("emission-output.step-scaled", "Output", TL("Write emission values scaled to the step length rather than as per-second values"));
     oc.doRegister("emission-output.attributes", new Option_StringVector());
@@ -168,12 +174,16 @@ MSFrame::fillOptions() {
     oc.addDescription("fcd-output", "Output", TL("Save the Floating Car Data"));
     oc.doRegister("fcd-output.geo", new Option_Bool(false));
     oc.addDescription("fcd-output.geo", "Output", TL("Save the Floating Car Data using geo-coordinates (lon/lat)"));
+    oc.doRegister("fcd-output.utm", new Option_Bool(false));
+    oc.addDescription("fcd-output.utm", "Output", TL("Save the Floating Car Data using utm/unshifted coordinates (x/y)"));
     oc.doRegister("fcd-output.signals", new Option_Bool(false));
     oc.addDescription("fcd-output.signals", "Output", TL("Add the vehicle signal state to the FCD output (brake lights etc.)"));
     oc.doRegister("fcd-output.distance", new Option_Bool(false));
     oc.addDescription("fcd-output.distance", "Output", TL("Add kilometrage to the FCD output (linear referencing)"));
     oc.doRegister("fcd-output.acceleration", new Option_Bool(false));
     oc.addDescription("fcd-output.acceleration", "Output", TL("Add acceleration to the FCD output"));
+    oc.doRegister("fcd-output.speed-relative", new Option_Bool(false));
+    oc.addDescription("fcd-output.speed-relative", "Output", TL("Add relative speed (vehicle speed / edge speed limit) to the FCD output"));
     oc.doRegister("fcd-output.max-leader-distance", new Option_Float(-1));
     oc.addDescription("fcd-output.max-leader-distance", "Output", TL("Add leader vehicle information to the FCD output (within the given distance)"));
     oc.doRegister("fcd-output.params", new Option_StringVector());
@@ -184,6 +194,12 @@ MSFrame::fillOptions() {
     oc.addDescription("fcd-output.attributes", "Output", TL("List attributes that should be included in the FCD output"));
     oc.doRegister("fcd-output.filter-shapes", new Option_StringVector());
     oc.addDescription("fcd-output.filter-shapes", "Output", TL("List shape names that should be used to filter the FCD output"));
+    oc.doRegister("fcd-output.skip-empty", new Option_Bool(false));
+    oc.addDescription("fcd-output.skip-empty", "Output", TL("Do not save data for time steps which have no vehicles / transportables"));
+
+    oc.doRegister("person-fcd-output", new Option_FileName());
+    oc.addSynonyme("person-fcd-output", "person-fcd");
+    oc.addDescription("person-fcd-output", "Output", TL("Save fcd for persons and container to separate FILE"));
 
     oc.doRegister("device.ssm.filter-edges.input-file", new Option_FileName());
     oc.addDescription("device.ssm.filter-edges.input-file", "Output", TL("Restrict SSM device output to the edge selection from the given input file"));
@@ -195,6 +211,14 @@ MSFrame::fillOptions() {
     oc.addDescription("queue-output", "Output", TL("Save the vehicle queues at the junctions (experimental)"));
     oc.doRegister("queue-output.period", new Option_String("-1", "TIME"));
     oc.addDescription("queue-output.period", "Output", TL("Save vehicle queues with the given period"));
+    oc.doRegister("queue-output.aggregation", new Option_String("-1", "TIME"));
+    oc.addDescription("queue-output.aggregation", "Output", TL("Write aggregated queue length statistics (max, median, 95th percentile) per edge for the given period (e.g. a traffic light cycle) instead of per-timestep data"));
+    oc.doRegister("queue-output.speed-threshold", new Option_Float(5.0 / 3.6));
+    oc.addDescription("queue-output.speed-threshold", "Output", TL("Maximum speed for counting a vehicle as queued"));
+    oc.doRegister("queue-output.percentile", new Option_Float(95.));
+    oc.addDescription("queue-output.percentile", "Output", TL("The percentile (0-100) to report as percentileQueueLength in aggregated queue output"));
+    oc.doRegister("queue-output.skip-empty", new Option_Bool(false));
+    oc.addDescription("queue-output.skip-empty", "Output", TL("Do not save data for time steps / intervals which have no queue (required for column based output formats)"));
 
     oc.doRegister("vtk-output", new Option_FileName());
     oc.addDescription("vtk-output", "Output", TL("Save complete vehicle positions inclusive speed values in the VTK Format (usage: /path/out will produce /path/out_$TIMESTEP$.vtp files)"));
@@ -505,15 +529,31 @@ MSFrame::fillOptions() {
 
     oc.doRegister("railsignal-moving-block", new Option_Bool(false));
     oc.addDescription("railsignal-moving-block", "Processing", TL("Let railsignals operate in moving-block mode by default"));
+    oc.addSynonyme("railsignal-moving-block", "railsignal.moving-block");
+
+    oc.doRegister("railsignal.moving-block.default-classes", new Option_StringVector(StringVector({"tram", "cable_car"})));
+    oc.addDescription("railsignal.moving-block.default-classes", "Processing", TL("List vehicle classes that default to moving-block operations"));
+
+    oc.doRegister("railsignal.moving-block.max-dist", new Option_Float(200));
+    oc.addDescription("railsignal.moving-block.max-dist", "Processing", TL("Maximum signal distance above which zipper conflicts are ignored"));
 
     oc.doRegister("railsignal.max-block-length", new Option_Float(2e4));
     oc.addDescription("railsignal.max-block-length", "Processing", TL("Do not build blocks longer than FLOAT and issue a warning instead"));
 
-    oc.doRegister("railsignal.default-classes", new Option_StringVector(StringVector({"rail", "rail_fast", "rail_electric", "rail_urban"})));
+    oc.doRegister("railsignal.default-classes", new Option_StringVector(StringVector({"rail", "rail_fast", "rail_electric", "rail_urban", "subway"})));
     oc.addDescription("railsignal.default-classes", "Processing", TL("List vehicle classes that uses block-based insertion checks even when the network has no rail signals for them"));
+
+    oc.doRegister("slope-centered", new Option_Bool(false));
+    oc.addDescription("slope-centered", "Processing", TL("Compute slope at the vehicle center of mass instead of integrating over front and back"));
 
     oc.doRegister("time-to-impatience", new Option_String("180", "TIME"));
     oc.addDescription("time-to-impatience", "Processing", TL("Specify how long a vehicle may wait until impatience grows from 0 to 1, defaults to 300, non-positive values disable impatience growth"));
+
+    oc.doRegister("default.departspeed", new Option_String("avg"));
+    oc.addDescription("default.departspeed", "Processing", TL("Select default depart speed"));
+
+    oc.doRegister("default.departlane", new Option_String("best_prob"));
+    oc.addDescription("default.departlane", "Processing", TL("Select default depart lane"));
 
     oc.doRegister("default.action-step-length", new Option_Float(0.0));
     oc.addDescription("default.action-step-length", "Processing", TL("Length of the default interval length between action points for the car-following and lane-change models (in seconds). If not specified, the simulation step-length is used per default. Vehicle- or VType-specific settings override the default. Must be a multiple of the simulation step-length."));
@@ -551,7 +591,7 @@ MSFrame::fillOptions() {
 
     // pedestrian model
     oc.doRegister("pedestrian.model", new Option_String("striping"));
-    oc.addDescription("pedestrian.model", "Processing", TL("Select among pedestrian models ['nonInteracting', 'striping', 'remote']"));
+    oc.addDescription("pedestrian.model", "Processing", TL("Select among pedestrian models ['nonInteracting', 'striping', 'jupedsim']"));
 
     oc.doRegister("pedestrian.timegap-crossing", new Option_Float(2.));
     oc.addDescription("pedestrian.timegap-crossing", "Processing", TL("Minimal acceptable gap (in seconds) between two vehicles before starting to cross"));
@@ -590,13 +630,13 @@ MSFrame::fillOptions() {
     oc.doRegister("pedestrian.striping.walkingarea-detail", new Option_Integer(4));
     oc.addDescription("pedestrian.striping.walkingarea-detail", "Processing", TL("Generate INT intermediate points to smooth out lanes within the walkingarea"));
 
-#ifdef JPS_VERSION
+#if defined(HAVE_JUPEDSIM_GRPC) || defined(HAVE_JUPEDSIM_LEGACY)
     oc.doRegister("pedestrian.jupedsim.step-length", new Option_String("0.01", "TIME"));
     oc.addDescription("pedestrian.jupedsim.step-length", "Processing", TL("The update interval of the JuPedSim simulation (in seconds)"));
     oc.doRegister("pedestrian.jupedsim.exit-tolerance", new Option_Float(1.));
     oc.addDescription("pedestrian.jupedsim.exit-tolerance", "Processing", TL("The distance to accept the JuPedSim arrival point (in meters)"));
-    oc.doRegister("pedestrian.jupedsim.model", new Option_String("CollisionFreeSpeed"));
-    oc.addDescription("pedestrian.jupedsim.model", "Processing", TL("The submodel to use in JuPedSim ('CollisionFreeSpeed', 'CollisionFreeSpeedV2', 'GeneralizedCentrifugalForce', 'SocialForce')"));
+    oc.doRegister("pedestrian.jupedsim.model", new Option_String("CollisionFreeSpeedModel"));
+    oc.addDescription("pedestrian.jupedsim.model", "Processing", TL("The submodel to use in JuPedSim (default: 'CollisionFreeSpeedModel')"));
     oc.doRegister("pedestrian.jupedsim.strength-neighbor-repulsion", new Option_Float(8.));
     oc.addDescription("pedestrian.jupedsim.strength-neighbor-repulsion", "Processing", TL("The neighbor repulsion strength of the JuPedSim model"));
     oc.doRegister("pedestrian.jupedsim.range-neighbor-repulsion", new Option_Float(.1));
@@ -611,6 +651,10 @@ MSFrame::fillOptions() {
     oc.addDescription("pedestrian.jupedsim.wkt.geo", "Output", TL("Whether to output JuPedSim network as WKT using geo-coordinates (lon/lat)"));
     oc.doRegister("pedestrian.jupedsim.py", new Option_FileName());
     oc.addDescription("pedestrian.jupedsim.py", "Output", TL("The filename to output the JuPedSim setup as Python script"));
+#ifdef HAVE_JUPEDSIM_GRPC
+    oc.doRegister("pedestrian.jupedsim.address", new Option_String(""));
+    oc.addDescription("pedestrian.jupedsim.address", "Processing", TL("The address to connect to the JuPedSim gRPC server"));
+#endif
 #endif
 
     oc.doRegister("ride.stop-tolerance", new Option_Float(10.));
@@ -628,10 +672,13 @@ MSFrame::fillOptions() {
     // generic routing options
     oc.doRegister("routing-algorithm", new Option_String("dijkstra"));
     oc.addDescription("routing-algorithm", "Routing",
-                      "Select among routing algorithms ['dijkstra', 'astar', 'CH', 'CHWrapper']");
+                      "Select among routing algorithms ['dijkstra', 'astar', 'CH', 'CHWrapper', 'CCH']");
 
     oc.doRegister("weights.random-factor", new Option_Float(1.));
     oc.addDescription("weights.random-factor", "Routing", TL("Edge weights for routing are dynamically disturbed by a random factor drawn uniformly from [1,FLOAT)"));
+
+    oc.doRegister("weights.random-factor.dynamic", new Option_Bool(false));
+    oc.addDescription("weights.random-factor.dynamic", "Routing", TL("When using option --weights.random-factor, vary the randomness over time"));
 
     oc.doRegister("weights.minor-penalty", new Option_Float(1.5));
     oc.addDescription("weights.minor-penalty", "Routing", TL("Apply the given time penalty when computing minimum routing costs for minor-link internal lanes"));
@@ -641,6 +688,9 @@ MSFrame::fillOptions() {
 
     oc.doRegister("weights.turnaround-penalty", new Option_Float(5.0));
     oc.addDescription("weights.turnaround-penalty", "Processing", TL("Apply the given time penalty when computing routing costs for turnaround internal lanes"));
+
+    oc.doRegister("weights.reversal-penalty", new Option_Float(60));
+    oc.addDescription("weights.reversal-penalty", "Processing", TL("Apply the given time penalty when computing routing costs for train reversal. Negative values disable reversal"));
 
     oc.doRegister("weights.priority-factor", new Option_Float(0));
     oc.addDescription("weights.priority-factor", "Routing", TL("Consider edge priorities in addition to travel times, weighted by factor"));
@@ -665,10 +715,10 @@ MSFrame::fillOptions() {
                       "Where are mode changes from car to walking allowed (possible values: 'parkingAreas', 'ptStops', 'allJunctions' and combinations)");
 
     oc.doRegister("persontrip.transfer.taxi-walk", new Option_StringVector());
-    oc.addDescription("persontrip.transfer.taxi-walk", "Routing", TL("Where taxis can drop off customers ('allJunctions, 'ptStops')"));
+    oc.addDescription("persontrip.transfer.taxi-walk", "Routing", TL("Where taxis can drop off customers ('allJunctions, 'ptStops', 'parkingAreas')"));
 
     oc.doRegister("persontrip.transfer.walk-taxi", new Option_StringVector());
-    oc.addDescription("persontrip.transfer.walk-taxi", "Routing", TL("Where taxis can pick up customers ('allJunctions, 'ptStops')"));
+    oc.addDescription("persontrip.transfer.walk-taxi", "Routing", TL("Where taxis can pick up customers ('allJunctions, 'ptStops', 'parkingAreas')"));
 
     oc.doRegister("persontrip.default.group", new Option_String());
     oc.addDescription("persontrip.default.group", "Routing", TL("When set, trips between the same origin and destination will share a taxi by default"));
@@ -694,7 +744,7 @@ MSFrame::fillOptions() {
     oc.addDescription("phemlight-path", "Emissions", TL("Determines where to load PHEMlight definitions from"));
 
     oc.doRegister("phemlight-year", new Option_Integer(0));
-    oc.addDescription("phemlight-year", "Emissions", TL("Enable fleet age modelling with the given reference year in PHEMlight5"));
+    oc.addDescription("phemlight-year", "Emissions", TL("Enable fleet age modeling with the given reference year in PHEMlight5"));
 
     oc.doRegister("phemlight-temperature", new Option_Float(INVALID_DOUBLE));
     oc.addDescription("phemlight-temperature", "Emissions", TL("Set ambient temperature to correct NOx emissions in PHEMlight5"));
@@ -727,6 +777,8 @@ MSFrame::fillOptions() {
     oc.addOptionSubTopic("Mesoscopic");
     oc.doRegister("mesosim", new Option_Bool(false));
     oc.addDescription("mesosim", "Mesoscopic", TL("Enables mesoscopic simulation"));
+    oc.doRegister("meso-ltm", new Option_Bool(false));
+    oc.addDescription("meso-ltm", "Mesoscopic", TL("Enables the meso-LTM (LIFT) model"));
     oc.doRegister("meso-edgelength", new Option_Float(98.0f));
     oc.addDescription("meso-edgelength", "Mesoscopic", TL("Length of an edge segment in mesoscopic simulation"));
     oc.doRegister("meso-tauff", new Option_String("1.13", "TIME"));
@@ -765,6 +817,8 @@ MSFrame::fillOptions() {
     oc.addDescription("meso-overtaking", "Mesoscopic", TL("Enable mesoscopic overtaking"));
     oc.doRegister("meso-recheck", new Option_String("0", "TIME"));
     oc.addDescription("meso-recheck", "Mesoscopic", TL("Time interval for rechecking insertion into the next segment after failure"));
+    oc.doRegister("meso-interpolate-pos", new Option_Bool(false));
+    oc.addDescription("meso-interpolate-pos", "Mesoscopic", TL("Enable mesoscopic position interpolation"));
 
     // add rand options
     RandHelper::insertRandOptions(oc);
@@ -776,7 +830,7 @@ MSFrame::fillOptions() {
     // the reason that we include them in vanilla sumo as well is to make reusing config files easy
     oc.addOptionSubTopic("GUI Only");
     oc.doRegister("gui-settings-file", 'g', new Option_FileName());
-    oc.addDescription("gui-settings-file", "GUI Only", TL("Load visualisation settings from FILE"));
+    oc.addDescription("gui-settings-file", "GUI Only", TL("Load visualization settings from FILE"));
 
     oc.doRegister("quit-on-end", 'Q', new Option_Bool(false));
     oc.addDescription("quit-on-end", "GUI Only", TL("Quits the GUI when the simulation stops"));
@@ -796,7 +850,7 @@ MSFrame::fillOptions() {
     oc.doRegister("breakpoints", 'B', new Option_StringVector());
     oc.addDescription("breakpoints", "GUI Only", TL("Use TIME[] as times when the simulation should halt"));
 
-    oc.doRegister("edgedata-files", new Option_FileName());
+    oc.doRegister("edgedata-files", 'm', new Option_FileName());
     oc.addSynonyme("edgedata-files", "data-files");
     oc.addDescription("edgedata-files", "GUI Only", TL("Load edge/lane weights for visualization from FILE"));
 
@@ -846,13 +900,16 @@ MSFrame::fillOptions() {
 void
 MSFrame::buildStreams() {
     // standard outputs
-    OutputDevice::createDeviceByOption("netstate-dump", "netstate", "netstate_file.xsd");
+    if (OutputDevice::createDeviceByOption("netstate-dump", "netstate", "netstate_file.xsd")) {
+        WRITE_WARNING(TL("Raw netstate dumps are deprecated. Use fcd-output instead."));
+    }
     OutputDevice::createDeviceByOption("summary-output", "summary", "summary_file.xsd");
     OutputDevice::createDeviceByOption("person-summary-output", "personSummary", "person_summary_file.xsd");
     OutputDevice::createDeviceByOption("tripinfo-output", "tripinfos", "tripinfo_file.xsd");
 
     //extended
     OutputDevice::createDeviceByOption("fcd-output", "fcd-export", "fcd_file.xsd");
+    OutputDevice::createDeviceByOption("person-fcd-output", "fcd-export", "fcd_file.xsd");
     OutputDevice::createDeviceByOption("emission-output", "emission-export", "emission_file.xsd");
     OutputDevice::createDeviceByOption("battery-output", "battery-export", "battery_file.xsd");
     if (OptionsCont::getOptions().getBool("elechybrid-output.aggregated")) {
@@ -864,7 +921,7 @@ MSFrame::buildStreams() {
     OutputDevice::createDeviceByOption("overheadwiresegments-output", "overheadWireSegments-export");
     OutputDevice::createDeviceByOption("substations-output", "substations-export");
     OutputDevice::createDeviceByOption("full-output", "full-export", "full_file.xsd");
-    OutputDevice::createDeviceByOption("queue-output", "queue-export", "queue_file.xsd");
+    OutputDevice::createDeviceByOption("queue-output", "queue-export", "queue_file.xsd", 3);
     OutputDevice::createDeviceByOption("amitran-output", "trajectories", "amitran/trajectories.xsd\" timeStepSize=\"" + toString(STEPS2MS(DELTA_T)));
 
     //OutputDevice::createDeviceByOption("vtk-output", "vtk-export");
@@ -891,6 +948,14 @@ bool
 MSFrame::checkOptions() {
     OptionsCont& oc = OptionsCont::getOptions();
     bool ok = true;
+    if (oc.getBool("ignore.routeelements")) {
+        oc.resetWritable("route-files");
+        oc.resetDefault("route-files");
+    }
+    if (oc.getBool("ignore.additionalelements")) {
+        oc.resetWritable("additional-files");
+        oc.resetDefault("additional-files");
+    }
     if (!oc.isSet("net-file") && oc.isDefault("remote-port")) {
         WRITE_ERROR(TL("No network file (-n) specified."));
         ok = false;
@@ -920,6 +985,9 @@ MSFrame::checkOptions() {
             WRITE_WARNING(TL("The option 'meso-junction-control.limited' implies 'meso-junction-control'."))
         }
         oc.setDefault("meso-junction-control", "true");
+    }
+    if (oc.getBool("meso-ltm") && oc.isDefault("mesosim")) {
+        oc.setDefault("mesosim", "true");
     }
     if (oc.getBool("mesosim")) {
         if (oc.isDefault("pedestrian.model")) {
@@ -1095,15 +1163,12 @@ MSFrame::checkOptions() {
     if (!oc.isDefault("weights.random-factor") && (oc.isSet("astar.all-distances") || oc.isSet("astar.landmark-distances"))) {
         WRITE_WARNING(TL("The option --weights.random-factor should not be used together with astar and precomputed distances."));
     }
-
-#ifdef JPS_VERSION
-    const std::string pedestrianJPSModel = oc.getString("pedestrian.jupedsim.model");
-    const std::vector<std::string> allowedPedestrianJPSModels = {"CollisionFreeSpeed", "CollisionFreeSpeedV2", "GeneralizedCentrifugalForce", "SocialForce"};
-    if (std::find(allowedPedestrianJPSModels.begin(), allowedPedestrianJPSModels.end(), pedestrianJPSModel) == allowedPedestrianJPSModels.end()) {
-        WRITE_ERRORF(TL("Invalid JuPedSim model '%'. Must be one of 'CollisionFreeSpeed', 'CollisionFreeSpeedV2', 'GeneralizedCentrifugalForce' or 'SocialForce'."), pedestrianJPSModel);
-        ok = false;
+    if (oc.getInt("threads") > 1) {
+        WRITE_WARNING(TL("The option --threads has known problems and does NOT provide meaningful speedup at this time (https://github.com/eclipse-sumo/sumo/issues/4767). Using it is not recommended!"));
     }
-#endif
+    if (oc.getBool("mapmatch.junctions") && oc.isDefault("junction-taz")) {
+        oc.setDefault("junction-taz", "true");
+    }
 
     ok &= MSDevice::checkOptions(oc);
     ok &= SystemFrame::checkOptions(oc);
@@ -1141,14 +1206,12 @@ MSFrame::setMSGlobals(OptionsCont& oc) {
     MSGlobals::gStateLoaded = oc.isSet("load-state");
     MSGlobals::gUseMesoSim = oc.getBool("mesosim");
     MSGlobals::gMesoLimitedJunctionControl = oc.getBool("meso-junction-control.limited");
-    if (MSGlobals::gUseMesoSim) {
-        MSGlobals::gUsingInternalLanes = false;
-    }
+    MSGlobals::gMesoInterpolatePos = oc.getBool("meso-interpolate-pos");
     MSGlobals::gWaitingTimeMemory = string2time(oc.getString("waiting-time-memory"));
     MSAbstractLaneChangeModel::initGlobalOptions(oc);
     MSGlobals::gOverheadWireSolver = oc.getBool("overhead-wire.solver");
     MSGlobals::gOverheadWireRecuperation = oc.getBool("overhead-wire.recuperation");
-    MSGlobals::gOverheadWireCurrentLimits = oc.getBool("overhead-wire.substation-current-limits");
+    Circuit::enforceCurrentLimits(oc.getBool("overhead-wire.substation-current-limits"));
     MSGlobals::gInsertionChecks = SUMOVehicleParameter::parseInsertionChecks(oc.getString("insertion-checks"));
     MSGlobals::gMaxRailSignalBlockLength = oc.getFloat("railsignal.max-block-length");
 
@@ -1190,12 +1253,33 @@ MSFrame::setMSGlobals(OptionsCont& oc) {
     MSGlobals::gTLSYellowMinDecel = oc.getFloat("tls.yellow.min-decel");
     MSGlobals::gUseStopEnded = oc.getBool("use-stop-ended");
     MSGlobals::gUseStopStarted = oc.getBool("use-stop-started");
+    MSGlobals::gSlopeCentered = oc.getBool("slope-centered");
 
     SVCPermissions defaultClasses = 0;
     for (const std::string& vClassName : oc.getStringVector("railsignal.default-classes")) {
         defaultClasses |= parseVehicleClasses(vClassName);
     }
-    MSRailSignalControl::initSignalized(defaultClasses);
+    SVCPermissions mBdefaultClasses = 0;
+    for (const std::string& vClassName : oc.getStringVector("railsignal.moving-block.default-classes")) {
+        mBdefaultClasses |= parseVehicleClasses(vClassName);
+    }
+    MSRailSignalControl::initSignalized(defaultClasses, mBdefaultClasses);
+    gTaxiClasses = 0;
+    for (const std::string& vClassName : oc.getStringVector("device.taxi.vclasses")) {
+        gTaxiClasses |= parseVehicleClasses(vClassName);
+    }
+
+    std::string error;
+    if (!SUMOVehicleParameter::parseDepartLane(oc.getString("default.departlane"), "options", "",
+            MSEdge::getDefaultDepartLane(),
+            MSEdge::getDefaultDepartLaneDefinition(), error)) {
+        WRITE_ERROR(error);
+    }
+    if (!SUMOVehicleParameter::parseDepartSpeed(oc.getString("default.departspeed"), "options", "",
+            MSLane::getDefaultDepartSpeed(),
+            MSLane::getDefaultDepartSpeedDefinition(), error)) {
+        WRITE_ERROR(error);
+    }
 
 #ifdef _DEBUG
     if (oc.isSet("movereminder-output")) {

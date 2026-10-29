@@ -21,12 +21,12 @@ Please also note that the mass in the handbook
 of a private car usually *includes* the average driver's weight.
 
 Whether the exclusion is correct or not also depends on the way you set up the simulation. If persons are
-modelled explicitly it is right, if not, you probably do not care about personCapacity and variable mass anyway,
+modeled explicitly it is right, if not, you probably do not care about personCapacity and variable mass anyway,
 but if you do please revisit your vType settings.
 
 ### On default emission classes
 Note that with the transition to [HBEFA4](Models/Emissions/HBEFA4-based.md) there are no more aggregated emission classes like `HDV` available.
-That means the default emission class for each vehicle class is usually the most frequent vehicle in the 2022 fleet composition as estimated in the HBEFA. This can vastly understimate real emissions which may be dominated by older vehicles, so if precision is important you are encouraged to use a distribution of vehicle types fitting your modelled vehicle fleet. It is also possible to go back to the [HBEFA3](Models/Emissions/HBEFA3-based.md) classes.
+That means the default emission class for each vehicle class is usually the most frequent vehicle in the 2022 fleet composition as estimated in the HBEFA. This can vastly underestimate real emissions which may be dominated by older vehicles, so if precision is important you are encouraged to use a distribution of vehicle types fitting your modeled vehicle fleet. It is also possible to go back to the [HBEFA3](Models/Emissions/HBEFA3-based.md) classes.
 
 Please also note that the default emission class for all electric trains is `zero` and all other trains (and ships) still use the dirtiest diesel emissions of the HBEFA3 model. You are encouraged to model your train (and ship) explicitly if consumption is of interest. This includes adapting parameters like the mass (which means the empty vehicle mass) and loading.
 
@@ -64,7 +64,7 @@ All passenger cars share the defaults listed above, the values below are just id
 |passenger|<img src="images/Wikicommons_passenger_wagon.jpg" width="180" title="" alt="Passenger Wagon" /><br><small>[(C) OSX](https://commons.wikimedia.org/wiki/File:2014_Mitsubishi_Outlander_(ZJ_MY14.5)_ES_4WD_wagon_(2015-05-29)_02.jpg)<br>[Public Domain](https://en.wikipedia.org/wiki/en:public_domain)</small>|passenger/wagon<br><img src="images/passenger-wagon.PNG" width="80" alt="Passenger Wagon" />||5|
 |passenger|<img src="images/Wikicommons_passenger_van.jpg" width="180" title="" alt="Passenger Van" /><br><small>[(C) Kuha455405](https://commons.wikimedia.org/wiki/File:Nissan_Largo_1993.jpg)<br>[CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en)</small>|passenger/van<br><img src="images/passenger-van.PNG" width="80" alt="Passenger Van" />|4.7m<sup>(16)</sup><br>1.9m<sup>(16)</sup><br>1.73m<sup>(16)</sup>|6|
 
-## Trucks and Busses
+## Trucks and Buses
 
 | `vClass` | example | `guiShape` | `length`<br>`width`<br>`height` | `mass` | `minGap` | `accel` | `decel` | `emer`<br>`gency`<br>`Decel` | `maxSpeed` | `desired`<br>`MaxSpeed` | `person`<br>`Capacity` | `emission`<br>`Class` | `speed`<br>`Dev` |
 |--|--|--|--|--|--|--|--|--|--|--|--|--|--|
@@ -73,7 +73,7 @@ All passenger cars share the defaults listed above, the values below are just id
 |bus|<img src="images/Wikicommons_bus_city.jpg" width="180" alt="Citybus" /><br><small>[(C) Iwouldstay](https://commons.wikimedia.org/wiki/File:EVAG_O530_3413_Holthuser_Tal.jpg)<br>[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en)</small>|bus<br><img src="images/bus.PNG" width="80" alt="Citybus" />|12m<sup>(3)</sup><br>2.5m<sup>(3)</sup><br>3.4m<sup>(3)</sup>|12000kg|2.5m|1.2m/s<sup>2(18)</sup>|4m/s<sup>2(27)</sup>|7m/s<sup>2</sup>|85km/h<sup>(3)</sup>|-|85|[HBEFA4/<br>UBus_Std_gt15-18t_Euro-VI_A-C](Models/Emissions/HBEFA4-based.md#city_bus)|0.1|
 |coach|<img src="images/Wikicommons_overland.jpg" width="180" alt="Coach" /><br><small>[(C) Leshe](https://commons.wikimedia.org/wiki/File:Baltic_Shuttle_Bus_in_Estonia.jpg)<br>[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en)</small>|bus/coach<br><img src="images/bus-coach.PNG" width="80" alt="Coach" />|14m<sup>(9)</sup><br>2.6m<sup>(9)</sup><br>4.m<sup>(9)</sup>|25000kg|2.5m|2.0m/s<sup>2(*)</sup>|see above|see above|100km/h<sup>(32)</sup>|-|70<sup>(9)</sup>|[HBEFA4/<br>Coach_3-Axes_gt18t_Euro-VI_A-C](Models/Emissions/HBEFA4-based.md#coaches)|0.05
 
-Please note that according to the HBEFA city busses with three axes are more frequent than the shorter ones but in order to keep the other values like length and mass consistent and have a stronger separation from the coaches it has been decided to use the emission class of a smaller bus.
+Please note that according to the HBEFA city buses with three axes are more frequent than the shorter ones but in order to keep the other values like length and mass consistent and have a stronger separation from the coaches it has been decided to use the emission class of a smaller bus.
 
 ### Recommended subclass settings
 
@@ -107,7 +107,7 @@ Please note that according to the HBEFA city busses with three axes are more fre
 |aircraft|<img src="images/Wikicommons_aircraft.jpg" width="180" title="" alt="Aircraft" /><br><small>[(C) Julian Herzog](https://commons.wikimedia.org/wiki/File:Airbus_A350-941_F-WWCF_MSN002_ILA_Berlin_2016_17.jpg)<br>[CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/deed.en)</small>|aircraft<br><img src="images/aircraft.PNG" width="80" alt="Aircraft" />|70.51m<sup>(46)</sup><br>60m<sup>(46)</sup><br>19.33m<sup>(46)</sup>|162500kg<sup>(46)</sup>|-|-|-|-|969km/h<sup>(46)</sup>|-|425<sup>(46)</sup>|-|-|
 |container|<img src="images/Wikicommons_container.jpg" width="180" title="" alt="Container" /><br><small>[(C) IPLManagement](https://commons.wikimedia.org/wiki/File:40_Foot_High_Cube_Shipping_Container_Depot.jpg)<br>[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en)</small>|container|6.058m<sup>(47)</sup><br>2.43m<sup>(47)</sup><br>2.59m<sup>(47)</sup>|2.33t<sup>(47)</sup>|-|-|-|-|-|-|-|-|-|
 |drone|<img src="images/Wikicommons_drone.jpg" width="180" title="" alt="Drone" /><br><small>[(C) Zarate123](https://commons.wikimedia.org/wiki/File:Unmanned_aerial_vehicle_aerial_photography_30.jpg)<br>[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en)</small>|drone<br>|294mm<sup>(48)</sup><br>373mm<sup>(48)</sup><br>101mm<sup>(48)</sup>|249g<sup>(48)</sup>|-|-|-|-|12m/s<sup>(48)</sup>|-|-|-|-|
-|wheelchair|<img src="images/Wikicommons_wheelchair.png" width="180" title="" alt="Wheelchair" /><br><small>[(C) Laboratoires Servier](https://commons.wikimedia.org/wiki/File:Orthopedics_3_--_Smart-Servier.png)<br>[CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en)</small>|wheelchair|103cm<sup>(49)</sup><br>62cm<sup>(49)</sup><br>90.5cm<sup>(49)</sup>|18.4kg<sup>(49)</sup>|-|-|-|-|-|-|-|-|-|
+|wheelchair|<img src="images/Wikicommons_wheelchair.png" width="180" title="" alt="Wheelchair" /><br><small>[(C) Laboratoires Servier](https://commons.wikimedia.org/wiki/File:Orthopedics_3_--_Smart-Servier.png)<br>[CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en)</small>|wheelchair|1.2m<sup>(49)</sup><br>0.72m<sup>(49)</sup><br>1.2m<sup>(49)</sup>|20+70kg<sup>(\*)</sup>|-|-|-|-|-|-|-|-|-|
 |cable_car|<img src="images/Wikicommons_cable_car.jpg" width="180" title="" alt="Cable_car" /><br><small>[(C) Wilfredo](https://commons.wikimedia.org/wiki/File:Telef%C3%A9rico_de_Caracas_1.jpg)<br>[CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en)</small>|cable_car|-|-|-|-|-|-|12,5m/s<sup>(50)</sup>|-|-|-|-|
 
 ## Footnotes
@@ -146,7 +146,7 @@ Please note that according to the HBEFA city busses with three axes are more fre
 - (34): <https://en.wikipedia.org/wiki/Orders_of_magnitude_(acceleration)>
 - (35): https://www.researchgate.net/publication/311633504_Improving_Road_Safety_of_Tank_Truck_in_Indonesia_by_Speed_Limiter_Installation
 - (36): <https://ka.stadtwiki.net/H%C3%B6chstgeschwindigkeit_(Bahn)>
-- (37): <https://www.rettungsdienst.brk.de/leichte-sprache/abteilung/beschaffung/rettungswagen/rtw-by-2010.html>
+- (37): <https://www.brk.de/angebote/bevoelkerungsschutz-und-rettung/rettungsdienst/beschaffung/rettungswagen/rtw-by-2010.html>
 - (39): <https://electric-scooter.guide/comparisons/electric-scooter-performance-tests/>
 - (40): <https://www.chip.de/artikel/E-Scooter-Test-Die-besten-Elektro-Scooter-mit-Strassenzulassung_165587317.html>
 - (41): Average speed on the 100m man's world record
@@ -157,6 +157,6 @@ Please note that according to the HBEFA city busses with three axes are more fre
 - (46): <http://www.flugzeuginfo.net/acdata_php/acdata_7471_dt.php>
 - (47): <https://de.wikipedia.org/wiki/ISO-Container>
 - (48): <https://www.dji.com/de/mini-4-pro/specs>
-- (49): <https://www.sanitaets-online.de/mobilitaet/rollstuehle/standard-rollstuhl/1153/bischoff-bischoff-rollstuhl-s-eco-300-sb-43>
+- (49): <https://nullbarriere.de/rollstuhl.htm>
 - (50): <https://de.wikipedia.org/wiki/Pendelbahn#Geschwindigkeit_und_F%C3%B6rderleistung>
 - (\*): estimated

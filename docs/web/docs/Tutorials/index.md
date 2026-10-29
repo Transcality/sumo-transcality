@@ -21,27 +21,31 @@ title: Tutorials
 The SUMO User Conference is an annual event organized by the German Aerospace Center (DLR) in Berlin. Since 2015, each conference begins with a SUMO tutorial session. Below you can find the tutorial material (slide deck and input files). Since 2019, the tutorials have also been recorded on video.
 
 ## Files
-* [SUMO 2015](https://sumo.dlr.de/daily/sumo2015_tutorial.zip): network editing with xml patch, persons,
-* [SUMO 2016](https://sumo.dlr.de/daily/sumo2016_tutorial.zip): network editing, meso, containers, [New Features 2016 (Slides)](https://sumo.dlr.de/daily/SUMO2016_new_features.pdf)
-* [SUMO 2017](https://sumo.dlr.de/daily/sumo2017_tutorial.zip): network editing, randomTrips, calibrators (xml only), public transport (obsolete)
-* [SUMO 2018](https://sumo.dlr.de/daily/sumo2018_tutorial.zip): fixing intermodal junctions, calibrators in netedit, junction model parameters, editing shapes
-* [SUMO 2019](https://sumo.dlr.de/daily/sumo2019_tutorial.zip): network editing, visualizing traffic data, public transport from OSM, parking, netgenerate
-* [SUMO 2020](https://sumo.dlr.de/daily/sumo2020_tutorial.zip): turn lanes, routeSampler.py, defining counting data in netedit, taxi/DRT
-* [SUMO 2021](https://sumo.dlr.de/daily/sumo2021_tutorial.zip): traffic light layout, indirect left turn, TAZ, OD-traffic, GTFS
-* [SUMO 2022](https://sumo.dlr.de/daily/sumo2022_tutorial.zip): network editing, flows, opposite driving, pedestrian crossings, parking search
-* [SUMO 2023](https://sumo.dlr.de/daily/sumo2023_tutorial.zip): graphical diff, personFlow, plotting tools, analyzing repeated runs
-* [SUMO 2024](https://sumo.dlr.de/daily/sumo2024_tutorial.zip): debugging simulation warnings, pedestrian models, flying taxis (a transcription is available [here](2024.md#transcription))
-* [SUMO 2025](https://sumo.dlr.de/daily/sumo2025_tutorial.zip): Railway simulation, GTFS, detector count import, electric vehicles, automated charging
+* [SUMO 2015](https://eclipse.dev/sumo/documents/2015/sumo2015_tutorial.zip): Network editing with xml patch, persons
+* [SUMO 2016](https://eclipse.dev/sumo/documents/2016/sumo2016_tutorial.zip): Network editing, meso, containers, [New Features 2016 (Slides)](https://eclipse.dev/sumo/documents/2016/SUMO2016_new_features.pdf)
+* [SUMO 2017](https://eclipse.dev/sumo/documents/2017/sumo2017_tutorial.zip): Network editing, randomTrips, calibrators (xml only), public transport (obsolete)
+* [SUMO 2018](https://eclipse.dev/sumo/documents/2018/sumo2018_tutorial.zip): Fixing intermodal junctions, calibrators in netedit, junction model parameters, editing shapes
+* [SUMO 2019](https://eclipse.dev/sumo/documents/2019/sumo2019_tutorial.zip): Network editing, visualizing traffic data, public transport from OSM, parking, netgenerate
+* [SUMO 2020](https://eclipse.dev/sumo/documents/2020/sumo2020_tutorial.zip): Turn lanes, routeSampler.py, defining counting data in netedit, taxi/DRT
+* [SUMO 2021](https://eclipse.dev/sumo/documents/2021/sumo2021_tutorial.zip): Traffic light layout, indirect left turn, TAZ, OD-traffic, GTFS
+* [SUMO 2022](https://eclipse.dev/sumo/documents/2022/sumo2022_tutorial.zip): Network editing, flows, opposite driving, pedestrian crossings, parking search
+* [SUMO 2023](https://eclipse.dev/sumo/documents/2023/sumo2023_tutorial.zip): Graphical diff, personFlow, plotting tools, analyzing repeated runs
+* [SUMO 2024](https://eclipse.dev/sumo/documents/2024/sumo2024_tutorial.zip): Debugging simulation warnings, pedestrian models, flying taxis
+* [SUMO 2025](https://eclipse.dev/sumo/documents/2025/sumo2025_tutorial.zip): Railway simulation, GTFS, detector count import, electric vehicles, automated charging
+* [SUMO 2026](https://eclipse.dev/sumo/documents/2026/sumo2026_tutorial.zip): Podcars, state saving/loading, routing preferences
 
 ## Videos
 
 <a class="no-arrow-link" data-youtube href="https://www.youtube.com/watch?v=UeaeCdLt_1o">Watch the 2019 Tutorial</a>
+(a transcription is available [here](2019.md#transcription))
 <br>
 
 <a class="no-arrow-link" data-youtube href="https://www.youtube.com/watch?v=aiOQbaB-pWo">Watch the 2020 Tutorial</a>
+(a transcription is available [here](2020.md#transcription))
 <br>
 
 <a class="no-arrow-link" data-youtube href="https://www.youtube.com/watch?v=tlshWdzFWpY">Watch the 2021 Tutorial</a>
+(a transcription is available [here](2021.md#transcription))
 <br>
 
 <a class="no-arrow-link" data-youtube href="https://www.youtube.com/watch?v=urKtJj87X5M">Watch the 2022 Tutorial</a>
@@ -58,11 +62,22 @@ The SUMO User Conference is an annual event organized by the German Aerospace Ce
 
 <a class="no-arrow-link" data-youtube href="https://www.youtube.com/watch?v=ccc2mnGX_Mg">Watch the 2025 Tutorial</a>
 (a transcription is available [here](2025.md#transcription))
+<br>
+
+<a class="no-arrow-link" data-youtube href="https://www.youtube.com/watch?v=zrMRpP47T_M">Watch the 2026 Tutorial</a>
+(a transcription is available [here](2026.md#transcription))
+
+# JuPedSim Tutorials
+* [JuPedSim Introduction](Jupedsim/JuPedSim_Intro.md)
+* [Crossing Simulation](Jupedsim/crossing-simulation.md)
+* [Definition of 2D Walkable Areas](Jupedsim/walkable_areas.md)
+* [Routing](Jupedsim/routing.md)
 
 # Advanced Tutorials
 * [Hello SUMO](Hello_SUMO.md) - The simplest net and a single car set up "by hand"
 * [ScenarioGuide](ScenarioGuide.md) - High level outline of the steps needed to build a simulation scenario
 * [HighwayDetector](HighwayDetector.md) - How to create a highway scenario based on induction loop data
+* [RailwayScenario](RailwayScenario.md) - How to create a large railway scenario from OSM and GTFS data
 * [FundamentalDiagram](FundamentalDiagram.md) - How to compute a fundamental diagram with SUMO
 * [PT from OpenStreetMap](PT_from_OpenStreetMap.md) - Creating a runnable public transit scenario entirely from [OpenStreetMap](https://www.openstreetmap.org/)
 * [Importing GTFS](GTFS.md) - Importing public transport schedules from public sources using the General Transit Feed Specification
@@ -79,8 +94,10 @@ These tutorials use the [Python-TraCI Library](../TraCI/Interfacing_TraCI_from_P
 
 # Other
 
-## Curso de Simulação em Mobilidade
-[Udemy tutorial](https://www.udemy.com/course/ferramenta-de-microssimulacao-de-trafego-sumo/) in Portuguese courtesy of Ednardo Ferreira.
+## External courses and tutorials
+
+- [Curso de Simulação em Mobilidade](https://www.udemy.com/course/ferramenta-de-microssimulacao-de-trafego-sumo/): A Udemy tutorial in Portuguese courtesy of Ednardo Ferreira.
+- [Traffic Simulation for Planning Applications](https://roadwayvr.com/TrafficSimulationforPlanningApplications/) - Use traffic simulation as a planning decision tool to model, test, and justify better designs: A free 12-week course by Ahmad Mohammadi.
 
 ## ITSC 2015
 
@@ -102,9 +119,9 @@ These tutorials use the [Python-TraCI Library](../TraCI/Interfacing_TraCI_from_P
 
 # Further Sources for Examples
 ## Using Examples from the Test Suite
-SUMO comes with a large set of tests, just browse them at [{{SUMO}}/tests](https://github.com/eclipse-sumo/sumo/blob/main/tests). They are set up to be running by using a testing environment, but it is also possible to extract them and execute using [sumo](../sumo.md) and/or the other tools of the package. In order to do so you can either [download the complete sumo package](../Downloads.md#sources) or use the [online test extraction](https://sumo.dlr.de/extractTest.php). In the online tool you enter the path to the test you like (e.g. [{{SUMO}}/tests/sumo/extended/rerouter/use_routing_device](https://github.com/eclipse-sumo/sumo/blob/main/tests/sumo/extended/rerouter/use_routing_device)) into the form and get a zip containing all the files.
+SUMO comes with a large set of tests, just browse them at [{{SUMO}}/tests](https://github.com/eclipse-sumo/sumo/blob/main/tests). They are set up to be running by using a testing environment, but it is also possible to extract them and execute using [sumo](../sumo.md) and/or the other tools of the package. In order to do so you can either clone the [GitHub repository](https://github.com/eclipse-sumo/sumo/) or use the [online test extraction](https://sumo.dlr.de/extractTest.php). In the online tool you enter the path to the test you like (e.g. [{{SUMO}}/tests/sumo/extended/rerouter/use_routing_device](https://github.com/eclipse-sumo/sumo/blob/main/tests/sumo/extended/rerouter/use_routing_device)) into the form and get a zip containing all the files.
 
-If you have downloaded and unzipped the all inclusive package, you do not need the online form. Just go into the folder and execute the "extractTest.py" script. For example, you may get the same example of using rerouters as following:
+If you have cloned the repository, you do not need the online form. Just go into the test folder and execute the "extractTest.py" script. For example, you may get the same example of using rerouters as following:
 
 ```
 cd <SUMO_HOME>/tests

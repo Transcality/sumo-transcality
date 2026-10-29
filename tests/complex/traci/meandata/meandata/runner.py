@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -28,13 +28,20 @@ if "SUMO_HOME" in os.environ:
 import traci  # noqa
 import sumolib  # noqa
 
-traci.start([sumolib.checkBinary('sumo'), "-c", "sumo.sumocfg"])
-for step in range(3):
-    print("step", step)
-    traci.simulationStep()
+traci.start([sumolib.checkBinary('sumo'), "-c", "sumo.sumocfg"] + sys.argv[1:])
+
 print("meandata", traci.meandata.getIDList())
 print("meandata count", traci.meandata.getIDCount())
-meandataID = "meandata_ID"
-print("examining", meandataID)
+lanes = traci.lane.getIDList()
+attrs = ["density", "laneDensity", "waitingTime", "timeLoss", "speed",
+         "speedRelative", "departed", "arrived", "entered", "left", "flow", "distance"]
+
+print('\t'.join(map(str, ["time"] + attrs)))
+for step in range(1200):
+    traci.simulationStep()
+    if step % 100 == 0:
+        for a in attrs:
+            data = [traci.meandata.getAttributeValue("ed", "1si_0", a) for a in attrs]
+        print('\t'.join(map(str, [step] + data)))
 
 traci.close()

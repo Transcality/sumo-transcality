@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2013-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2013-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -51,7 +51,6 @@ public:
      */
     static void insertOptions(OptionsCont& oc);
 
-
     /** @brief Build devices for the given vehicle, if needed
      *
      * The options are read and evaluated whether a FCD-device shall be built
@@ -80,17 +79,48 @@ public:
         return "fcd";
     }
 
-    static const std::set<const MSEdge*>& getEdgeFilter() {
+    static inline SUMOTime getBegin() {
+        return myBegin;
+    }
+
+    static inline SUMOTime getPeriod() {
+        return myPeriod;
+    }
+
+    static inline bool useGeo() {
+        return myUseGeo;
+    }
+
+    static inline bool useUTM() {
+        return myUseUTM;
+    }
+
+    static inline double getMaxLeaderDistance() {
+        return myMaxLeaderDistance;
+    }
+
+    static inline const std::vector<std::string>& getParamsToWrite() {
+        return myParamsToWrite;
+    }
+
+    static inline double getRadius() {
+        return myRadius;
+    }
+
+    static inline const std::set<const MSEdge*>& getEdgeFilter() {
         return myEdgeFilter;
     }
 
-    static SumoXMLAttrMask getWrittenAttributes() {
+    static inline const SumoXMLAttrMask& getWrittenAttributes() {
         return myWrittenAttributes;
+    }
+
+    static inline bool skipEmpty() {
+        return mySkipEmpty;
     }
 
     /// @brief initialize edge filter and attribute mask (once)
     static void initOnce();
-
 
     /// @brief resets the edge filter
     static void cleanup();
@@ -111,6 +141,14 @@ private:
      */
     MSDevice_FCD(SUMOVehicle& holder, const std::string& id);
 
+    /// @brief begin time
+    static SUMOTime myBegin;
+    static SUMOTime myPeriod;
+    static bool myUseGeo;
+    static bool myUseUTM;
+    static double myMaxLeaderDistance;
+    static std::vector<std::string> myParamsToWrite;
+    static double myRadius;
 
     /// @brief edge filter for FCD output
     static std::set<const MSEdge*> myEdgeFilter;
@@ -124,6 +162,9 @@ private:
     /// @brief bit mask for checking attributes to be written
     static SumoXMLAttrMask myWrittenAttributes;
     static SumoXMLAttrMask getDefaultMask();
+
+    /// @brief whether time steps without vehicles will generate output
+    static bool mySkipEmpty;
 
 private:
     /// @brief Invalidated copy constructor.

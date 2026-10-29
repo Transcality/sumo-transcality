@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2004-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2004-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -47,7 +47,6 @@ OutputDevice_CERR::getDevice() {
 // method definitions
 // ===========================================================================
 OutputDevice_CERR::OutputDevice_CERR() : OutputDevice(0, "CERR") {
-    myStreamDevice = std::make_unique<COUTStreamDevice>(std::cerr);
 }
 
 
@@ -56,10 +55,15 @@ OutputDevice_CERR::~OutputDevice_CERR() {
 }
 
 
+std::ostream&
+OutputDevice_CERR::getOStream() {
+    return std::cerr;
+}
+
+
 void
 OutputDevice_CERR::postWriteHook() {
     std::cerr.flush();
-    getOStream().flush();
 }
 
 

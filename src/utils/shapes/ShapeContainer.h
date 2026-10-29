@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2005-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2005-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -34,6 +34,7 @@
 // class declarations
 // ===========================================================================
 class PolygonDynamics;
+class ShapeListener;
 class SUMOTrafficObject;
 template <class T, class S>
 class ParametrisedWrappingCommand;
@@ -175,6 +176,10 @@ public:
     /** @brief Remove all dynamics before quick-loading state */
     void clearState();
 
+    void addShapeListener(ShapeListener* listener) {
+        myListeners.push_back(listener);
+    }
+
 protected:
     /// @brief add polygon
     virtual bool add(SUMOPolygon* poly, bool ignorePruning = false);
@@ -221,5 +226,26 @@ protected:
 private:
     /// @brief Command pointers for scheduled polygon update. Maps PolyID->Command
     std::map<const std::string, ParametrisedWrappingCommand<ShapeContainer, PolygonDynamics*>*> myPolygonUpdateCommands;
+    std::vector<ShapeListener*> myListeners;
 
+};
+
+
+/**
+ * @class ShapeListener
+ * @brief Interface for objects which want to be notified about shape updates
+ */
+class ShapeListener {
+public:
+    virtual ~ShapeListener() {};
+    virtual void polygonChanged(const SUMOPolygon* const poly, const bool added, const bool removed) {
+        UNUSED_PARAMETER(poly);
+        UNUSED_PARAMETER(added);
+        UNUSED_PARAMETER(removed);
+    }
+    virtual void poiChanged(const PointOfInterest* const poi, const bool added, const bool removed) {
+        UNUSED_PARAMETER(poi);
+        UNUSED_PARAMETER(added);
+        UNUSED_PARAMETER(removed);
+    }
 };

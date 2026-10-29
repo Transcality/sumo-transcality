@@ -16,9 +16,9 @@ may also [download pre-built Windows binaries](../Downloads.md).
 - Python 3.X
 - SUMO sources (either an unpacked src zip or a git clone, see
   [Getting the source code](../Installing/Linux_Build.md#getting_the_source_code))
-- Installed Libraries (Xerces-C, Proj, Fox) preferably by cloning <https://github.com/DLR-TS/SUMOLibraries/>
-  - Make sure that the `SUMO_LIBRARIES` environment variable points to your cloned directory in case you didn't put the libraries in the same directory as the SUMO repository
-  - Note that in case you don't have admin rights, you can still configure environment variables for you only
+- Installed Libraries (Xerces-C, Proj, Fox) preferably by downloading the [dependent libraries](https://github.com/DLR-TS/SUMOLibraries/releases).
+  - Make sure that the `SUMO_LIBRARIES` environment variable points to your unzipped directory in case you didn't put the libraries in the same directory as the SUMO repository
+  - Note that in case you don't have admin rights, you can still configure environment variables for your user
 
 ## Recommended Windows setup
 
@@ -41,6 +41,7 @@ may also [download pre-built Windows binaries](../Downloads.md).
 CMake settings can easily be modified, loaded and saved using *Project -> CMake Settings* in Visual Studio.
 
 ![](../images/vs_cmake_settings.png)
+
 Editing the CMake settings using Visual Studio
 
 ### Optional but still recommended steps
@@ -79,6 +80,7 @@ If you need to modify settings, you can edit the `CMakeCache.txt` by opening it 
 - If the libraries are not found, set `SUMO_LIBRARIES:PATH` to something like `C:/Users/tests/source/repos/SUMOLibraries` and retry
 - If a wrong Python interpreter or library is found, edit the PYTHON_* variables
 - If you want to disable building the GUI (Fox) or usage of Proj, set the according library entries to an empty string
+- To enable console output for the *Release* build of graphical applications sumo-gui and netedit, set CONSOLE_RELEASE=1
 
 To make a debug build, you should ***not*** change CMAKE_BUILD_TYPE in the cache file. You should choose a different configuration in the GUI instead.
 
@@ -96,6 +98,29 @@ For details on building your
 own and also on how to use different versions and additional libraries
 see [Installing/Windows_Libraries](../Installing/Windows_Libraries.md).
 You might not to edit your `CMakeCache.txt` to use the selfmade libraries.
+
+## vcpkg support
+
+If you cannot use SUMOLibraries or want to build from source (maybe for different platforms
+or because you want to anble or disable certain features in the libraries),
+you can also try to build against vcpkg.
+The setup follows those basic steps.
+```
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+./vcpkg install arrow gdal xerces-c gettext fmt eigen3
+```
+
+Unless you are determined that all your builds will use vcpkg libraries,
+you should not call `./vcpkg integrate install` because it might mess up
+your environment if you decide to build against SUMOLibraries at a later point.
+Instead you should add
+`-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake` to your cmake options.
+
+Unfortunately the FOX toolkit is still missing from vcpkg so you
+cannot build any GUI applications by using only vcpkg.
+
 
 ## Install python packages
 
@@ -217,6 +242,10 @@ You can check if all dependencies are correct using
 Your version of Visual Studio doesn't support Debugging, you can only compile in release mode.
 
 ## How to build JuPedSim and then build SUMO with JuPedSim
+
+!!! note
+    This section is outdated and refers to the legacy JuPedSim module. For the current SUMO version it suffices to have JuPedSim installed in
+    the active Python environment.
 
 In this section, you will learn how to build the latest version of the pedestrian simulator JuPedSim and how to compile SUMO with this latest version of JuPedSim, in case the release version of JuPedSim that comes with SUMO isn't sufficient for your needs. You can consult the JuPedSim build procedure [here](https://github.com/PedestrianDynamics/jupedsim#readme); hereafter proposes a similar procedure. First of all, clone the JuPedSim repository:
 

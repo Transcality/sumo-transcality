@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,7 @@
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 // Avoid some noisy warnings with Visual Studio
-#pragma warning(disable:4820 4514 5045 4710)
+#pragma warning(disable:4820 4514 5045 4710 4711)
 #endif
 #include <vector>
 #include <iostream>
@@ -714,6 +714,7 @@ TraCITestClient::testAPI() {
     libsumo::TraCIPositionVector shape = polygon.getShape("poly0");
     polygon.setLineWidth("poly0", 0.6);
     answerLog << "    getLineWidth: " << polygon.getLineWidth("poly0") << "\n";
+    answerLog << "    getHeight: " << polygon.getHeight("poly0") << "\n";
     answerLog << "    getShape: " << shape.getString() << "\n";
     answerLog << "    getColor: " << polygon.getColor("poly0").getString() << "\n";
     shape.value[0].x = 42;

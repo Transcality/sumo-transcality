@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -218,13 +218,13 @@ public:
     bool useStoppingPlace(MSStoppingPlace* stoppingPlace) override;
 
     /// @brief Provide the router to use (MSNet::getRouterTT or MSRoutingEngine)
-    SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouter(SUMOVehicle& veh, const MSEdgeVector& prohibited) override;
+    SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouter(SUMOVehicle& veh, const Prohibitions& prohibited) override;
 
     /// @brief Return the number of occupied places of the StoppingPlace
-    double getStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace) override;
+    double getStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace, const SUMOVehicle* veh) override;
 
     /// @brief Return the number of occupied places of the StoppingPlace from the previous time step
-    double getLastStepStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace) override;
+    double getLastStepStoppingPlaceOccupancy(MSStoppingPlace* stoppingPlace, const SUMOVehicle* veh) override;
 
     /// @brief Return the number of places the StoppingPlace provides
     double getStoppingPlaceCapacity(MSStoppingPlace* stoppingPlace) override;
@@ -396,9 +396,6 @@ private:
 
     /// @brief SoC the last time the station finder algorithm was run completely
     double myUpdateSoC;
-
-    /// @brief The maximum charging speed of the vehicle battery in W
-    double myMaxChargePower;
 
     /// @brief The target state of charge where the vehicle stops charging
     double myTargetSoC;

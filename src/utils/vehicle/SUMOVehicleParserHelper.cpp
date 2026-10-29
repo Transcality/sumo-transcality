@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -35,7 +35,6 @@
 #include <utils/emissions/PollutantsInterface.h>
 #include <utils/router/IntermodalNetwork.h>
 #include <utils/vehicle/SUMOVTypeParameter.h>
-#include <utils/vehicle/SUMOVehicleParameter.h>
 #include <utils/xml/SUMOSAXAttributes.h>
 
 #include "SUMOVehicleParserHelper.h"
@@ -277,7 +276,7 @@ SUMOVehicleParserHelper::parseFlowAttributes(SumoXMLTag tag, const SUMOSAXAttrib
         // parse number
         if (hasNumber) {
             bool ok = true;
-            flowParameter->repetitionNumber = attrs.get<int>(SUMO_ATTR_NUMBER, id.c_str(), ok);
+            flowParameter->repetitionNumber = attrs.get<long long int>(SUMO_ATTR_NUMBER, id.c_str(), ok);
             if (!ok) {
                 return handleVehicleError(hardFail, flowParameter);
             } else {
@@ -303,21 +302,21 @@ SUMOVehicleParserHelper::parseFlowAttributes(SumoXMLTag tag, const SUMOSAXAttrib
         } else {
             // interpret repetitionNumber
             if (flowParameter->repetitionProbability > 0) {
-                flowParameter->repetitionNumber = std::numeric_limits<int>::max();
+                flowParameter->repetitionNumber = std::numeric_limits<long long int>::max();
             } else {
                 if (flowParameter->repetitionOffset <= 0) {
                     if (poissonFlow) {
                         // number is random but flow has a fixed end time
-                        flowParameter->repetitionNumber = std::numeric_limits<int>::max();
+                        flowParameter->repetitionNumber = std::numeric_limits<long long int>::max();
                     } else {
                         return handleVehicleError(hardFail, flowParameter, "Invalid repetition rate in the definition of " + toString(tag) + " '" + id + "'.");
                     }
                 } else {
                     if (flowParameter->repetitionEnd == SUMOTime_MAX) {
-                        flowParameter->repetitionNumber = std::numeric_limits<int>::max();
+                        flowParameter->repetitionNumber = std::numeric_limits<long long int>::max();
                     } else {
                         const SUMOTime repLength = flowParameter->repetitionEnd - flowParameter->depart;
-                        flowParameter->repetitionNumber = (int)ceil((double)repLength / (double)flowParameter->repetitionOffset);
+                        flowParameter->repetitionNumber = (long long int)ceil((double)repLength / (double)flowParameter->repetitionOffset);
                     }
                 }
             }
@@ -753,17 +752,22 @@ SUMOVehicleParserHelper::parseCommonAttributes(const SUMOSAXAttributes& attrs, S
 
 
 SUMOVTypeParameter*
-SUMOVehicleParserHelper::beginVTypeParsing(const SUMOSAXAttributes& attrs, const bool hardFail, const std::string& file) {
-    // first obtain ID
-    std::string id = parseID(attrs, SUMO_TAG_VTYPE);
-    // check if ID is valid
+SUMOVehicleParserHelper::beginVTypeParsing(const SUMOSAXAttributes& attrs, const bool hardFail, const std::string& file, const SUMOVTypeParameter* const base) {
+    const std::string id = (attrs.hasAttribute(SUMO_ATTR_ID) || base == nullptr) ? parseID(attrs, SUMO_TAG_VTYPE) : "";
     if (!id.empty()) {
-        SUMOVehicleClass vClass = SVC_PASSENGER;
+        // create vType
+        SUMOVehicleClass vClass = base == nullptr ? SVC_PASSENGER : base->vehicleClass;
         if (attrs.hasAttribute(SUMO_ATTR_VCLASS)) {
             vClass = parseVehicleClass(attrs, id);
         }
-        // create vType
-        SUMOVTypeParameter* vType = new SUMOVTypeParameter(id, vClass);
+        SUMOVTypeParameter* vType;
+        if (base == nullptr) {
+            vType = new SUMOVTypeParameter(id, vClass);
+        } else {
+            vType = new SUMOVTypeParameter(*base);
+            vType->id = id;
+            vType->vehicleClass = vClass;
+        }
         // parse attributes
         if (attrs.hasAttribute(SUMO_ATTR_VCLASS)) {
             vType->parametersSet |= VTYPEPARS_VEHICLECLASS_SET;
@@ -1193,6 +1197,8 @@ SUMOVehicleParserHelper::beginVTypeParsing(const SUMOSAXAttributes& attrs, const
         }
         // all ok, then return vType
         return vType;
+    } else if (base != nullptr) {
+        return const_cast<SUMOVTypeParameter*>(base);
     } else {
         return handleVehicleTypeError(hardFail, nullptr, "VType cannot be created");
     }
@@ -1273,7 +1279,7 @@ SUMOVehicleParserHelper::parseCFMParams(SUMOVTypeParameter* into, const SumoXMLT
             } else if (it == SUMO_ATTR_SPEED_TABLE || it == SUMO_ATTR_TRACTION_TABLE || it == SUMO_ATTR_RESISTANCE_TABLE) {
                 into->cfParameter[it] = parsedCFMAttribute;
             } else if (it == SUMO_ATTR_CF_IDM_STEPPING) {
-                // declare a int in wich save CFM int attribute
+                // declare a int in which save CFM int attribute
                 double CFMDoubleAttribute = -1;
                 try {
                     // obtain CFM attribute in int format
@@ -1296,7 +1302,7 @@ SUMOVehicleParserHelper::parseCFMParams(SUMOVTypeParameter* into, const SumoXMLT
                     return false;
                 }
             } else {
-                // declare a double in wich save CFM float attribute
+                // declare a double in which save CFM float attribute
                 double CFMDoubleAttribute = -1;
                 try {
                     // obtain CFM attribute in double format
@@ -1470,6 +1476,13 @@ SUMOVehicleParserHelper::getAllowedCFModelAttrs() {
         railParams.insert(SUMO_ATTR_RESISTANCE_COEFFICIENT_CONSTANT);
         railParams.insert(SUMO_ATTR_RESISTANCE_COEFFICIENT_LINEAR);
         railParams.insert(SUMO_ATTR_RESISTANCE_COEFFICIENT_QUADRATIC);
+        railParams.insert(SUMO_ATTR_CURVE_RESISTANCE);
+        railParams.insert(SUMO_ATTR_CURVE_INTEGRATION);
+        railParams.insert(SUMO_ATTR_ROECKL_SHARP_RADIUS);
+        railParams.insert(SUMO_ATTR_ROECKL_NUMERATOR);
+        railParams.insert(SUMO_ATTR_ROECKL_NUMERATOR_SHARP);
+        railParams.insert(SUMO_ATTR_ROECKL_OFFSET);
+        railParams.insert(SUMO_ATTR_ROECKL_OFFSET_SHARP);
         allowedCFModelAttrs[SUMO_TAG_CF_RAIL] = railParams;
         allParams.insert(railParams.begin(), railParams.end());
         // ACC
@@ -1528,6 +1541,11 @@ SUMOVehicleParserHelper::getAllowedCFModelAttrs() {
         ccParams.insert(SUMO_ATTR_CF_CC_FLATBED_H);
         allowedCFModelAttrs[SUMO_TAG_CF_CC] = ccParams;
         allParams.insert(ccParams.begin(), ccParams.end());
+        // NaSch
+        std::set<SumoXMLAttr> naschParams(genericParams);
+        naschParams.insert(SUMO_ATTR_SIGMA);
+        allowedCFModelAttrs[SUMO_TAG_CF_NASCH] = naschParams;
+        allParams.insert(naschParams.begin(), naschParams.end());
         // last element
         allowedCFModelAttrs[SUMO_TAG_NOTHING] = allParams;
     }
@@ -1557,6 +1575,9 @@ SUMOVehicleParserHelper::parseLCParams(SUMOVTypeParameter* into, LaneChangeModel
         lc2013Params.insert(SUMO_ATTR_LCA_SPEEDGAIN_URGENCY);
         lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_ROUNDABOUT);
         lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_SPEED);
+        lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_HELPTIME);
+        lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_HELPTHRESHOLD);
+        lc2013Params.insert(SUMO_ATTR_LCA_COOPERATIVE_MINSPEED);
         lc2013Params.insert(SUMO_ATTR_LCA_OVERTAKE_RIGHT);
         lc2013Params.insert(SUMO_ATTR_LCA_SIGMA);
         lc2013Params.insert(SUMO_ATTR_LCA_KEEPRIGHT_ACCEPTANCE_TIME);
@@ -1592,7 +1613,7 @@ SUMOVehicleParserHelper::parseLCParams(SUMOVTypeParameter* into, LaneChangeModel
             if (!ok) {
                 return false;
             }
-            // declare a double in wich save CFM attribute
+            // declare a double in which save CFM attribute
             double LCMAttribute = -1;
             try {
                 // obtain CFM attribute in double format
@@ -1663,7 +1684,7 @@ SUMOVehicleParserHelper::parseJMParams(SUMOVTypeParameter* into, const SUMOSAXAt
             if (!ok) {
                 return false;
             }
-            // declare a double in wich save CFM attribute
+            // declare a double in which save CFM attribute
             double JMAttribute = INVALID_DOUBLE;
             try {
                 // obtain CFM attribute in double format
@@ -1772,7 +1793,7 @@ SUMOVehicleParserHelper::processActionStepLength(double given) {
             WRITE_WARNING(defaultError + "Ignoring given value (=" + toString(STEPS2TIME(result)) + " s.)");
         }
         result = DELTA_T;
-    } else if (result % DELTA_T != 0) {
+    } else if (result % DELTA_T != 0 && OptionsCont::getOptions().exists("step-length")) {
         result = (SUMOTime)((double)DELTA_T * floor(double(result) / double(DELTA_T)));
         result = MAX2(DELTA_T, result);
         if (fabs(given * 1000. - double(result)) > NUMERICAL_EPS) {
@@ -1854,6 +1875,41 @@ SUMOVehicleParserHelper::parseCarWalkTransfer(const OptionsCont& oc, const bool 
         }
     }
     return carWalk;
+}
+
+
+bool
+SUMOVehicleParserHelper::parseStopTag(const SUMOSAXAttributes& attrs, const SUMOVehicleParameter::Stop* stopParam, SumoXMLTag& tag, std::string& id) {
+    bool ok = true;
+    // dummy stop parameter to hold the attributes
+    SUMOVehicleParameter::Stop stop;
+    if (stopParam != nullptr) {
+        stop = *stopParam;
+    } else {
+        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_BUS_STOP, nullptr, ok, "");
+        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_TRAIN_STOP, nullptr, ok, stop.busstop); // alias
+        stop.chargingStation = attrs.getOpt<std::string>(SUMO_ATTR_CHARGING_STATION, nullptr, ok, "");
+        stop.overheadWireSegment = attrs.getOpt<std::string>(SUMO_ATTR_OVERHEAD_WIRE_SEGMENT, nullptr, ok, "");
+        stop.containerstop = attrs.getOpt<std::string>(SUMO_ATTR_CONTAINER_STOP, nullptr, ok, "");
+        stop.parkingarea = attrs.getOpt<std::string>(SUMO_ATTR_PARKING_AREA, nullptr, ok, "");
+    }
+    if (stop.busstop != "") {
+        tag = SUMO_TAG_BUS_STOP;
+        id = stop.busstop;
+    } else if (stop.containerstop != "") {
+        tag = SUMO_TAG_CONTAINER_STOP;
+        id = stop.containerstop;
+    } else if (stop.parkingarea != "") {
+        tag = SUMO_TAG_PARKING_AREA;
+        id = stop.parkingarea;
+    } else if (stop.chargingStation != "") {
+        tag = SUMO_TAG_CHARGING_STATION;
+        id = stop.chargingStation;
+    } else if (stop.overheadWireSegment != "") {
+        tag = SUMO_TAG_OVERHEAD_WIRE_SEGMENT;
+        id = stop.overheadWireSegment;
+    }
+    return ok;
 }
 
 

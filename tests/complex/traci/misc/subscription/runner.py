@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -35,7 +35,7 @@ else:
     pure_traci = traci
 
 try:
-    traci.start([sumolib.checkBinary("sumo"), "-c", "sumo.sumocfg", "+a", "input_additional.add.xml"])
+    traci.start([sumolib.checkBinary("sumo"), "-c", "sumo.sumocfg", "+a", "input_additional.add.xml"] + sys.argv[1:])
     traci.simulationStep()
     for dt in pure_traci.DOMAINS:
         if dt._name == "gui":
@@ -65,7 +65,10 @@ try:
                             name = dt._name + "_0"
                         param = None
                         if '"s"' in remainder:
-                            param = {v: "3o_0"}
+                            if dt._name == "meandata":
+                                param = {v: "flow"}
+                            else:
+                                param = {v: "3o_0"}
                         elif '"d"' in remainder:
                             param = {v: 0.}
                         elif '"i"' in remainder:
@@ -88,6 +91,8 @@ try:
                             param = {v: ("tru", 2, ("1si", 0., 0), traci.constants.REQUEST_DRIVINGDIST)}
                         elif '"tou"' in remainder:
                             param = {v: ("tou", 2, (400., 495.), traci.constants.REQUEST_DRIVINGDIST)}
+                        elif '"tss"' in remainder:
+                            param = {v: ("tss", 2, "1si_0", "flow")}
                         try:
                             if dt._name == "simulation":
                                 traci.simulation.subscribe([v], parameters=param)

@@ -33,7 +33,7 @@ title: Changes in the 2011 releases (versions 0.12.3, 0.13.0 and 0.13.1)
   - added importer for openDRIVE files, see
     [Networks/Import/OpenDRIVE](../Networks/Import/OpenDRIVE.md);
     many thanks go to Marius Dupuis from
-    [VIRES](https://vires.mscsoftware.com/) for allowing to use the example
+    [VIRES](https://www.cadence.com/en_US/home/tools/msc-software/virtual-test-drive.html) for allowing to use the example
     files for tests
   - added importer for matSIM files, see
     [Networks/Import/MATsim](../Networks/Import/MATsim.md)
@@ -134,13 +134,13 @@ not be loaded into old SUMO versions.
     back bumper of its leader in a traffic jam.
 - netconvert
   - added optional attribute `name` to
-    plain edge input. This is used for visualisation (Street name)
+    plain edge input. This is used for visualization (Street name)
   - added optional attribute `endOffset`
     to plain edge input. This can be used to shorten the usable
     edge/lane length when stopping (i.e. in case of pedestrian
     crossings)
   - added optional attribute `width` to
-    plain edge input. This will be used for visualisation in future
+    plain edge input. This will be used for visualization in future
     patches
   - plain edge input now supports lane specific speeds
   - plain edge input now supports edge-specific vehicle class

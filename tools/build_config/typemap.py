@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2015-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2015-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -28,10 +28,12 @@ from os.path import dirname, exists, getmtime, join
 
 
 def writeTypeMap(typemapFile, typemap):
-    with open(typemapFile, 'w') as f:
+    # there are some latin1 characters in the default visum typemap
+    # but they seem to survive utf8 decoding / encoding just fine
+    with open(typemapFile, 'w', encoding="utf8") as f:
         for format, mapFile in sorted(typemap.items()):
             print("const std::string %sTypemap =" % format, file=f)
-            for line in open(mapFile):
+            for line in open(mapFile, encoding="utf8"):
                 print('"%s"' %
                       line.replace('"', r'\"').replace('\n', r'\n'), file=f)
             print(";", file=f)
@@ -53,5 +55,5 @@ if __name__ == "__main__":
     srcDir = join(dirname(__file__), '..', '..', 'src')
     if len(sys.argv) > 1:
         srcDir = sys.argv[1]
-    generateTypeMap(join(srcDir, 'netimport', 'typemap.h'), ("opendrive", "osm"), "Netconvert.typ.xml")
+    generateTypeMap(join(srcDir, 'netimport', 'typemap.h'), ("opendrive", "osm", "visum"), "Netconvert.typ.xml")
     generateTypeMap(join(srcDir, 'polyconvert', 'pc_typemap.h'), ("navteq", "osm", "visum"), "Polyconvert.typ.xml")

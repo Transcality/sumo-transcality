@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -66,7 +66,7 @@ struct ODCell {
     std::string vehicleType;
 
     /// @brief the list of paths / routes
-    std::vector<RORoute*> pathsVector;  // path_id, string of edges?
+    std::vector<std::shared_ptr<RORoute> > pathsVector;  // path_id, string of edges?
 
     /// @brief mapping of departure times to departing vehicles, if already fixed
     typedef std::map<SUMOTime, std::vector<SUMOVehicleParameter> > Departures;

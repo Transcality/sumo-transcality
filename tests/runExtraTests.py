@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -20,10 +20,14 @@ import argparse
 import glob
 import logging
 import os
+import shutil
 import subprocess
 
+APPS = ("activitygen", "dfrouter", "duarouter", "jtrrouter", "marouter",
+        "netconvert", "netedit", "od2trips", "polyconvert", "sumo")
 
-def run(suffix, args, guiTests=False, chrouter=True):
+
+def run(suffix, args, guiTests=False, chrouter=True, apps=None, force_gui=False, force_local=False):
     if type(args) is list:
         args = " ".join(args)
     if os.name != "posix":
@@ -44,29 +48,39 @@ def run(suffix, args, guiTests=False, chrouter=True):
 
     env["TEXTTEST_HOME"] = root
     env["LANG"] = "C"
-    if "SUMO_HOME" not in env:
+    if "SUMO_HOME" not in env or force_local:
         env["SUMO_HOME"] = os.path.join(root, "..")
-    for binary in ("activitygen", "emissionsDrivingCycle", "emissionsMap",
-                   "dfrouter", "duarouter", "jtrrouter", "marouter",
-                   "netconvert", "netedit", "netgenerate",
-                   "od2trips", "polyconvert", "sumo"):
-        env[binary.upper() + "_BINARY"] = os.path.join(root, "..", "bin", binary + suffix)
-    env["GUISIM_BINARY"] = os.path.join(root, "..", "bin", "sumo-gui" + suffix)
-    apps = ("sumo.extra,sumo.extra.gcf,sumo.extra.sf,sumo.meso,"
-            "sumo.agg.ballistic,sumo.agg.idm,sumo.agg.sublanes,"
-            "sumo.astar,sumo.parallel,duarouter.astar,netconvert.gdal,polyconvert.gdal,"
-            "complex.meso,complex.libsumo,complex.libtraci")
-    if chrouter:
-        apps += ",duarouter.chrouter,duarouter.chwrapper"
-    if guiTests:
-        apps += ",sumo.meso.gui,sumo.gui.osg"
-        if os.name == "posix":
-            apps += ",complex.libsumo.gui"
-    process = subprocess.Popen("%s %s -a %s" % ("texttest", args, apps), env=env,
-                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    for binary in APPS + ("emissionsDrivingCycle", "emissionsMap", "netgenerate"):
+        env[binary.upper() + "_BINARY"] = os.path.join(env["SUMO_HOME"], "bin", binary + suffix)
+    env["GUISIM_BINARY"] = os.path.join(env["SUMO_HOME"], "bin", "sumo-gui" + suffix)
+    if force_gui:
+        env["SUMO_BINARY"] = env["GUISIM_BINARY"]
+    if not apps:
+        apps = ("sumo.extra,sumo.extra.gcf,sumo.extra.sf,sumo.extra.legacy,sumo.meso,"
+                "sumo.agg.ballistic,sumo.agg.idm,sumo.agg.sublanes,"
+                "sumo.astar,sumo.cch,sumo.parallel,duarouter.astar,netconvert.gdal,polyconvert.gdal,"
+                "complex.meso,complex.libsumo,complex.libtraci,tools.extra")
+        if chrouter:
+            apps += ",duarouter.cch,duarouter.chrouter,duarouter.chwrapper"
+        if guiTests:
+            apps += ",sumo.meso.gui,sumo.gui.osg"
+            if os.name == "posix":
+                apps += ",complex.libsumo.gui"
+    elif apps == "all":
+        apps = ",".join(APPS) + ",complex,netgen,tools,traci"
+    tt = env.get("TEXTTESTPY")
+    if not tt:
+        if os.name != "posix":
+            tt = shutil.which("texttest.exe")
+        if not tt:
+            tt = shutil.which("texttest") or "texttest"
+    if not logging.root.handlers:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+    process = subprocess.Popen("%s %s -a %s" % (tt, args, apps), env=env,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, shell=True)
     with process.stdout:
         for line in process.stdout:
-            logging.info(line)
+            logging.info(line.rstrip())
     process.wait()
 
 
@@ -74,5 +88,11 @@ if __name__ == "__main__":
     optParser = argparse.ArgumentParser()
     optParser.add_argument("-s", "--suffix", default="", help="suffix to the fileprefix")
     optParser.add_argument("-g", "--gui", default=False, action="store_true", help="run gui tests")
+    optParser.add_argument("-f", "--force-gui", default=False, action="store_true",
+                           help="run tests with sumo-gui instead of sumo")
+    optParser.add_argument("-l", "--force-local", default=False, action="store_true",
+                           help="run tests with the local binaries instead of using SUMO_HOME")
+    optParser.add_argument("-a", "--apps", help="run the given apps")
     options, args = optParser.parse_known_args()
-    run(options.suffix, ["-" + a for a in args], options.gui)
+    run(options.suffix, ["-" + a for a in args], options.gui,
+        True, options.apps, options.force_gui, options.force_local)

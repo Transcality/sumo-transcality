@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -38,6 +38,7 @@ class GUIEvent;
 class GUIGlChildWindow;
 class GUISUMOAbstractView;
 class MFXStaticToolTip;
+class MFXCheckableButton;
 
 
 // ===========================================================================
@@ -108,11 +109,29 @@ public:
     /// @brief get status bar text (can be implemented in children)
     virtual void setStatusBarText(const std::string&) { }
 
-    /// @brief get cartesian label
-    FXLabel* getCartesianLabel();
+    /// @brief get cartesian coordinate field
+    FXTextField* getCartesianLabel();
 
-    /// @brief get geo label
-    FXLabel* getGeoLabel();
+    /// @brief get geo coordinate field
+    FXTextField* getGeoLabel();
+
+    /// @brief parse geo coordinate string ("lat, lon" or "lat:... lon:...")
+    static bool parseGeoCoordinate(const std::string& text, double& lat, double& lon);
+
+    /// @brief parse cartesian coordinate string ("x, y" or "x:... y:...")
+    static bool parseCartesianCoordinate(const std::string& text, double& x, double& y);
+
+    /// @brief called when user enters a geo coordinate in the status bar
+    long onCmdSetGeoCoordinate(FXObject*, FXSelector, void*);
+
+    /// @brief called when user enters a cartesian coordinate in the status bar
+    long onCmdSetCartesianCoordinate(FXObject*, FXSelector, void*);
+
+    /// @brief called when user focuses a coordinate field in the status bar
+    long onCmdFocusCoordinate(FXObject*, FXSelector, void*);
+
+    /// @brief called when a coordinate field in the status bar loses focus
+    long onCmdUnfocusCoordinate(FXObject*, FXSelector, void*);
 
     /// @brief get test label
     FXLabel* getTestLabel();
@@ -147,6 +166,16 @@ public:
 
     /// @brief Sets the breakpoints of the parent application
     virtual void setBreakpoints(const std::vector<SUMOTime>&) {}
+
+    /// @brief get checkable button for menu tooltips (if any)
+    virtual MFXCheckableButton* getShowToolTipsMenu() const {
+        return nullptr;
+    }
+
+    /// @brief get checkable button for view tooltips (if any)
+    virtual MFXCheckableButton* getShowToolTipsView() const {
+        return nullptr;
+    }
 
     /** @brief Sends an event from the application thread to the GUI and waits until it is handled
      * @param event the event to send
@@ -205,6 +234,9 @@ protected:
     /// @brief A lock to make the removal and addition of trackers secure
     FXMutex myTrackerLock;
 
+    /// @brief default Font (after scaling)
+    FXFont* myNormalFont = nullptr;
+
     /// @brief Font used for popup-menu titles
     FXFont* myBoldFont = nullptr;
 
@@ -217,9 +249,9 @@ protected:
     /// @brief The status bar
     FXStatusBar* myStatusbar = nullptr;
 
-    /// @brief Labels for the current cartesian, geo-coordinate and test coordinates
-    FXLabel* myCartesianCoordinate = nullptr;
-    FXLabel* myGeoCoordinate = nullptr;
+    /// @brief Coordinate fields for the current cartesian, geo-coordinate and test coordinates
+    FXTextField* myCartesianCoordinate = nullptr;
+    FXTextField* myGeoCoordinate = nullptr;
     FXLabel* myTestCoordinate = nullptr;
 
     /// @brief frames for coordinates

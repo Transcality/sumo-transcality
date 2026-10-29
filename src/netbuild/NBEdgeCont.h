@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -277,6 +277,9 @@ public:
                  int noLanesFirstEdge, int noLanesSecondEdge,
                  const double speed = -1., const double friction = 1., const int changedLeft = 0);
     /// @}
+    
+    /// @brief if base is an existing edge id, find a unused id of the form base + sep + INT
+    std::string createUnusedID(const std::string& base, const std::string& sep);
 
     /// @name container access methods
     /// @{
@@ -304,6 +307,8 @@ public:
         }
         return &split->second;
     }
+
+    NBEdge* getSplitBase(const std::string& edgeID) const;
 
     /** @brief Returns the number of edge splits
      * @return How often an edge was split
@@ -566,7 +571,7 @@ public:
     bool ignoreFilterMatch(NBEdge* edge);
 
     /// @brief remap node IDs accoring to options --numerical-ids and --reserved-ids
-    int remapIDs(bool numericaIDs, bool reservedIDs, const std::string& prefix, NBPTStopCont& sc);
+    int remapIDs(bool numericaIDs, bool reservedIDs, bool keptIDs, const std::string& prefix, NBPTStopCont& sc);
 
     /// @brief check whether edges overlap
     void checkOverlap(double threshold, double zThreshold) const;
@@ -616,6 +621,9 @@ public:
     int removeEdgesBySpeed(NBDistrictCont& dc);
     int removeEdgesByPermissions(NBDistrictCont& dc);
     int removeLanesByWidth(NBDistrictCont& dc, const double minWidth);
+
+    /// @brief return number of edges split
+    int attachRemoved(NBNodeCont& nc, NBDistrictCont& dc, const double maxDist);
 
 private:
     /// @brief compute the form factor for a loop of edges

@@ -1,5 +1,6 @@
 on("ready", function(){
-    var PORT = "8010";
+    const params = new URLSearchParams(globalThis.location.search);
+    const PORT = params.has("port") ? params.get("port") : "8010";
 
     /**
      * @class
@@ -16,15 +17,15 @@ on("ready", function(){
         init: function(display, internal, fringeFactor, count, enabled){
             this.internal = internal;
 
-            var node = elem("<div>", {className: "container"});
-            var header = elem("<h4>", {textContent: display});
+            let node = elem("<div>", {className: "container"});
+            let header = elem("<h4>", {textContent: display});
             header.append("<img>", {src: "images/" + internal + ".png"});
             node.append(header);
             this.enable = elem("<input>", {type: "checkbox", checked: enabled});
             node.append(this.enable);
 
-            var options = elem("<div>", {className: "options"});
-            var label = elem("<label>", {textContent: "Through Traffic Factor"});
+            let options = elem("<div>", {className: "options"});
+            let label = elem("<label>", {textContent: "Through Traffic Factor"});
             this.fringeFactor = elem("<input>", {type: "number", min: .5, max: 100, step: .1, value: fringeFactor});
             label.append(this.fringeFactor);
             options.append(label);
@@ -41,15 +42,15 @@ on("ready", function(){
         toJSON: function(){
             if(this.enable.checked){
                 return {
-                    fringeFactor: parseFloat(this.fringeFactor.value),
-                    count: parseFloat(this.count.value)
+                    fringeFactor: Number.parseFloat(this.fringeFactor.value),
+                    count: Number.parseFloat(this.count.value)
                 };
             }
             return null;
         }
     };
 
-    var vehicleClasses = [
+    const vehicleClasses = [
         new Settings("Cars", "passenger", 5, 12, true),
         new Settings("Trucks", "truck", 5, 8),
         new Settings("Bus", "bus", 5, 4),
@@ -71,16 +72,16 @@ on("ready", function(){
             this.category = category;
             this.typeList = typeList;
 
-            var node = elem("<div>", {className: "container"});
-            var header = elem("<h4>", {textContent: category});
-            var checkbox = elem("<input>",{type: "checkbox", checked:true, className: "checkAll", id: category.toLowerCase()});
+            let node = elem("<div>", {className: "container"});
+            let header = elem("<h4>", {textContent: category});
+            let checkbox = elem("<input>",{type: "checkbox", checked:true, className: "checkAll", id: category.toLowerCase()});
             node.append(header);
             node.append(checkbox);
 
-            var types = elem("<div>", {className: "roadTypes " + category.toLowerCase()});
-            var label = elem("<label>");
+            let types = elem("<div>", {className: "roadTypes " + category.toLowerCase()});
+            let label = elem("<label>");
 
-            for (var i = 0; i < typeList.length; i++) {
+            for (let i = 0; i < typeList.length; i++) {
                 label = elem("<label>", {textContent: typeList[i]});
                 let roadTypeId = this.category + "_" + typeList[i]
                 this.roadTypeCheck = elem("<input>",{type: "checkbox", checked:true, id: roadTypeId});
@@ -94,9 +95,9 @@ on("ready", function(){
         },
 
         getEnabledTypeList: function () {
-            var retEnabledTypeList = [];
-            for (var j = 0; j < this.typeList.length; j++) {
-                var roadTypeId = this.category + "_" + this.typeList[j];
+            let retEnabledTypeList = [];
+            for (let j = 0; j < this.typeList.length; j++) {
+                let roadTypeId = this.category + "_" + this.typeList[j];
                 if (document.getElementById(roadTypeId).checked) {
                     retEnabledTypeList.push(this.typeList[j]);
                     if (this.typeList[j].match(/^(motorway|trunk|primary|secondary|tertiary)$/)) {
@@ -112,29 +113,29 @@ on("ready", function(){
     categories["Highway"] = ["motorway", "trunk", "primary","secondary", "tertiary", "unclassified", "residential",
         "living_street", "unsurfaced", "service", "raceway", "bus_guideway"];
     categories["Pedestrians"] = ["track", "footway", "pedestrian", "path", "bridleway", "cycleway", "step", "steps",
-        "stairs"];              //"Pedestrians" has also the "highway" key in OSM, this will be transformed in startBuild()
+        "stairs"]; //"Pedestrians" has also the "highway" key in OSM, this will be transformed in startBuild()
     categories["Railway"] = ["preserved", "tram", "subway", "light_rail", "rail", "highspeed", "monorail"];
     categories["Aeroway"] = ["stopway", "parking_position", "taxiway", "taxilane", "runway", "highway_strip"]
     categories["Waterway"] = ["river", "canal"];
     categories["Aerialway"] = ["cable_car", "gondola"];
     categories["Route"] = ["ferry"];
 
-    var roadClasses = [];
+    let roadClasses = [];
 
     for (const [key, value] of Object.entries(categories)) {
         roadClasses.push(new RoadTypes(key, value));
     }
 
-    var activeTab = null;
+    let activeTab = null;
 
     /**
      * @function
      * @param id: the id of the tab to open
      */
     function openTab(id){
-        var tab = elems(".tab")[id];
-        var side = elem("#side");
-        var control = elems(".controls")[id];
+        let tab = elems(".tab")[id];
+        let side = elem("#side");
+        let control = elems(".controls")[id];
 
         // clicked on the open tab, close everything
         if(activeTab === id){
@@ -167,10 +168,10 @@ on("ready", function(){
 
     openTab(0);
 
-    var canvas = elem("canvas");
-    var canvasActive = false;
-    var canvasRect = [.1, .1, .75, .9];
-    var ctx = canvas.getContext("2d");
+    let canvas = elem("canvas");
+    let canvasActive = false;
+    let canvasRect = [.1, .1, .75, .9];
+    let ctx = canvas.getContext("2d");
 
     /**
      * @function
@@ -190,7 +191,7 @@ on("ready", function(){
      * draws the rect on the canvas, to select an area
      **/
     function draw(){
-        var x0 = canvas.width * canvasRect[0],
+        let x0 = canvas.width * canvasRect[0],
             y0 = canvas.height * canvasRect[1],
             x1 = canvas.width * canvasRect[2],
             y1 = canvas.height * canvasRect[3];
@@ -204,7 +205,7 @@ on("ready", function(){
         ctx.clearRect(x0, y0, x1 - x0, y1 - y0);
     }
 
-    var mouse = {
+    let mouse = {
         x: 0, // last x coordinate
         y: 0, // last y coordinates
         area: null // if mouse button is down, and in which function; move or resize
@@ -219,12 +220,12 @@ on("ready", function(){
     });
 
     function changeMousePointer(x, y, down){
-        var x0 = canvas.width * canvasRect[0],
+        let x0 = canvas.width * canvasRect[0],
             y0 = canvas.height * canvasRect[1],
             x1 = canvas.width * canvasRect[2],
             y1 = canvas.height * canvasRect[3];
 
-        var cursor = "", t = 20; //tolerance
+        let cursor = "", t = 20; //tolerance
 
         if(lequal(x0 - t, x, x1 + t) && lequal(y0 - t, y, y1 + t)){
             if(lequal(y0 - t, y, y0 + t))
@@ -249,7 +250,7 @@ on("ready", function(){
 
     canvas.on("mousemove", function(evt){
         changeMousePointer(evt.clientX, evt.clientY);
-        var dx = (evt.clientX - mouse.x) / canvas.width, dy = (evt.clientY - mouse.y) / canvas.height;
+        let dx = (evt.clientX - mouse.x) / canvas.width, dy = (evt.clientY - mouse.y) / canvas.height;
         mouse.x = evt.clientX;
         mouse.y = evt.clientY;
         if(mouse.area !== null){
@@ -316,81 +317,134 @@ on("ready", function(){
         }
     }
 
-    var canvasToggle = elem("#canvas-toggle");
+    const canvasToggle = elem("#canvas-toggle");
 
     canvasToggle.on("click", toggleCanvas);
     toggleCanvas();
 
+    // Enable/disable pt mode checkboxes depending on the main publicTransport checkbox
+    let ptModesContainer = elem("#pt-modes");
+    function updatePtModesState() {
+        let enabled = elem("#publicTransport").checked;
+        if(ptModesContainer) {
+            Array.from(ptModesContainer.querySelectorAll("input[type=checkbox]")).forEach(function(ch){ ch.disabled = !enabled; });
+        }
+    }
+    elem("#publicTransport").on("click", updatePtModesState);
+    updatePtModesState();
+
     // function to check or uncheck all checkboxes for a certain roadType
-    var checkOrUncheckAll = function() {
+    let checkOrUncheckAll = function() {
         Array.from(document.querySelectorAll(".roadTypes." + this.getAttribute("id") + " input[type=checkbox]")).forEach(el => el.checked = this.checked);
     };
 
     // listen if a roadType checkbox is selected/unselected
-    var roadTypeCheckboxes = document.getElementsByClassName("checkAll");
+    let roadTypeCheckboxes = document.getElementsByClassName("checkAll");
 
     Array.from(roadTypeCheckboxes).forEach(function(element) {
         element.addEventListener("click", checkOrUncheckAll);
     });
 
-    // OSM map
-    // avoid cross domain resource sharing issues (#3991)
-    // (https://gis.stackexchange.com/questions/83953/openlayers-maps-issue-with-ssl)
-    var map = new OpenLayers.Map("map");
-    var maplayer = new OpenLayers.Layer.OSM("OpenStreetMap",
-    // Official OSM tileset as protocol-independent URLs
-    [
-        'https://tile.openstreetmap.org/${z}/${x}/${y}.png'
-    ], null);
-    map.addLayer(maplayer);
+    // Base map (using Leaflet)
+    const worldBounds = L.latLngBounds(
+        L.latLng(-85, -180),
+        L.latLng(85, 180)
+    );
+
+    let map = L.map("map", {
+        maxBounds: worldBounds,
+        worldCopyJump: false,
+        zoomControl: true,
+        minZoom: 3,
+        maxZoom: 17, // the highest zoom level available for the OpenTopoMap tile layer
+        attributionControl: false
+    });
+
+    L.control.attribution({
+        position: "bottomleft",
+        prefix: false
+    }).addTo(map);
+
+    const tileLayers = {
+        "OpenStreetMap": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            noWrap: true,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>'
+        }),
+        "OpenStreetMap Deutschland": L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
+            noWrap: true,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>'
+        }),
+        "OpenTopoMap": L.tileLayer("https://a.tile.opentopomap.org/{z}/{x}/{y}.png", {
+            noWrap: true,
+            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> | DEM: <a href="http://viewfinderpanoramas.org/" target="_blank">SRTM</a>, <a href="https://sonny.4lima.de/" target="_blank">Sonny</a> | Map style: &copy; <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>)'
+        }),
+        "ÖPNVKarte (public transport facilities)": L.tileLayer("https://tile.memomaps.de/tilegen/{z}/{x}/{y}.png", {
+            noWrap: true,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> | &copy; <a href="https://memomaps.de/" target="_blank">MeMoMaps</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank">CC-BY-SA</a>)'
+        }),
+    };
+
+    tileLayers["OpenStreetMap"].addTo(map);
+
+    L.control.layers(tileLayers, null, {
+        collapsed: true,
+        position: "topleft"
+    }).addTo(map);
 
     function setPosition(lon, lat){
         if(!lon || !lat){
-            latLon = elem("#lat_lon").value.split(" ")
-            lon = parseFloat(latLon[1]);
-            lat = parseFloat(latLon[0]);
+            let latLon = elem("#lat_lon").value.split(" ");
+            lon = Number.parseFloat(latLon[1]);
+            lat = Number.parseFloat(latLon[0]);
         } else {
             elem("#lat_lon").value = lat.toFixed(6) + " " + lon.toFixed(6);
         }
 
-        var leftHandBounds = [new OpenLayers.Bounds(-11,50,1,60), // British Isles
-                              new OpenLayers.Bounds(0.774536,50.986099,1.779785,53.146770), // British Isles (part2)
-                              new OpenLayers.Bounds(66, 3, 90, 30), // India, Pakistan
-                              new OpenLayers.Bounds(95, -45, 179, 2), // Australia, Indonesia
-                              new OpenLayers.Bounds(-20, -35, 40, -15), // Southern Africa
-                              new OpenLayers.Bounds(135, 30, 150, 42), // Japan
-                             ];
+        const leftHandBounds = [
+            [[50, -11], [60, 1]], // British Isles
+            [[50.986099, 0.774536], [53.14677, 1.779785]], // British Isles (part2)
+            [[3, 66], [30, 90]], // India, Pakistan
+            [[-45, 95], [2, 179]], // Australia, Indonesia
+            [[-35, -20], [-15, 40]], // Southern Africa
+            [[30, 135], [42, 150]] // Japan
+        ];
+
         elem("#leftHand").checked = false;
-        for (var i = 0; i < leftHandBounds.length; i++) {
-            if (leftHandBounds[i].contains(lon, lat)) {
+        for (let i = 0; i < leftHandBounds.length; i++) {
+            if (
+                lat >= leftHandBounds[i][0][0] && lat <= leftHandBounds[i][1][0] &&
+                lon >= leftHandBounds[i][0][1] && lon <= leftHandBounds[i][1][1]
+            ) {
                 elem("#leftHand").checked = true;
                 break;
             }
         }
 
-        var lonLat = new OpenLayers.LonLat(lon, lat);
-        lonLat.transform(
-            new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
-            map.getProjectionObject() // to Spherical Mercator Projection
-        );
-
-        map.setCenter(lonLat, 16);
+        map.setView([lat, lon], 16);
     }
 
     function setPositionByString() {
-        query = elem("#address").value
+        let query = elem("#address").value;
         $.ajax({
         url: "https://nominatim.openstreetmap.org/search?q=" + query + "&format=json&polygon=0&addressdetails=0&limit=1&callback",
         cache: false,
         dataType: "json",
             success: function(data) {
-                var result = data[0];
-                lon = parseFloat(result.lon);
-                lat = parseFloat(result.lat);
+                if (!Array.isArray(data) || data.length === 0) {
+                    globalThis.alert('Could not locate address: ' + query);
+                    return;
+                }
+                let result = data[0];
+                let lon = Number.parseFloat(result.lon);
+                let lat = Number.parseFloat(result.lat);
+                if (Number.isNaN(lon) || Number.isNaN(lat)) {
+                    globalThis.alert('Could not locate address: ' + query);
+                    return;
+                }
                 setPosition(lon, lat);
             },
             error: function (request, status, err) {
-                window.alert('Could not locate address: ' + err);
+                globalThis.alert('Could not locate address: ' + err);
             }
         });
     }
@@ -401,12 +455,12 @@ on("ready", function(){
         }
     });
 
-    var getJSON = function(url, callback) {
-        var xhr = new XMLHttpRequest();
+/*     let getJSON = function(url, callback) {
+        let xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.responseType = 'json';
         xhr.onload = function() {
-          var status = xhr.status;
+          let status = xhr.status;
           if (status == 200) {
             callback(null, xhr.response);
           } else {
@@ -414,8 +468,7 @@ on("ready", function(){
           }
         };
         xhr.send();
-    };
-
+    }; */
 
     // set default position to center Berlin
     setPosition(13.4, 52.52);
@@ -425,7 +478,10 @@ on("ready", function(){
      * set the coordinates of the map to current coordinates (got from browser)
      */
     elem("#buttonCurrent").on("click", function(){
-        if(!navigator.geolocation) return;
+        if(!navigator.geolocation) {
+            globalThis.alert("Unable to access your location. Geolocation is either not supported by your browser or is not enabled.");
+            return;
+        }
 
         navigator.geolocation.getCurrentPosition(function(position){
             setPosition(position.coords.longitude, position.coords.latitude);
@@ -443,105 +499,152 @@ on("ready", function(){
      * @listener
      * whenever the map coordinates changes, update the input boxes
      */
-    map.events.register("move", map, function(){
-        var cor = map.getExtent();
-        cor.transform(
-            map.getProjectionObject(), // from Spherical Mercator Projection
-            new OpenLayers.Projection("EPSG:4326")
-        );
-        lat = (cor.top + (cor.bottom - cor.top) / 2);
-        lon = (cor.left + (cor.right - cor.left) / 2);
+    map.on("move", function(){
+        let center = map.getCenter();
+        let lat = center.lat;
+        let lon = center.lng;
 
         elem("#lat_lon").value = lat.toFixed(6) + " " + lon.toFixed(6);
     });
 
-    var socket;
-    var totalSteps;
-    var currentStep;
-    var presentedErrorLog = false;
+    let socket;
+    let totalSteps;
+    let currentStep;
+    let presentedErrorLog = false;
+    let progressTimer = null;
+
+    function errorMessage(error) {
+        if (presentedErrorLog == false) {
+            globalThis.alert("Server connection failed (" + error + "). Please (re-)open the OSM Web Wizard by using osmWebWizard.py or the link in your start menu.");
+            presentedErrorLog = true;
+        }
+    }
+
+    async function safeFetch(url, options) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response;
+        } catch (err) {
+            errorMessage(err);
+            throw err;
+        }
+    }
 
     /**
      * @function
      * connects to the socket, when it fails it tries it again after five seconds
      */
     function connectSocket(){
-        var address = location.hostname;
+        let address = location.hostname;
         // when accessing via file, location.hostname is an empty string, so guess that the server is on localhost
         if(!address)
             address = "localhost";
         try {
-            socket = new WebSocket("ws://" + address + ":" + PORT);
+            // we use this locally but if someone wants to try over https, we are prepared
+            let proto = (globalThis.location.protocol === "https:") ? "wss://" : "ws://";
+            socket = new WebSocket(proto + address + ":" + PORT);
         } catch(e){
             // connection failed, wait five seconds, then try again
-	    setTimeout(connectSocket, 5000);
+            setTimeout(connectSocket, 5000);
             return;
         }
 
-	socket.onerror = function(error) {
-	    if (presentedErrorLog == false) {
-		window.alert("Socket connection failed. Please open the OSM WebWizard by using osmWebWizard.py or the link in your start menu.");
-		presentedErrorLog = true;
-	    }
-	};
+        socket.onerror = errorMessage;
 
         // whenever the socket closes (e.g. restart) try to reconnect
         socket.addEventListener("close", connectSocket);
-        socket.addEventListener("message", function(evt){
-            var message = evt.data;
-            // get the first space
-            var index = message.indexOf(" ");
-            // split the message type from the message
-            var type = message.substr(0, index);
-            message = message.substr(index + 1);
-
-            if(type === "zip"){
-                showZip(message);
-            } else if(type === "report"){
-                currentStep++;
-                elem("#status > span").textContent = message;
-                elem("#status > div").style.width = (100 * currentStep / totalSteps) + "%";
-
-                if(currentStep === totalSteps){
-                    setTimeout(function(){
-                        elem("#status").style.display = "none";
-                    elem("#export-button").style.display = "block";
-                    }, 2000);
-                }
-            } else if(type === "steps"){
-                totalSteps = parseInt(message);
-                currentStep = 0;
-            }
-        });
+        socket.addEventListener("message", messageHandler);
     }
 
-    connectSocket();
+    function messageHandler(evt){
+        let message = evt.data;
+        // get the first space
+        let index = message.indexOf(" ");
+        // split the message type from the message
+        let type = message.substr(0, index);
+        message = message.substr(index + 1);
+
+        if(type === "zip"){
+            showZip(message);
+        } else if(type === "report"){
+            currentStep++;
+            elem("#status > span").textContent = message;
+            elem("#status > div").style.width = (100 * currentStep / totalSteps) + "%";
+
+            if(currentStep === totalSteps){
+                setTimeout(function(){
+                    elem("#status").style.display = "none";
+                    elem("#export-button").style.display = "block";
+                }, 2000);
+                if (progressTimer) {
+                    clearInterval(progressTimer);
+                    progressTimer = null;
+                }
+            }
+        } else if(type === "steps"){
+            totalSteps = Number.parseInt(message);
+            currentStep = 0;
+        }
+    }
+
+    if (globalThis.location.protocol == "file:") {
+        connectSocket();
+    }
+
+    async function pollProgress() {
+        const r = await fetch("/progress");
+        const d = await r.json();
+        if (d.data) {
+            messageHandler(d);
+        }
+    }
 
     /**
      * @function
      * generate and send the data to the websocket
      */
     function startBuild(){
-        var cor = map.getExtent();
-        cor.transform(
-            map.getProjectionObject(), // from Spherical Mercator Projection
-            new OpenLayers.Projection("EPSG:4326")
-        );
+        let bounds = map.getBounds();
+        let cor = {
+            left: bounds.getWest(),
+            bottom: bounds.getSouth(),
+            right: bounds.getEast(),
+            top: bounds.getNorth()
+        };
 
-        var data = {
+        let data = {
             poly: elem("#polygons").checked,
-            duration: parseInt(elem("#duration").value),
+            duration: Number.parseInt(elem("#duration").value),
             publicTransport: elem("#publicTransport").checked,
+            ptModes: {
+                bus: elem("#pt_bus").checked,
+                tram: elem("#pt_tram").checked,
+                subway: elem("#pt_subway").checked,
+                light_rail: elem("#pt_light_rail").checked,
+                train: elem("#pt_train").checked,
+                trolleybus: elem("#pt_trolleybus").checked,
+                monorail: elem("#pt_monorail").checked,
+                minibus: elem("#pt_minibus").checked,
+                share_taxi: elem("#pt_share_taxi").checked,
+                ferry: elem("#pt_ferry").checked,
+                aerialway: elem("#pt_aerialway").checked
+            },
             leftHand: elem("#leftHand").checked,
             decal: elem("#decal").checked,
+            tileZoom: elem("#decal").checked ? Number.parseInt(elem("#tileZoom").value) : null,
             carOnlyNetwork: elem("#carOnlyNetwork").checked,
+            verbose: elem("#verbose").checked,
             vehicles: {},
-            roadTypes:{}                                                            // sab-inf
+            roadTypes:{} // sab-inf
         };
 
         // calculates the coordinates of the rectangle if area-picking is active
         if(canvasActive){
-            var width = cor.right - cor.left;
-            var height = cor.bottom - cor.top;
+            let width = cor.right - cor.left;
+            let height = cor.bottom - cor.top;
             data.coords = [
                 cor.left + width * canvasRect[0],
                 cor.top + height * canvasRect[3],
@@ -552,13 +655,13 @@ on("ready", function(){
             data.coords = [cor.left, cor.bottom, cor.right, cor.top];
 
         vehicleClasses.forEach(function(vehicleClass){
-            var result = vehicleClass.toJSON();
+            let result = vehicleClass.toJSON();
             if(result)
                 data.vehicles[vehicleClass.internal] = result;
         });
 
         roadClasses.forEach(function(roadType){
-            var result = roadType.getEnabledTypeList();
+            let result = roadType.getEnabledTypeList();
             if(result){
                 // in OSM "pedestrians" have also the key "highway", therefore we prepare the data accordingly
                 if(roadType.category == "Pedestrians" || roadType.category == "Highway"){
@@ -574,10 +677,20 @@ on("ready", function(){
             }
         });
 
-        try {
-            socket.send(JSON.stringify(data));
-        } catch(e){
-            return;
+        if (globalThis.location.protocol == "file:") {
+            try {
+                socket.send(JSON.stringify(data));
+            } catch(e){
+                return;
+            }
+        } else {
+            safeFetch("/build", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            // poll for messages
+            progressTimer = setInterval(pollProgress, 500);
         }
 
         elem("#status").style.display = "block";
@@ -586,16 +699,33 @@ on("ready", function(){
 
     elem("#export-button").on("click", startBuild);
 
+    // Show/hide tile zoom selector based on decal checkbox state
+    function syncTileZoomToMap() {
+        // clamp map zoom to the select's option range [12, 19]
+        const z = Math.min(19, Math.max(12, map.getZoom()));
+        elem("#tileZoom").value = z;
+    }
+
+    elem("#decal").addEventListener("change", function() {
+        const row = elem("#tileZoomRow");
+        row.style.display = this.checked ? "block" : "none";
+        if (this.checked) syncTileZoomToMap();
+    });
+
+    map.on("zoomend", function() {
+        if (elem("#decal").checked) syncTileZoomToMap();
+    });
+
     /**
      * @function
      * @param uri: a base64-encoded string for a zip file
      * shows a download dialog to save the zip file
      */
     function showZip(uri){
-        var url = "data:application/zip;base64," + uri;
+        let url = "data:application/zip;base64," + uri;
 
         // using a temporarily link to trigger the download dialog
-        var link = elem("<a>", {
+        let link = elem("<a>", {
             download: "osm.zip",
             href: url,
             target: "_blank"
@@ -603,6 +733,6 @@ on("ready", function(){
 
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
     }
 });

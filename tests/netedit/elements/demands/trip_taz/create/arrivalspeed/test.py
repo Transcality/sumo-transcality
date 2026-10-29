@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -34,51 +34,43 @@ netedit.changeMode("vehicle")
 # select trip over TAZs
 netedit.changeElement("vehicleFrame", "trip (from-to TAZs)")
 
-# set invalid arrival pos
-netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalPosLat, "dummyPos")
+# set invalid arrival lane
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalSpeed, "dummySpeed")
 
 # try to create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeKey('enter')
+netedit.typeKey("enter")
 
-# set invalid arrival pos
-netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalPosLat, "-12")
+# set invalid arrival speed
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalSpeed, "-12")
+
+# press enter to create trip
+netedit.typeKey("enter")
+
+# set valid arrival speed
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalSpeed, "current")
+
+# press enter to create trip
+netedit.typeKey("enter")
+
+# set valid arrival speed
+netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalSpeed, "20")
 
 # create trip
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
 netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
 
 # press enter to create trip
-netedit.typeKey('enter')
-
-# set valid arrival pos
-netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalPosLat, "center")
-
-# create trip
-netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
-netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
-
-# press enter to create trip
-netedit.typeKey('enter')
-
-# set valid arrival pos
-netedit.modifyAttribute(netedit.attrs.tripTAZ.create.arrivalPosLat, "20")
-
-# create trip
-netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZGreen)
-netedit.leftClick(referencePosition, netedit.positions.elements.demands.TAZRed)
-
-# press enter to create trip
-netedit.typeKey('enter')
+netedit.typeKey("enter")
 
 # Check undo redo
 netedit.checkUndoRedo(referencePosition)
 
 # save Netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

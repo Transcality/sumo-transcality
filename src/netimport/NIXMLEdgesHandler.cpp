@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -66,6 +66,8 @@ NIXMLEdgesHandler::NIXMLEdgesHandler(NBNodeCont& nc,
     myHaveReportedAboutOverwriting(false),
     myHaveReportedAboutTypeOverride(false),
     myHaveWarnedAboutDeprecatedLaneId(false),
+    myDefaultNodeType(SUMOXMLDefinitions::NodeTypes.hasString(options.getString("default.junctions.type"))
+            ? SUMOXMLDefinitions::NodeTypes.get(options.getString("default.junctions.type")) : SumoXMLNodeType::UNKNOWN),
     myKeepEdgeShape(!options.getBool("plain.extend-edge-shape")) {
 }
 
@@ -170,33 +172,7 @@ NIXMLEdgesHandler::addEdge(const SUMOSAXAttributes& attrs) {
     myCurrentEdge = myEdgeCont.retrieve(myCurrentID);
     // check deprecated (unused) attributes
     // use default values, first
-    myCurrentType = myOptions.getString("default.type");
-    myCurrentPriority = myTypeCont.getEdgeTypePriority(myCurrentType);
-    myCurrentLaneNo = myTypeCont.getEdgeTypeNumLanes(myCurrentType);
-    myCurrentEndOffset = NBEdge::UNSPECIFIED_OFFSET;
-    if (myCurrentEdge != nullptr) {
-        // update existing edge. only update lane-specific settings when explicitly requested
-        myIsUpdate = true;
-        myCurrentSpeed = NBEdge::UNSPECIFIED_SPEED;
-        myCurrentFriction = NBEdge::UNSPECIFIED_FRICTION;
-        myPermissions = SVC_UNSPECIFIED;
-        myCurrentWidth = NBEdge::UNSPECIFIED_WIDTH;
-        myCurrentType = myCurrentEdge->getTypeID();
-        myLanesSpread = SUMOXMLDefinitions::LaneSpreadFunctions.get(myOptions.getString("default.spreadtype"));
-    } else {
-        // this is a completely new edge. get the type specific defaults
-        myCurrentSpeed = myTypeCont.getEdgeTypeSpeed(myCurrentType);
-        myCurrentFriction = myTypeCont.getEdgeTypeFriction(myCurrentType);
-        myPermissions = myTypeCont.getEdgeTypePermissions(myCurrentType);
-        myCurrentWidth = myTypeCont.getEdgeTypeWidth(myCurrentType);
-        myLanesSpread = myTypeCont.getEdgeTypeSpreadType(myCurrentType);
-    }
-    myShape = PositionVector();
-    myLength = NBEdge::UNSPECIFIED_LOADED_LENGTH;
-    myCurrentStreetName = "";
-    myReinitKeepEdgeShape = false;
-    mySidewalkWidth = NBEdge::UNSPECIFIED_WIDTH;
-    myBikeLaneWidth = NBEdge::UNSPECIFIED_WIDTH;
+    myCurrentType = myCurrentEdge == nullptr ? myOptions.getString("default.type") : myCurrentEdge->getTypeID();
     // check whether a type's values shall be used
     if (attrs.hasAttribute(SUMO_ATTR_TYPE)) {
         myCurrentType = attrs.get<std::string>(SUMO_ATTR_TYPE, myCurrentID.c_str(), ok);
@@ -207,15 +183,40 @@ NIXMLEdgesHandler::addEdge(const SUMOSAXAttributes& attrs) {
             WRITE_ERRORF("Type '%' used by edge '%' was not defined (ignore with option --ignore-errors.edge-type).", myCurrentType, myCurrentID);
             return;
         }
+    }
+    myCurrentEndOffset = NBEdge::UNSPECIFIED_OFFSET;
+    if (myCurrentEdge != nullptr) {
+        // update existing edge. only update lane-specific settings when explicitly requested
+        myIsUpdate = true;
+        myCurrentSpeed = NBEdge::UNSPECIFIED_SPEED;
+        myCurrentFriction = NBEdge::UNSPECIFIED_FRICTION;
+        myCurrentPriority = myCurrentEdge->getPriority();
+        myCurrentLaneNo = myCurrentEdge->getNumLanes();
+        myPermissions = SVC_UNSPECIFIED;
+        myCurrentWidth = NBEdge::UNSPECIFIED_WIDTH;
+        myLanesSpread = myCurrentEdge->getLaneSpreadFunction();
+        mySidewalkWidth = NBEdge::UNSPECIFIED_WIDTH;
+        myBikeLaneWidth = NBEdge::UNSPECIFIED_WIDTH;
+    } else {
+        // this is a completely new edge. get the type specific defaults
         myCurrentSpeed = myTypeCont.getEdgeTypeSpeed(myCurrentType);
+        myCurrentFriction = myTypeCont.getEdgeTypeFriction(myCurrentType);
         myCurrentPriority = myTypeCont.getEdgeTypePriority(myCurrentType);
         myCurrentLaneNo = myTypeCont.getEdgeTypeNumLanes(myCurrentType);
         myPermissions = myTypeCont.getEdgeTypePermissions(myCurrentType);
         myCurrentWidth = myTypeCont.getEdgeTypeWidth(myCurrentType);
         myLanesSpread = myTypeCont.getEdgeTypeSpreadType(myCurrentType);
+        if (myLanesSpread == LaneSpreadFunction::SPREAD_UNKNOWN) {
+            myLanesSpread = SUMOXMLDefinitions::LaneSpreadFunctions.get(myOptions.getString("default.spreadtype"));
+        }
         mySidewalkWidth = myTypeCont.getEdgeTypeSidewalkWidth(myCurrentType);
         myBikeLaneWidth = myTypeCont.getEdgeTypeBikeLaneWidth(myCurrentType);
     }
+    myShape = PositionVector();
+    myLength = NBEdge::UNSPECIFIED_LOADED_LENGTH;
+    myCurrentStreetName = "";
+    myReinitKeepEdgeShape = false;
+
     // use values from the edge to overwrite if existing, then
     if (myIsUpdate) {
         if (!myHaveReportedAboutOverwriting) {
@@ -233,13 +234,10 @@ NIXMLEdgesHandler::addEdge(const SUMOSAXAttributes& attrs) {
             myCurrentEdge = nullptr;
             return;
         }
-        myCurrentPriority = myCurrentEdge->getPriority();
-        myCurrentLaneNo = myCurrentEdge->getNumLanes();
         if (!myCurrentEdge->hasDefaultGeometry()) {
             myShape = myCurrentEdge->getGeometry();
             myReinitKeepEdgeShape = true;
         }
-        myLanesSpread = myCurrentEdge->getLaneSpreadFunction();
         if (myCurrentEdge->hasLoadedLength()) {
             myLength = myCurrentEdge->getLoadedLength();
         }
@@ -368,9 +366,10 @@ NIXMLEdgesHandler::addEdge(const SUMOSAXAttributes& attrs) {
     }
     // try to get the kilometrage/mileage
     myCurrentEdge->setDistance(attrs.getOpt<double>(SUMO_ATTR_DISTANCE, myCurrentID.c_str(), ok, myCurrentEdge->getDistance()));
-    // preserve bidi edge (only as boo, the actual edge will be recomputed)
+    myCurrentEdge->setRoutingType(attrs.getOpt<std::string>(SUMO_ATTR_ROUTINGTYPE, myCurrentID.c_str(), ok, myCurrentEdge->getRoutingType()));
+    // preserve bidi edge (only as bool, the actual edge will be recomputed)
     const std::string bidi = attrs.getOpt<std::string>(SUMO_ATTR_BIDI, myCurrentID.c_str(), ok, "");
-    myCurrentEdge->setBidi(myCurrentEdge->getBidiEdge() != nullptr || bidi != "");
+    myCurrentEdge->setBidi(myCurrentEdge->getBidiEdge() != nullptr || myCurrentEdge->isBidi() || bidi != "");
 
     myLastParameterised.push_back(myCurrentEdge);
 }
@@ -380,7 +379,7 @@ void
 NIXMLEdgesHandler::addLane(const SUMOSAXAttributes& attrs) {
     if (myCurrentEdge == nullptr) {
         if (!OptionsCont::getOptions().isInStringVector("remove-edges.explicit", myCurrentID)) {
-            WRITE_ERRORF("Additional lane information could not be set - the edge with id '%s' is not known.", myCurrentID);
+            WRITE_ERRORF("Additional lane information could not be set - the edge with id '%' is not known.", myCurrentID);
         }
         return;
     }
@@ -489,7 +488,7 @@ void NIXMLEdgesHandler::addSplit(const SUMOSAXAttributes& attrs) {
         // XXX rounding to int may duplicate the id of another split
         e.nameID = myCurrentID + "." + toString((int)e.pos);
         if (e.pos < 0) {
-            e.pos += myCurrentEdge->getGeometry().length();
+            e.pos += myCurrentEdge->getLoadedLength();
         }
         for (const std::string& id : attrs.getOpt<std::vector<std::string> >(SUMO_ATTR_LANES, myCurrentID.c_str(), ok)) {
             try {
@@ -520,7 +519,8 @@ void NIXMLEdgesHandler::addSplit(const SUMOSAXAttributes& attrs) {
             WRITE_ERRORF(TL("Invalid split node id for edge '%' (from- and to-node are forbidden)"), myCurrentEdge->getID());
             return;
         }
-        e.node = myNodeCont.retrieve(nodeID);
+        e.node = e.pos != 0 ? myNodeCont.retrieve(nodeID) : myCurrentEdge->getFromNode();
+        e.offset = attrs.getOpt(SUMO_ATTR_OFFSET, nullptr, ok, 0.0);
         e.offsetFactor = OptionsCont::getOptions().getBool("lefthand") ? -1 : 1;
         if (e.node == nullptr) {
             double geomPos = e.pos;
@@ -531,7 +531,7 @@ void NIXMLEdgesHandler::addSplit(const SUMOSAXAttributes& attrs) {
             myNodeCont.insert(e.node);
         }
         NIXMLNodesHandler::processNodeType(attrs, e.node, e.node->getID(), e.node->getPosition(), false,
-                                           myNodeCont, myEdgeCont, myTLLogicCont, myLocation);
+                                           myDefaultNodeType, myNodeCont, myEdgeCont, myTLLogicCont, myLocation);
         mySplits.push_back(e);
     }
 }

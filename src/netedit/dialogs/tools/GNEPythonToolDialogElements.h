@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -20,17 +20,19 @@
 #pragma once
 #include <config.h>
 
-#include <utils/foxtools/fxheader.h>
 #include <string>
 #include <vector>
+#include <utils/foxtools/fxheader.h>
 
 // ===========================================================================
 // class declaration
 // ===========================================================================
 
+class GNEApplicationWindow;
+class GNEPythonTool;
 class GNEPythonToolDialog;
-class MFXLabelTooltip;
 class MFXButtonTooltip;
+class MFXLabelTooltip;
 class Option;
 
 // ===========================================================================
@@ -65,8 +67,10 @@ public:
         FXDECLARE_ABSTRACT(GNEPythonToolDialogElements::Argument)
 
     public:
-        /// @brief constructor
-        Argument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame, const std::string& parameter, Option* option);
+        /// @brief constructor (we need pythonTool and applicationWindow because is called during GNEPythonToolDialog constructor)
+        Argument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                 GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
+                 const std::string& parameter, Option* option);
 
         /// @brief destructor
         ~Argument();
@@ -105,10 +109,10 @@ public:
         virtual const std::string getValue() const = 0;
 
         /// @brief tool dialog parent
-        GNEPythonToolDialog* myToolDialogParent;
+        GNEPythonToolDialog* myToolDialogParent = nullptr;
 
         /// @brief option
-        Option* myOption;
+        Option* myOption = nullptr;
 
         /// @brief default value
         const std::string myDefaultValue;
@@ -138,7 +142,8 @@ public:
 
     public:
         /// @brief constructor
-        EdgeVectorArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        EdgeVectorArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                           GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                            const std::string name, Option* option);
 
         /// @brief reset to default value
@@ -182,7 +187,8 @@ public:
 
     public:
         /// @brief constructor
-        FileNameArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        FileNameArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                         GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                          const std::string name, Option* option);
 
         /// @brief reset to default value
@@ -199,11 +205,15 @@ public:
         FileNameArgument();
 
         /// @brief constructor for current buttons
-        FileNameArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        FileNameArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                         GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                          const std::string name, Option* option, const std::string& useCurrent);
 
         /// @brief get value
         const std::string getValue() const;
+
+        /// @brief update text field depending on openMode
+        void updateFromDialog(const GNEFileDialog& fileDialog);
 
         /// @brief filename textField
         FXTextField* myFilenameTextField = nullptr;
@@ -229,7 +239,8 @@ public:
 
     public:
         /// @brief constructor
-        NetworkArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        NetworkArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                        GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                         const std::string name, Option* option);
 
         /// @brief Called when user press open filename button
@@ -260,7 +271,8 @@ public:
 
     public:
         /// @brief constructor
-        AdditionalArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        AdditionalArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                           GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                            const std::string name, Option* option);
 
         /// @brief Called when user press open filename button
@@ -291,7 +303,8 @@ public:
 
     public:
         /// @brief constructor
-        RouteArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        RouteArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                      GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                       const std::string name, Option* option);
 
         /// @brief Called when user press open filename button
@@ -322,7 +335,8 @@ public:
 
     public:
         /// @brief constructor
-        DataArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        DataArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                     GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                      const std::string name, Option* option);
 
         /// @brief Called when user press open filename button
@@ -353,7 +367,8 @@ public:
 
     public:
         /// @brief constructor
-        SumoConfigArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame,
+        SumoConfigArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                           GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
                            const std::string name, Option* option);
 
         /// @brief Called when user press open filename button
@@ -382,7 +397,9 @@ public:
 
     public:
         /// @brief constructor
-        EdgeArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame, const std::string name, Option* option);
+        EdgeArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                     GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
+                     const std::string name, Option* option);
 
         /// @brief reset to default value
         void reset();
@@ -413,7 +430,9 @@ public:
 
     public:
         /// @brief constructor
-        StringArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame, const std::string name, Option* option);
+        StringArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                       GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
+                       const std::string name, Option* option);
 
         /// @brief reset to default value
         void reset();
@@ -441,7 +460,9 @@ public:
 
     public:
         /// @brief constructor
-        IntArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame, const std::string name, Option* option);
+        IntArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                    GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
+                    const std::string name, Option* option);
 
         /// @brief reset to default value
         void reset();
@@ -472,7 +493,9 @@ public:
 
     public:
         /// @brief constructor
-        FloatArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame, const std::string name, Option* option);
+        FloatArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                      GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
+                      const std::string name, Option* option);
 
         /// @brief reset to default value
         void reset();
@@ -504,7 +527,9 @@ public:
 
     public:
         /// @brief constructor
-        BoolArgument(GNEPythonToolDialog* toolDialogParent, FXVerticalFrame* argumentFrame, const std::string name, Option* option);
+        BoolArgument(GNEPythonToolDialog* toolDialogParent, const GNEPythonTool* pythonTool,
+                     GNEApplicationWindow* applicationWindow, FXVerticalFrame* argumentFrame,
+                     const std::string name, Option* option);
 
         /// @brief reset to default value
         void reset();
@@ -526,4 +551,6 @@ public:
         /// @brief Invalidated assignment operator.
         BoolArgument& operator=(const IntArgument&) = delete;
     };
+
+    static GNEFileDialog::OpenMode getOpenMode(const Option* o);
 };

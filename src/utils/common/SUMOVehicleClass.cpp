@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -48,6 +48,7 @@ static StringBijection<SUMOVehicleClass>::Entry sumoVehicleClassStringInitialize
     {"public_army",       SVC_ARMY}, // !!! deprecated
     {"army",              SVC_ARMY},
     {"vip",               SVC_VIP},
+    {"pedestrian",        SVC_PEDESTRIAN},
     {"passenger",         SVC_PASSENGER},
     {"hov",               SVC_HOV},
     {"taxi",              SVC_TAXI},
@@ -58,19 +59,18 @@ static StringBijection<SUMOVehicleClass>::Entry sumoVehicleClassStringInitialize
     {"transport",         SVC_TRUCK}, // !!! deprecated
     {"truck",             SVC_TRUCK},
     {"trailer",           SVC_TRAILER},
+    {"motorcycle",        SVC_MOTORCYCLE},
+    {"moped",             SVC_MOPED},
+    {"bicycle",           SVC_BICYCLE},
+    {"evehicle",          SVC_E_VEHICLE},
     {"lightrail",         SVC_TRAM}, // !!! deprecated
     {"tram",              SVC_TRAM},
     {"cityrail",          SVC_RAIL_URBAN}, // !!! deprecated
     {"rail_urban",        SVC_RAIL_URBAN},
     {"rail_slow",         SVC_RAIL}, // !!! deprecated
     {"rail",              SVC_RAIL},
-    {"rail_fast",         SVC_RAIL_FAST},
     {"rail_electric",     SVC_RAIL_ELECTRIC},
-    {"motorcycle",        SVC_MOTORCYCLE},
-    {"moped",             SVC_MOPED},
-    {"bicycle",           SVC_BICYCLE},
-    {"pedestrian",        SVC_PEDESTRIAN},
-    {"evehicle",          SVC_E_VEHICLE},
+    {"rail_fast",         SVC_RAIL_FAST},
     {"ship",              SVC_SHIP},
     {"container",         SVC_CONTAINER},
     {"cable_car",         SVC_CABLE_CAR},
@@ -354,7 +354,9 @@ parseVehicleClasses(const std::string& allowedS) {
         while (sta.hasNext()) {
             const std::string s = sta.next();
             if (!SumoVehicleClassStrings.hasString(s)) {
-                if (gIgnoreUnknownVClass) {
+                if (!SUMOXMLDefinitions::isValidNetID(s)) {
+                    WRITE_ERRORF(TL("Invalid character in vehicle class '%' encountered."), s);
+                } else if (gIgnoreUnknownVClass) {
                     WRITE_WARNINGF(TL("Unknown vehicle class '%' ignored."), s);
                 } else {
                     WRITE_ERRORF(TL("Unknown vehicle class '%' encountered."), s);
@@ -374,6 +376,11 @@ parseVehicleClasses(const std::string& allowedS) {
     return parseVehicleClassesCached.at(allowedS);
 }
 
+
+void
+clearParseVehicleClassesCache() {
+    parseVehicleClassesCached.clear();
+}
 
 bool
 canParseVehicleClasses(const std::string& classes) {
@@ -449,34 +456,35 @@ parseVehicleClasses(const std::vector<std::string>& allowedS) {
 
 void
 writePermissions(OutputDevice& into, SVCPermissions permissions) {
-    if (permissions == SVCAll) {
+    if (permissions == SVCAll || permissions == SVC_UNSPECIFIED) {
+        into.writeOptionalAttr(SUMO_ATTR_ALLOW, "", true);
+        into.writeOptionalAttr(SUMO_ATTR_DISALLOW, "", true);
         return;
-    } else if (permissions == 0) {
+    }
+    if (permissions == 0) {
+        into.writeOptionalAttr(SUMO_ATTR_ALLOW, "", true);
         into.writeAttr(SUMO_ATTR_DISALLOW, VehicleClassNameAll);
         return;
+    }
+    int num_allowed = 0;
+    for (SVCPermissions mask = 1; mask <= SUMOVehicleClass_MAX; mask = mask << 1) {
+        if ((mask & permissions) == mask) {
+            ++num_allowed;
+        }
+    }
+    if (num_allowed <= (NUM_VCLASSES - num_allowed) && num_allowed > 0) {
+        into.writeAttr(SUMO_ATTR_ALLOW, getVehicleClassNames(permissions));
+        into.writeOptionalAttr(SUMO_ATTR_DISALLOW, "", true);
     } else {
-        int num_allowed = 0;
-        for (SVCPermissions mask = 1; mask <= SUMOVehicleClass_MAX; mask = mask << 1) {
-            if ((mask & permissions) == mask) {
-                ++num_allowed;
-            }
-        }
-        if (num_allowed <= (NUM_VCLASSES - num_allowed) && num_allowed > 0) {
-            into.writeAttr(SUMO_ATTR_ALLOW, getVehicleClassNames(permissions));
-        } else {
-            into.writeAttr(SUMO_ATTR_DISALLOW, getVehicleClassNames(~permissions));
-        }
+        into.writeOptionalAttr(SUMO_ATTR_ALLOW, "", true);
+        into.writeAttr(SUMO_ATTR_DISALLOW, getVehicleClassNames(~permissions));
     }
 }
 
 
 void
 writePreferences(OutputDevice& into, SVCPermissions preferred) {
-    if (preferred == SVCAll || preferred == 0) {
-        return;
-    } else {
-        into.writeAttr(SUMO_ATTR_PREFER, getVehicleClassNames(preferred));
-    }
+    into.writeOptionalAttr(SUMO_ATTR_PREFER, getVehicleClassNames(preferred), preferred == SVCAll || preferred == 0);
 }
 
 
@@ -560,7 +568,7 @@ getDefaultVehicleLength(const SUMOVehicleClass vc) {
         case SVC_PEDESTRIAN:
             return 0.215;
         case SVC_WHEELCHAIR:
-            return 0.5;
+            return 1.2;
         case SVC_BICYCLE:
             return 1.6;
         case SVC_SCOOTER:

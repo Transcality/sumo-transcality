@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -151,12 +151,12 @@ public:
         /// @brief Map needed to sort vehicles by departure time
         std::map<const SUMOTime, int> departureCounts;
 
-        /// @brief pregenerated route output sorted by time
-        std::map<const SUMOTime, std::map<const std::string, std::string> > routeXML;
+        /// @brief pregenerated route output sorted by time and creation
+        std::map<const SUMOTime, std::map<const SUMOTrafficObject::NumericalID, std::string> > routeXML;
     };
 
     static void registerTransportableDepart(SUMOTime depart);
-    static void writeSortedOutput(SortedRouteInfo* routeInfo, SUMOTime depart, const std::string& id, const std::string& xmlOutput);
+    static void writeSortedOutput(SortedRouteInfo* routeInfo, SUMOTime depart, const SUMOTrafficObject::NumericalID id, const std::string& xmlOutput);
 
 private:
     /** @brief Constructor
@@ -265,10 +265,11 @@ private:
          * @param[in] route_ The prior route
          */
         RouteReplaceInfo(const MSEdge* const edge_, const SUMOTime time_, ConstMSRoutePtr const route_,
-                         const std::string& info_, int lastRouteIndex_, int newRouteIndex_) :
+                         const std::string& info_, int lastRouteIndex_, int newRouteIndex_, bool isValid_) :
             edge(edge_), time(time_), route(route_), info(info_),
             lastRouteIndex(lastRouteIndex_),
-            newRouteIndex(newRouteIndex_)
+            newRouteIndex(newRouteIndex_),
+            isValid(isValid_)
         {}
 
         /// @brief Destructor
@@ -294,10 +295,16 @@ private:
         // (new route may or may not include prior driven route edges)
         int newRouteIndex;
 
+        /// @brief whether the current route is valid/complete
+        bool isValid;
+
     };
 
     /// @brief The currently used route
     ConstMSRoutePtr myCurrentRoute;
+
+    /// @brief Whether the currently used route is valid/complete
+    bool myCurrentValid;
 
     /// @brief Prior routes
     std::vector<RouteReplaceInfo> myReplacedRoutes;
@@ -328,6 +335,9 @@ private:
 
     /// @brief the edges that were passed before the current stop
     std::vector<const MSEdge*> myPriorEdges;
+
+    /// @brief the cost of the initial route if not set (cannot be stored in the route because it may be shared)
+    double myInitialCost;
 
     OutputDevice_String myStopOut;
 

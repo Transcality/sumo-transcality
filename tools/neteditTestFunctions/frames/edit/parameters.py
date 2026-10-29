@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -16,8 +16,8 @@
 # @date    28-05-25
 
 # imports
-from ...general.functions import *
-from .basicAttribute import *
+from ...frames.edit.basicAttribute import modifyAttribute, modifyAttributeOverlapped
+from ...general.undoRedo import checkUndoRedo
 
 
 def checkParameters(referencePosition, attributeIndex, offsetX=0, offsetY=0):
@@ -101,7 +101,7 @@ def checkDoubleParameters(referencePosition, attributeIndex, offsetX=0, offsetY=
     # Change generic parameters with a valid value
     modifyAttribute(attributeIndex, "keyFinal1=1|keyFinal2=2|keyFinal3=3")
     # Check undoRedo
-    checkUndoRedo(referencePosition, offsetX, offsetY)
+    checkUndoRedo(referencePosition, offsetX, offsetY + 30)
 
 
 def checkDoubleParametersOverlapped(referencePosition, attributeIndex, offsetX=0, offsetY=0):
@@ -129,4 +129,4 @@ def checkDoubleParametersOverlapped(referencePosition, attributeIndex, offsetX=0
     # Change generic parameters with a valid value
     modifyAttributeOverlapped(attributeIndex, "keyFinal1=1|keyFinal2=2|keyFinal3=3")
     # Check undoRedo
-    checkUndoRedo(referencePosition, offsetX, offsetY)
+    checkUndoRedo(referencePosition, offsetX, offsetY + 30)

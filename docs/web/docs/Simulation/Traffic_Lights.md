@@ -2,6 +2,23 @@
 title: Traffic Lights
 ---
 
+# High level Overview
+
+The purpose of traffic light modeling in SUMO is threefold:
+
+1. provide comfortable ways to set up plausible traffic signals for a whole city
+2. provide functionality to replicate an existing traffic light with high fidelity
+3. provide functionality to simulate any conceivable traffic light algorithm for research purposes
+
+The first aim is supported by a deep pool of heuristics that construct traffic lights and programs.
+The other aims are supported by the following capabilities:
+
+- parameterization of the [built-in-algorithms](#defining_new_tls-programs)
+- loading custom algorithms directly into the simulation with a [mini-programming language](#type_actuated_with_custom_switching_rules) tailored to traffic light operations
+- attaching arbitrary external code to a running simulation via a [process-coupling interface (TraCI)](#controlling_traffic_lights_via_traci)
+
+# Workflow
+
 Normally, [netconvert](../netconvert.md) and
 [netgenerate](../netgenerate.md) generate traffic lights and
 programs for junctions during the computation of the networks. Still,
@@ -11,8 +28,9 @@ to run [sumo](../sumo.md)/[sumo-gui](../sumo-gui.md) with
 additional program definitions. Also,
 [sumo](../sumo.md)/[sumo-gui](../sumo-gui.md) allow loading
 definitions which describe when and how a set of traffic lights can
-switch from one program to another. Both will be discussed in the
-following subchapters. Another possibility is to edit traffic light plans
+[switch from one program to another](#defining_program_switch_times_and_procedure).
+Both will be discussed in the following subchapters.
+Another possibility is to edit traffic light plans
 visually in [netedit](../Netedit/editModesNetwork.md#traffic_lights).
 
 # Automatically Generated TLS-Programs
@@ -47,17 +65,18 @@ visually in [netedit](../Netedit/editModesNetwork.md#traffic_lights).
   option **--tls.allred.time** can be used.
 - It is also possible to generate
   [Actuated Traffic Lights](#type_actuated)
-  by setting the option **--tls.default-type**. This will generated the same signal plans as
+  by setting the option **--tls.default-type**. This will generate the same signal plans as
   above but with green phases that have a variable length of 5s-50s
   (both values can be set using the options **--tls.min-dur, --tls.max-dur**).
-    - default type **actuated**: traffic light actuation is based on gaps measured by automatically generated induction loops
-    - default type **delay_based**: actuation is based on vehicle delays
+  - default type **actuated**: traffic light actuation is based on gaps measured by automatically generated induction loops
+  - default type **delay_based**: actuation is based on vehicle delays
 - The generated phase layout can be selected setting option **--tls.layout** to
   *opposites* (default) or *incoming* (see below).
 - The generated phase layout is also influenced by the [node
   type](../Networks/PlainXML.md#node_types) which may be either
   *traffic_light* or *traffic_light_right_on_red* (explained
   below)
+- by default, generated programs will have a fixed phase sequence and only vary in timing (for tlType *actuated* and *delay_based*). As an exception, a program that can *skip* a phase is generated when the only point of conflict is a [pedestrian crossing](Pedestrians.md#generating_a_network_with_crossings_and_walkingareas) and the tlType is *actuated*. This program uses [dynamic phase selection](#dynamic_phase_selection_phase_skipping) so that the pedestrian crossing phase is only activated once pedestrians are waiting at the crossing.
 
 ## Default 4-arm intersection (layout *opposites*)
 
@@ -66,7 +85,7 @@ By default, programs are generated with 4 green phases:
 1.  a straight phase
 2.  a left-turning phase (only if there is a dedicated left-turn lane)
 3.  a straight phase for the direction orthogonal to the first one
-4.  a left-turning phase for the direction direction orthogonal to the
+4.  a left-turning phase for the direction orthogonal to the
     first one (only if there is a dedicated left-turn lane)
 
 Due to the default timings explained above, the green phases usually
@@ -74,8 +93,8 @@ have a duration of 31s.
 
 If the node type is set to *traffic_light_right_on_red* rather than
 *traffic_light*, then right turns from all sides are permitted in all
-phases (after coming to a stop before entering the traffic stream that
-currently has the green light.
+phases. Whenever a right-turn does not have the green light, it is treated like a priority stop: the vehicle must stop for a configurable time and then wait for a safe gap in traffic before turning right.
+The stopping duration is configurable with vType attribute `jmStopSignWait` and defaults to 1 simulation step.
 
 ## Phase layout *incoming*
 
@@ -209,9 +228,9 @@ The following signal colors are used:
 | --------- | ---------------------------------------------------------- | -------------------- |
 | r         | <span style="color:#FF0000; background:#FF0000">FOO</span> | 'red light' for a signal - vehicles must stop     |
 | y         | <span style="color:#FFFF00; background:#FFFF00">FOO</span> | 'amber (yellow) light' for a signal - vehicles will start to decelerate if far away from the junction, otherwise they pass    |
-| g         | <span style="color:#00B300; background:#00B300">FOO</span> | 'green light' for a signal, no priority - vehicles may pass the junction if no vehicle uses a higher priorised foe stream, otherwise they decelerate for letting it pass. They always decelerate on approach until they are within the configured [visibility distance](../Networks/PlainXML.md#explicitly_setting_which_edge_lane_is_connected_to_which) |
+| g         | <span style="color:#00B300; background:#00B300">FOO</span> | 'green light' for a signal, no priority - vehicles may pass the junction if no vehicle uses a higher prioritized foe stream, otherwise they decelerate for letting it pass. They always decelerate on approach until they are within the configured [visibility distance](../Networks/PlainXML.md#explicitly_setting_which_edge_lane_is_connected_to_which) |
 | G         | <span style="color:#00FF00; background:#00FF00">FOO</span> | 'green light' for a signal, priority - vehicles may pass the junction                                                                                                                                                                                                                                                                                                                                 |
-| s         | <span style="color:#800080; background:#800080">FOO</span> | 'green right-turn arrow' requires stopping - vehicles may pass the junction if no vehicle uses a higher priorised foe stream. They always stop before passing. This is only generated for junction type *traffic_light_right_on_red*.                                                                                                                                                             |
+| s         | <span style="color:#800080; background:#800080">FOO</span> | 'green right-turn arrow' requires stopping - vehicles may pass the junction if no vehicle uses a higher prioritized foe stream. They always stop before passing. This is only generated for junction type *traffic_light_right_on_red*.                                                                                                                                                             |
 | u         | <span style="color:#FF8000; background:#FF8000">FOO</span> | 'red+yellow light' for a signal, may be used to indicate upcoming green phase but vehicles may not drive yet (shown as orange in the gui)                                                                                                                                                                                                                                                             |
 | o         | <span style="color:#804000; background:#804000">FOO</span> | 'off - blinking' signal is switched off, blinking light indicates vehicles have to yield                                                                                                                                                                                                                                                                                                              |
 | O         | <span style="color:#00FFFF; background:#00FFFF">FOO</span> | 'off - no signal' signal is switched off, vehicles have the right of way|
@@ -247,8 +266,10 @@ the input file.
 TLS Link indices can be access using either
 
 - [sumolib](../Tools/Sumolib.md) using
-  [tls.getConnections()](https://sumo.dlr.de/pydoc/sumolib.net.html#TLS)
-- or [TraCI](../TraCI.md) using
+  [connection.getTLLinkIndex()](https://sumo.dlr.de/pydoc/sumolib/net/connection.html)
+- [sumolib](../Tools/Sumolib.md) using
+  [tls.getConnections()](https://sumo.dlr.de/pydoc/sumolib/net.html#TLS)
+- or [TraCI](../TraCI/index.md) using
   [traci.trafficlight.getControlledLinks()](../TraCI/Traffic_Lights_Value_Retrieval.md#structure_of_compound_object_controlled_links)
 
 ## Viewing TLS-Programs graphically
@@ -276,11 +297,16 @@ ensured by loading the network and the new signal plan into
 [netconvert](../netconvert.md) and thus updating the right-of-way
 rules.
 
+# Traffic Lights with fixed  timing
+
+The simplest type of traffic light in SUMO has fixed timings and is declared with `<tlLogic>`-attribute `type="static"`.
+This type of traffic light will cycle through a fixed sequence of states and spent time in each state according to the `duration` attribute of each state.
+By default the phase sequence will be in order of the phase elements in the input file, starting anew with the first phase after the last phase has ended.
+The order of the phases can be changed by defining attribute `next` for some or all phases (if multiple indices are defined in `next`, the first entry is used and all others are ignored).
+
 # Traffic Lights that respond to traffic
 
 Generally, the designation "actuated" refers to traffic lights that switch in response to traffic (or lack thereof). The different controllers and their features are described below. SUMO supports several algorithms with this property and they are described below.
-!!! note
-    [Mesoscopic simulation](Meso.md) does not support actuated traffic lights.
 
 ## Type 'actuated'
 
@@ -389,6 +415,9 @@ By assigning the special value `NO_DETECTOR`, the detector for a given lane key 
 !!! caution
     Custom detectors only work when the 'tlLogic' is loaded from an additional file.
 
+!!! note
+    Using custom detectors in [meso](Meso.md), only works if the inductionLoop sets attribute `mesoTLS="true"`
+
 Custom detector activation states can optionally be written to the [TLS output](Output/Traffic_Lights.md#optional_output).
 
 To include further detectors in the output and in the [phase tracker dialog](#track_phases) (i.e. when a custom logic uses laneArea detectors or multiple detectors on the same lane) the following declaration can be used to list all extra detectors:
@@ -444,16 +473,34 @@ When a phase uses attribute 'next' with a list of indices. The next phase is cho
 - compute the priority for each phase given in 'next'. Priority is primarily given by the number of active detectors for that phase. Active means either of:
   - with detection gap below threshold
   - with a detection since the last time where the signal after this detector was green
+- for each crossing that will be green in the target phase and which has an approaching pedestrian, a large amount of bonus priority is assigned to that phase
 - the current phase is implicitly available for continuation as long as its maxDur is not reached. Detectors of the current phase get a bonus priority
 - the phase with the highest priority is used with phases coming earlier in the next list given precedence over those coming later
 - if there is no traffic, the phases will run through a default cycle defined by the first value in the 'next' attribute
   - if the traffic light uses [custom switching rules](#type_actuated_with_custom_switching_rules) then the default phase is the **last** value of the 'next' attribute
 - if a particular phase should remain active indefinitely in the absence of traffic it must have its own index in the 'next' list as well as a high maxDur value
-- if an active detector was not served for a given time threshold (param **inactive-threshold**), this detector receives bonus priority according the time it was not served. This can be used to prevent starvation if other phases are consistently preferred due to serving more traffic
+- if an active detector was not served for a given time threshold (param **inactive-threshold**), this detector receives bonus priority according to the time it was not served. This can be used to prevent starvation if other phases are consistently preferred due to serving more traffic
 
 Examples for this type of traffic light logic can be found in [{{SUMO}}/tests/sumo/tls/actuated/multiNext/dualring_simple]({{Source}}tests/sumo/tls/actuated/multiNext/dualring_simple).
 
 The helper script [buildTransitions.py](../Tools/tls.md#buildtransitionspy) can be used to generate such logics from simplified definitions.
+
+#### Example: left-turn phases can be skipped
+
+```xml
+    <tlLogic id="C" type="actuated" programID="P1" offset="0">
+        <phase duration="33" state="GgrrGgrr" minDur="5" maxDur="60" next="1 8"/>
+        <phase duration="3"  state="ygrrygrr"/>
+        <phase duration="6"  state="rGrrrGrr" minDur="5" maxDur="60" />
+        <phase duration="3"  state="ryrrryrr"/>
+        <phase duration="33" state="rrGgrrGg" minDur="5" maxDur="60" next="5 9"/>
+        <phase duration="3"  state="rrygrryg"/>
+        <phase duration="6"  state="rrrGrrrG" minDur="5" maxDur="60" />
+        <phase duration="3"  state="rrryrrry" next="0"/>
+        <phase duration="3"  state="yyrryyrr" next="4"/>
+        <phase duration="3"  state="rryyrryy"/>
+    </tlLogic>
+```
 
 ## Type 'actuated' with custom switching rules
 
@@ -485,8 +532,11 @@ The following elements are permitted in an expression for attributes
 - pre-defined functions:
   - 'z:DETID': returns the time gap since the last vehicle detection for inductionLoop detector with id 'DETID' or id 'TLSID_PROGRAMID_DETID' (DETID may omit the [prefix 'TLSID_PROGRAMID_'](#detectors))
   - 'a:DETID': returns number of vehicles on detector with id 'DETID'. Supports inductionLoop and laneAreaDetectors. Also supports omitting the prefix of the detector id. (see 'z:')
+  - 'w:DETID': returns longest individual waiting time in seconds for vehicles on detector with id 'DETID'. Supports inductionLoop and laneAreaDetectors. Also supports omitting the prefix of the detector id. (see 'z:')
+  - 'd:DETID': returns maximum stop arrival delay in seconds for public transport vehicles on detector with id 'DETID'. Supports inductionLoop and laneAreaDetectors. Also supports omitting the prefix of the detector id. (see 'z:')
   - 'g:TLSINDEX': returns current green duration in seconds for link with the given index
   - 'r:TLSINDEX': returns current red duration in seconds for link with the given index
+  - 'p:TLSINDEX': returns the number of persons that are on a waiting area and intending to cross the pedestrian crossing with the given tls link index
   - 'c:': returns the time within the current cycle
 - [use-defined functions](#custom_function_definitions) FNAME:arg1,args2,...,argN  where arg may be any expression that does not contain spaces (except within parentheses)
 - Symbolic names for [pre-defined expressions](#named_expressions)
@@ -562,6 +612,28 @@ The default gap control logic, replicated with custom conditions. A complete sce
 
 !!! note
     The expression 'z:D0.0' retrieves the detection gap of detector 'C_PI_D0.0' but the prefix 'C_PI_' may be omitted.
+
+#### Default Gap Control Logic, may skip left-turn phases
+
+```xml
+<tlLogic id="C" type="actuated" programID="P1" offset="0">
+  <phase duration="33" state="GgrrGgrr" minDur="5" maxDur="60" next="1 8"/>
+  <phase duration="3"  state="ygrrygrr" earlyTarget="NS"/>
+  <phase duration="6"  state="rGrrrGrr" minDur="5" maxDur="60" />
+  <phase duration="3"  state="ryrrryrr" earlyTarget="NSL"/>
+  <phase duration="33" state="rrGgrrGg" minDur="5" maxDur="60" next="5 9"/>
+  <phase duration="3"  state="rrygrryg" earlyTarget="EW"/>
+  <phase duration="6"  state="rrrGrrrG" minDur="5" maxDur="60" />
+  <phase duration="3"  state="rrryrrry" earlyTarget="EWL" next="0"/>
+  <phase duration="3"  state="yyrryyrr" earlyTarget="NS and NSL" next="4"/>
+  <phase duration="3"  state="rryyrryy" earlyTarget="EW and EWL"/>
+
+  <condition id="NS"  value="z:D0.0 > 3 and z:D2.0 > 3"/>
+  <condition id="NSL" value="z:D0.1 > 3 and z:D2.1 > 3"/>
+  <condition id="EW"  value="z:D1.0 > 3 and z:D3.0 > 3"/>
+  <condition id="EWL" value="z:D1.1 > 3 and z:D3.1 > 3"/>
+</tlLogic>
+```
 
 #### Bus prioritization
 
@@ -1112,3 +1184,7 @@ The following additional features may be activated via checkboxes:
 
 ![track_phases.png](../images/track_phases.png
 "Track Phases Window")
+
+# Miscellaneous
+
+- [LiSUM](../Tools/LiSuM.md) LiSuM is a middleware that couples LISA+ and SUMO, making it easier to use Software-in-the-Loop for existing virtual controller definitions (i.e. as used in VISSIM)execute more complex traffic

@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -38,14 +38,14 @@ FXDEFMAP(GNEViewObjectSelector) SelectorParentNetworkElementsMap[] = {
 };
 
 // Object implementation
-FXIMPLEMENT(GNEViewObjectSelector, MFXGroupBoxModule, SelectorParentNetworkElementsMap, ARRAYNUMBER(SelectorParentNetworkElementsMap))
+FXIMPLEMENT(GNEViewObjectSelector, GNEGroupBoxModule, SelectorParentNetworkElementsMap, ARRAYNUMBER(SelectorParentNetworkElementsMap))
 
 // ---------------------------------------------------------------------------
 // GNEViewObjectSelector - methods
 // ---------------------------------------------------------------------------
 
 GNEViewObjectSelector::GNEViewObjectSelector(GNEFrame* frameParent) :
-    MFXGroupBoxModule(frameParent, TL("NetworkElements")),
+    GNEGroupBoxModule(frameParent, TL("NetworkElements")),
     myFrameParent(frameParent) {
     // Create buttons
     myClearSelection = GUIDesigns::buildFXButton(getCollapsableFrame(), TL("Clear selection"), "", "", nullptr, this, MID_GNE_CLEARSELECTION, GUIDesignButton);
@@ -77,16 +77,16 @@ GNEViewObjectSelector::isNetworkElementSelected(const GNEAttributeCarrier* AC) c
 
 
 void
-GNEViewObjectSelector::showNetworkElementsSelector(const SumoXMLTag tag, const SumoXMLAttr attribute) {
-    myTag = tag;
+GNEViewObjectSelector::showNetworkElementsSelector(const SumoXMLTag newTag, const SumoXMLAttr attribute) {
+    myTag = newTag;
     myAttribute = attribute;
     // update info
     myLabel->setText((TL("-This additional requires to\n select at least\n one element") + std::string("\n") +
-                      TLF("-Click over % to select", toString(tag)) + std::string("\n") +
+                      TLF("-Click over % to select", toString(newTag)) + std::string("\n") +
                       TL("-ESC to clear elements")).c_str());
-    myUseSelected->setText(TLF("Use selected %s", toString(tag)).c_str());
+    myUseSelected->setText(TLF("Use selected %s", toString(newTag)).c_str());
     // update groupBox elements
-    setText(TLF("% selector", toString(tag)));
+    setText(TLF("% selector", toString(newTag)));
     // clear items
     myList->clearItems();
     mySelectedACs.clear();
@@ -122,7 +122,7 @@ GNEViewObjectSelector::toggleSelectedElement(const GNEAttributeCarrier* AC) {
         myFrameParent->getViewNet()->update();
         return true;
     } else {
-        // nothing to toogle
+        // nothing to toggle
         return false;
     }
 }
@@ -137,7 +137,7 @@ GNEViewObjectSelector::toggleSelectedLane(const GNELane* lane) {
             return toggleSelectedElement(lane);
         }
     } else {
-        // nothing to toogle
+        // nothing to toggle
         return false;
     }
 }
@@ -168,7 +168,7 @@ GNEViewObjectSelector::fillSumoBaseObject(CommonXMLStructure::SumoBaseObject* ba
 
 void
 GNEViewObjectSelector::clearSelection() {
-    // clear list of egdge ids
+    // clear list of edge ids
     myList->clearItems();
     mySelectedACs.clear();
     // update viewNet
@@ -178,7 +178,7 @@ GNEViewObjectSelector::clearSelection() {
 
 long
 GNEViewObjectSelector::onCmdUseSelectedElements(FXObject*, FXSelector, void*) {
-    // clear list of egdge ids
+    // clear list of edge ids
     myList->clearItems();
     mySelectedACs.clear();
     // get all selected ACs

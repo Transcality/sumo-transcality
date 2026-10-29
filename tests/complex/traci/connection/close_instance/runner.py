@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -29,14 +29,16 @@ sys.path.append(os.path.join(SUMO_HOME, 'tools'))
 import traci  # noqa
 import sumolib  # noqa
 
+args = [sumolib.checkBinary('sumo'), "-c", "sumo.sumocfg", "--remote-port"]
+
 sumoPort = sumolib.miscutils.getFreeSocketPort()
-sumoProcess = subprocess.Popen([sumolib.checkBinary('sumo'), "-c", "sumo.sumocfg", "--remote-port", str(sumoPort)])
+sumoProcess = subprocess.Popen(args + [str(sumoPort)] + sys.argv[1:])
 conn = traci.connect(sumoPort, proc=sumoProcess)
 conn.simulationStep()
 conn.close()
 
 sumoPort = sumolib.miscutils.getFreeSocketPort()
-sumoProcess = subprocess.Popen([sumolib.checkBinary('sumo'), "-c", "sumo.sumocfg", "--remote-port", str(sumoPort)])
+sumoProcess = subprocess.Popen((args + [str(sumoPort)] + sys.argv[1:]))
 conn = traci.connect(sumoPort, label="yo", proc=sumoProcess)
 conn.simulationStep()
 conn.close()

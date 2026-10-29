@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -103,6 +103,33 @@ MSCFModel_CACC::MSCFModel_CACC(const MSVehicleType* vtype) :
 }
 
 MSCFModel_CACC::~MSCFModel_CACC() {}
+
+
+void
+MSCFModel_CACC::CACCVehicleVariables::saveState(OutputDevice& out, const MSCFModel& /*cfm*/) const {
+    out.openTag(SUMO_TAG_CFM_VARIABLES);
+    out.writeAttr(SUMO_ATTR_ID, "CACC");
+    std::ostringstream internals;
+    internals << CACC_ControlMode << " ";
+    internals << CACC_CommunicationsOverrideMode;
+    out.writeAttr(SUMO_ATTR_STATE, internals.str());
+    out.closeTag();
+}
+
+
+void
+MSCFModel_CACC::CACCVehicleVariables::loadState(const SUMOSAXAttributes& attrs) {
+    bool ok = true;
+    const std::string cfmID = attrs.get<std::string>(SUMO_ATTR_ID, nullptr, ok);
+    if (cfmID != "CACC") {
+        throw ProcessError(TLF("incompatible carFollowModel '%' when loading state for CACC", cfmID));
+    }
+    std::istringstream bis(attrs.getString(SUMO_ATTR_STATE));
+    bis >> CACC_ControlMode;
+    int mode;
+    bis >> mode;
+    CACC_CommunicationsOverrideMode = (CommunicationsOverrideMode)mode;
+}
 
 double
 MSCFModel_CACC::freeSpeed(const MSVehicle* const veh, double speed, double seen, double maxSpeed, const bool onInsertion, const CalcReason usage) const {

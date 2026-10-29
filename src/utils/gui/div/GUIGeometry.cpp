@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -72,16 +72,16 @@ GUIGeometry::updateGeometry(const PositionVector& shape, const double posOverSha
     // first clear geometry
     clearGeometry();
     // get shape length
-    const double shapeLength = shape.length();
+    const double shapeLength = shape.length2D();
     // calculate position and rotation
     if (posOverShape < 0) {
-        myShape.push_back(shape.positionAtOffset(0, lateralOffset));
+        myShape.push_back(shape.positionAtOffset2D(0, lateralOffset));
         myShapeRotations.push_back(shape.rotationDegreeAtOffset(0));
     } else if (posOverShape > shapeLength) {
-        myShape.push_back(shape.positionAtOffset(shapeLength, lateralOffset));
+        myShape.push_back(shape.positionAtOffset2D(shapeLength, lateralOffset));
         myShapeRotations.push_back(shape.rotationDegreeAtOffset(shapeLength));
     } else {
-        myShape.push_back(shape.positionAtOffset(posOverShape, lateralOffset));
+        myShape.push_back(shape.positionAtOffset2D(posOverShape, lateralOffset));
         myShapeRotations.push_back(shape.rotationDegreeAtOffset(posOverShape));
     }
 }
@@ -348,7 +348,7 @@ GUIGeometry::drawContourGeometry(const GUIGeometry& geometry, const double width
 void
 GUIGeometry::drawGeometryPoints(const GUIVisualizationSettings::Detail d, const PositionVector& shape,
                                 const RGBColor& color, const double radius, const double exaggeration,
-                                const bool editingElevation) {
+                                const bool drawSymbols, const bool editingElevation) {
     // check detail level
     if (editingElevation || (d <= GUIVisualizationSettings::Detail::GeometryPoint)) {
         // get exaggeratedRadio
@@ -362,11 +362,11 @@ GUIGeometry::drawGeometryPoints(const GUIVisualizationSettings::Detail d, const 
             // set color
             GLHelper::setColor(color);
             // draw circle detailled
-            GLHelper::drawFilledCircleDetailled(d, exaggeratedRadio);
+            GLHelper::drawFilledCircleDetailed(d, exaggeratedRadio);
             // pop geometry point matrix
             GLHelper::popMatrix();
             // draw elevation or special symbols (Start, End and Block)
-            if (d <= GUIVisualizationSettings::Detail::Text) {
+            if (drawSymbols && (d <= GUIVisualizationSettings::Detail::Text)) {
                 if (editingElevation) {
                     // Push Z matrix
                     GLHelper::pushMatrix();

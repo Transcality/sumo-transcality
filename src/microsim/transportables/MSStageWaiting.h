@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -101,9 +101,9 @@ public:
      * @param[in] previous The previous stage for additional info such as from edge
      * @exception IOError not yet implemented
      */
-    void routeOutput(const bool isPerson, OutputDevice& os, const bool withRouteLength, const MSStage* const previous) const;
+    void routeOutput(const bool isPerson, OutputDevice& os, const bool withRouteLength, const MSStage* const previous, const bool withTiming, const bool saveState = false) const;
 
-    void saveState(std::ostringstream& out);
+    void saveState(std::ostringstream& out, MSTransportable* transportable);
 
     void loadState(MSTransportable* transportable, std::istringstream& state);
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -31,7 +31,7 @@ traci.start([sumolib.checkBinary('sumo'),
              '-n', 'input_net4.net.xml',
              '-a', 'input_additional.add.xml',
              # '-S', '-Q',
-             ])
+             ] + sys.argv[1:])
 
 traci.simulationStep()
 traci.vehicle.rerouteParkingArea("ego", 'parkB1B2')

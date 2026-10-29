@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -65,7 +65,7 @@ print("loaded?", traci.isLoaded())
 version = traci.start([sumolib.checkBinary('sumo'), "-c", "sumo.sumocfg",
                        "--ignore-route-errors",
                        "--end", "42",
-                       "--log", "log.txt"])
+                       "--log", "log.txt"] + sys.argv[1:])
 print("version at start", version)
 print("version", traci.getVersion())
 print("loaded?", traci.isLoaded())
@@ -168,6 +168,10 @@ print("getParameter stats.persons.jammed", traci.simulation.getParameter("", "st
 print("getParameter stats.personTeleports.total", traci.simulation.getParameter("", "stats.personTeleports.total"))
 print("getParameter stats.personTeleports.abortWait", traci.simulation.getParameter("", "stats.personTeleports.abortWait"))  # noqa
 print("getParameter stats.personTeleports.wrongDest", traci.simulation.getParameter("", "stats.personTeleports.wrongDest"))  # noqa
+
+print("getParameter buildConfig.ARROW_SO_VERSION", traci.simulation.getParameter("", "buildConfig.ARROW_SO_VERSION"))
+print("getParameter buildConfig.JPS_VERSION", traci.simulation.getParameter("", "buildConfig.JPS_VERSION"))
+print("getParameter buildConfig.ENABLED", traci.simulation.getParameter("", "buildConfig.ENABLED"))
 
 try:
     print("getBusStopWaiting", traci.simulation.getBusStopWaiting("foo"))

@@ -48,6 +48,8 @@ vclass
 
 # test trips with intermediate waypoints
 intermediate
+return_to_origin
+return_to_origin_fallback
 no_valid_edges
 no_valid_intermediate_edges
 
@@ -66,6 +68,9 @@ validate
 # generate validated trips
 validate_vclass
 validate_intermediate
+
+# generate validated trips
+validate_flows
 
 # setting non-positive period should fail
 period_positive

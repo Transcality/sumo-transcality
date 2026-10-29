@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -43,7 +43,7 @@ cmd = [sumolib.checkBinary('sumo'),
              "--no-step-log",
        ]
 
-traci.start(cmd)
+traci.start(cmd + sys.argv[1:])
 
 veh = "v0"
 tlID = "C"
@@ -53,7 +53,7 @@ tlState2 = 'G' * len(tlState)
 traci.trafficlight.setRedYellowGreenState(tlID, tlState2)
 traci.simulation.saveState("state.xml")
 traci.close()
-traci.start(cmd)
+traci.start(cmd + sys.argv[1:])
 for i in range(2):
     traci.simulation.loadState("state.xml")
     traci.simulationStep()

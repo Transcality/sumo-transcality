@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-# Copyright (C) 2009-2025 German Aerospace Center (DLR) and others.
+# Copyright (C) 2009-2026 German Aerospace Center (DLR) and others.
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
 # https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.environ.get('SUMO_HOME', '.'), 'tools'))
+sys.path.append(os.path.join(os.environ.get("SUMO_HOME", "."), "tools"))
 import neteditTestFunctions as netedit  # noqa
 
 # Open netedit
@@ -34,14 +34,14 @@ netedit.changeElement("additionalFrame", "routeProbe")
 # disable center view
 netedit.modifyBoolAttribute(netedit.attrs.routeProbe.create.center)
 
-# set invalid frequency
-netedit.modifyAttribute(netedit.attrs.routeProbe.create.frequency, "-20")
+# set invalid period
+netedit.modifyAttribute(netedit.attrs.routeProbe.create.period, "-20")
 
 # try to create routeProbe
 netedit.leftClick(referencePosition, netedit.positions.elements.edge0)
 
-# set valid default frequency
-netedit.modifyAttribute(netedit.attrs.routeProbe.create.frequency, "120")
+# set valid default period
+netedit.modifyAttribute(netedit.attrs.routeProbe.create.period, "120")
 
 # create routeProbe (camera will be moved)
 netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
@@ -50,7 +50,7 @@ netedit.leftClick(referencePosition, netedit.positions.elements.edge1)
 netedit.checkUndoRedo(referencePosition)
 
 # save netedit config
-netedit.saveExistentShortcut("neteditConfig")
+netedit.saveExistentFile("neteditConfig")
 
 # quit netedit
 netedit.quit(neteditProcess)

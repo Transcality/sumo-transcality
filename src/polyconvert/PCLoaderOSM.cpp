@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2008-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2008-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -322,6 +322,20 @@ PCLoaderOSM::convertNodePosition(PCOSMNode* n) {
 }
 
 
+double
+PCLoaderOSM::parseHeight(const std::map<std::string, std::string>& attrs, long long int id) {
+    auto itH = attrs.find("height");
+    if (itH != attrs.end()) {
+        try {
+            return StringUtils::parseDist(itH->second);
+        } catch (...) {
+            WRITE_WARNINGF(TL("Value of key '%' is not numeric ('%') in way '%'."), "height", itH->second, id);
+        }
+    }
+    return SUMOPolygon::DEFAULT_HEIGHT;
+}
+
+
 int
 PCLoaderOSM::addPolygon(const PCOSMEdge* edge, const PositionVector& vec, const PCTypeMap::TypeDef& def, const std::string& fullType, int index, bool useName, PCPolyContainer& toFill, bool ignorePruning, bool withAttributes) {
     if (def.discard) {
@@ -334,7 +348,11 @@ PCLoaderOSM::addPolygon(const PCOSMEdge* edge, const PositionVector& vec, const 
         SUMOPolygon* poly = new SUMOPolygon(
             StringUtils::escapeXML(id),
             StringUtils::escapeXML(OptionsCont::getOptions().getBool("osm.keep-full-type") ? fullType : def.id),
-            def.color, vec, false, fill, 1, def.layer);
+            def.color, vec, false, fill, 1, def.layer,
+            SUMOPolygon::DEFAULT_ANGLE,
+            SUMOPolygon::DEFAULT_IMG_FILE,
+            SUMOPolygon::DEFAULT_NAME,
+            parseHeight(edge->myAttributes, edge->id));
         if (withAttributes) {
             poly->updateParameters(edge->myAttributes);
         }

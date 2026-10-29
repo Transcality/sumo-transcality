@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2017-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2017-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -121,6 +121,12 @@ ChargingStation::getChargeInTransit(const std::string& stopID) {
 }
 
 
+double
+ChargingStation::getTotalPower(const std::string& stopID) {
+    return dynamic_cast<MSChargingStation*>(getChargingStation(stopID))->getTotalChargingPower();
+}
+
+
 void
 ChargingStation::setChargingPower(const std::string& stopID, double power) {
     dynamic_cast<MSChargingStation*>(getChargingStation(stopID))->setChargingPower(power);
@@ -142,6 +148,12 @@ ChargingStation::setChargeDelay(const std::string& stopID, double delay) {
 void
 ChargingStation::setChargeInTransit(const std::string& stopID, bool inTransit) {
     dynamic_cast<MSChargingStation*>(getChargingStation(stopID))->setChargeInTransit(inTransit);
+}
+
+
+void
+ChargingStation::setTotalPower(const std::string& stopID, double totalPower) {
+    dynamic_cast<MSChargingStation*>(getChargingStation(stopID))->setTotalChargingPower(totalPower);
 }
 
 
@@ -198,9 +210,11 @@ ChargingStation::handleVariable(const std::string& objID, const int variable, Va
         case VAR_CS_EFFICIENCY:
             return wrapper->wrapDouble(objID, variable, getEfficiency(objID));
         case VAR_CS_CHARGE_DELAY:
-            return wrapper->wrapDouble(objID, variable, STEPS2TIME(getChargeDelay(objID)));
+            return wrapper->wrapDouble(objID, variable, getChargeDelay(objID));
         case VAR_CS_CHARGE_IN_TRANSIT:
             return wrapper->wrapInt(objID, variable, getChargeInTransit(objID));
+        case VAR_CS_TOTAL_POWER:
+            return wrapper->wrapDouble(objID, variable, getTotalPower(objID));
         case libsumo::VAR_PARAMETER:
             paramData->readUnsignedByte();
             return wrapper->wrapString(objID, variable, getParameter(objID, paramData->readString()));

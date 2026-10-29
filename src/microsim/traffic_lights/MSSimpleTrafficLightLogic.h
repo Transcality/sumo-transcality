@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -136,6 +136,7 @@ public:
     const MSPhaseDefinition& getCurrentPhaseDef() const override;
     /// @}
 
+    void resetLastSwitch(SUMOTime t) override;
 
 
     /// @name Conversion between time and phase
@@ -188,6 +189,9 @@ public:
         */
     virtual void saveState(OutputDevice& out) const override;
 
+    /// @brief restores the tls state, including the start of the current phase
+    virtual void loadState(MSTLLogicControl& tlcontrol, SUMOTime t, int step, SUMOTime spentDuration, SUMOTime nextSwitch, SUMOTime timeInCycle, bool active) override;
+
     virtual SUMOTime mapTimeInCycle(SUMOTime t) const override;
 
     /**@brief gets a parameter */
@@ -204,6 +208,7 @@ protected:
     /// @brief the maximum duration for keeping the current phase when considering 'latestEnd'
     SUMOTime getLatest() const;
 
+    void saveStateAttrs(OutputDevice& out) const;
 
 protected:
     /// @brief The list of phases this logic uses

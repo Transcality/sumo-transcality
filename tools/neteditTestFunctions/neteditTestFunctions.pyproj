@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{ba09ae0f-8205-4ceb-a78c-4446c0c9592b}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>enums\attributesEnum.py</StartupFile>
+    <StartupFile>buildinternaltestdata.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -24,6 +24,7 @@
     <Compile Include="enums\attributesEnum.py" />
     <Compile Include="constants.py" />
     <Compile Include="enums\contextualMenuOperations.py" />
+    <Compile Include="enums\movements.py" />
     <Compile Include="files\load.py" />
     <Compile Include="files\quit.py" />
     <Compile Include="files\reload.py" />
@@ -31,8 +32,6 @@
     <Compile Include="frames\data\data.py" />
     <Compile Include="frames\data\meanData.py" />
     <Compile Include="frames\delete.py" />
-    <Compile Include="frames\demand\container.py" />
-    <Compile Include="frames\demand\person.py" />
     <Compile Include="frames\demand\type.py" />
     <Compile Include="frames\edit\basicAttribute.py" />
     <Compile Include="frames\edit\boolAttribute.py" />
@@ -43,21 +42,22 @@
     <Compile Include="frames\elements.py" />
     <Compile Include="frames\move.py" />
     <Compile Include="frames\network\additional.py" />
+    <Compile Include="frames\network\createEdge.py" />
     <Compile Include="frames\network\connection.py" />
     <Compile Include="frames\network\crossing.py" />
     <Compile Include="frames\network\shape.py" />
     <Compile Include="frames\network\tls.py" />
     <Compile Include="frames\select.py" />
     <Compile Include="general\contextualMenu.py" />
+    <Compile Include="general\overwrite.py" />
     <Compile Include="general\fixElements.py" />
     <Compile Include="general\functions.py" />
     <Compile Include="general\modes.py" />
     <Compile Include="general\undoRedo.py" />
     <Compile Include="general\viewport.py" />
-    <Compile Include="imports.py" />
     <Compile Include="input\keyboard.py" />
     <Compile Include="input\mouse.py" />
-    <Compile Include="internaltestdata.py" />
+    <Compile Include="buildinternaltestdata.py" />
     <Compile Include="setup.py" />
     <Compile Include="enums\viewPositions.py" />
     <Compile Include="__init__.py" />

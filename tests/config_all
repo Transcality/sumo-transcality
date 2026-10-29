@@ -2,6 +2,7 @@ home_operating_system:posix
 kill_timeout:300
 virtual_display_extra_args:-cc 4
 
+batch_include_comment_plugin:false
 batch_result_repository:$SUMO_BATCH_RESULT
 historical_report_location:$SUMO_REPORT
 historical_report_split_version:true
@@ -11,13 +12,17 @@ output:\r{REPLACE \n}
 output:[0-9\.]+ms{REPLACE (TIME)}
 output:spent [0-9\.]+s{REPLACE spent (TIME)}
 output:Duration [0-9\.]+s{REPLACE Duration (TIME)}
-output:Version
+output:Eclipse SUMO .* v*
 output:Build features
 log:[0-9\.]+ms{REPLACE (TIME)}
 log:spent [0-9\.]+s{REPLACE spent (TIME)}
 log:Duration [0-9\.]+s{REPLACE Duration (TIME)}
 logPrefixed:[0-9\.]+ms{REPLACE (TIME)}
 logPrefixed:[0-9\.]+s{REPLACE (TIME)}
+logSuffixed:[0-9\.]+ms{REPLACE (TIME)}
+logSuffixed:[0-9\.]+s{REPLACE (TIME)}
+logPrefixedSuffixed:[0-9\.]+ms{REPLACE (TIME)}
+logPrefixedSuffixed:[0-9\.]+s{REPLACE (TIME)}
 errors:random.tcc.*runtime error
 errors:UTFDataFormatException
 errors:exceeded byte limit

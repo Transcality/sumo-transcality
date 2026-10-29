@@ -2,6 +2,24 @@
 #define SWIG_MODULE libsumo
 %include "libsumo_typemap.i"
 
+#if defined(SWIGJAVA)
+%typemap(javaimports) libsumo::Simulation "import java.lang.Runtime.Version;"
+%extend libsumo::Simulation {
+%proxycode %{
+    public static void preloadLibraries() {
+        if (Version.parse(System.getProperty("java.version")).compareTo(Version.parse("21.0.5")) < 0) {
+            System.err.println("The recommended minimal Java version is 21.0.5.");
+        }
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            System.loadLibrary("libcrypto");
+            System.loadLibrary("libssl");
+        }
+        System.loadLibrary("libsumojni");
+    }
+%}
+}
+#endif
+
 // Add necessary symbols to generated header
 %{
 #include <libsumo/Edge.h>
@@ -62,7 +80,23 @@
 %include "POI.h"
 %include "Polygon.h"
 %include "Route.h"
+#ifdef SWIGPYTHON
+// GCC false positive: the "localhost" default temporary is only deleted if SWIG_IsNewObj is set
+%typemap(freearg, noblock=1) const std::string& host {
+%#if defined(__GNUC__)
+%#pragma GCC diagnostic push
+%#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+%#endif
+if (SWIG_IsNewObj(res$argnum)) delete $1;
+%#if defined(__GNUC__)
+%#pragma GCC diagnostic pop
+%#endif
+}
 %include "Simulation.h"
+%clear const std::string& host;
+#else
+%include "Simulation.h"
+#endif
 %include "TraCIConstants.h"
 %include "TrafficLight.h"
 %include "VehicleType.h"

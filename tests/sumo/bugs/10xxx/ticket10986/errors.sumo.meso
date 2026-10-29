@@ -1,2 +1,1 @@
-Warning: Traffic light type 'actuated' cannot be used in mesoscopic simulation. Using 'static' as fallback.
-Warning: Network contains internal links which are ignored. Vehicles will 'jump' across junctions and thus underestimate route lengths and travel times.
+Warning: Mismodelled capacity on edge ':2972382261_0'. Not all lanes are usable by vClass 'tram'. Use option --meso-lane-queue or add unused class to option --meso-ignore-lanes-by-vclass.

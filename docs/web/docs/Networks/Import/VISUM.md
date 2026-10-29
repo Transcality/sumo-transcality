@@ -24,6 +24,17 @@ netconvert --visum my_visum_net.net -o my_sumo_net.net.xml
 !!! caution
     If your network contains geo-coordinates (lon/lat) you must add option **--proj.utm** in order to project your network into the cartesian plane
 
+# Localization
+
+VISUM network files can use keywords in different languages. By default, [netconvert](../../netconvert.md) attempts to import german keywords.
+The option **--visum.language-file {{DT_FILE}}** can be used to switch to a different language.  The following language files are provided in the `<SUMO_HOME>/data/lang` directory:
+
+- visumEN.txt
+- visumFR.txt
+- visumIT.txt
+
+If you wish to import a file in an unsupported language, please [contact](https://eclipse.dev/sumo/contact/) us and provide an example file.
+
 # Import Coverage
 
 The following table shows which information is parsed from a given VISUM
@@ -56,11 +67,11 @@ networks**
 
 
 Well, basically that's all for network import, isn't it? Well, actually
-not. In the following, the basic possibilities and further advices and
-tricks for working with these is described.
+not. In the following, the basic possibilities, further advice and
+tricks for working with these are described.
 
 !!! note
-    "Rang" from "Streckentypen" is used as edge priority information. As streets with a lower "Rang" are normally higher priorised, an edge type's priority is computed as 100-Rang
+    "Rang" from "Streckentypen" is used as edge priority information. As streets with a lower "Rang" are normally higher prioritized, an edge type's priority is computed as 100-Rang
 
 ## Lane Number
 
@@ -101,6 +112,15 @@ page. Here, we want to show the
 possibilities to change the connector attributes using
 [netconvert](../../netconvert.md).
 
+
+## Permissions
+
+A VISUM model declares a list of abstract traffic types and uses these to define access rules for every road. While there are some conventions for typical types (i.e. 'c' for passenger car and 'w' for walk), these types are user-definable. Since version 1.27.0 netconvert uses the following three strategies to interpret permissions (earlier versions only use the first strategy):
+
+- a [pre-defined list](https://github.com/eclipse-sumo/sumo/blob/main/data/typemap/visumNetconvert.typ.xml) of typical traffic type codes
+- interpreting the textual description field for each type (i.e. anything with the substring 'bus' in it's description is guessed as abstract vehicle class 'bus')
+- loading a custom type file with option **--type-files** that maps traffic type ids to permissions (the [default file](https://github.com/eclipse-sumo/sumo/blob/main/data/typemap/visumNetconvert.typ.xml) can be copied and extended as needed).
+
 # See also
 
 [netconvert](../../netconvert.md) is able to guess some information
@@ -126,10 +146,13 @@ projection of geo-coordinates, should not apply when working with
 
 ## Importing other data from VISUM
 
-[VISUM](https://www.ptvgroup.com/en/solutions/products/ptv-visum/) uses O/D-matrices
+- netconvert can import [public transport stop locations](../../Simulation/Public_Transport.md#bus_stops) by setting option **--ptstop-output**
+- netconvert can import [Traffic Analysis Zones (TAZ)](../../Demand/Importing_O/D_Matrices.md#describing_the_taz) by setting option **--polygon-output**
+- [VISUM](https://www.ptvgroup.com/en/solutions/products/ptv-visum/) uses O/D-matrices
 as a demand descriptions. There is some further information on
 [Demand/Importing O/D
 Matrices](../../Demand/Importing_O/D_Matrices.md).
+- Abstract network model XML routes (anm_routes.xml) can be imported with [visum_convertXMLRoutes.py](../../Tools/Import/VISUM.md#visum_convertxmlroutespy)
 
 # References
 

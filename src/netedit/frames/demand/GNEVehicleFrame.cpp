@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2001-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2001-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -44,7 +44,7 @@
 // ---------------------------------------------------------------------------
 
 GNEVehicleFrame::HelpCreation::HelpCreation(GNEVehicleFrame* vehicleFrameParent) :
-    MFXGroupBoxModule(vehicleFrameParent, TL("Help")),
+    GNEGroupBoxModule(vehicleFrameParent, TL("Help")),
     myVehicleFrameParent(vehicleFrameParent) {
     myInformationLabel = new MFXDynamicLabel(getCollapsableFrame(), "", 0, GUIDesignLabelFrameInformation);
 }
@@ -134,7 +134,7 @@ GNEVehicleFrame::GNEVehicleFrame(GNEViewParent* viewParent, GNEViewNet* viewNet)
     myVehicleTagSelector = new GNETagSelector(this, GNETagProperties::Type::VEHICLE, SUMO_TAG_TRIP);
 
     // Create vehicle type selector and set DEFAULT_VTYPE_ID as default element
-    myTypeSelector = new GNEDemandElementSelector(this, SUMO_TAG_VTYPE, GNETagProperties::Type::VEHICLE);
+    myTypeSelector = new GNEDemandElementSelector(this, {SUMO_TAG_VTYPE, SUMO_TAG_VTYPE_DISTRIBUTION}, GNETagProperties::Type::VEHICLE, false);
 
     // Create attributes editor
     myVehicleAttributesEditor = new GNEAttributesEditor(this, GNEAttributesEditorType::EditorType::CREATOR);
@@ -310,9 +310,8 @@ GNEVehicleFrame::createPath(const bool useLastRoute) {
         // add VType
         myVehicleBaseObject->addStringAttribute(SUMO_ATTR_TYPE, myTypeSelector->getCurrentDemandElement()->getID());
         // declare route handler
-        GNERouteHandler routeHandler(myViewNet->getNet(), myVehicleBaseObject->hasStringAttribute(GNE_ATTR_DEMAND_FILE) ?
-                                     myVehicleBaseObject->getStringAttribute(GNE_ATTR_DEMAND_FILE) : "",
-                                     myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), false);
+        GNERouteHandler routeHandler(myViewNet->getNet(), myViewNet->getNet()->getACTemplates()->getTemplateAC(vehicleTag)->getFileBucket(),
+                                     myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), true);
         // check if use last route
         if (useLastRoute) {
             // build vehicle using last route
@@ -546,9 +545,8 @@ GNEVehicleFrame::buildVehicleOverRoute(SumoXMLTag vehicleTag, GNEDemandElement* 
         // get vehicle attributes
         myVehicleAttributesEditor->fillSumoBaseObject(myVehicleBaseObject);
         // declare route handler
-        GNERouteHandler routeHandler(myViewNet->getNet(), myVehicleBaseObject->hasStringAttribute(GNE_ATTR_DEMAND_FILE) ?
-                                     myVehicleBaseObject->getStringAttribute(GNE_ATTR_DEMAND_FILE) : "",
-                                     myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), false);
+        GNERouteHandler routeHandler(myViewNet->getNet(), route->getFileBucket(),
+                                     myViewNet->getViewParent()->getGNEAppWindows()->isUndoRedoAllowed(), true);
         // check if departLane is valid
         if ((route->getTagProperty()->getTag() == SUMO_TAG_ROUTE) && myVehicleBaseObject->hasStringAttribute(SUMO_ATTR_DEPARTLANE) &&
                 GNEAttributeCarrier::canParse<int>(myVehicleBaseObject->getStringAttribute(SUMO_ATTR_DEPARTLANE))) {
@@ -611,7 +609,7 @@ GNEVehicleFrame::buildVehicleOverRoute(SumoXMLTag vehicleTag, GNEDemandElement* 
         // center view after creation
         const auto* vehicle = myViewNet->getNet()->getAttributeCarriers()->retrieveDemandElement(myVehicleBaseObject->getTag(), myVehicleBaseObject->getStringAttribute(SUMO_ATTR_ID), false);
         if (vehicle && !myViewNet->getVisibleBoundary().around(vehicle->getPositionInView())) {
-            myViewNet->centerTo(vehicle->getPositionInView(), false);
+            myViewNet->centerToPos(vehicle->getPositionInView(), false);
         }
         // refresh attributes editor
         myVehicleAttributesEditor->refreshAttributesEditor();

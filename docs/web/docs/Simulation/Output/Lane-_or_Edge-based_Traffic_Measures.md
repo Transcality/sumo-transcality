@@ -50,18 +50,19 @@ For additional attributes see the table below.
 | period (alias freq) | int (time)                | The aggregation period the values the detector collects shall be summed up. If not given the whole time interval from begin to end (see below) is aggregated.                                                                               |
 | begin          | int (time)                     | The time to start writing (intervals starting before this time are discarded). If not given, the simulation's begin is used.                                                                                                                |
 | end            | int (time)                     | The time to end writing (intervals starting at or after this time are discarded). If not given the simulation's end is used.                                                                                                                |
-| excludeEmpty   | string (true, false, defaults) | If set to true, edges/lanes which were not used by a vehicle during this period will not be written; *default: false*. If set to "defaults" default values for travel time and speed depending on edge length and maximum speed get printed. |
+| excludeEmpty   | string (true, false, defaults, modified) | If set to true, edges/lanes which were not used by a vehicle during this period will not be written; *default: false*. If set to "defaults" default values for travel time and speed depending on edge length and maximum speed get printed, "modified" will print values only for empty edges which have a dynamically adapted maximum speed. |
 | withInternal   | bool                           | If set, junction internal edges/lanes will be written as well; *default: false*.                                                                                                                                                            |
 | maxTraveltime  | float (time)                   | The maximum traveltime in seconds to write if only very small movements occur; *default 100000*.                                                                                                                                            |
 | minSamples     | float (time)                   | The minimum total number of seconds vehicles have to be on the edge / lane to consider it non-empty; *default: \>0*.                                                                                                                        |
-| speedThreshold | float (m/s)                    | The maximum speed to consider a vehicle halting; *default 0.1*.                                                                                                                                                                             |
-| vTypes         | string                         | space separated list of vehicle type ids to consider, "" means all; *default ""*.                                                                                                                                                           |
+| speedThreshold | float (m/s)                    | The maximum speed to consider a vehicle halting; *default 0.1*.        |
+| speedThresholdRelative | float                  | The maximum relative speed (vehSpeed / speedLimit) to consider a vehicle halting; *default 0*. <br>**Note:** When this is set, waitingTime may be larger than timeLoss |
+| vTypes         | string                         | space separated list of vehicle type ids to consider. If not given, all vTypes will be considered.                         |
 | trackVehicles  | bool                           | whether aggregation should be performed over all vehicles that entered the edge/lane in the aggregation interval                                                                                                                            |
 | detectPersons  | string list                    | whether pedestrians shall be recorded instead of vehicles. Allowed value is *walk*.<br>**Note:** further modes are planned           |
-| writeAttributes  | string list                  | list of attribute names that shall be written (defaults to all attribute)         |
+| writeAttributes  | string list                  | list of attribute names that shall be written (defaults to all attributes)         |
 | edges  | string list                  | restrict output to the given list of edge ids        |
-| edgesFile  | filename                 | restrict output to the given the list of edges given in file (either one edgeID per line or an id prefixed with 'edge:' as in a [selection file](../../Netedit/editModesCommon.md#selection_operations)        |
-| aggregate  | bool    | Whether the traffic statistic of all edges shall be aggregated into a single value (edge id will be `AGGREGATED`).  |
+| edgesFile  | filename                 | restrict output to the given the list of edges given in file (either one edgeID per line or an id prefixed with 'edge:' as in a [selection file](../../Netedit/editModesCommon.md#selection_operations))        |
+| aggregate  | bool or "taz"    | Whether the traffic statistic of edges shall be aggregated. If set to "true" the data for all edges (potentially a subset configured with `edges` or `edgesFiles`) will be aggregated into a single value and the output edge id will be `AGGREGATED`). If set to "taz" then the statistics for all edges in a loaded TAZ will be aggregated into a single value and the output edge id will be the TAZ-id. This feature is also compatible with option **--junction-taz** to obtain aggregated output for every junction. |
 
 
 ### Simplified definition
@@ -159,7 +160,8 @@ The meanings of the written values are given in the following table.
 | traveltime        | s                    | Time needed to pass the edge/lane, note that this is just an estimation based on the mean speed, not the exact time the vehicles needed. The value is based on the time needed for the front of the vehicle to pass the edge. |
 | overlapTraveltime | s                    | Time needed to pass the edge/lane completely, note that this is just an estimation based on the mean speed, not the exact time the vehicles needed. The value is based on the time any part of the vehicle was the edge.      |
 | density           | \#veh/km             | Vehicle density on the edge    |
-| laneDensity           | \#veh/km/lane             | Vehicle density on the edge per lane    |
+| overlapDensity    | \#veh/km             | Vehicle density on the edge. This value counts vehicles if any part along it's length touches the edge. This should not be used for flow computation  |
+| laneDensity       | \#veh/km/lane        | Vehicle density on the edge per lane    |
 | occupancy         | %                    | Occupancy of the edge/lane in %. A value of 100 would indicate vehicles standing bumper to bumper on the whole edge (minGap=0).                                                                                               |
 | waitingTime       | s                    | The total number of seconds vehicles were considered halting (speed < speedThreshold). Summed up over all vehicles  |
 | timeLoss         | s                     | The total number of seconds vehicles lost due to driving slower than desired (summed up over all vehicles)    |
@@ -173,11 +175,16 @@ The meanings of the written values are given in the following table.
 | laneChangedTo     | \#veh                | The number of vehicles that changed to this lane   |
 | vaporized         | \#veh                | The number of vehicles vaporized on this edge **(only present if \#veh \> 0)**        |
 | teleported        | \#veh                | The number of vehicles teleported from this edge **(only present if \#veh \> 0)**      |
+| flow              | \#veh/hour           | The number of vehicles passing this edge per hour. Vehicles that depart on this edge beyond position 0 or arrive before the end of the edge are fractionally discounted |
+| distance          | m                    | The total distance driven by (the front of) all vehicles |
 
 Please note that in the case of *edge* meandata both laneChanged entries
 are equal to the total number of lane changes on the edge. Furthermore
 each lane change is counted separately, that means if one vehicle
 changes from lane 1 to lane 3 it will generate two lane change counts.
+
+You can also add [emission](Lane-_or_Edge-based_Emissions_Measures.md) and [noise](Lane-_or_Edge-based_Noise_Measures.md)
+values directly in the same output by adding the needed attributes to the `writeAttributes`.
 
 ## How to aggregate / derive further values
 
@@ -202,6 +209,7 @@ denotes the length of the aggregation interval):
 - Traffic volume at the begin of the lane / edge (\#/h) = `3600 * entered / period`
 - Traffic volume at the end of the lane / edge (\#/h) = `3600 * left /  period`
 - Total distance travelled (m) = `speed * sampledSeconds`
+  - This is different from `distance` because a vehicle which is only partially on the edge (and not with its front) still counts.
 - Edge length = `sampledSeconds / period * 1000 / density`
 
 
@@ -230,7 +238,9 @@ vehicle only once but they include/exclude some special cases.
   drove. If the lane / edge collected no data the attributes speed,
   traveltime, density, occupancy and waitingTime are not written. One
   can disable writing unused edges/lanes by setting the
-  `excludeEmpty` attribute to true.
+  `excludeEmpty` attribute to "true". Setting it to `modified` will
+  print the empty edges if they have been modified by [calibrators](../Calibrator.md),
+  [variable speed signs](../Variable_Speed_Signs.md) or [TraCI](../../TraCI/index.md).
 - Even on lanes/edges which have sampledSeconds="0.00" since the real
   number of sampledSeconds may be 0.001 and was cut off in the output.
   To define a minimum number of samples before you consider your data
@@ -256,7 +266,7 @@ vehicle only once but they include/exclude some special cases.
 ## Visualization / Plotting
 
 - [sumo-gui](../../sumo-gui.md#visualizing_edge-related_data) can load edgeData files and color network edges/lanes according to any of its attributes
-- [sumo-gui](../../sumo-gui.md#edgelane_visualisation_settings) can color edges/lanes by any of the attributes being collected while the simulation is running
+- [sumo-gui](../../sumo-gui.md#edgelane_visualization_settings) can color edges/lanes by any of the attributes being collected while the simulation is running
 - [netedit](../../Netedit/editModesData.md) can be used to load/view/edit edgeData files
 - The [mpl_dump_onNet.py](../../Tools/Visualization.md#mpl_dump_onnetpy)
   script can display values of this output as a colored net (and

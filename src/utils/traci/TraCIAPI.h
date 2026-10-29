@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -184,6 +184,7 @@ public:
         double getNoiseEmission(const std::string& edgeID) const;
         double getElectricityConsumption(const std::string& edgeID) const;
         double getLastStepMeanSpeed(const std::string& edgeID) const;
+        double getMaxSpeed(const std::string& edgeID) const;
         double getLastStepOccupancy(const std::string& edgeID) const;
         double getLastStepLength(const std::string& edgeID) const;
         double getTraveltime(const std::string& edgeID) const;
@@ -366,6 +367,7 @@ public:
         virtual ~PolygonScope() {}
 
         double getLineWidth(const std::string& polygonID) const;
+        double getHeight(const std::string& polygonID) const;
         bool getFilled(const std::string& polygonID) const;
         std::string getType(const std::string& polygonID) const;
         libsumo::TraCIPositionVector getShape(const std::string& polygonID) const;
@@ -374,6 +376,7 @@ public:
         void setShape(const std::string& polygonID, const libsumo::TraCIPositionVector& shape) const;
         void setColor(const std::string& polygonID, const libsumo::TraCIColor& c) const;
         void setLineWidth(const std::string& polygonID, const double lineWidth) const;
+        void setHeight(const std::string& polygonID, const double height) const;
         void add(const std::string& polygonID, const libsumo::TraCIPositionVector& shape, const libsumo::TraCIColor& c, bool fill, const std::string& type, int layer) const;
         void remove(const std::string& polygonID, int layer = 0) const;
     };
@@ -589,6 +592,7 @@ public:
         double getAngle(const std::string& vehicleID) const;
         std::string getRoadID(const std::string& vehicleID) const;
         std::string getLaneID(const std::string& vehicleID) const;
+        std::string getShadowLaneID(const std::string& vehicleID) const;
         int getLaneIndex(const std::string& vehicleID) const;
         std::string getTypeID(const std::string& vehicleID) const;
         std::string getRouteID(const std::string& vehicleID) const;

@@ -4,6 +4,8 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
 
 ## Version 1.4.0 (10.12.2019)
 
+[Downloads](https://sumo.dlr.de/releases/1.4.0/)
+
 ### Bugfixes
 
 - Simulation
@@ -74,7 +76,7 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - The new option **--aggregate-warnings** can be used to group warnings of the same type and give only their count after the first N warnings occurred.
 
 - Simulation
-  - Simulation of parking vehicles now optionally takes into account [maneuvering times](../Simulation/ParkingArea.md#modelling_maneuvering_times_when_entering_and_leaving_the_parking_space). Issue #5956
+  - Simulation of parking vehicles now optionally takes into account [maneuvering times](../Simulation/ParkingArea.md#modeling_maneuvering_times_when_entering_and_leaving_the_parking_space). Issue #5956
   - Vehicle stop elements now support attribute 'speed'. This can be used to force a vehicle to drive with a fixed speed on a particular stretch of lane. Issue #1020
   - When defining a person ride, setting attribute `lines="ANY"` can now be used to take any vehicle that stops at the destination busStop or destination edge. Issue #6039
   - when defining vehicle stops, the new attribute 'extension' can be used to limit delays when too many people are boarding or when expected persons do not show up. Issue #6072 #3635
@@ -148,6 +150,8 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
 
 ## Version 1.3.1 (27.08.2019)
 
+[Downloads](https://sumo.dlr.de/releases/1.3.1/)
+
 ### Bugfixes
 
 - netedit
@@ -195,6 +199,8 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - removed doxygen docu from the distribution
 
 ## Version 1.3.0 (20.08.2019)
+
+[Downloads](https://sumo.dlr.de/releases/1.3.0/)
 
 ### Bugfixes
 
@@ -411,6 +417,8 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
 
 ## Version 1.2.0 (16.04.2019)
 
+[Downloads](https://sumo.dlr.de/releases/1.2.0/)
+
 ### Bugfixes
 
 - Simulation
@@ -541,7 +549,7 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - When *show-detectors* is set for actuated traffic lights, the detector outline will switch to green for detectors that are used to control the active phase. Issue #5168
   - Added option **--tls.actuated.show-detectors** {{DT_BOOL}} to set the default for actuated detector visibility.
   - Vehicles with guiShape *truck/trailer* and *truck/semitrailer* now bend when cornering. Issue #3100
-  - Added vehicle route visualisation *Show Future Route* to the vehicle context menu. This only shows the remaining portion of the route.
+  - Added vehicle route visualization *Show Future Route* to the vehicle context menu. This only shows the remaining portion of the route.
   - Persons riding in a vehicle now have distinct seat position. Issue #1628
   - Persons waiting at a busStop can now wait in multiple rows according the specified stop length and personCapacity.
   - Added person drawing style *circles*

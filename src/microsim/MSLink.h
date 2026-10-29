@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2002-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2002-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@
 #include <utils/common/SUMOVehicleClass.h>
 #include <utils/vehicle/SUMOVehicle.h>
 #include <utils/xml/SUMOXMLDefinitions.h>
+#include "MSLane.h"
 
 
 // ===========================================================================
@@ -223,6 +224,15 @@ public:
         double startPos;
         double endPos;
     };
+
+    /// @brief Function-object for stable sorting MSLinks with numerical lane ids
+    struct ComparatorNumericalLaneIdLess {
+        bool operator()(const MSLink* const a, const MSLink* const b) const {
+            return (a->getLane()->getNumericalID() < b->getLane()->getNumericalID())
+                   || (a->getLane()->getNumericalID() == b->getLane()->getNumericalID() && a->getIndex() < b->getIndex());
+        }
+    };
+
 
     /** @brief Constructor for simulation which uses internal lanes
      *
@@ -618,7 +628,7 @@ public:
     /// @brief write information about all approaching vehicles to the given output device
     void writeApproaching(OutputDevice& od, const std::string fromLaneID) const;
 
-    /// @brief return the link that is parallel to this lane or 0
+    /// @brief return the link that is parallel to this link or 0
     MSLink* getParallelLink(int direction) const;
 
     /// @brief return the link that is the opposite entry link to this one
@@ -687,6 +697,8 @@ public:
         return myPermissions;
     }
 
+    void updatePermissions();
+
     /// @brief initialize parallel links (to be called after all links are loaded)
     void initParallelLinks();
 
@@ -704,6 +716,9 @@ public:
     inline bool hasFoeCrossing() const {
         return myHavePedestrianCrossingFoe;
     }
+
+    /// @brief whether this link is for a railsignal that was passed in this step
+    bool railSignalWasPassed() const;
 
     /// @brief post-processing for legacy networks
     static void recheckSetRequestInformation();

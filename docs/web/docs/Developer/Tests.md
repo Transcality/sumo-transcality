@@ -23,26 +23,43 @@ with the results on this [summary webpage](https://sumo.dlr.de/daily/).
 # Setup
 
 We use [TextTest](https://texttest.org/) 4.x as our testing environment which
-is Python based and currently available for Python 3. To install
-it on Linux / MacOS, you can open a terminal and type:
+is based on the Python GTK bindings so it needs some prerequisites
+which cannot be installed with pip.
 
-`pip3 install texttest`
+**On Linux (Debian/Ubuntu):**
+```
+sudo apt-get install meld geany python3-gi python3-gi-cairo pipx
+```
 
-For a "naked" python installation, the following may be needed to allow TextTest to work:
+**On macOS:**
+```
+brew install meld geany python py3cairo pygobject3 gtk+3 adwaita-icon-theme
+```
 
-`pip3 install gobject PyGObject psutil`
+Then to install it on Linux / MacOS, you can open a terminal and type:
+
+`pipx install --system-site-packages texttest`
+
+## Windows
 
 For Windows you should download and run the installer from the
 [SourceForge project page](https://sourceforge.net/projects/texttest/).
 
-It might not pull in all the dependencies, so in some cases you need
-to follow the [TextTest installation
-instructions](https://texttest.sourceforge.net/index.php?page=documentation_trunk&n=install_texttest)
-and the additional info there.
+## Viewer and editor
 
-For MacOS the following command should install all dependencies:
+The commands above also install a diff viewer and text editor for viewing and comparing test results
+on Linux and macOS. For Windows the meld diff tool comes bundled with the installer.
 
-`brew install python py3cairo pygobject3 gtk+3 adwaita-icon-theme`
+**Recommended tools** (preferred by SUMO developers):
+- **Diff viewer:** `meld` - for comparing file differences
+- **Text editor:** `geany` - for viewing and editing files
+
+Download and install from
+[Geany project page](https://www.geany.org/) by following the provided installation instructions.
+
+After installing these tools, you need to configure TextTest to use them by creating or editing `$HOME/.texttest/config` (see [Customize configuration](#customize_configuration) section below).
+
+**Alternative (TextTest defaults):** If you prefer, you can install `tkdiff` and `emacs` instead, which are TextTest's default programs and don't require additional configuration. However, we recommend using meld and geany for a better experience.
 
 If the installation was successful, this window will appear after execution of `{{SUMO}}/tests/runAllTests.bat` (Windows) or
 `{{SUMO}}/tests/runTests.sh` (Linux, macOS)
@@ -52,15 +69,24 @@ If the installation was successful, this window will appear after execution of `
 
 ## Customize configuration
 
-Common options added to the personal config file
-`$HOME/.texttest/config` are the used diff-viewer, editor, and the flag
-to collapse the static test suites on program start. E.g.:
+You need to configure TextTest to use your installed diff viewer and text editor. Create or edit the personal config file
+`$HOME/.texttest/config` (on Windows: `%USERPROFILE%\.texttest\config`) and add the following options:
 
 ```
    diff_program:meld
    view_program:geany
    static_collapse_suites:1
 ```
+
+The `diff_program` setting specifies which tool to use for comparing files, and `view_program` specifies the text editor for viewing files. The `static_collapse_suites` flag collapses the static test suites on program start.
+
+**Note:** If you do not overwrite the `diff_program` and `view_program` lines, TextTest will try to use tkdiff and emacs automatically.
+
+If you encounter problems during the texttest installation check also the [TextTest installation
+instructions](https://texttest.sourceforge.net/index.php?page=documentation_trunk&n=install_texttest)
+and the additional info there.
+
+# Running the Tests
 
 ## Recommended python packages
 
@@ -69,7 +95,7 @@ the "tools" and/or "complex" tests please do
 
 `pip3 install -r $SUMO_HOME/tools/requirements.txt -r $SUMO_HOME/tools/req_dev.txt`
 
-# Running the Tests
+## Starting the test runner
 
 Within the  `$SUMO_HOME/tests` folder you can find batch files for Windows and shell files for Linux & macOS which start
 [TextTest](https://texttest.org/) with our test suites. `runAllTests.bat` (Windows) or `runTests.sh` (Linux, macOS)
@@ -94,16 +120,6 @@ following steps. For the examples below we'll use "polyconvert" as the
 example application.
 
 - go to `$SUMO_HOME/tests`
-- copy one of the **run...Tests.bat**-files and rename it properly
-  (**runPolyconvertTests.bat** in our case); change the name of the
-  application within it. In our case the resulting file will look as
-  this:
-
-```
-call %~dp0\testEnv.bat %1
-start %TEXTTESTPY% -a polyconvert
-```
-
 - add the application to the list of applications that are tested each
 night by
   - adding it to **runTests.sh**; in our case, the following line
@@ -179,8 +195,8 @@ a different battery output than expected. If the file marked in red was
 *errors.sumo*, it means that our modification of SUMO has caused a
 *runtime error*, and finally if the file marked in red is *output.sumo*,
 it means that SUMO generated some warning during execution.
-Double-clicking on the red box *battery.sumo* opens ''TkDiffv
-automatically, and displays the differences of our battery output with
+Double-clicking on the red box *battery.sumo* opens your configured diff
+viewer (e.g. `meld`) automatically, and displays the differences of our battery output with
 respect to the original *battery output control file*.
 
 ![](../images/TestError3.png "Error in battery.sumo")

@@ -70,6 +70,13 @@ Afterwards, you will have to recompute the junction shape to see how it looks (F
 
 This will create a single joined junction but keep the endpoints at the original junction positions.
 
+### Using 'Shift Geometry'
+
+1. select the edge (i.e. by clicking on it in select mode)
+2. in move mode, enter the shift value in the input field below the label "Shift selected edges geometry" and press the "Apply shift value" button.
+
+Positive values shift the whole edge to the right (outward from the road center line) whereas negative values shift it inwards.
+
 ### Restoring edge geometry to its default state
 
 The reverse operation to *Setting a custom geometry endpoint* as explained above is *Restoring the geometry endpoint* and it may be accomplished in any of the following ways:
@@ -82,7 +89,7 @@ The reverse operation to *Setting a custom geometry endpoint* as explained above
 ## Setting connection attributes
 
 1.  after opening the network press F5 to compute connection objects
-2.  in inspect-mode enable the *Show Connections* checkbox in the menu bar
+2.  in inspect-mode enable the *Show Connections* checkbox in the menu bar. (Alternatively, use the corresponding item in the *Edit menu* or press Alt+6)
 3.  click on a connection to inspect it and edit its attributes
 
 ## Converting an intersection into a roundabout
@@ -185,7 +192,7 @@ directions. To make a unidirectional track usable in both directions,
 
 ## Define rail signals that only affect one track direction
 
-If a piece of railway track is [modelled for train operations in both directions](#creating_bidirectional_railway_tracks), any rail signal defined on this *bidi*-track will affect both direction of travel by default.
+If a piece of railway track is [modeled for train operations in both directions](#creating_bidirectional_railway_tracks), any rail signal defined on this *bidi*-track will affect both direction of travel by default.
 To change this, the following steps have to be taken:
 
 1. ensure that [edges for both directions of travel are visible](../Simulation/Railways.md#working_with_bidirectional_tracks_in_netedit)
@@ -259,11 +266,11 @@ Prohibiting pedestrians from walking on the road can be accomplished using the '
 
 - edges are created and the 'add Sidwalk' option is active
 - edges are created with a custom 'allow' value (i.e. 'pedestrian' or 'passenger')
-- edge context menu function 'Lane operations/Add restricted Lane/Sidwealk' is applied to an edge or a selection of edges  
+- edge context menu function 'Lane operations/Add restricted Lane/Sidwealk' is applied to an edge or a selection of edges
 
 Crossings can be created with 'crossing mode' by clicking on a junction and then clicking on one or more edges to be crossed and confirming with <kbd>ENTER</kbd>
 !!! note
     Crossings can only be created if the edges to be crossed have lanes that prohibit pedestrian use
-    
+
 Walkingareas are created automatically if the network contains at least one pedestrian crossing or if option **walkingareas** is set in the options screen (<kd>F10</kbd>, in the Pedestrians tab).
 They will be created wherever footpaths or sidewalks are bordered by lanes that prohibit pedestrian use.

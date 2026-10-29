@@ -1,6 +1,6 @@
 /****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.dev/sumo
-// Copyright (C) 2012-2025 German Aerospace Center (DLR) and others.
+// Copyright (C) 2012-2026 German Aerospace Center (DLR) and others.
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
 // https://www.eclipse.org/legal/epl-2.0/
@@ -167,7 +167,7 @@ public:
                     bool ok;
                     mapMatcher->parseGeoEdges(PositionVector({Position(lon, lat)}), true, SVC_IGNORING, mapped, "LMLT", false, ok, true);
                     if (mapped.size() != 1) {
-                        throw ProcessError(TLF("Invalid coordinate in landmark file, could not find edge at  '%'", line));
+                        throw ProcessError(TLF("Invalid coordinate in landmark file, could not find edge at '%'", line));
                     }
                     std::string lm = mapped.front()->getID();
                     const auto& it = numericID.find(lm);
