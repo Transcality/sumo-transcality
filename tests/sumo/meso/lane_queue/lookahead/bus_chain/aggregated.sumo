@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-10-21T17:53:35.305892+01:00 by Eclipse SUMO sumo v1_28_0+0174-8a8067ddf66
+This data file and the accompanying materials
+are made available under the terms of the Eclipse Public License v2.0
+which accompanies this distribution, and is available at
+http://www.eclipse.org/legal/epl-v20.html
+This file may also be made available under the following Secondary
+Licenses when the conditions for such availability set forth in the Eclipse
+Public License 2.0 are satisfied: GNU General Public License, version 2
+or later which is available at
+https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html
+SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="net3.net.xml"/>
+        <route-files value="input_routes3.rou.xml"/>
+    </input>
+
+    <output>
+        <write-license value="true"/>
+        <edgedata-output value="aggregated.xml"/>
+    </output>
+
+    <time>
+        <end value="4000"/>
+    </time>
+
+    <processing>
+        <default.departspeed value="0"/>
+        <default.departlane value="first"/>
+        <default.speeddev value="0"/>
+    </processing>
+
+    <report>
+        <xml-validation value="never"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <mesoscopic>
+        <mesosim value="true"/>
+        <meso-lane-queue value="true"/>
+        <meso-lookahead value="1500"/>
+    </mesoscopic>
+
+</sumoConfiguration>
+-->
+
+<meandata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/meandata_file.xsd">
+    <interval begin="0.00" end="4000.00" id="DEFAULT_EDGEDATA">
+        <edge id="beg" sampledSeconds="51422.25" traveltime="163.25" overlapTraveltime="164.07" density="12.74" overlapDensity="12.74" laneDensity="4.25" occupancy="2.16" waitingTime="279.94" timeLoss="39982.87" speed="6.18" speedRelative="0.22" departed="0" arrived="0" entered="315" left="315" laneChangedFrom="0" laneChangedTo="0" flow="283.50" distance="317784.60"/>
+        <edge id="exit" sampledSeconds="16333.20" traveltime="98.99" overlapTraveltime="103.19" density="30.54" overlapDensity="30.54" laneDensity="30.54" occupancy="17.32" waitingTime="1147.68" timeLoss="14745.09" speed="1.35" speedRelative="0.10" departed="0" arrived="0" entered="165" left="165" laneChangedFrom="0" laneChangedTo="0" flow="148.50" distance="22058.85"/>
+        <edge id="exit2" sampledSeconds="32983.83" traveltime="199.90" overlapTraveltime="205.54" density="41.27" overlapDensity="41.27" laneDensity="41.27" occupancy="23.26" waitingTime="0.00" timeLoss="13.53" speed="1.00" speedRelative="1.00" departed="0" arrived="165" entered="165" left="0" laneChangedFrom="0" laneChangedTo="0" flow="148.50" distance="32970.30"/>
+        <edge id="in" sampledSeconds="3611.85" traveltime="11.47" overlapTraveltime="11.67" density="3.01" overlapDensity="3.01" laneDensity="1.50" occupancy="0.80" waitingTime="0.00" timeLoss="210.11" speed="26.16" speedRelative="0.94" departed="315" arrived="0" entered="0" left="315" laneChangedFrom="0" laneChangedTo="0" flow="283.50" distance="94500.00"/>
+        <edge id="main" sampledSeconds="2709.00" traveltime="18.06" overlapTraveltime="18.24" density="1.35" overlapDensity="1.35" laneDensity="1.35" occupancy="0.67" waitingTime="0.00" timeLoss="0.00" speed="27.78" speedRelative="1.00" departed="0" arrived="150" entered="150" left="0" laneChangedFrom="0" laneChangedTo="0" flow="135.00" distance="75259.50"/>
+    </interval>
+</meandata>

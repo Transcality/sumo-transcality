@@ -350,6 +350,7 @@ enum SumoXMLTag {
     SUMO_TAG_ENTRY,
     SUMO_TAG_RNGSTATE,
     SUMO_TAG_RNGLANE,
+    SUMO_TAG_RNGMESOGROUP,
     /// @}
 
     SUMO_TAG_VEHICLETRANSFER,
@@ -1899,6 +1900,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_LOADERTIME,
     SUMO_ATTR_ENTRYPOS,
     SUMO_ATTR_ROUTELENGTH,
+    SUMO_ATTR_HEADWAY,
     // @}
 
     //@name meso edge type attributes
@@ -1913,6 +1915,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_MESO_MINOR_PENALTY,
     SUMO_ATTR_MESO_OVERTAKING,
     SUMO_ATTR_MESO_EDGELENGHT,
+    SUMO_ATTR_MESO_LOOKAHEAD,
     // @}
 
     /// @brief invalid attribute, must be the last one

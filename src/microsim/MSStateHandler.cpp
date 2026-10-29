@@ -189,6 +189,7 @@ MSStateHandler::saveState(const std::string& file, SUMOTime step, bool usePrefix
         }
     }
     MSNet::getInstance()->getTLSControl().saveState(out);
+    MSNet::getInstance()->getDetectorControl().saveState(out);
     MSRoutingEngine::saveState(out);
     out.close();
     gPrecision = defaultPrecision;
@@ -245,6 +246,14 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             const int index = attrs.getInt(SUMO_ATTR_INDEX);
             const std::string state = attrs.getString(SUMO_ATTR_STATE);
             MSLane::loadRNGState(index, state);
+            break;
+        }
+        case SUMO_TAG_RNGMESOGROUP: {
+            const int index = attrs.getInt(SUMO_ATTR_INDEX);
+            const std::string state = attrs.getString(SUMO_ATTR_STATE);
+            if (MSGlobals::gUseMesoSim) {
+                MSGlobals::gMesoNet->loadRNGState(index, state);
+            }
             break;
         }
         case SUMO_TAG_EDGECONTROL: {
@@ -489,8 +498,13 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             }
             // might not be set if the phase happens to match and there are multiple programs
             tl->loadState(tlc, myTime, phase, spentDuration, nextSwitch, timeInCycle, active);
-            if (attrs.hasAttribute(SUMO_ATTR_STATE)) {
-                tl->loadExtraState(attrs.get<std::string>(SUMO_ATTR_STATE, tlID.c_str(), ok));
+            break;
+        }
+        case SUMO_TAG_INDUCTION_LOOP: {
+            MSDetectorFileOutput* const det = MSNet::getInstance()->getDetectorControl().getTypedDetectors(SUMO_TAG_INDUCTION_LOOP).get(attrs.getString(SUMO_ATTR_ID));
+            // the detector may belong to an output which is not loaded
+            if (det != nullptr) {
+                det->loadState(attrs, myOffset);
             }
             break;
         }
@@ -687,6 +701,9 @@ MSStateHandler::saveRNGs(OutputDevice& out) {
     out.writeAttr(SUMO_ATTR_RNG_DRIVERSTATE, RandHelper::saveState(OUProcess::getRNG()));
     out.writeAttr(SUMO_ATTR_RNG_DEVICE_TOC, RandHelper::saveState(MSDevice_ToC::getResponseTimeRNG()));
     MSLane::saveRNGStates(out);
+    if (MSGlobals::gUseMesoSim) {
+        MSGlobals::gMesoNet->saveRNGStates(out);
+    }
     out.closeTag();
 
 }

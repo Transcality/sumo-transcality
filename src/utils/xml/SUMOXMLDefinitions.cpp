@@ -214,6 +214,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "entry",                                  SUMO_TAG_ENTRY },
     { "rngState",                               SUMO_TAG_RNGSTATE },
     { "rngLane",                                SUMO_TAG_RNGLANE },
+    { "rngMesoGroup",                           SUMO_TAG_RNGMESOGROUP },
     { "vehicleTransfer",                        SUMO_TAG_VEHICLETRANSFER },
     { "device",                                 SUMO_TAG_DEVICE },
     { "cfmVars",                                SUMO_TAG_CFM_VARIABLES },
@@ -1416,6 +1417,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "loaderTime",        SUMO_ATTR_LOADERTIME },
     { "entryPos",          SUMO_ATTR_ENTRYPOS },
     { "routeLength",       SUMO_ATTR_ROUTELENGTH },
+    { "headway",           SUMO_ATTR_HEADWAY },
     // @}
 
     //@name meso edge type attributes
@@ -1430,6 +1432,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "minorPenalty",      SUMO_ATTR_MESO_MINOR_PENALTY },
     { "overtaking",        SUMO_ATTR_MESO_OVERTAKING },
     { "edgeLength",        SUMO_ATTR_MESO_EDGELENGHT },
+    { "lookahead",         SUMO_ATTR_MESO_LOOKAHEAD },
     // @}
 
     // Other

@@ -34,6 +34,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/output/MSXMLRawOut.h>
 #include <microsim/output/MSDetectorFileOutput.h>
+#include <microsim/output/MSMeanData.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/devices/MSDevice.h>
 #include <utils/common/FileHelpers.h>
@@ -138,7 +139,9 @@ MESegment::MESegment(const std::string& id,
         usableLanes = 1;
     }
     if (multiQueue) {
-        if (next == nullptr) {
+        // vehicles choose their queue by their next edge on the last segment and on all segments ending within the lookahead distance
+        const double distToEnd = parent.getLength() - (idx + 1) * length;
+        if (next == nullptr || distToEnd < edgeType.lookahead) {
             for (const MSEdge* const edge : parent.getSuccessors()) {
                 if (edge->isTazConnector()) {
                     continue;
@@ -149,6 +152,18 @@ MESegment::MESegment(const std::string& id,
                 for (MSLane* const l : *allowed) {
                     std::vector<MSLane*>::const_iterator it = std::find(lanes.begin(), lanes.end(), l);
                     myFollowerMap[edge] |= (1 << distance(lanes.begin(), it));
+                }
+                if (edgeType.lookahead > 0) {
+                    // also consider the turns further downstream that are within the lookahead distance
+                    std::vector<int> reach(lanes.size(), 0);
+                    for (int i = 0; i < (int)lanes.size(); i++) {
+                        for (const MSLink* const link : lanes[i]->getLinkCont()) {
+                            if (&link->getLane()->getEdge() == edge) {
+                                reach[i] |= 1 << link->getLane()->getIndex();
+                            }
+                        }
+                    }
+                    addDownstreamFollowers(*edge, reach, 0., edgeType.lookahead - MAX2(0., distToEnd), 1);
                 }
             }
         }
@@ -165,6 +180,48 @@ MESegment::MESegment(const std::string& id,
 
     initSegment(edgeType, parent, length * usableLanes);
 }
+
+void
+MESegment::addDownstreamFollowers(const MSEdge& edge, const std::vector<int>& reach, const double dist, const double lookahead, const int depth) {
+    if (dist + edge.getLength() >= lookahead) {
+        return;
+    }
+    const std::vector<MSLane*>& lanes = edge.getLanes();
+    int usable = 0;
+    for (int i = 0; i < (int)reach.size(); i++) {
+        if (reach[i] != 0) {
+            usable |= 1 << i;
+        }
+    }
+    for (const MSEdge* const succ : edge.getSuccessors()) {
+        if (succ->isTazConnector()) {
+            continue;
+        }
+        // the queues of this segment from which succ can be reached without changing lanes
+        int queues = 0;
+        std::vector<int> succReach(reach.size(), 0);
+        for (int i = 0; i < (int)reach.size(); i++) {
+            for (int j = 0; j < (int)lanes.size(); j++) {
+                if ((reach[i] & (1 << j)) != 0) {
+                    for (const MSLink* const link : lanes[j]->getLinkCont()) {
+                        if (&link->getLane()->getEdge() == succ) {
+                            queues |= 1 << i;
+                            succReach[i] |= 1 << link->getLane()->getIndex();
+                        }
+                    }
+                }
+            }
+        }
+        if (queues != 0) {
+            if (queues != usable) {
+                myFollowerMap[succ] |= queues;
+                myLookahead = MAX2(myLookahead, depth + 1);
+            }
+            addDownstreamFollowers(*succ, succReach, dist + edge.getLength(), lookahead, depth + 1);
+        }
+    }
+}
+
 
 void
 MESegment::initSegment(const MesoEdgeType& edgeType, const MSEdge& parent, const double capacity) {
@@ -271,6 +328,11 @@ MESegment::jamThresholdForSpeed(double speed, double jamThresh) const {
 
 void
 MESegment::addDetector(MSMoveReminder* data, int queueIndex) {
+    // mean data updates are serialised by the reminder's own mutex; everything else (rerouters,
+    // calibrators, drive ways) keeps the moves on this segment in the serial part of the parallel loop
+    if (dynamic_cast<MSMeanData::MeanDataValues*>(data) == nullptr) {
+        myHasSerialReminders = true;
+    }
     if (queueIndex == -1) {
         for (Queue& q : myQueues) {
             q.addDetector(data);
@@ -325,7 +387,7 @@ SUMOTime
 MESegment::hasSpaceFor(const MEVehicle* const veh, const SUMOTime entryTime, int& qIdx, const bool init) const {
     SUMOTime earliestEntry = SUMOTime_MAX;
     qIdx = 0;
-    if (myNumVehicles == 0 && myQueues.size() == 1) {
+    if (myNumVehicles == 0 && myQueues.size() == 1 && !hasTravelingGaps(0, entryTime)) {
         // we have always space for at least one vehicle
         if (myQueues.front().allows(veh->getVClass())) {
             return entryTime;
@@ -335,12 +397,36 @@ MESegment::hasSpaceFor(const MEVehicle* const veh, const SUMOTime entryTime, int
     }
     const SUMOVehicleClass svc = veh->getVClass();
     int minSize = std::numeric_limits<int>::max();
-    const MSEdge* const succ = myNextSegment == nullptr ? veh->succEdge(veh->getEdge() == &myEdge ? 1 : 2) : nullptr;
+    // the queues leading to the next edges of the vehicle's route
+    int usable = -1;
+    if (!myFollowerMap.empty()) {
+        // the lane chain to a later route edge may run through lanes the vehicle may not use
+        int permitted = -1;
+        if (myLookahead > 1) {
+            permitted = 0;
+            for (int i = 0; i < (int)myQueues.size(); i++) {
+                if (myQueues[i].allows(svc)) {
+                    permitted |= 1 << i;
+                }
+            }
+        }
+        const int offset = veh->getEdge() == &myEdge ? 1 : 2;
+        for (int k = 0; k < myLookahead; k++) {
+            const MSEdge* const succ = veh->succEdge(offset + k);
+            if (succ == nullptr) {
+                break;
+            }
+            const auto it = myFollowerMap.find(succ);
+            if (it != myFollowerMap.end() && (k == 0 || (usable & it->second & permitted) != 0)) {
+                usable &= it->second;
+            }
+        }
+    }
     for (int i = 0; i < (int)myQueues.size(); i++) {
         const Queue& q = myQueues[i];
         const double newOccupancy = q.size() == 0 ? 0. : q.getOccupancy() + veh->getVehicleType().getLengthWithGap();
         if (newOccupancy <= myQueueCapacity) { // we must ensure that occupancy remains below capacity
-            if (succ == nullptr || myFollowerMap.count(succ) == 0 || ((myFollowerMap.find(succ)->second & (1 << i)) != 0)) {
+            if ((usable & (1 << i)) != 0) {
                 if (q.allows(svc) && q.size() < minSize) {
                     if (init) {
                         // regular insertions and initial insertions must respect different constraints:
@@ -455,12 +541,17 @@ MESegment::writeVehicles(OutputDevice& of) const {
 
 MEVehicle*
 MESegment::removeCar(MEVehicle* v, SUMOTime leaveTime, const MSMoveReminder::Notification reason) {
-    Queue& q = myQueues[v->getQueIndex()];
     // One could be tempted to do  v->setSegment(next); here but position on lane will be invalid if next == 0
     v->updateDetectors(leaveTime, v->getEventTime(), true, reason);
+    return unlinkCar(v, v->getQueIndex());
+}
+
+
+MEVehicle*
+MESegment::unlinkCar(MEVehicle* v, const int qIdx) {
     myNumVehicles--;
     myEdge.lock();
-    MEVehicle* nextLeader = q.remove(v);
+    MEVehicle* const nextLeader = myQueues[qIdx].remove(v);
     myEdge.invalidateMesoCache();
     myEdge.unlock();
     return nextLeader;
@@ -615,6 +706,33 @@ MESegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOT
 
 
 SUMOTime
+MESegment::prepareSend(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) {
+    assert(!veh->isStopped());
+    veh->updateDetectors(time, veh->getEventTime(), true, reason);
+    return computeHeadway(myQueues[veh->getQueIndex()], next->myQueues[nextQIdx], next, veh);
+}
+
+
+void
+MESegment::completeSend(MEVehicle* veh, const int qIdx, MSLink* link, SUMOTime time, SUMOTime headway, bool /*queued*/) {
+    Queue& q = myQueues[qIdx];
+    if (link != nullptr) {
+        link->removeApproaching(veh);
+    }
+    MEVehicle* const lc = unlinkCar(veh, qIdx); // new leaderCar
+    if (myEdge.isNormal() && myCapacity >= 22.5) {
+        veh->markJammed(q.getOccupancy() > myJamThreshold);
+    }
+    myLastHeadway = headway;
+    q.setBlockTime(time + headway);
+    if (lc != nullptr) {
+        lc->setEventTime(MAX2(lc->getEventTime(), q.getBlockTime()));
+        MSGlobals::gMesoNet->addLeaderCar(lc, getLink(lc));
+    }
+}
+
+
+SUMOTime
 MESegment::getTauJJ(double nextQueueSize, double nextQueueCapacity, double nextJamThreshold) const {
     // compute coefficients for the jam-jam headway function
     // this function models the effect that "empty space" needs to move
@@ -645,7 +763,7 @@ MESegment::getTauJJ(double nextQueueSize, double nextQueueCapacity, double nextJ
 
 bool
 MESegment::overtake() {
-    return myOvertaking && RandHelper::rand() > (getBruttoOccupancy() / myCapacity);
+    return myOvertaking && RandHelper::rand(myRNG) > (getBruttoOccupancy() / myCapacity);
 }
 
 
@@ -658,7 +776,8 @@ MESegment::addReminders(MEVehicle* veh) const {
 
 
 void
-MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart, const bool isTeleport, const bool newEdge) {
+MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart, const bool isTeleport, const bool newEdge,
+                   SUMOTime* const deferredEventTime) {
     const double speed = isDepart ? -1 : MAX2(veh->getSpeed(), MESO_MIN_SPEED); // on the previous segment
     veh->setSegment(this); // for arrival checking
     veh->setLastEntryTime(time);
@@ -669,6 +788,7 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
                 // arrival on entering a new segment
                 || veh->hasArrived())) {
         // route has ended
+        assert(deferredEventTime == nullptr); // the parallel loop keeps the moves onto the last edge of a route on the main thread
         veh->setEventTime(time + TIME2STEPS(myLength / speed)); // for correct arrival speed
         addReminders(veh);
         veh->activateReminders(MSMoveReminder::NOTIFICATION_JUNCTION);
@@ -703,6 +823,11 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
             SUMOTime leaderOut = cars[0]->getEventTime();
             if (!isDepart && leaderOut > tleave && overtake()) {
                 if (cars.size() == 1) {
+                    // the overtaken car is no longer the leader and must not block foes
+                    MSLink* const link = getLink(cars[0]);
+                    if (link != nullptr) {
+                        link->removeApproaching(cars[0]);
+                    }
                     MSGlobals::gMesoNet->removeLeaderCar(cars[0]);
                     newLeader = veh;
                 }
@@ -721,8 +846,12 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
             q.setEntryBlockTime(time + tauWithVehLength(myTau_ff, veh->getVehicleType().getLengthWithGap(), veh->getVehicleType().getCarFollowModel().getHeadwayTime()) - 1);
         }
         q.setOccupancy(MIN2(myQueueCapacity, q.getOccupancy() + veh->getVehicleType().getLengthWithGap()));
-        veh->setEventTime(tleave);
-        veh->setUnqueuedEventTime(tleave);
+        if (deferredEventTime != nullptr) {
+            *deferredEventTime = tleave;
+        } else {
+            veh->setEventTime(tleave);
+            veh->setUnqueuedEventTime(tleave);
+        }
         veh->setSegment(this, qIdx);
     }
     addReminders(veh);
