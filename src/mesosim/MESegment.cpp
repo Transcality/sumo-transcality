@@ -34,6 +34,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/output/MSXMLRawOut.h>
 #include <microsim/output/MSDetectorFileOutput.h>
+#include <microsim/output/MSMeanData.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/devices/MSDevice.h>
 #include <utils/common/FileHelpers.h>
@@ -327,6 +328,11 @@ MESegment::jamThresholdForSpeed(double speed, double jamThresh) const {
 
 void
 MESegment::addDetector(MSMoveReminder* data, int queueIndex) {
+    // mean data updates are serialised by the reminder's own mutex; everything else (rerouters,
+    // calibrators, drive ways) keeps the moves on this segment in the serial part of the parallel loop
+    if (dynamic_cast<MSMeanData::MeanDataValues*>(data) == nullptr) {
+        myHasSerialReminders = true;
+    }
     if (queueIndex == -1) {
         for (Queue& q : myQueues) {
             q.addDetector(data);
@@ -535,12 +541,17 @@ MESegment::writeVehicles(OutputDevice& of) const {
 
 MEVehicle*
 MESegment::removeCar(MEVehicle* v, SUMOTime leaveTime, const MSMoveReminder::Notification reason) {
-    Queue& q = myQueues[v->getQueIndex()];
     // One could be tempted to do  v->setSegment(next); here but position on lane will be invalid if next == 0
     v->updateDetectors(leaveTime, v->getEventTime(), true, reason);
+    return unlinkCar(v, v->getQueIndex());
+}
+
+
+MEVehicle*
+MESegment::unlinkCar(MEVehicle* v, const int qIdx) {
     myNumVehicles--;
     myEdge.lock();
-    MEVehicle* nextLeader = q.remove(v);
+    MEVehicle* const nextLeader = myQueues[qIdx].remove(v);
     myEdge.invalidateMesoCache();
     myEdge.unlock();
     return nextLeader;
@@ -695,6 +706,33 @@ MESegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOT
 
 
 SUMOTime
+MESegment::prepareSend(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) {
+    assert(!veh->isStopped());
+    veh->updateDetectors(time, veh->getEventTime(), true, reason);
+    return computeHeadway(myQueues[veh->getQueIndex()], next->myQueues[nextQIdx], next, veh);
+}
+
+
+void
+MESegment::completeSend(MEVehicle* veh, const int qIdx, MSLink* link, SUMOTime time, SUMOTime headway, bool /*queued*/) {
+    Queue& q = myQueues[qIdx];
+    if (link != nullptr) {
+        link->removeApproaching(veh);
+    }
+    MEVehicle* const lc = unlinkCar(veh, qIdx); // new leaderCar
+    if (myEdge.isNormal() && myCapacity >= 22.5) {
+        veh->markJammed(q.getOccupancy() > myJamThreshold);
+    }
+    myLastHeadway = headway;
+    q.setBlockTime(time + headway);
+    if (lc != nullptr) {
+        lc->setEventTime(MAX2(lc->getEventTime(), q.getBlockTime()));
+        MSGlobals::gMesoNet->addLeaderCar(lc, getLink(lc));
+    }
+}
+
+
+SUMOTime
 MESegment::getTauJJ(double nextQueueSize, double nextQueueCapacity, double nextJamThreshold) const {
     // compute coefficients for the jam-jam headway function
     // this function models the effect that "empty space" needs to move
@@ -725,7 +763,7 @@ MESegment::getTauJJ(double nextQueueSize, double nextQueueCapacity, double nextJ
 
 bool
 MESegment::overtake() {
-    return myOvertaking && RandHelper::rand() > (getBruttoOccupancy() / myCapacity);
+    return myOvertaking && RandHelper::rand(myRNG) > (getBruttoOccupancy() / myCapacity);
 }
 
 
@@ -738,7 +776,8 @@ MESegment::addReminders(MEVehicle* veh) const {
 
 
 void
-MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart, const bool isTeleport, const bool newEdge) {
+MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart, const bool isTeleport, const bool newEdge,
+                   SUMOTime* const deferredEventTime) {
     const double speed = isDepart ? -1 : MAX2(veh->getSpeed(), MESO_MIN_SPEED); // on the previous segment
     veh->setSegment(this); // for arrival checking
     veh->setLastEntryTime(time);
@@ -749,6 +788,7 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
                 // arrival on entering a new segment
                 || veh->hasArrived())) {
         // route has ended
+        assert(deferredEventTime == nullptr); // the parallel loop keeps the moves onto the last edge of a route on the main thread
         veh->setEventTime(time + TIME2STEPS(myLength / speed)); // for correct arrival speed
         addReminders(veh);
         veh->activateReminders(MSMoveReminder::NOTIFICATION_JUNCTION);
@@ -806,8 +846,12 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
             q.setEntryBlockTime(time + tauWithVehLength(myTau_ff, veh->getVehicleType().getLengthWithGap(), veh->getVehicleType().getCarFollowModel().getHeadwayTime()) - 1);
         }
         q.setOccupancy(MIN2(myQueueCapacity, q.getOccupancy() + veh->getVehicleType().getLengthWithGap()));
-        veh->setEventTime(tleave);
-        veh->setUnqueuedEventTime(tleave);
+        if (deferredEventTime != nullptr) {
+            *deferredEventTime = tleave;
+        } else {
+            veh->setEventTime(tleave);
+            veh->setUnqueuedEventTime(tleave);
+        }
         veh->setSegment(this, qIdx);
     }
     addReminders(veh);

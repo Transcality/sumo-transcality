@@ -33,6 +33,7 @@
 // ===========================================================================
 class SUMOVehicle;
 class MSEdge;
+class SumoRNG;
 class MSLink;
 class MSDetectorFileOutput;
 class MSVehicleControl;
@@ -208,6 +209,19 @@ public:
     virtual double getMinDistanceToEnd(int /*qIdx*/, double /*lengthAhead*/, SUMOTime /*time*/) const {
         return 0.;
     }
+
+    /// @brief the group for parallel event computation (see MELoop) and its random number generator
+    int getGroup() const {
+        return myGroup;
+    }
+    SumoRNG* getRNG() const {
+        return myRNG;
+    }
+    void setGroup(int group, SumoRNG* rng) {
+        myGroup = group;
+        myRNG = rng;
+    }
+
     /// @brief model specific queue state (e.g. the gap times of meso-ltm) for saving / loading
     virtual std::string getQueueExtraState(int /*qIdx*/) const {
         return "";
@@ -338,6 +352,14 @@ public:
      */
     MEVehicle* removeCar(MEVehicle* v, SUMOTime leaveTime, const MSMoveReminder::Notification reason);
 
+    /** @brief Removes the given car from its queue without notifying its reminders (removeCar does both)
+     *
+     * @param[in] v The vehicle to remove
+     * @param[in] qIdx The queue the vehicle is in (the vehicle itself may already point to its next segment)
+     * @return The next first vehicle to add to the net's que
+     */
+    MEVehicle* unlinkCar(MEVehicle* v, const int qIdx);
+
     /** @brief Returns the link the given car will use when passing the next junction
      *
      * This returns non-zero values only for the last segment and only
@@ -367,14 +389,40 @@ public:
      */
     virtual void send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason);
 
+    /** @brief Prepares the departure of the vehicle while it is still on this segment (first half of send)
+     *
+     * Notifies the reminders and computes the headway. The parallel loop calls this on the thread of the
+     *  segment the vehicle enters, so it changes neither this segment nor its queues.
+     * @param[in] veh The vehicle in question
+     * @param[in] next The subsequent segment for delay calculation
+     * @param[in] time the leave time
+     * @return the headway to pass to completeSend
+     */
+    SUMOTime prepareSend(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason);
+
+    /** @brief Completes a departure prepared by prepareSend (second half of send)
+     *
+     * Removes the vehicle from its queue, blocks the queue for the headway and promotes the next car to queue leader.
+     * @param[in] veh The vehicle which left
+     * @param[in] qIdx The queue it left
+     * @param[in] link The link it was registered on (nullptr if none)
+     * @param[in] time the leave time
+     * @param[in] headway The headway computed by prepareSend
+     * @param[in] queued Whether the vehicle had lost time in the queue (MELSegment: the speed of the gap it leaves)
+     */
+    virtual void completeSend(MEVehicle* veh, const int qIdx, MSLink* link, SUMOTime time, SUMOTime headway, bool queued);
+
     /** @brief Adds the vehicle to the segment, adapting its parameters
      *
      * @param[in] veh The vehicle in question
      * @param[in] time the leave time
      * @param[in] isDepart whether the vehicle just departed
+     * @param[out] deferredEventTime if given, the new event time of the vehicle is stored here instead of being set
+     *  (the parallel loop sets it on the main thread while other threads may still read the current one)
      * @todo Isn't always time == veh->getEventTime?
      */
-    void receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart = false, const bool isTeleport = false, const bool newEdge = false);
+    void receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart = false, const bool isTeleport = false, const bool newEdge = false,
+                 SUMOTime* const deferredEventTime = nullptr);
 
 
     /** @brief tries to remove any car from this segment
@@ -402,6 +450,11 @@ public:
      * @return The time the vehicle thinks it leaves
      */
     SUMOTime getEventTime() const;
+
+    /// @brief whether a reminder of this segment must be updated on the main thread (see MELoop::isGroupSafe)
+    inline bool hasSerialReminders() const {
+        return myHasSerialReminders;
+    }
 
     /// @brief Like getEventTime but returns seconds (for visualization)
     inline double getEventTimeSeconds() const {
@@ -606,6 +659,10 @@ protected:
     /// @brief The time headway parameters, see the Eissfeldt thesis
     SUMOTime myTau_ff, myTau_fj, myTau_jf, myTau_jj;
 
+    /// @brief group for parallel event computation (see MELoop) and its random number generator
+    int myGroup = 0;
+    SumoRNG* myRNG = nullptr;
+
     /// @brief Whether tls penalty is enabled
     bool myTLSPenalty;
 
@@ -646,6 +703,9 @@ protected:
 
     /// @brief the last headway
     SUMOTime myLastHeadway;
+
+    /// @brief whether a reminder other than mean data was added (see hasSerialReminders)
+    bool myHasSerialReminders = false;
 
     /* @brief segment for signifying vaporization. This segment has invalid
      * data and should only be used as a unique pointer */

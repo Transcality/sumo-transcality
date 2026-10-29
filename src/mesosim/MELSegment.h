@@ -66,6 +66,9 @@ public:
      */
     void send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) override;
 
+    /// @brief records the gap the vehicle leaves behind, then completes the departure (see MESegment::completeSend)
+    void completeSend(MEVehicle* veh, const int qIdx, MSLink* link, SUMOTime time, SUMOTime headway, bool queued) override;
+
     /// @brief update entry blockTime for all queues
     void updateEntryBlockTime(SUMOTime time) override; 
 
@@ -116,6 +119,9 @@ private:
     // @note: could be slightly faster as a double-index ring-buffer
     typedef std::vector<Gap> Gaps;
     std::vector<Gaps> myGaps;
+
+    /// @brief records when the gap a vehicle leaves in the queue at the given time reaches the upstream end
+    void recordGap(const int qIdx, const SUMOTime time, const bool queued);
 
 private:
     /// @brief Invalidated copy constructor.

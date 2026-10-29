@@ -98,19 +98,31 @@ MELSegment::computeHeadway(Queue& /*q*/, const Queue& /*qNext*/, const MESegment
 
 
 void
-MELSegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) {
-    Gaps& gaps = myGaps[veh->getQueIndex()];
+MELSegment::recordGap(const int qIdx, const SUMOTime time, const bool queued) {
+    Gaps& gaps = myGaps[qIdx];
     // record time when the gap vacated by ego will reach the upstream end of the segment
     // gaps travel quickly in free flow (the number of gaps and vehicles stays below the segment capacity)
     // but they travel more slowly when queued (startupDelay)
-    const bool queued = veh->getQueuingTimeLoss() > 0;
     const SUMOTime waveTime = (SUMOTime)(myJamLength * (double)(queued ? myTau_jj : myTau_ff) / DEFAULT_VEH_LENGTH_WITH_GAP);
     // the entering vehicle needs this long to drive through the length that cannot be occupied
     const SUMOTime remainderTime = TIME2STEPS((myLength - myJamLength) / myEdge.getSpeedLimit());
     myEdge.lock(); // the gui reads the gaps when drawing vehicles
     gaps.insert(gaps.begin(), {time + MAX2((SUMOTime)0, waveTime - remainderTime), time, queued});
     myEdge.unlock();
+}
+
+
+void
+MELSegment::send(MEVehicle* veh, MESegment* const next, const int nextQIdx, SUMOTime time, const MSMoveReminder::Notification reason) {
+    recordGap(veh->getQueIndex(), time, veh->getQueuingTimeLoss() > 0);
     MESegment::send(veh, next, nextQIdx, time, reason);
+}
+
+
+void
+MELSegment::completeSend(MEVehicle* veh, const int qIdx, MSLink* link, SUMOTime time, SUMOTime headway, bool queued) {
+    recordGap(qIdx, time, queued);
+    MESegment::completeSend(veh, qIdx, link, time, headway, queued);
 }
 
 

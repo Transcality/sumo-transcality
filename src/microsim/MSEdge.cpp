@@ -75,7 +75,7 @@ MSEdge::MSEdge(const std::string& id, int numericalID,
                double distance) :
     Named(id), myNumericalID(numericalID), myLanes(nullptr),
     myLaneChanger(nullptr), myFunction(function), myVaporizationRequests(0),
-    myLastFailedInsertionTime(-1),
+    myLastFailedInsertionTime(-1), myLastFailedInsertionCheckTime(-1),
     myFromJunction(nullptr), myToJunction(nullptr),
     myHaveTransientPermissions(false),
     myOtherTazConnector(nullptr),
@@ -842,7 +842,8 @@ MSEdge::insertVehicle(SUMOVehicle& v, SUMOTime time, const bool checkOnly, const
         }
     }
     if (MSGlobals::gUseMesoSim) {
-        if (!forceCheck && myLastFailedInsertionTime == time) {
+        if (!forceCheck && (myLastFailedInsertionTime == time || (checkOnly && myLastFailedInsertionCheckTime == time))) {
+            // a vehicle ahead in the insertion queue of this edge was refused in this step (option eager-insert)
             return false;
         }
         double pos = 0.0;
@@ -885,6 +886,9 @@ MSEdge::insertVehicle(SUMOVehicle& v, SUMOTime time, const bool checkOnly, const
             } else {
                 result = segment->initialise(veh, time);
             }
+        }
+        if (checkOnly && !result) {
+            myLastFailedInsertionCheckTime = time;
         }
         return result;
     }
