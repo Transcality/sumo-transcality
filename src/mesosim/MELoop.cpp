@@ -28,6 +28,7 @@
 #include <microsim/MSEdge.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/MSLane.h>
+#include <microsim/MSLink.h>
 #include <microsim/MSVehicle.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/MSJunction.h>
@@ -123,6 +124,9 @@ MELoop::simulate(SUMOTime tMax) {
             // the moved cars get their event times and the departures go to the threads of the groups left
             leaders.clear();
             for (Group& g : myGroups) {
+                for (const auto& item : g.ops.unapproached) {
+                    item.second->removeApproaching(item.first);
+                }
                 for (DeferredMove& m : g.ops.moves) {
                     m.veh->setDeferred(false);
                     m.veh->setEventTime(m.eventTime);
@@ -561,6 +565,16 @@ MELoop::removeLeaderCar(MEVehicle* v) {
     } else if (!v->isDeferred()) {
         // a deferred car has no pending event
         myGroups[getGroup(v)].invalidated.push(LeaderEvent(v));
+    }
+}
+
+
+void
+MELoop::removeApproaching(MEVehicle* veh, MSLink* link) {
+    if (myDeferred != nullptr) {
+        myDeferred->unapproached.push_back(std::make_pair(veh, link));
+    } else {
+        link->removeApproaching(veh);
     }
 }
 
