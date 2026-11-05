@@ -83,7 +83,8 @@ MELSegment::computeHeadway(Queue& /*q*/, const Queue& /*qNext*/, const MESegment
     // @note: it might seem sensible to check veh->getQueuingTimeLoss() here but
     // then the queing state would be "sticky" because queuingTimeLoss is computed with tau_ff
     // and every leader car that uses tau_jf applies queing timeLoss to it's followers
-    SUMOTime headway = tauWithVehLength(veh->getWaitingTime() > 0 ? myTau_jf : myTau_ff,
+    const SUMOTime waiting = veh->getWaitingTime();
+    SUMOTime headway = tauWithVehLength(waiting > 0 ? myTau_ff + MIN2(waiting, myTau_jf - myTau_ff) : myTau_ff,
                                         veh->getVehicleType().getLengthWithGap(),
                                         veh->getVehicleType().getCarFollowModel().getHeadwayTime());
     if (myTLSPenalty) {
@@ -105,7 +106,7 @@ MELSegment::recordGap(const int qIdx, const SUMOTime time, const bool queued) {
     // but they travel more slowly when queued (startupDelay)
     const SUMOTime waveTime = (SUMOTime)(myJamLength * (double)(queued ? myTau_jj : myTau_ff) / DEFAULT_VEH_LENGTH_WITH_GAP);
     // the entering vehicle needs this long to drive through the length that cannot be occupied
-    const SUMOTime remainderTime = TIME2STEPS((myLength - myJamLength) / myEdge.getSpeedLimit());
+    const SUMOTime remainderTime = TIME2STEPS(MAX2(0., myLength - myJamLength) / myEdge.getSpeedLimit());
     myEdge.lock(); // the gui reads the gaps when drawing vehicles
     gaps.insert(gaps.begin(), {time + MAX2((SUMOTime)0, waveTime - remainderTime), time, queued});
     myEdge.unlock();
