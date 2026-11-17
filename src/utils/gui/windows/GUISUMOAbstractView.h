@@ -27,14 +27,7 @@
 #include <vector>
 #include <map>
 #include <utils/foxtools/fxheader.h>
-// fx3d includes windows.h so we need to guard against macro pollution
-#ifdef WIN32
-#define NOMINMAX
-#endif
 #include <fx3d.h>
-#ifdef WIN32
-#undef NOMINMAX
-#endif
 
 #include <utils/geom/Boundary.h>
 #include <utils/geom/Position.h>
@@ -201,6 +194,9 @@ public:
 
     /// @brief A method that updates the tooltip
     void updateToolTip();
+
+    /// @brief update position information labels
+    virtual void updatePositionInformationLabel() const;
 
     /// @brief @name Dealing with snapshots
     ///@{
@@ -486,9 +482,6 @@ protected:
     /// @brief performs the painting of the simulation
     void paintGL();
 
-    /// @brief update position information labels
-    virtual void updatePositionInformationLabel() const;
-
     /// @brief paint GL
     virtual int doPaintGL(int /*mode*/, const Boundary& /*boundary*/);
 
@@ -509,6 +502,12 @@ protected:
 
     /// @brief Draws frames-per-second indicator
     void drawFPS();
+
+    /// @brief Draws a hint in the bottom right corner explaining how to leave full screen mode
+    void drawFullScreenHint();
+
+    /// @brief Returns the text of the full screen mode hint
+    static std::string getFullScreenHintText();
 
     /// @brief returns the GUILane at cursor position (implementation depends on view)
     virtual GUILane* getLaneUnderCursor();

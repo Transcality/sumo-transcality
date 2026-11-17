@@ -49,7 +49,6 @@
 // ===========================================================================
 // static members
 // ===========================================================================
-SumoRNG MSRouteHandler::myParsingRNG("routehandler");
 
 
 // ===========================================================================
@@ -684,6 +683,16 @@ MSRouteHandler::closeVehicle() {
         }
     }
 
+    if (route->getEdges().size() == 1
+            && myVehicleParameter->departPosProcedure == DepartPosDefinition::GIVEN
+            && myVehicleParameter->arrivalPosProcedure == ArrivalPosDefinition::GIVEN
+            && myVehicleParameter->arrivalPos > 0
+            && myVehicleParameter->arrivalPos <= myVehicleParameter->departPos) {
+        WRITE_WARNINGF(TL("Vehicle '%' ignores unreachable arrivalPos %."),
+                       myVehicleParameter->id, toString(myVehicleParameter->arrivalPos),
+                       toString(myVehicleParameter->departPos));
+    }
+
     // try to build the vehicle
     SUMOVehicle* vehicle = nullptr;
     if (vehControl.getVehicle(myVehicleParameter->id) == nullptr) {
@@ -745,6 +754,8 @@ MSRouteHandler::closeVehicle() {
             }
             myVehicleParameter = nullptr;
         } else {
+            // persons and containers that depart triggered by this vehicle are discarded as well (#18596)
+            myScaledVehicles.insert(myVehicleParameter->id);
             vehControl.deleteVehicle(vehicle, true);
             myVehicleParameter = nullptr;
             vehicle = nullptr;
@@ -1168,7 +1179,9 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
                 myVehicleParameter->depart = startVeh->depart;
             }
             if (startVeh == nullptr) {
-                if (mySkippedVehicles.count(vehID) == 0) {
+                if (myScaledVehicles.count(vehID) != 0) {
+                    WRITE_WARNINGF(TL("Skipping % '%' with triggered departure because vehicle '%' was removed by scaling."), agent, aid, vehID);
+                } else if (mySkippedVehicles.count(vehID) == 0) {
                     throw ProcessError("Unknown vehicle '" + vehID + "' in triggered departure for " + agent + " '" + aid + "'.");
                 }
                 // we cannot simply throw here because we need to parse the rest of the person (just to discard it)
@@ -1237,51 +1250,15 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
 
 MSStoppingPlace*
 MSRouteHandler::retrieveStoppingPlace(const SUMOSAXAttributes& attrs, const std::string& errorSuffix, SUMOVehicleParameter::Stop* stopParam) {
-    bool ok = true;
-    // dummy stop parameter to hold the attributes
-    SUMOVehicleParameter::Stop stop;
-    if (stopParam != nullptr) {
-        stop = *stopParam;
-    } else {
-        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_BUS_STOP, nullptr, ok, "");
-        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_TRAIN_STOP, nullptr, ok, stop.busstop); // alias
-        stop.chargingStation = attrs.getOpt<std::string>(SUMO_ATTR_CHARGING_STATION, nullptr, ok, "");
-        stop.overheadWireSegment = attrs.getOpt<std::string>(SUMO_ATTR_OVERHEAD_WIRE_SEGMENT, nullptr, ok, "");
-        stop.containerstop = attrs.getOpt<std::string>(SUMO_ATTR_CONTAINER_STOP, nullptr, ok, "");
-        stop.parkingarea = attrs.getOpt<std::string>(SUMO_ATTR_PARKING_AREA, nullptr, ok, "");
-    }
     MSStoppingPlace* toStop = nullptr;
-    if (stop.busstop != "") {
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.busstop, SUMO_TAG_BUS_STOP);
+    SumoXMLTag tag = SUMO_TAG_NOTHING;
+    std::string id;
+    bool ok = SUMOVehicleParserHelper::parseStopTag(attrs, stopParam, tag, id);
+    if (tag != SUMO_TAG_NOTHING) {
+        toStop = MSNet::getInstance()->getStoppingPlace(id, tag);
         if (toStop == nullptr) {
             ok = false;
-            WRITE_ERROR(TLF("The busStop '%' is not known%.", stop.busstop, errorSuffix));
-        }
-    } else if (stop.containerstop != "") {
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.containerstop, SUMO_TAG_CONTAINER_STOP);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The containerStop '%' is not known%.", stop.containerstop, errorSuffix));
-        }
-    } else if (stop.parkingarea != "") {
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.parkingarea, SUMO_TAG_PARKING_AREA);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The parkingArea '%' is not known%.", stop.parkingarea, errorSuffix));
-        }
-    } else if (stop.chargingStation != "") {
-        // ok, we have a charging station
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.chargingStation, SUMO_TAG_CHARGING_STATION);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The chargingStation '%' is not known%.", stop.chargingStation, errorSuffix));
-        }
-    } else if (stop.overheadWireSegment != "") {
-        // ok, we have an overhead wire segment
-        toStop = MSNet::getInstance()->getStoppingPlace(stop.overheadWireSegment, SUMO_TAG_OVERHEAD_WIRE_SEGMENT);
-        if (toStop == nullptr) {
-            ok = false;
-            WRITE_ERROR(TLF("The overhead wire segment '%' is not known%.", stop.overheadWireSegment, errorSuffix));
+            WRITE_ERROR(TLF("The % '%' is not known%.", toString(tag), id, errorSuffix));
         }
     }
     if (!ok && MSGlobals::gCheckRoutes) {
@@ -1574,13 +1551,22 @@ MSRouteHandler::addPersonTrip(const SUMOSAXAttributes& attrs) {
         const MSEdge* to = nullptr;
         parseFromViaTo(SUMO_TAG_PERSON, attrs);
         myInsertStopEdgesAt = -1;
-        if (attrs.hasAttribute(SUMO_ATTR_FROM) || attrs.hasAttribute(SUMO_ATTR_FROM_JUNCTION) || attrs.hasAttribute(SUMO_ATTR_FROM_TAZ)
-                || attrs.hasAttribute(SUMO_ATTR_FROMXY) || attrs.hasAttribute(SUMO_ATTR_FROMLONLAT)) {
+        const bool hasExplicitFrom = (attrs.hasAttribute(SUMO_ATTR_FROM) || attrs.hasAttribute(SUMO_ATTR_FROM_JUNCTION)
+                                      || attrs.hasAttribute(SUMO_ATTR_FROM_TAZ) || attrs.hasAttribute(SUMO_ATTR_FROMXY)
+                                      || attrs.hasAttribute(SUMO_ATTR_FROMLONLAT));
+        if (hasExplicitFrom) {
             from = myActiveRoute.front();
         } else if (myActiveTransportablePlan->empty()) {
             throw ProcessError(TLF("Start edge not defined for person '%'.", myVehicleParameter->id));
         } else {
             from = myActiveTransportablePlan->back()->getDestination();
+        }
+        if (hasExplicitFrom && !myActiveTransportablePlan->empty()) {
+            const MSEdge* const previousDestination = myActiveTransportablePlan->back()->getDestination();
+            if (previousDestination != nullptr && previousDestination != from) {
+                WRITE_WARNINGF(TL("Person '%' jumps from edge '%' to personTrip origin edge '%'."),
+                               id, previousDestination->getID(), from->getID());
+            }
         }
         if (attrs.hasAttribute(SUMO_ATTR_TO) || attrs.hasAttribute(SUMO_ATTR_TO_JUNCTION) || attrs.hasAttribute(SUMO_ATTR_TO_TAZ)
                 || attrs.hasAttribute(SUMO_ATTR_TOXY) || attrs.hasAttribute(SUMO_ATTR_TOLONLAT)) {

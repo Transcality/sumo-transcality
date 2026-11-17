@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 #include <utils/iodevices/OutputDevice.h>
-#include <utils/options/OptionsCont.h>
 #include <utils/common/ToString.h>
 #include <utils/common/StringUtils.h>
 #include <utils/geom/GeomHelper.h>
@@ -71,7 +70,7 @@ MSPerson::MSPersonStage_Access::clone() const {
     return new MSPersonStage_Access(myDestination, myDestinationStop, myArrivalPos, myArrivalPosLat, myDist, myAmExit, myPath.front(), myPath.back());
 }
 
-void
+bool
 MSPerson::MSPersonStage_Access::proceed(MSNet* net, MSTransportable* person, SUMOTime now, MSStage* previous) {
     myDeparted = now;
     if (myDist >= 0) {
@@ -84,6 +83,7 @@ MSPerson::MSPersonStage_Access::proceed(MSNet* net, MSTransportable* person, SUM
     net->getBeginOfTimestepEvents()->addEvent(new ProceedCmd(person, edge), myEstimatedArrival);
     net->getPersonControl().startedAccess();
     edge->addTransportable(person);
+    return true;
 }
 
 
@@ -198,7 +198,7 @@ MSPerson::checkAccess(const MSStage* const prior, const bool waitAtStop) {
                                                     prevStop->getLane().geometryPositionAtOffset(arrivalAtBs));
             } else {
                 const bool useDoors = access->exit == MSStoppingPlace::AccessExit::DOORS ||
-                                      (OptionsCont::getOptions().getString("pedestrian.model") != "jupedsim" && access->exit == MSStoppingPlace::AccessExit::CARRIAGE);
+                                      (!MSNet::getInstance()->getPersonControl().getMovementModel()->usingDoors() && access->exit == MSStoppingPlace::AccessExit::CARRIAGE);
                 if (access->exit == MSStoppingPlace::AccessExit::CARRIAGE) {
                     const double startPos = prior->getStageType() == MSStageType::TRIP ? prior->getEdgePos(0) : prior->getArrivalPos();
                     const double startPosLat = prior->getStageType() == MSStageType::TRIP ? prior->getEdgePosLat(0) : prior->getArrivalPosLat();

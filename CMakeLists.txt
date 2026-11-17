@@ -31,7 +31,6 @@ option(ENABLE_JUPEDSIM "Enable JuPedSim pedestrian simulation integration" ${CHE
 option(ENABLE_BOOST "Enable Boost for stacktrace support" ${CHECK_OPTIONAL_LIBS})
 option(VERBOSE_SUB "Let sub-commands be more verbose")
 set(BINARY_SUFFIX "" CACHE STRING "Append the suffix to every generated binary")
-set(COMPILE_DEFINITIONS "" CACHE STRING "Macros or defines to add when compiling")
 set(JUPEDSIM_CUSTOMDIR "" CACHE PATH "Custom install location of jupedsim")
 set(PROJECT_NAME "SUMO" CACHE STRING "Project/Solution name")
 
@@ -49,12 +48,12 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 
 # the part after ... sets all cmake policies to "new" which have been introduced up to that cmake version
-cmake_minimum_required(VERSION 3.5...3.31 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8...3.31 FATAL_ERROR)
 project("${PROJECT_NAME}" CXX C)
 set(PACKAGE_VERSION "git")
 
 # The command and parameters for rm / remove_directory change in cmake
-if (${CMAKE_VERSION} VERSION_GREATER 3.17.0)
+if (CMAKE_VERSION VERSION_GREATER 3.17.0)
     set(remove_command "rm" "-rf")
 else()
     set(remove_command "remove_directory")
@@ -64,8 +63,26 @@ endif()
 set(SUMO_LIBRARIES "$ENV{SUMO_LIBRARIES}" CACHE PATH "Location of SUMOLibraries dependencies")
 
 # some user place SUMOLibraries in the same SUMO folder
-if (NOT SUMO_LIBRARIES AND EXISTS "${CMAKE_SOURCE_DIR}/../SUMOLibraries")
-    set(SUMO_LIBRARIES "${CMAKE_SOURCE_DIR}/../SUMOLibraries")
+if (NOT SUMO_LIBRARIES)
+    # choose the lexicographically highest SUMOLibraries* directory (e.g. SUMOLibraries-1.29 over SUMOLibraries-1.28),
+    # a release (SUMOLibraries-1.29.0) ranks above its pre-releases (SUMOLibraries-1.29.0.dev),
+    # plain SUMOLibraries sorts last and is thus the fallback
+    file(GLOB SUMO_LIBRARIES_CANDIDATES LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/../SUMOLibraries*")
+    set(SUMO_LIBRARIES_SORTED "")
+    foreach (CANDIDATE ${SUMO_LIBRARIES_CANDIDATES})
+        if (IS_DIRECTORY "${CANDIDATE}")
+            # the trailing ~ is only a sort aid and removed again below
+            if (CANDIDATE MATCHES "/SUMOLibraries-[0-9.]+$")
+                set(CANDIDATE "${CANDIDATE}~")
+            endif ()
+            list(APPEND SUMO_LIBRARIES_SORTED "${CANDIDATE}")
+        endif ()
+    endforeach ()
+    list(SORT SUMO_LIBRARIES_SORTED COMPARE STRING ORDER DESCENDING)
+    if (SUMO_LIBRARIES_SORTED)
+        list(GET SUMO_LIBRARIES_SORTED 0 SUMO_LIBRARIES)
+        string(REGEX REPLACE "~$" "" SUMO_LIBRARIES "${SUMO_LIBRARIES}")
+    endif ()
 endif ()
 
 if (CCACHE_SUPPORT)
@@ -99,31 +116,20 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build_config/cma
 
 set(ENABLED_FEATURES "${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} ${CMAKE_BUILD_TYPE}")
 
-if (COMPILE_DEFINITIONS)
-    add_compile_definitions(${COMPILE_DEFINITIONS})
-endif ()
-
 # declare flags for compilers
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set (GNU_COMPILER True)
 endif ()
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     set (CLANG_COMPILER True)
 endif ()
 
 # C++20 is needed by Parquet >= 24.
-# C++17 is needed by std::filesystem and Parquet.
-# C++14 is needed by Google Test >= 1.13, for all the other parts C++11 should be enough.
-# This will silently fall back to C++14 or even C++11, whatever is supported by the compiler.
-if (${CMAKE_VERSION} VERSION_LESS 3.8.0)
-    set(DEFAULT_CXX_STANDARD 14)
+# Brew does not support versioning, so it has only the most recent Arrow / Parquet. Thus we need C++20 on macOS.
+if (APPLE)
+    set(DEFAULT_CXX_STANDARD 20)
 else()
-    # Brew does not support versioning, so it has only the most recent Arrow / Parquet. Thus we need C++20 on macOS.
-    if (APPLE)
-        set(DEFAULT_CXX_STANDARD 20)
-    else()
-        set(DEFAULT_CXX_STANDARD 17)
-    endif()
+    set(DEFAULT_CXX_STANDARD 17)
 endif()
 set(CMAKE_CXX_STANDARD ${DEFAULT_CXX_STANDARD} CACHE STRING "C++ standard")
 if (NOT "cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
@@ -132,67 +138,55 @@ endif()
 
 # compiler specific flags
 if (GNU_COMPILER OR CLANG_COMPILER)
+    add_compile_options(-Wall -Wextra)
     # set flags for clang in windows
     if (CLANG_COMPILER AND WIN32)
         # flags for clang in windows
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unsafe-buffer-usage")
+        add_compile_options(-Wno-unsafe-buffer-usage)
         # disable warnings
-        add_compile_options("/clang:-Wno-unsafe-buffer-usage")
-        add_compile_options("/clang:-Wno-reserved-identifier")
-        add_compile_options("/clang:-Wno-c++98-compat")
+        add_compile_options(/clang:-Wno-unsafe-buffer-usage /clang:-Wno-reserved-identifier /clang:-Wno-c++98-compat)
         # disable debug build (due a problem with Runtime Libraries)
         set(CMAKE_CONFIGURATION_TYPES "Release")
         set(CMAKE_BUILD_TYPE "Release")
     else ()
-        # flags for clang and gcc in linux
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -pedantic -Wextra")
+        # flags for clang and gcc in linux / macos
+        add_compile_options(-pedantic -ffp-contract=off)
     endif ()
     if (GNU_COMPILER)
         # see https://stackoverflow.com/questions/23499909/adjust-variable-tracking-assignment-length
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --param=max-vartrack-size=5000000")
+        add_compile_options(--param=max-vartrack-size=5000000)
         if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.9 AND CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
             # see the last bulletpoint about ABI at https://gcc.gnu.org/gcc-10/changes.html#cxx
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+            add_compile_options(-Wno-psabi)
         endif()
     endif ()
     if (PROFILING)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+        add_compile_options(-pg)
         set(ENABLED_FEATURES "${ENABLED_FEATURES} Profiling")
         set(BINARY_SUFFIX "${BINARY_SUFFIX}P")
+        # Apply the PIE disabling flag ONLY to executables (not any shared libraries)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg -no-pie")
     endif ()
     if (COVERAGE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -O0")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+        add_compile_options(--coverage -O0)
+        link_libraries(--coverage)
         set(ENABLED_FEATURES "${ENABLED_FEATURES} Coverage")
     endif ()
 elseif (MSVC)
+    add_compile_options(/Wall)
     # enabling /WX is not possible due to warnings in external headers
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # this is a workaround to disable lots of warnings for replacing /W3 with /W4 in VS 2019
-        # there is a policy for that starting with CMake 3.15
-        if (MSVC_VERSION GREATER 1900)
-            string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-        else ()
-            string(REPLACE "/W3" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-        endif ()
         # netedit hits the 4GB limit with incremental linking
         set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO")
         set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /PDBPAGESIZE:8192")
-    else ()
-        # /Wall brings MSVC 2013 to complete halt
-        if (MSVC_VERSION GREATER 1900)
-            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Wall")
-        else ()
-            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W4")
-        endif ()
     endif ()
     if (MULTITHREADED_BUILD)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+        add_compile_options(/MP)
     endif ()
     # SWIG generates large obj files
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+    add_compile_options(/bigobj)
     # backward compatible mutex API, see https://github.com/actions/runner-images/issues/10004
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR")
+    add_compile_options(/D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
     # exporting symbols for shared libraries needs to enabled explicitly
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     # add option for enabling console in release mode
@@ -247,7 +241,11 @@ if (CMAKE_GENERATOR MATCHES Xcode)
 endif ()
 message(STATUS "")
 
-if (${CMAKE_VERSION} VERSION_LESS 3.12.0)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+link_libraries(Threads::Threads)
+
+if (CMAKE_VERSION VERSION_LESS 3.12.0)
     find_package(PythonInterp REQUIRED)
     # define variable for compatibility
     set(Python_EXECUTABLE ${PYTHON_EXECUTABLE} CACHE FILEPATH "Python executable")
@@ -257,7 +255,7 @@ else()
     find_package(Python REQUIRED COMPONENTS Interpreter OPTIONAL_COMPONENTS Development.Module)
     message(STATUS "Found Python: " ${Python_EXECUTABLE})
 endif()
-if (${CMAKE_VERSION} VERSION_LESS 3.18.0 AND (ENABLE_PYTHON_BINDINGS OR ENABLE_JAVA_BINDINGS OR ENABLE_CS_BINDINGS))
+if (CMAKE_VERSION VERSION_LESS 3.18.0 AND (ENABLE_PYTHON_BINDINGS OR ENABLE_JAVA_BINDINGS OR ENABLE_CS_BINDINGS))
     message(WARNING "Language bindings require at least CMake 3.18.")
     set(ENABLE_PYTHON_BINDINGS OFF)
     set(ENABLE_JAVA_BINDINGS OFF)
@@ -271,7 +269,7 @@ if (MSVC AND ENABLE_PYTHON_BINDINGS)
         message(WARNING "Python language bindings are only supported for 64 bit.")
         set(ENABLE_PYTHON_BINDINGS OFF)
     endif()
-    if (NOT PYTHON_DEBUG_LIBRARY AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    if (NOT PYTHON_DEBUG_LIBRARY AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(WARNING "Did not find Python debug library. Please reinstall your Python and enable the Python debug libraries in the installer.")
         set(ENABLE_PYTHON_BINDINGS OFF)
     endif()
@@ -287,13 +285,13 @@ endif()
 # exclusive from Apple
 if (APPLE)
     # we know that openGL is deprecated for newer MacOS
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGL_SILENCE_DEPRECATION")
+    add_compile_options(-DGL_SILENCE_DEPRECATION)
 
     # Xcode 15 on macOS sonoma complains about duplicate libraries for the linker, so we disable the warning for xcode >= 15
     if (CLANG_COMPILER)
         string(REGEX MATCH "^[0-9]+" ClangMajorVersion "${CMAKE_CXX_COMPILER_VERSION}")
         if (ClangMajorVersion GREATER_EQUAL 15)
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
+            add_link_options(-Wl,-no_warn_duplicate_libraries)
         endif()
     endif()
 
@@ -318,12 +316,17 @@ if (APPLE)
     endif ()
 endif (APPLE)
 
-# Specifically define variable WIN32 for compilations under windows (due an error in Shawn)
-if (GNU_COMPILER AND WIN32)
-    option(USE_MINGW_64BITS "Use 64 bits libraries for the compilation with MinGW" true)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWIN32 -D_WIN32_WINNT=0x0501")
-    set(MINGW32 1)
-endif ()
+if (WIN32)
+    if (GNU_COMPILER AND WIN32)
+        # Specifically define variable WIN32 for compilations under windows (due an error in Shawn)
+        option(USE_MINGW_64BITS "Use 64 bits libraries for the compilation with MinGW" true)
+        add_compile_definitions(_WIN32_WINNT=0x0501 WIN32_LEAN_AND_MEAN NOMINMAX)
+        set(MINGW32 1)
+    else ()
+        # 0x0601 is the Windows 7 API which is the minimum for boost process support
+        add_compile_definitions(_WIN32_WINNT=0x0601 WIN32_LEAN_AND_MEAN NOMINMAX)
+    endif ()
+endif()
 
 if (NOT JUPEDSIM_CUSTOMDIR)
     # check if set JuPedSim directory from SUMOLibraries
@@ -360,15 +363,18 @@ if (SUMO_LIBRARIES AND WIN32)
     file(GLOB OSG_PATH "${SUMO_LIBRARIES}/OSG-*")
     file(GLOB GL2PS_PATH "${SUMO_LIBRARIES}/gl2ps-*")
     file(GLOB GEOS_PATH "${SUMO_LIBRARIES}/geos-*")
+    file(GLOB GRPC_PATH "${SUMO_LIBRARIES}/grpc-*")
     file(GLOB BOOST_PATH "${SUMO_LIBRARIES}/boost-*")
     if (MSVC_VERSION GREATER 1919)
         # fmt and gettext in SUMOLibraries only work with MSVC 2019 and later
         file(GLOB FMT_PATH "${SUMO_LIBRARIES}/fmt-*")
         file(GLOB GETTEXT_PATH "${SUMO_LIBRARIES}/gettext-*")
     endif ()
+    # make sure gRPC and the rest use the same zlib
+    set(ZLIB_ROOT "${ZLIB_PATH}")
 
     # set all paths in prefix
-    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${EIGEN3_PATH};${XERCES_PATH};${ZLIB_PATH};${PROJ_PATH};${FOX_PATH};${FREETYPE_PATH};${GETTEXT_PATH};${GETTEXT_PATH}/tools/gettext;${ARROW_PATH};${LZ4_PATH};${ZSTD_PATH};${BZIP2_PATH};${THRIFT_PATH};${GDAL_PATH};${FFMPEG_PATH};${OSG_PATH};${GL2PS_PATH};${GEOS_PATH};${BOOST_PATH}")
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${ZLIB_PATH};${GRPC_PATH};${EIGEN3_PATH};${XERCES_PATH};${PROJ_PATH};${FOX_PATH};${FREETYPE_PATH};${GETTEXT_PATH};${GETTEXT_PATH}/tools/gettext;${ARROW_PATH};${LZ4_PATH};${ZSTD_PATH};${BZIP2_PATH};${THRIFT_PATH};${GDAL_PATH};${FFMPEG_PATH};${OSG_PATH};${GL2PS_PATH};${GEOS_PATH};${BOOST_PATH}")
     # save in variable SUMO_LIBRARIES_DLL all paths to dll files
     file(GLOB SUMO_LIBRARIES_DLL "${XERCES_PATH}/bin/*.dll"
                                  "${ZLIB_PATH}/bin/*.dll"
@@ -427,7 +433,7 @@ if (SUMO_LIBRARIES AND WIN32)
     endif ()
     if (ENABLE_JUPEDSIM)
         file(GLOB _JUPEDSIM_DLLS "${JUPEDSIM_CUSTOMDIR}/bin/*.dll"
-                                 "${SUMO_LIBRARIES}/geos-*/bin/*.dll")
+                                 "${GEOS_PATH}/bin/*.dll")
         list(APPEND SUMO_LIBRARIES_DLL ${_JUPEDSIM_DLLS})
     endif ()
     if (ENABLE_PARQUET)
@@ -650,20 +656,32 @@ endif ()
 
 if (ENABLE_JUPEDSIM)
     find_package(jupedsim CONFIG HINTS ${JUPEDSIM_CUSTOMDIR} QUIET)
-    if (jupedsim_FOUND)
+    find_package(Protobuf CONFIG QUIET)
+    if (NOT Protobuf_FOUND)
+        find_package(Protobuf)
+    endif()
+    find_package(gRPC CONFIG)
+    if (jupedsim_FOUND OR (Protobuf_FOUND AND gRPC_FOUND))
         find_package(GEOS 3.3.0)
         if (GEOS_FOUND)
             include_directories(SYSTEM ${GEOS_INCLUDE_DIR})
             set(JPS_VERSION "${jupedsim_VERSION_MAJOR}${jupedsim_VERSION_MINOR}${jupedsim_VERSION_PATCH}")
-            set(HAVE_JUPEDSIM 1)
-            set(ENABLED_FEATURES "${ENABLED_FEATURES} JuPedSim")
+            if (jupedsim_FOUND)
+                set(HAVE_JUPEDSIM_LEGACY 1)
+                set(ENABLED_FEATURES "${ENABLED_FEATURES} JuPedSim_legacy")
+            endif ()
+            if (Protobuf_FOUND AND gRPC_FOUND)
+                set(HAVE_JUPEDSIM_GRPC 1)
+                set(ENABLED_FEATURES "${ENABLED_FEATURES} JuPedSim_gRPC")
+                message(STATUS "Using protobuf ${Protobuf_VERSION} and gRPC ${gRPC_VERSION}")
+            endif ()
             message(STATUS "Found JuPedSim: ${jupedsim_DIR} ${jupedsim_VERSION}")
         else (GEOS_FOUND)
             message(STATUS "Could NOT find GEOS! JuPedSim requires GEOS.")
         endif (GEOS_FOUND)
-    else (jupedsim_FOUND)
+    else ()
         message(STATUS "Could NOT find JuPedSim! Skipping JuPedSim integration.")
-    endif (jupedsim_FOUND)
+    endif ()
 endif ()
 
 if (ENABLE_BOOST)
@@ -777,16 +795,14 @@ install(DIRECTORY tools/ DESTINATION ${DATA_PATH}tools
         PATTERN "*.pyc" EXCLUDE
         PATTERN "*.egg-info" EXCLUDE
         PATTERN ".git" EXCLUDE)
-if (${CMAKE_VERSION} VERSION_GREATER 3.6.0)
-    # this is a hack which works only with a non-isolated build
-    install(DIRECTORY tools/libsumo/ DESTINATION libsumo COMPONENT tools_libsumo EXCLUDE_FROM_ALL
-            PATTERN "__pycache__" EXCLUDE
-            PATTERN "*.pyc" EXCLUDE)
-    if (PROJ_DATA_DIR)
-        install(DIRECTORY ${PROJ_DATA_DIR}/ DESTINATION ${DATA_PATH}data/proj COMPONENT proj_data EXCLUDE_FROM_ALL
-                PATTERN "*.tif" EXCLUDE
-                PATTERN "*.txt" EXCLUDE)
-    endif ()
+# this is a hack which works only with a non-isolated build
+install(DIRECTORY tools/libsumo/ DESTINATION libsumo COMPONENT tools_libsumo EXCLUDE_FROM_ALL
+        PATTERN "__pycache__" EXCLUDE
+        PATTERN "*.pyc" EXCLUDE)
+if (PROJ_DATA_DIR)
+    install(DIRECTORY ${PROJ_DATA_DIR}/ DESTINATION ${DATA_PATH}data/proj COMPONENT proj_data EXCLUDE_FROM_ALL
+            PATTERN "*.tif" EXCLUDE
+            PATTERN "*.txt" EXCLUDE)
 endif ()
 install(CODE "
     execute_process(COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_config/version.py --pep440 \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${DATA_PATH}tools/sumolib/version.py)
@@ -798,7 +814,7 @@ endif ()
 install(EXPORT SUMOConfig DESTINATION ${DATA_PATH}cmake NAMESPACE SUMO:: COMPONENT runtime)
 
 set(SUMO_TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools")
-if (${CMAKE_VERSION} VERSION_GREATER 3.6.0 AND NOT ${PYTHON_BUILD_MISSING})
+if (NOT PYTHON_BUILD_MISSING)
     # no isolated build here because we need to be able to do it offline (on open build service, launchpad etc.)
     # furthermore several commands in the same execute_process are not guaranteed to be executed sequentially
     install(CODE "
@@ -870,7 +886,7 @@ set_property(TARGET install_dll PROPERTY FOLDER "CMake")
 set_property(TARGET install_test_dll PROPERTY FOLDER "CMake")
 
 # installing desktop files and other Linux specific stuff
-if (CMAKE_VERSION VERSION_GREATER 3.6.0 AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     install(DIRECTORY build_config/package/ DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/profile.d
             COMPONENT linux_integration EXCLUDE_FROM_ALL
             FILES_MATCHING PATTERN "*sh" PATTERN "jupedsim" EXCLUDE)
@@ -985,7 +1001,7 @@ if (HELPMAN_EXECUTABLE)
     set_property(TARGET man PROPERTY EXCLUDE_FROM_DEFAULT_BUILD TRUE)
     set_property(TARGET man PROPERTY FOLDER "doc")
     set(MAN_TARGET man)
-    if (CMAKE_VERSION VERSION_GREATER 3.6.0 AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         install(DIRECTORY docs/man/ DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
                 COMPONENT linux_integration EXCLUDE_FROM_ALL)
     endif()
@@ -1041,6 +1057,7 @@ if (PYINSTALLER_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/tools/game/runner.spec)
 endif()
 
 add_test(exampletest ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/examples/runAll.py)
+set_tests_properties(exampletest PROPERTIES TIMEOUT 300)
 find_package(Git)
 if (GIT_FOUND)
     add_custom_target(dist

@@ -4,6 +4,8 @@ title: Changes in the 2024 releases (versions 1.20.0 and 1.21.0)
 
 ## Version 1.21.0 (10.10.2024)
 
+[Downloads](https://sumo.dlr.de/releases/1.21.0/)
+
 ### Bugfixes
 
 - sumo
@@ -33,7 +35,7 @@ title: Changes in the 2024 releases (versions 1.20.0 and 1.21.0)
   - Removal of JuPedSim-pedestrians in vanishing area with period < 1 is now working. #14900
   - No more cooperative speed adaptation when setting lcCooperative=-1. #14871
   - Fixed invalid initial blinker for continuous lanechange in lefthand network #15058
-  - Now avoiding orthogonal sliding in continuos lane change model with attribute `lcMaxSpeedLatStanding="0"` #15052
+  - Now avoiding orthogonal sliding in continuous lane change model with attribute `lcMaxSpeedLatStanding="0"` #15052
   - GLOSA device now follows intended 3-phase speed trajectory (decel, constant, accel) instead of (decel, accel) #15067
   - Fixed negative emissions with HBEFA4 model #15079
   - Fixed duplicate 'started' and 'ended' values in vehroute-output #15086
@@ -94,7 +96,7 @@ title: Changes in the 2024 releases (versions 1.20.0 and 1.21.0)
   - Fixed Crash during undo-redo of stops/waypoints over stoppingPlaces #15249 (regression in 1.19.0)
   - Fixed crash when editing person and container types for a selection #15255 (regression in 1.19.0)
   - Fixed junction highlighting on hovering in edge mode #15413 (regression in 1.19.0)
-  - Fixed invalid "embededRoute" element in view #15492 (regression in 1.19.0)
+  - Fixed invalid "embeddedRoute" element in view #15492 (regression in 1.19.0)
   - Vehicle type attribute dialog: guiShape combobox is now working with default vClass #14859  (regression in 1.19.0)
   - Fixed invalid tls link indices #14949 (regression in 1.20.0)
   - Fixed inspecting and selecting elements in data mode #14999 (regression in 1.20.0)
@@ -310,6 +312,8 @@ title: Changes in the 2024 releases (versions 1.20.0 and 1.21.0)
 - A warning is now given when trying to use carFollowModel EIDM with actionSteps #15557
 
 ## Version 1.20.0 (07.05.2024)
+
+[Downloads](https://sumo.dlr.de/releases/1.20.0/)
 
 ### Bugfixes
 
@@ -529,7 +533,7 @@ title: Changes in the 2024 releases (versions 1.20.0 and 1.21.0)
   - [TocDevice](../ToC_Device.md) openGap parameters can now be set via `vehicle.setParameter` #14582
   - in mesosim, `lane.setMaxSpeed` now only affects a single queue when running with **--meso-lane-queue** #14589
   - Added functions `edge.getFromJunction`, `edge.getToJunction`, `junction.getIncomingEdges`, `junction.getOutgoingEdges` to query the network topology. #14490
-  - The routing mode value `ROUTING_MODE_INGNORE_TRANSIENT_PERMISSIONS` can now be used to ignore temporary permission changes from rerouters. #14205
+  - The routing mode value `ROUTING_MODE_IGNORE_TRANSIENT_PERMISSIONS` can now be used to ignore temporary permission changes from rerouters. #14205
   - Added function `trafficlight.getSpentDuration` #14400
   - `trafficlight.getParameter(tlsID, "typeName")` now retrieves traffic light type #14737
 

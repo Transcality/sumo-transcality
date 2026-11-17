@@ -98,6 +98,9 @@ public:
     /// @brief get reference to fileBucket in which save this AC
     virtual FileBucket* getFileBucket() const = 0;
 
+    /// @brief set reference to fileBucket in which save this AC
+    virtual void setFileBucket(FileBucket* fileBucket);
+
     /// @brief update pre-computed geometry information
     virtual void updateGeometry() = 0;
 
@@ -313,8 +316,8 @@ public:
     template<typename T>
     static T parse(const std::string& string);
 
-    /**@brief true if a value of type T can be parsed from string (requieres network)
-     * @note checkConsecutivity doesn't check connectivity trought connections
+    /**@brief true if a value of type T can be parsed from string (requires network)
+     * @note checkConsecutivity doesn't check connectivity trough connections
      */
     template<typename T>
     static bool canParse(const GNENet* net, const std::string& value, const bool checkConsecutivity);

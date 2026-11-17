@@ -1351,7 +1351,7 @@ MSLCM_SL2015::_wantsChangeSublane(
 
         std::vector<CLeaderDist> collectLeadBlockers;
         std::vector<CLeaderDist> collectFollowBlockers;
-        int blockedFully = 0; // wether execution of the full maneuver is blocked
+        int blockedFully = 0; // whether execution of the full maneuver is blocked
         maneuverDist = latDist;
         const double gapFactor = computeGapFactor(LCA_STRATEGIC);
         blocked = checkBlocking(neighLane, latDist, maneuverDist, laneOffset,
@@ -2717,14 +2717,16 @@ MSLCM_SL2015::updateCFRelated(const MSLeaderDistanceInfo& vehicles, double foeOf
             if (overlap(rightVehSide, leftVehSide, foeRight, foeLeft) && !outsideEdge()
                     // account for imprecise driving by some models
                     && (vehDist.second >= vehDist.first->getVehicleType().getMinGap() * (1 - vehDist.first->getCarFollowModel().getCollisionMinGapFactor())
-                    // avoid deadlock due to #3729
-                    || (!leaders
-                        && myVehicle.getPositionOnLane() >= myVehicle.getVehicleType().getLength()
-                        && myVehicle.getSpeed() < SUMO_const_haltingSpeed
-                        && vehDist.first->getSpeed() < SUMO_const_haltingSpeed
-                        && -vehDist.second < vehDist.first->getVehicleType().getMinGap()
-                        && &(myVehicle.getLane()->getEdge()) != &(vehDist.first->getLane()->getEdge()))
-                                                                                           )) {
+                        || (vehDist.second < 0 && myVehicle.getLane()->isNormal() && vehDist.first->getLane()->isNormal()
+                            && vehDist.second >= -myVehicle.getVehicleType().getMinGap() * (1 - myVehicle.getCarFollowModel().getCollisionMinGapFactor()))
+                        // avoid deadlock due to #3729
+                        || (!leaders
+                            && myVehicle.getPositionOnLane() >= myVehicle.getVehicleType().getLength()
+                            && myVehicle.getSpeed() < SUMO_const_haltingSpeed
+                            && vehDist.first->getSpeed() < SUMO_const_haltingSpeed
+                            && -vehDist.second < vehDist.first->getVehicleType().getMinGap()
+                            && &(myVehicle.getLane()->getEdge()) != &(vehDist.first->getLane()->getEdge()))
+                       )) {
 #ifdef DEBUG_BLOCKING
                 if (gDebugFlag2) {
                     std::cout << "       ignoring cfrelated foe=" << vehDist.first->getID()  << "\n";

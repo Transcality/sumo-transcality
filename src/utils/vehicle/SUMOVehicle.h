@@ -86,6 +86,9 @@ public:
     /// Returns the current route
     virtual ConstMSRoutePtr getRoutePtr() const = 0;
 
+    /// @brief return index of edge within route
+    virtual int getRoutePosition() const = 0;
+
     /** @brief Returns the nSuccs'th successor of edge the vehicle is currently at
      *
      * If the rest of the route (counted from the current edge) than nSuccs,
@@ -128,13 +131,16 @@ public:
      */
     virtual bool reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<MSEdge, SUMOVehicle>& router, const bool onInit = false, const bool withTaz = false, const bool silent = false, const MSEdge* sink = nullptr) = 0;
 
+    /// @brief returns the router according to the current routing mode of the vehicle
+    virtual SUMOAbstractRouter<MSEdge, SUMOVehicle>& getRouterTT() const = 0;
+
     /** @brief Validates the current or given route
      * @param[out] msg Description why the route is not valid (if it is the case)
      * @param[in] route The route to check (or 0 if the current route shall be checked)
      * @return Whether the vehicle's current route is valid
      */
     virtual bool hasValidRoute(std::string& msg, ConstMSRoutePtr route = 0) const = 0;
-    /// @brief checks wether the vehicle can depart on the first edge
+    /// @brief checks whether the vehicle can depart on the first edge
     virtual bool hasValidRouteStart(std::string& msg) = 0;
 
     /// @brief computes validity attributes for the current route

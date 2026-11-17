@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-09-28T13:19:23.628267+01:00 by Eclipse SUMO netconvert v1_27_1+0788-b04dbbe6fbc
+<!-- generated on 2026-11-10T16:36:56.303835+01:00 by Eclipse SUMO netconvert v1_28_0+0490-0028982655c
 -->
 
 <netconvertConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
@@ -393,6 +393,24 @@
         <!-- Joins tram edges into road lanes with similar geometry (within FLOAT distance) -->
         <edges.join-tram-dist value="-1" type="FLOAT"/>
 
+        <!-- Sets default jam-threshold parameter for all actuation detectors -->
+        <tls.actuated.jam-threshold value="-1" type="FLOAT"/>
+
+        <!-- Sets default show-detectors parameter for all actuation detectors -->
+        <tls.actuated.show-detectors value="false" type="BOOL"/>
+
+        <!-- Sets default passing-time parameter for all actuation detectors -->
+        <tls.actuated.passing-time value="-1" type="FLOAT"/>
+
+        <!-- Sets default detector-gap parameter for all actuation detectors -->
+        <tls.actuated.detector-gap value="0" type="FLOAT"/>
+
+        <!-- Sets default detector-length parameter for all actuation detectors -->
+        <tls.actuated.detector-length value="-1" type="FLOAT"/>
+
+        <!-- Sets default inactive-threshold parameter for all actuation detectors -->
+        <tls.actuated.inactive-threshold value="-1" type="FLOAT"/>
+
     </processing>
 
     <building_defaults>
@@ -650,6 +668,9 @@
 
         <!-- Only keep the INT largest weakly connected components -->
         <keep-edges.components value="0" type="INT"/>
+
+        <!-- Keep rail/waterway components that contain public transport stops -->
+        <keep-edges.components.keep-ptstops value="true" type="BOOL"/>
 
         <!-- Remove edges where type is in STR[] -->
         <remove-edges.by-type value="" type="STR[]"/>
@@ -957,8 +978,11 @@
         <!-- The speed limit to be set when there is no actual speed limit in reality -->
         <osm.speedlimit-none value="39.4444" type="FLOAT"/>
 
-        <!-- Whether edges shoulds carry information on the usage of typemap defaults -->
+        <!-- Whether edges should carry information on the usage of typemap defaults -->
         <osm.annotate-defaults value="false" type="BOOL"/>
+
+        <!-- Whether ETCS2 track sections should default to moving-block mode -->
+        <osm.etcs-moving-block value="false" type="BOOL"/>
 
         <!-- The edge lengths given in the MATSim-file will be kept -->
         <matsim.keep-length value="false" type="BOOL"/>
@@ -1053,7 +1077,7 @@
         <!-- Computes the number of lanes from the edges&apos; capacities -->
         <visum.recompute-lane-number value="false" synonymes="visum.recompute-laneno" deprecated="visum.recompute-laneno" type="BOOL"/>
 
-        <!-- Prints all warnings, some of which are due to VISUM misbehaviour -->
+        <!-- Prints all warnings, some of which are due to VISUM misbehavior -->
         <visum.verbose-warnings value="false" type="BOOL"/>
 
         <!-- The factor for flow to no. lanes conversion -->

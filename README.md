@@ -2,7 +2,7 @@
 
 Eclipse SUMO - Simulation of Urban MObility
 ===========================================
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20836073.svg)](https://doi.org/10.5281/zenodo.20836073)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23219601.svg)](https://doi.org/10.5281/zenodo.23219601)
 [![Windows](https://github.com/eclipse-sumo/sumo/actions/workflows/windows.yml/badge.svg)](https://github.com/eclipse-sumo/sumo/actions/workflows/windows.yml)
 [![Linux](https://github.com/eclipse-sumo/sumo/actions/workflows/linux.yml/badge.svg)](https://github.com/eclipse-sumo/sumo/actions/workflows/linux.yml)
 [![macOS](https://github.com/eclipse-sumo/sumo/actions/workflows/macos.yml/badge.svg)](https://github.com/eclipse-sumo/sumo/actions/workflows/macos.yml)
@@ -51,11 +51,8 @@ Build and Installation
 ----------------------
 
 For Windows we provide pre-compiled binaries and CMake files to generate Visual Studio projects.
-If you want to develop under Windows, please also clone the dependent libraries using:
-
-```
-git clone --recursive https://github.com/DLR-TS/SUMOLibraries
-```
+If you want to develop under Windows, please also download the [dependent libraries](https://github.com/DLR-TS/SUMOLibraries/releases).
+Use the latest release if you are developing, if not use the release matching your SUMO version.
 
 If you're using Linux, you should have a look whether your distribution already contains sumo.
 There is also a [ppa for ubuntu users](https://launchpad.net/~sumo) and an
@@ -84,7 +81,7 @@ homepage.
 Documentation
 ---------------
 
-- The main documentation is at [sumo.dlr.de/docs](https://sumo.dlr.de/docs). Note that this tracks the [development version](https://sumo.dlr.de/docs/FAQ.html#why_does_sumo_not_behave_as_documented_in_this_wiki).
+- The main documentation is at [sumo.dlr.de/docs](https://sumo.dlr.de/docs). Note that this tracks the [development version](https://sumo.dlr.de/docs/FAQ.html#why_does_sumo_not_behave_as_documented_here).
 - A mirror of the main documentation is at [eclipse.dev/sumo/docs/](https://eclipse.dev/sumo/docs/).
 - An offline version of the documentation is part of every release and can be accessed via `docs/userdoc/index.html`.
 

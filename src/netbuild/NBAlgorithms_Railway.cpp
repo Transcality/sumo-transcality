@@ -587,12 +587,6 @@ NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc, NBPTLi
         EdgeVector inRail, outRail;
         getRailEdges(n, inRail, outRail);
         for (NBEdge* start : outRail) {
-            if (lineEdges.count(start)) {
-                // ptline edges should never be reversed. They are fixed by a different algorithm require their original ids and orientation
-                continue;
-            }
-            EdgeVector tmp;
-            tmp.push_back(start);
             // only reverse edges where the node would be unbroken afterwards
             if (!allBroken(n, start, inRail, outRail)
                     || (inRail.size() == 1 && outRail.size() == 1)) {
@@ -607,6 +601,18 @@ NBRailwayTopologyAnalyzer::reverseEdges(NBEdgeCont& ec, NBPTStopCont& sc, NBPTLi
             bool forward = true;
             EdgeVector seq;
             while (forward) {
+                if (lineEdges.count(start)) {
+                    // ptline edges should never be reversed. They are fixed by a different algorithm which requires their original ids and orientation
+                    break;
+                } else if (start->hasParameter(NBTrafficLightDefinition::OSM_DIRECTION)) {
+                    // do not reverse edges where direction was explicitly set in OSM (including via signal direction)
+#ifdef DEBUG_SEQSTOREVERSE
+                    if (n->getID() == DEBUGNODEID) {
+                        std::cout << " abort at edge=" << start->getID() << " (has OSM_DIRECTION " << start->getParameter(NBTrafficLightDefinition::OSM_DIRECTION) << ")\n";
+                    }
+#endif
+                    break;
+                }
                 seq.push_back(start);
                 //std::cout << " seq=" << toString(seq) << "\n";
                 NBNode* n2 = start->getToNode();
@@ -1404,10 +1410,45 @@ NBRailwaySignalGuesser::canBeSignal(const NBNode* node) {
 }
 
 
+bool
+NBRailwaySignalGuesser::isTerminal(const NBEdge* e, double terminalThreshold, bool forward) {
+    double seen = 0;
+    while (seen < terminalThreshold) {
+        // we looking for a bidi-edge with turn-around and no continuation
+        if (e->getBidiEdge() == nullptr) {
+            return false;
+        }
+        const EdgeVector& cands = forward ? e->getToNode()->getOutgoingEdges() : e->getFromNode()->getIncomingEdges();
+        if (cands.size() == 1) {
+            const NBEdge* b = e->getBidiEdge();
+            if ((forward && e->getStep() == NBEdge::EdgeBuildingStep::LANES2LANES_USER && !e->isConnectedTo(b))
+                    || (!forward && b->getStep() == NBEdge::EdgeBuildingStep::LANES2LANES_USER && !b->isConnectedTo(e))) {
+                // explicitly not a terminal based on loaded connections
+                return false;
+            }
+            return true;
+        }
+        if (cands.size() > 2) {
+            // it's a switch
+            return false;
+        }
+        for (const NBEdge* cand : cands) {
+            if (cand != e->getBidiEdge()) {
+                e = cand;
+                break;
+            }
+        }
+        seen += e->getLoadedLength();
+    }
+    return false;
+}
+
+
 int
 NBRailwaySignalGuesser::guessByStops(NBNodeCont& nc, NBEdgeCont& ec, NBPTStopCont& sc, NBDistrictCont& dc, double minLength, bool split) {
     const double splitOffset = 10;
     const double splitOffsetSlack = 200;
+    const double terminalThreshold = 140; // default train length + 5m slack
     int addedSignals = 0;
     for (const auto& item : sc.getStops()) {
         NBEdge* stopEdge = ec.retrieve(item.second->getEdgeId());
@@ -1434,7 +1475,7 @@ NBRailwaySignalGuesser::guessByStops(NBNodeCont& nc, NBEdgeCont& ec, NBPTStopCon
                         NBTurningDirectionsComputer::computeTurnDirectionsForNode(stopEdge->getFromNode(), false);
                         NBTurningDirectionsComputer::computeTurnDirectionsForNode(stopEdge->getToNode(), false);
                     }
-                } else {
+                } else if (!isTerminal(stopEdge, terminalThreshold, true)) {
                     to->reinit(to->getPosition(), SumoXMLNodeType::RAIL_SIGNAL);
                     addedSignals++;
                 }
@@ -1481,7 +1522,7 @@ NBRailwaySignalGuesser::guessByStops(NBNodeCont& nc, NBEdgeCont& ec, NBPTStopCon
                         NBTurningDirectionsComputer::computeTurnDirectionsForNode(curr->getFromNode(), false);
                         NBTurningDirectionsComputer::computeTurnDirectionsForNode(curr->getToNode(), false);
                     }
-                } else {
+                } else if (!isTerminal(curr, terminalThreshold, false)) {
                     from->reinit(from->getPosition(), SumoXMLNodeType::RAIL_SIGNAL);
                     addedSignals++;
                 }

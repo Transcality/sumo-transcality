@@ -33,6 +33,7 @@
 #include <guisim/GUINet.h>
 #include <guisim/GUITrafficLightLogicWrapper.h>
 #include <microsim/MSEdgeControl.h>
+#include <microsim/MSGlobals.h>
 #include <microsim/MSInsertionControl.h>
 #include <microsim/MSStateHandler.h>
 #include <microsim/transportables/MSTransportableControl.h>
@@ -43,10 +44,12 @@
 #include <utils/common/MsgHandler.h>
 #include <utils/common/StringUtils.h>
 #include <utils/foxtools/MFXButtonTooltip.h>
+#include <utils/foxtools/MFXCheckableButton.h>
 #include <utils/foxtools/MFXLabelTooltip.h>
 #include <utils/foxtools/MFXLCDLabel.h>
 #include <utils/foxtools/MFXLinkLabel.h>
 #include <utils/foxtools/MFXRealSpinner.h>
+#include <utils/foxtools/MFXStaticToolTip.h>
 #include <utils/gui/cursors/GUICursorSubSys.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/div/GUIDesigns.h>
@@ -131,6 +134,8 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_NEW_OSGVIEW,    GUIApplicationWindow::onUpdAddView),
 
 #endif
+    FXMAPFUNC(SEL_COMMAND,  MID_SHOWTOOLTIPS_VIEW,                              GUIApplicationWindow::onCmdShowToolTipsView),
+    FXMAPFUNC(SEL_COMMAND,  MID_SHOWTOOLTIPS_MENU,                              GUIApplicationWindow::onCmdShowToolTipsMenu),
     // Time
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_A_MODE_STARTSIMULATION_ADDITIONALS_STOPS,        GUIApplicationWindow::onCmdStart),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS,   GUIApplicationWindow::onCmdStart),
@@ -228,6 +233,13 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_JA,    GUIApplicationWindow::onUpdChangeLanguage),
     FXMAPFUNC(SEL_COMMAND,  MID_LANGUAGE_KO,    GUIApplicationWindow::onCmdChangeLanguage),
     FXMAPFUNC(SEL_UPDATE,   MID_LANGUAGE_KO,    GUIApplicationWindow::onUpdChangeLanguage),
+    // coordinate inputs
+    FXMAPFUNC(SEL_COMMAND,  MID_GEO_COORDINATE,          GUIApplicationWindow::onCmdSetGeoCoordinate),
+    FXMAPFUNC(SEL_COMMAND,  MID_CARTESIAN_COORDINATE,    GUIApplicationWindow::onCmdSetCartesianCoordinate),
+    FXMAPFUNC(SEL_FOCUSIN,  MID_GEO_COORDINATE,          GUIApplicationWindow::onCmdFocusCoordinate),
+    FXMAPFUNC(SEL_FOCUSIN,  MID_CARTESIAN_COORDINATE,    GUIApplicationWindow::onCmdFocusCoordinate),
+    FXMAPFUNC(SEL_FOCUSOUT, MID_GEO_COORDINATE,          GUIApplicationWindow::onCmdUnfocusCoordinate),
+    FXMAPFUNC(SEL_FOCUSOUT, MID_CARTESIAN_COORDINATE,    GUIApplicationWindow::onCmdUnfocusCoordinate),
     // keys
     FXMAPFUNC(SEL_KEYPRESS,              0,     GUIApplicationWindow::onKeyPress),
     FXMAPFUNC(SEL_KEYRELEASE,            0,     GUIApplicationWindow::onKeyRelease),
@@ -315,10 +327,22 @@ GUIApplicationWindow::dependentBuild(const bool isLibsumo) {
         }
         // build geo coordiantes
         myGeoFrame = new FXHorizontalFrame(myStatusbar, GUIDesignHorizontalFrameStatusBar);
-        myGeoCoordinate = GUIDesigns::buildFXLabel(myGeoFrame, TL("N/A"), "", TL("Original coordinate (before coordinate transformation in netconvert)"), nullptr, LAYOUT_CENTER_Y);
+        myGeoCoordinate = new FXTextField(myGeoFrame, 26, this, MID_GEO_COORDINATE, FRAME_NONE | LAYOUT_CENTER_Y | TEXTFIELD_ENTER_ONLY, 0, 0, 0, GUIDesignHeight, 2, 2, 1, 1);
+        myGeoCoordinate->setHelpText(TL("Original coordinate (before coordinate transformation in netconvert). Enter 'lat, lon' or 'lat:... lon:...' to center view"));
+        myGeoCoordinate->setTipText(TL("Enter 'lat, lon' to center view"));
+        myGeoCoordinate->setBackColor(myGeoFrame->getBackColor());
+        myGeoCoordinate->setText(TL("N/A"));
+        myGeoCoordinate->disable();
+        myGeoCoordinate->setEditable(false);
         // build cartesian coordinates
         myCartesianFrame = new FXHorizontalFrame(myStatusbar, GUIDesignHorizontalFrameStatusBar);
-        myCartesianCoordinate = GUIDesigns::buildFXLabel(myCartesianFrame, TL("N/A"), "", TL("Network coordinate"), nullptr, LAYOUT_CENTER_Y);
+        myCartesianCoordinate = new FXTextField(myCartesianFrame, 22, this, MID_CARTESIAN_COORDINATE, FRAME_NONE | LAYOUT_CENTER_Y | TEXTFIELD_ENTER_ONLY, 0, 0, 0, GUIDesignHeight, 2, 2, 1, 1);
+        myCartesianCoordinate->setHelpText(TL("Network coordinate. Enter 'x, y' to center view"));
+        myCartesianCoordinate->setTipText(TL("Enter 'x, y' to center view"));
+        myCartesianCoordinate->setBackColor(myCartesianFrame->getBackColor());
+        myCartesianCoordinate->setText(TL("N/A"));
+        myCartesianCoordinate->disable();
+        myCartesianCoordinate->setEditable(false);
         // build buttons
         std::vector<std::string> help({
             TL("number of running vehicles"),
@@ -327,12 +351,23 @@ GUIApplicationWindow::dependentBuild(const bool isLibsumo) {
             TL("number of active persons"),
             TL("number of active containers")});
 
-        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_VEHS], help[STAT_VEHS], GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE), this, MID_SHOWVEHSTATS));
+        const GUIIcon greenVehIcon = (OptionsCont::getOptions().isSet("mesosim") && OptionsCont::getOptions().getBool("mesosim")) ?
+                                     GUIIcon::GREEN_VEHICLE_MESO : GUIIcon::GREENVEHICLE;
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_VEHS], help[STAT_VEHS], GUIIconSubSys::getIcon(greenVehIcon), this, MID_SHOWVEHSTATS));
         myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_DELAYED], help[STAT_DELAYED], GUIIconSubSys::getIcon(GUIIcon::INSERTION_DELAY), this, MID_SHOWVEHSTATS));
         myStatButtons.back()->hide();
         myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_TELEPORTS], help[STAT_TELEPORTS], GUIIconSubSys::getIcon(GUIIcon::TELEPORT), this, MID_SHOWVEHSTATS));
         myStatButtons.back()->hide();
-        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_PERSONS], help[STAT_PERSONS], GUIIconSubSys::getIcon(GUIIcon::GREENPERSON), this, MID_SHOWPERSONSTATS));
+        GUIIcon greenPersonIcon = GUIIcon::GREENPERSON;
+        if (OptionsCont::getOptions().isSet("pedestrian.model")) {
+            const std::string pedModel = OptionsCont::getOptions().getString("pedestrian.model");
+            if (StringUtils::to_lower_case(pedModel) == "noninteracting") {
+                greenPersonIcon = GUIIcon::GREEN_PERSON_NON_INTERACTING;
+            } else if (StringUtils::to_lower_case(pedModel) == "jupedsim") {
+                greenPersonIcon = GUIIcon::GREEN_PERSON_JUPEDSIM;
+            }
+        }
+        myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_PERSONS], help[STAT_PERSONS], GUIIconSubSys::getIcon(greenPersonIcon), this, MID_SHOWPERSONSTATS));
         myStatButtons.back()->hide();
         myStatButtons.push_back(GUIDesigns::buildFXButton(myStatusbar, "-", help[STAT_CONTAINERS], help[STAT_CONTAINERS], GUIIconSubSys::getIcon(GUIIcon::GREENCONTAINER), this, MID_SHOWVEHSTATS));
         myStatButtons.back()->hide();
@@ -542,7 +577,7 @@ GUIApplicationWindow::fillMenuBar() {
                                            TL("Edit Breakpoints"), "Ctrl+B", TL("Opens a dialog for editing breakpoints."),
                                            GUIIconSubSys::getIcon(GUIIcon::APP_BREAKPOINTS), this, MID_HOTKEY_CTRL_B_EDITBREAKPOINT_OPENDATAELEMENTS);
     GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
-                                           TL("Edit Visualisation"), "F9", TL("Opens a dialog for editing visualization settings."),
+                                           TL("Edit Visualization"), "F9", TL("Opens a dialog for editing visualization settings."),
                                            GUIIconSubSys::getIcon(GUIIcon::COLORWHEEL), this, MID_HOTKEY_F9_EDIT_VIEWSCHEME);
     GUIDesigns::buildFXMenuCommandShortcut(myEditMenu,
                                            TL("Edit Viewport"), "Ctrl+I", TL("Opens a dialog for editing viewing area, zoom and rotation."),
@@ -786,6 +821,18 @@ GUIApplicationWindow::buildToolBars() {
         new MFXButtonTooltip(myToolBar5, myStaticTooltipMenu, (std::string("\t") + TL("Open new 3D view") + std::string("\t") + TL("Open a new 3D view.")).c_str(),
                              GUIIconSubSys::getIcon(GUIIcon::OSGVIEW), this, MID_NEW_OSGVIEW, GUIDesignButtonToolbar);
 #endif
+        // add toggle button for tooltips in view on/off (by default unchecked)
+        myShowToolTipsView = new MFXCheckableButton(false, myToolBar5,
+                myStaticTooltipMenu, (std::string("\t") + TL("Toggle View Tooltips") + std::string("\t") + TL("Toggles whether tooltips in the view shall be shown.")).c_str(),
+                GUIIconSubSys::getIcon(GUIIcon::SHOWTOOLTIPS_VIEW), this, MID_SHOWTOOLTIPS_VIEW, GUIDesignMFXCheckableButtonSquare);
+        myShowToolTipsView->setChecked(getApp()->reg().readIntEntry("gui", "viewToolTips", 0) == 1);
+        myStaticTooltipView->enableStaticToolTip(myShowToolTipsView->amChecked());
+        // add toggle button for tooltips in menu on/off (by default checked)
+        myShowToolTipsMenu = new MFXCheckableButton(false, myToolBar5,
+                myStaticTooltipMenu, (std::string("\t") + TL("Toggle Menu Tooltips") + std::string("\t") + TL("Toggles whether tooltips in the menu shall be shown.")).c_str(),
+                GUIIconSubSys::getIcon(GUIIcon::SHOWTOOLTIPS_MENU), this, MID_SHOWTOOLTIPS_MENU, GUIDesignMFXCheckableButtonSquare);
+        myShowToolTipsMenu->setChecked(getApp()->reg().readIntEntry("gui", "menuToolTips", 0) != 1);
+        myStaticTooltipMenu->enableStaticToolTip(myShowToolTipsMenu->amChecked());
     }
     /// game specific stuff
     {
@@ -1712,6 +1759,10 @@ GUIApplicationWindow::onCmdFullScreen(FXObject*, FXSelector, void*) {
         setX(getApp()->reg().readIntEntry("SETTINGS", "x", 150));
         setY(getApp()->reg().readIntEntry("SETTINGS", "y", 150));
     }
+    // show or hide the full screen hint
+    for (GUIGlChildWindow* const window : myGLWindows) {
+        window->getView()->update();
+    }
     return 1;
 }
 
@@ -1750,6 +1801,30 @@ GUIApplicationWindow::onCmdNewOSG(FXObject*, FXSelector, void*) {
     return 1;
 }
 #endif
+
+
+long
+GUIApplicationWindow::onCmdShowToolTipsView(FXObject*, FXSelector, void*) {
+    // invert check
+    myShowToolTipsView->setChecked(!myShowToolTipsView->amChecked());
+    // update parent
+    myStaticTooltipView->enableStaticToolTip(myShowToolTipsView->amChecked());
+    // save in registry
+    getApp()->reg().writeIntEntry("gui", "viewToolTips", myShowToolTipsView->amChecked() ? 1 : 0);
+    return 1;
+}
+
+
+long
+GUIApplicationWindow::onCmdShowToolTipsMenu(FXObject*, FXSelector, void*) {
+    // invert check
+    myShowToolTipsMenu->setChecked(!myShowToolTipsMenu->amChecked());
+    // update parent
+    myStaticTooltipMenu->enableStaticToolTip(myShowToolTipsMenu->amChecked());
+    // save in registry
+    getApp()->reg().writeIntEntry("gui", "menuToolTips", myShowToolTipsMenu->amChecked() ? 0 : 1);
+    return 1;
+}
 
 
 long
@@ -2013,6 +2088,18 @@ GUIApplicationWindow::handleEvent_SimulationLoaded(GUIEvent* e) {
             }
             // set simulation step begin information
             myLCDLabel->setText("----------------");
+            const GUIIcon greenVehIcon = MSGlobals::gUseMesoSim ? GUIIcon::GREEN_VEHICLE_MESO : GUIIcon::GREENVEHICLE;
+            myStatButtons[STAT_VEHS]->setIcon(GUIIconSubSys::getIcon(greenVehIcon));
+
+            const std::string pedModel = OptionsCont::getOptions().getString("pedestrian.model");
+            if (StringUtils::to_lower_case(pedModel) == "noninteracting") {
+                myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREEN_PERSON_NON_INTERACTING));
+            } else if (StringUtils::to_lower_case(pedModel) == "jupedsim") {
+                myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREEN_PERSON_JUPEDSIM));
+            } else {
+                myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENPERSON));
+            }
+
             for (std::vector<FXButton*>::const_iterator it = myStatButtons.begin(); it != myStatButtons.end(); ++it) {
                 (*it)->setText("-");
             }
@@ -2054,13 +2141,14 @@ GUIApplicationWindow::handleEvent_SimulationStep(GUIEvent*) {
     const int backlog = myRunThread->getNet().getInsertionControl().getWaitingVehicleNo();
     const int teleports = myRunThread->getNet().getVehicleControl().getTeleportCount();
     const int departed = myRunThread->getNet().getVehicleControl().getDepartedVehicleNo();
+    const GUIIcon greenVehIcon = MSGlobals::gUseMesoSim ? GUIIcon::GREEN_VEHICLE_MESO : GUIIcon::GREENVEHICLE;
     if (backlog > running) {
-        if (vehStats->getIcon() == GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE)) {
+        if (vehStats->getIcon() == GUIIconSubSys::getIcon(greenVehIcon)) {
             vehStats->setIcon(GUIIconSubSys::getIcon(GUIIcon::YELLOWVEHICLE));
         }
     } else {
         if (vehStats->getIcon() == GUIIconSubSys::getIcon(GUIIcon::YELLOWVEHICLE)) {
-            vehStats->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE));
+            vehStats->setIcon(GUIIconSubSys::getIcon(greenVehIcon));
         }
     }
     vehStats->setText(toString(running).c_str());
@@ -2308,6 +2396,8 @@ void
 GUIApplicationWindow::closeAllWindows() {
     myTrackerLock.lock();
     myLCDLabel->setText("----------------");
+    myStatButtons[STAT_VEHS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENVEHICLE));
+    myStatButtons[STAT_PERSONS]->setIcon(GUIIconSubSys::getIcon(GUIIcon::GREENPERSON));
     for (std::vector<FXButton*>::const_iterator it = myStatButtons.begin(); it != myStatButtons.end(); ++it) {
         (*it)->setText("-");
         if (it != myStatButtons.begin()) {
@@ -2353,7 +2443,11 @@ GUIApplicationWindow::closeAllWindows() {
     myTrackerLock.unlock();
     // remove coordinate information
     myGeoCoordinate->setText(TL("N/A"));
+    myGeoCoordinate->disable();
+    myGeoCoordinate->setEditable(false);
     myCartesianCoordinate->setText(TL("N/A"));
+    myCartesianCoordinate->disable();
+    myCartesianCoordinate->setEditable(false);
     if (myTestCoordinate) {
         myTestCoordinate->setText(TL("N/A"));
     }
@@ -2477,6 +2571,22 @@ GUIApplicationWindow::addHotkey(int key, Command* press, Command* release) {
 long
 GUIApplicationWindow::onKeyPress(FXObject* o, FXSelector sel, void* ptr) {
     FXEvent* e = (FXEvent*) ptr;
+    if (e->code == KEY_Escape) {
+        if (myGeoCoordinate && myGeoCoordinate->hasFocus()) {
+            myGeoCoordinate->killFocus();
+            if (getActiveView()) {
+                getActiveView()->updatePositionInformationLabel();
+            }
+            return 1;
+        }
+        if (myCartesianCoordinate && myCartesianCoordinate->hasFocus()) {
+            myCartesianCoordinate->killFocus();
+            if (getActiveView()) {
+                getActiveView()->updatePositionInformationLabel();
+            }
+            return 1;
+        }
+    }
     // PgUp and PgDown switch between widgets by default and binding them via menu shortcuts does not work reliably
     // so we must intercept them before FXMainWindow can handle it
     if (e->code == FX::KEY_Page_Up) {

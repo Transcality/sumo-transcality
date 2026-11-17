@@ -219,6 +219,16 @@ public:
         return myEventTime;
     }
 
+    /// @brief Sets the index of the vehicle's event (orders events with the same time)
+    inline void setEventIndex(long long int index) {
+        myEventIndex = index;
+    }
+
+    /// @brief Returns the index of the vehicle's event
+    inline long long int getEventIndex() const {
+        return myEventIndex;
+    }
+
     /** @brief Sets the minimum time at which the vehicle leaves its current segment (this includes planned stops)
      * @param[in] t The leaving time
      */
@@ -346,9 +356,9 @@ public:
     bool replaceRoute(ConstMSRoutePtr route,  const std::string& info, bool onInit = false, int offset = 0, bool addRouteStops = true, bool removeStops = true, std::string* msgReturn = nullptr);
 
     /** @brief Returns whether the vehicle is allowed to pass the next junction, checks also for triggered stops
-     * @return true iff the vehicle may drive over the next junction
+     * @return MESegment::PROCEED_YES iff the vehicle may drive over the next junction
      */
-    bool mayProceed();
+    int mayProceed();
 
     /** @brief Updates a single vehicle detector if present
      */
@@ -401,6 +411,9 @@ protected:
 
     /// @brief The (planned) time of leaving the segment (cell)
     SUMOTime myEventTime;
+
+    /// @brief The index of the vehicle's event (orders events with the same time)
+    long long int myEventIndex;
 
     /// @brief The time the vehicle entered its current segment
     SUMOTime myLastEntryTime;

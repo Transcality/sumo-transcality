@@ -200,7 +200,7 @@ Ok, let's solve these problems one after another.
   <type id="2"  priority="4" numLanes="1" speed="22.22"/>
   <!-- "Hauptstrasse" (main (city) road) -->
   <type id="3"  priority="3" numLanes="2" speed="13.89"/>
-  <!-- "Nebenstrasse" (lower priorised (city) road) -->
+  <!-- "Nebenstrasse" (lower prioritized (city) road) -->
   <type id="4"  priority="2" numLanes="1" speed="13.89"/>
   <!-- "Weg" (path) -->
   <type id="5"  priority="1" numLanes="1" speed="5"/>
@@ -208,7 +208,7 @@ Ok, let's solve these problems one after another.
   <type id="6"  priority="2" numLanes="1" speed="8.33"/>
   <!-- "Spielstrasse" (a street where children may play (10km/h)) -->
   <type id="7"  priority="1" numLanes="1" speed="1.39"/>
-  <!-- "Fussgaengerzone" (pedestrains zone) -->
+  <!-- "Fussgaengerzone" (pedestrians zone) -->
   <type id="8"  priority="0" numLanes="1" speed="0.1"/>
   <!-- "gesperrte Strasse" (closed street) -->
   <type id="9"  priority="0" numLanes="1" speed="0.1"/>
@@ -233,7 +233,7 @@ netconvert --arcview strassen -o frida.net.xml \
 
 ### Data Quality
 
-Looking a bit deeper at the network, we had to realise two further
+Looking a bit deeper at the network, we had to realize two further
 problems. At first, highway on- and off-ramps are marked as "highway".
 this yields in a network where on- and offramps have the same number of
 lanes as the highways themselves. And it's definitely not fitting to

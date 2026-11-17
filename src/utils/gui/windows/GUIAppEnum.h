@@ -375,6 +375,10 @@ enum {
     MID_SHOWPERSONSTATS,
     /// @brief update traci status
     MID_TRACI_STATUS,
+    /// @brief enter geo coordinate to center view
+    MID_GEO_COORDINATE,
+    /// @brief enter cartesian coordinate to center view
+    MID_CARTESIAN_COORDINATE,
 
     /// @name Common View Settings - IDs
     /// @{
@@ -593,6 +597,10 @@ enum {
     MID_CHOOSER_FILTER,
     /// @brief Filter list by substring
     MID_CHOOSER_FILTER_SUBSTR,
+    /// @brief Case sensitive search
+    MID_CHOOSER_CASESENSITIVE,
+    /// @brief Auto center
+    MID_CHOOSER_AUTOCENTER,
 
     /// @}
 
@@ -1116,7 +1124,7 @@ enum {
     MID_GNE_ATTRIBUTESEDITOR_RESET,
     /// @brief set attribute (string, bool, etc.) in attributes editor row
     MID_GNE_ATTRIBUTESEDITORROW_SETATTRIBUTE,
-    /// @brief toogle enable attribute in attributes editor row
+    /// @brief toggle enable attribute in attributes editor row
     MID_GNE_ATTRIBUTESEDITORROW_TOGGLEENABLEATTRIBUTE,
     /// @brief open color dialog in attributes editor row
     MID_GNE_ATTRIBUTESEDITORROW_OPENDIALOG_COLOR,
@@ -1140,7 +1148,7 @@ enum {
     MID_GNE_SELECTORFRAME_SELECTTAG,
     /// @brief select attribute in selector frame
     MID_GNE_SELECTORFRAME_SELECTATTRIBUTE,
-    /// @brief toogle only show common
+    /// @brief toggle only show common
     MID_GNE_SELECTORFRAME_TOGGLECOMMON,
     /// @brief process string
     MID_GNE_SELECTORFRAME_PROCESSSTRING,
@@ -1174,11 +1182,11 @@ enum {
     MID_GNE_CONNECTORFRAME_SELECTCONFLICTS,
     /// @brief select lanes with connections that have the pass attribute set to 'true'
     MID_GNE_CONNECTORFRAME_SELECTPASS,
-    /// @brief toogle inspect connections
+    /// @brief toggle inspect connections
     MID_GNE_CONNECTORFRAME_VISIBLEININSPECTMODE,
-    /// @brief toogle show only from source connections
+    /// @brief toggle show only from source connections
     MID_GNE_CONNECTORFRAME_HIDEOTHERSOURCES,
-    /// @brief toogle inspect connections
+    /// @brief toggle inspect connections
     MID_GNE_CONNECTORFRAME_INSPECTCONNECTIONS,
 
     /// @}

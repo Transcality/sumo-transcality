@@ -431,10 +431,11 @@ static PyObject* parseSubscriptionMap(const std::map<int, std::shared_ptr<libsum
 
 %pythonprepend SWIG_MODULE::Vehicle::add(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&,
                                      const std::string&, const std::string&, const std::string&, const std::string&, const std::string&,
-                                     const std::string&, const std::string&, const std::string&, int, int) %{
+                                     const std::string&, const std::string&, const std::string&, int, int,
+                                     const std::string&, const std::string&, double, const std::string&) %{
     args = [str(a) for a in args[:13]] + list(args[13:])
     for key, val in kwargs.items():
-        if key not in ("personCapacity", "personNumber"):
+        if key not in ("personCapacity", "personNumber", "speedFactor"):
             kwargs[key] = str(val)
 %}
 
@@ -522,7 +523,7 @@ SUBSCRIBE_HELPER(RouteProbe)
 // ignore constant conditional expression (C4127) and unreachable/unsafe code warnings
 // and hidden local declaration (C4456), uninitialized variable (C4701), assignment in conditional expression (C4706)
 // also see config.h.cmake
-#pragma warning(disable:4127 4456 4701 4702 4706 4996 4365 4820 4514 5045 4191 4710 4668)
+#pragma warning(disable:4127 4456 4701 4702 4706 4996 4365 4820 4514 5045 4191 4710 4711 4668 5267)
 #else
 // ignore unused parameter warnings for vector template code
 #pragma GCC diagnostic ignored "-Wunused-parameter"

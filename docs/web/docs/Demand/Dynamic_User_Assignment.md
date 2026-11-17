@@ -190,7 +190,7 @@ files.
 
 # Iterative Assignment (Approximating System Optimum)
 
-The system optimal condition can be achieved by replacing the path travel time with the path marginal travel time (MTT). There are two ways to calculate the path MTT: 1) global approximation, which represents the changes in the total system travel time caused by an additional vehicle that is added to the path at a certain time interval, and 2) local approximation, which represents the changes in the path travel time caused by an additional vehicle that is added to the route at a certain time interval. duaIterate.py supports an approach where the path MTT is approximated as a summation of the corresponding link MTTs. bBcause the global approximation of MTT is computationally expensive and is not practical for large-scale DTA, the tool implements the local approximation of MTT.
+The system optimal condition can be achieved by replacing the path travel time with the path marginal travel time (MTT). There are two ways to calculate the path MTT: 1) global approximation, which represents the changes in the total system travel time caused by an additional vehicle that is added to the path at a certain time interval, and 2) local approximation, which represents the changes in the path travel time caused by an additional vehicle that is added to the route at a certain time interval. duaIterate.py supports an approach where the path MTT is approximated as a summation of the corresponding link MTTs. Because the global approximation of MTT is computationally expensive and is not practical for large-scale DTA, the tool implements the local approximation of MTT.
 
 Given that SUMO provides the average travel time of each link, it is not possible to directly calculate the additional travel time that one vehicle inflicts on the link. An alternative approach to compute the link MTT is to calculate the average travel time in successive iterations (with a different number of vehicles assigned to each link in each iteration) and compute the difference in link average travel time. Using this method, the average inflicted additional travel time on the link can be calculated. Therefore, a surrogate model of MTT is used to achieve SO as follows:
 
@@ -203,7 +203,7 @@ where ![grafik](https://github.com/eclipse-sumo/sumo/assets/6240630/c8927274-d95
  and ![grafik](https://github.com/eclipse-sumo/sumo/assets/6240630/4f0dd98f-4ad4-4d3a-b0f3-4f181be25feb) are, respectively, the traffic flow of link *a* at simulation steps *i-1* and *i-2*.
 
 The Dynamic System Optimal traffic assignment can be activated by setting options **--marginal-cost, --marginal-cost.exp**, in duaIterate.py. As the MTTs in the proposed algorithm are calculated based on a local approximation, it may lead to its overestimation. Therefore, it is recommended to use the second term of the MTT equation for calibration (option **--marginal-cost.exp**)
-For more information about dynamic system optimal modelling in SUMO please refer to https://doi.org/10.52825/scp.v3i.119.
+For more information about dynamic system optimal modeling in SUMO please refer to https://doi.org/10.52825/scp.v3i.119.
 
 # Iterative Assignment (Mixing DUE and SO)
 

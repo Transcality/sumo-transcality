@@ -150,6 +150,10 @@ GUISUMOAbstractView::GUISUMOAbstractView(FXComposite* p, GUIMainWindow& app, GUI
     myVisualizationSettings->gaming = myApp->isGaming();
     gSchemeStorage.setViewport(this);
     myDecals = gSchemeStorage.getDecals();
+    if (myApp->getCartesianLabel() != nullptr) {
+        myApp->getCartesianLabel()->enable();
+        myApp->getCartesianLabel()->setEditable(true);
+    }
 }
 
 
@@ -265,13 +269,25 @@ void
 GUISUMOAbstractView::updatePositionInformationLabel() const {
     Position pos = getPositionInformation();
     // set cartesian position
-    myApp->getCartesianLabel()->setText(("x:" + toString(pos.x()) + ", y:" + toString(pos.y())).c_str());
+    if (!myApp->getCartesianLabel()->hasFocus()) {
+        myApp->getCartesianLabel()->setText(("x:" + toString(pos.x()) + ", y:" + toString(pos.y())).c_str());
+    }
     // set geo position
-    GeoConvHelper::getFinal().cartesian2geo(pos);
-    if (GeoConvHelper::getFinal().usingGeoProjection()) {
-        myApp->getGeoLabel()->setText(("lat:" + toString(pos.y(), gPrecisionGeo) + ", lon:" + toString(pos.x(), gPrecisionGeo)).c_str());
-    } else {
-        myApp->getGeoLabel()->setText(TL("(No projection defined)"));
+    if (!myApp->getGeoLabel()->hasFocus()) {
+        GeoConvHelper::getFinal().cartesian2geo(pos);
+        if (GeoConvHelper::getFinal().usingGeoProjection()) {
+            if (!myApp->getGeoLabel()->isEnabled()) {
+                myApp->getGeoLabel()->enable();
+                myApp->getGeoLabel()->setEditable(true);
+            }
+            myApp->getGeoLabel()->setText(("lat:" + toString(pos.y(), gPrecisionGeo) + ", lon:" + toString(pos.x(), gPrecisionGeo)).c_str());
+        } else {
+            myApp->getGeoLabel()->setText(TL("(No projection defined)"));
+            if (myApp->getGeoLabel()->isEnabled()) {
+                myApp->getGeoLabel()->disable();
+                myApp->getGeoLabel()->setEditable(false);
+            }
+        }
     }
     // if enabled, set test position
     if (myApp->getTestFrame()) {
@@ -356,6 +372,9 @@ GUISUMOAbstractView::paintGL() {
     myFrameDrawTime = end - start;
     if (myVisualizationSettings->fps) {
         drawFPS();
+    }
+    if (myApp->isFullScreen()) {
+        drawFullScreenHint();
     }
     // check if show tooltip
     if (myGlChildWindowParent->getGUIMainWindowParent()->getStaticTooltipView()->isStaticToolTipEnabled()) {
@@ -944,6 +963,52 @@ GUISUMOAbstractView::drawFPS() {
     GLHelper::drawText(toString(GLHelper::getMatrixCounter()) + " matrix", Position(0.82, 0.79), -1, fontHeight, RGBColor::RED, 0, FONS_ALIGN_LEFT, fontWidth);
     GLHelper::drawText(toString(GLHelper::getVertexCounter()) + " vertex", Position(0.82, 0.71), -1, fontHeight, RGBColor::RED, 0, FONS_ALIGN_LEFT, fontWidth);
 #endif
+    // restore matrices
+    glMatrixMode(GL_PROJECTION);
+    GLHelper::popMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    GLHelper::popMatrix();
+}
+
+
+std::string
+GUISUMOAbstractView::getFullScreenHintText() {
+    return TL("Full Screen Mode. Press Ctrl+F to exit.");
+}
+
+
+void
+GUISUMOAbstractView::drawFullScreenHint() {
+    glMatrixMode(GL_PROJECTION);
+    GLHelper::pushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    GLHelper::pushMatrix();
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // sizes are given in pixels and converted to normalized device coordinates
+    const double pxX = 2. / getWidth();
+    const double pxY = 2. / getHeight();
+    const std::string text = getFullScreenHintText();
+    const double fontHeight = 16 * pxY;
+    const double fontWidth = 16 * pxX;
+    const double textWidth = GLHelper::getTextWidth(text, fontWidth);
+    const double margin = 6;
+    const double right = 1. - margin * pxX;
+    const double bottom = -1. + margin * pxY;
+    // semi-transparent background box for readability on any background color
+    glColor4ub(0, 0, 0, 160);
+    glBegin(GL_QUADS);
+    glVertex2d(right - textWidth - 2 * margin * pxX, bottom);
+    glVertex2d(right, bottom);
+    glVertex2d(right, bottom + fontHeight + 2 * margin * pxY);
+    glVertex2d(right - textWidth - 2 * margin * pxX, bottom + fontHeight + 2 * margin * pxY);
+    glEnd();
+    GLHelper::drawText(text, Position(right - margin * pxX, bottom + margin * pxY), 0, fontHeight, RGBColor::WHITE, 0, FONS_ALIGN_RIGHT | FONS_ALIGN_BOTTOM, fontWidth);
+    glEnable(GL_DEPTH_TEST);
     // restore matrices
     glMatrixMode(GL_PROJECTION);
     GLHelper::popMatrix();

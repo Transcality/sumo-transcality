@@ -396,7 +396,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--osm.all-attributes** {{DT_BOOL}} | Whether additional attributes shall be imported; *default:* **false** |
 | **--osm.extra-attributes** {{DT_STR_LIST}} | List of additional attributes that shall be imported from OSM via osm.all-attributes (set 'all' to import all); *default:* **all** |
 | **--osm.speedlimit-none** {{DT_FLOAT}} | The speed limit to be set when there is no actual speed limit in reality; *default:* **39.4444** |
-| **--osm.annotate-defaults** {{DT_BOOL}} | Whether edges shoulds carry information on the usage of typemap defaults; *default:* **false** |
+| **--osm.annotate-defaults** {{DT_BOOL}} | Whether edges should carry information on the usage of typemap defaults; *default:* **false** |
 | **--matsim.keep-length** {{DT_BOOL}} | The edge lengths given in the MATSim-file will be kept; *default:* **false** |
 | **--matsim.lanes-from-capacity** {{DT_BOOL}} | The lane number will be computed from the capacity; *default:* **false** |
 | **--shapefile.street-id** {{DT_STR}} | Read edge ids from column STR |
@@ -428,7 +428,7 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--visum.connectors-lane-number** {{DT_INT}} | Sets connector lane number; *default:* **3** |
 | **--visum.no-connectors** {{DT_BOOL}} | Excludes connectors; *default:* **true** |
 | **--visum.recompute-lane-number** {{DT_BOOL}} | Computes the number of lanes from the edges' capacities; *default:* **false** |
-| **--visum.verbose-warnings** {{DT_BOOL}} | Prints all warnings, some of which are due to VISUM misbehaviour; *default:* **false** |
+| **--visum.verbose-warnings** {{DT_BOOL}} | Prints all warnings, some of which are due to VISUM misbehavior; *default:* **false** |
 | **--visum.lanes-from-capacity.norm** {{DT_FLOAT}} | The factor for flow to no. lanes conversion; *default:* **1800** |
 | **--opendrive.import-all-lanes** {{DT_BOOL}} | Imports all lane types; *default:* **false** |
 | **--opendrive.curve-resolution** {{DT_FLOAT}} | The geometry resolution in m when importing curved geometries as line segments.; *default:* **2** |
@@ -487,12 +487,12 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 | **--meanDataEdge-prefix** {{DT_STR}} | Prefix for meanDataEdge naming; *default:* **ed** |
 | **--meanDataLane-prefix** {{DT_STR}} | Prefix for meanDataLane naming; *default:* **ld** |
 
-### Visualisation
+### Visualization
 | Option | Description |
 |--------|-------------|
 | **--disable-laneIcons** {{DT_BOOL}} | Disable icons of special lanes; *default:* **false** |
 | **-T** {{DT_BOOL}}<br> **--disable-textures** {{DT_BOOL}} | Disable textures; *default:* **false** |
-| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualisation settings from FILE |
+| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualization settings from FILE |
 | **--registry-viewport** {{DT_BOOL}} | Load current viewport from registry; *default:* **false** |
 | **--window-size** {{DT_STR_LIST}} | Create initial window with the given x,y size |
 | **--window-pos** {{DT_STR_LIST}} | Create initial window at the given x,y position |
@@ -536,4 +536,3 @@ configuration: [sumoConfiguration.xsd](https://sumo.dlr.de/xsd/neteditConfigurat
 |--------|-------------|
 | **--random** {{DT_BOOL}} | Initialises the random number generator with the current system time; *default:* **false** |
 | **--seed** {{DT_INT}} | Initialises the random number generator with the given value; *default:* **23423** |
-

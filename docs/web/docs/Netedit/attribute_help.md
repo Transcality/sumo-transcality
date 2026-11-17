@@ -59,7 +59,7 @@
 |type|string|A typename for the polygon|
 |imgFile|filename(Existent)|A bitmap to use for rendering this poly|
 |angle|angle[0, 360]|Angle of rendered image in degree *default:* **0.00**|
-|height|non-negative float|Height of polygonin meters *default:* **0.00**|
+|height|non-negative float|Height of polygon in meters *default:* **0.00**|
 |geo|boolean|Enable or disable GEO attributes *default:* **0**|
 |geoShape|list of unique positions|A custom geo shape for this polygon|
 
@@ -836,7 +836,7 @@ child element of [variableSpeedSign](#variablespeedsign)
 |jmIgnoreFoeSpeed|non-negative float|This value is used in conjunction with jmIgnoreFoeProb. Only vehicles with a speed below or equal to the given value may be ignored. *default:* **0.00**|
 |jmSigmaMinor|float|This value configures driving imperfection (dawdling) while passing a minor link. *default:* **0.00**|
 |jmTimegapMinor|non-negative float|This value defines the minimum time gap when passing ahead of a prioritized vehicle.  *default:* **1.00**|
-|impatience|non-negative float|Willingess of drivers to impede vehicles with higher priority *default:* **0.00**|
+|impatience|non-negative float|Willingness of drivers to impede vehicles with higher priority *default:* **0.00**|
 |lcStrategic|non-negative float|The eagerness for performing strategic lane changing. Higher values result in earlier lane-changing. *default:* **1.00**|
 |lcCooperative|non-negative float|The willingness for performing cooperative lane changing. Lower values result in reduced cooperation. *default:* **1.00**|
 |lcSpeedGain|non-negative float|The eagerness for performing lane changing to gain speed. Higher values result in more lane-changing. *default:* **1.00**|

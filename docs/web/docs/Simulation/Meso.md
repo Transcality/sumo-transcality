@@ -12,7 +12,7 @@ uses the same input data as the main [sumo](../sumo.md) model. It
 computes vehicle movements with queues and runs up to 100 times faster
 than the microscopic model of [sumo](../sumo.md). Additionally, due
 to using a coarser model for intersections and lane-changing it is more
-tolerant of network modelling errors than [sumo](../sumo.md).
+tolerant of network modeling errors than [sumo](../sumo.md).
 
 - **Purpose:** Simulates a defined scenario
 - **System:** portable (Linux/Windows is tested); runs on command line
@@ -138,7 +138,7 @@ The option **--meso-recheck** {{DT_TIME}} can be used to delay traffic flow into
 
 When setting option **--meso-ltm**, an alternative longitudinal model (the mesoscopic **L**ink **T**ransmission **M**odel) is activated. This model is based on a [publications](https://www.sciencedirect.com/science/article/pii/S1569190X26000018) by Ying-Chuan Ni et. al.
 
-Instead of classifying segments as jammed/free based on **--meso-jam-threshold**, this model achieves jam dynamics by tracking gaps between cars that travel upstream when a car exists a segment.
+Instead of classifying segments as jammed/free based on **--meso-jam-threshold**, this model achieves jam dynamics by tracking gaps between cars that travel upstream when a car exits a segment.
 Whereas the other model achieves increased headway whenever a car travels from a "jammed" segment into another "jammed" segment, the meso-LTM model achieves increased headway whenever a segment is filled with a combination of cars and gaps. As soon as gaps reach the upstream end of the segment they disappear and thus free up capacity for vehicles from the upstream segment.
 The following parameters are used by the model:
 
@@ -155,9 +155,14 @@ Lateral movement is not modelled explicitly. Vehicles may overtake each
 other (swap their position) if the option **--meso-overtaking** is enabled. This is a
 randomized process depending on vehicle speeds and density.
 
+When using option **--meso-lane-queue**, every lane is a separate queue and vehicles enter the shortest queue that they may use.
+Only on the last segment of an edge do they restrict their choice to the queues of the lanes that lead to their next edge.
+Thus, a spill-back from a turning lane (e.g. from a jammed off-ramp) blocks all queues on the upstream segments.
+With option **--meso-lookahead** {{DT_FLOAT}}, vehicles already restrict their choice to the queues of the lanes that lead along their route on all segments that end within the given distance (in m) of a turn, also when the turn is on one of the following edges.
+
 ## Junction Model
 
-There are 3 basic options for modelling junction control
+There are 3 basic options for modeling junction control
 
 1. **--meso-junction-control false** (the default): No junction control takes place. This should only be
     used for motorway scenarios or in combination with the penalty options below
@@ -236,7 +241,7 @@ The model parameters described above can be customized for each edge type id by 
     <type id="highway.motorway" ...>
         <meso tauff="1.13" taufj="1.13" taujf="1.73" taujj="1.4" jamThreshold="-1"
              multiQueue="true" junctionControl="false" tlsPenalty="0" tlsFlowPenalty="0"
-             minorPenalty="0" overtaking="false" edgeLength="98"/>
+             minorPenalty="0" overtaking="false" edgeLength="98" lookahead="0"/>
     </type>
 </additional>
 ```

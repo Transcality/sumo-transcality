@@ -43,7 +43,7 @@ next stops (0x73).
 | color (0x45) | ubyte,ubyte,ubyte,ubyte | Returns the vehicle's color (RGBA). This does not return the currently visible color in the GUI but the color value set in the XML file or via TraCI. | [getColor](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getColor) |
 | lane position (0x56) | double | The position of the vehicle along the lane (the distance from the front bumper to the start of the lane in [m]); error value: -2^30 | [getLanePosition](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getLanePosition) |
 | distance (0x84) | double | The distance, the vehicle has already driven ([m]); error value: -2^30 | [getDistance](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getDistance) |
-| signal states (0x5b) | int | An integer encoding the state of a vehicle's signals, see [TraCI/Vehicle Signalling](Vehicle_Signalling.md) for more information. | [getSignals](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getSignals) |
+| signal states (0x5b) | int | An integer encoding the state of a vehicle's signals, see [TraCI/Vehicle Signaling](Vehicle_Signaling.md) for more information. | [getSignals](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getSignals) |
 | routing mode (0x89) | int | An integer encoding the [current routing mode](../Simulation/Routing.md#travel-time_values_for_routing) (0: default, 1: aggregated) | [getRoutingMode](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getRoutingMode) |
 | TaxiFleet (0x20) | stringList | Return the list of all taxis with the given mode:(-1: all, 0 : empty, 1 : pickup,2 : occupied, 3: pickup+occupied). Note: vehicles that are in state pickup+occupied (due to ride sharing) will also be returned when requesting mode 1 or 2 | [getTaxiFleet](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getTaxiFleet) |
 | CO2 emissions<br />(id 0x60) | double | Vehicle's CO2 emissions in mg/s during this time step, to get the value for one step multiply with the step length; error value: -2^30 | [getCO2Emission](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getCO2Emission) |
@@ -95,6 +95,7 @@ next stops (0x73).
 | action step length (0x7d) | double | Returns the current action step length for the vehicle in s. | [getActionStepLength](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getActionStepLength) |
 | last action time (0x7f) | double | Returns the time of the last action step in s. | [getLastActionTime](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getLastActionTime) |
 | stops (0x74) | complex | Returns the list of the next or last n stops as StopData objects. | [getStops](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getStops) |
+| arrival position (0x75) | double | Returns the arrival position of the vehicle on the last edge of its route in m. | [getArrivalPos](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getArrivalPos) |
 | timeLoss (0x8c) | double | Returns the accumulated timeLoss of the vehicle in s | [getTimeLoss](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getTimeLoss) |
 | loaded list (0x24) | stringList | Returns a list of all loaded vehicle ids that have not yet arrived. This includes vehicles that are meant to depart in the future. | [getLoadedIDList](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getLoadedIDList) |
 | teleporting list (0x25) | stringList | Returns a list of all vehicles that are currently [teleporting/jumping](../Simulation/Why_Vehicles_are_teleporting.md) | [getTeleportingIDList](https://sumo.dlr.de/pydoc/traci/_vehicle.html#VehicleDomain.getTeleportingIDList) |
@@ -278,7 +279,7 @@ from the given speed.
 | :-------------------: | :---: | :----: | :----: |:----: |
 | value type *compound* | 3     | stopIndex  | param    | customParam
 
-The stopIndex must be in range [-numberOfPassedStops, numberORemaingStops - 1].
+The stopIndex must be in range [-numberOfPassedStops, numberORemainingStops - 1].
 The customParam is interpreted as a boolean and determines whether an attribute values or a user defined parameter is returned.
 
 
@@ -332,6 +333,12 @@ call](../TraCI/GenericParameters.md#get_parameter).
 - device.taxi.occupiedTime
 - device.taxi.occupiedDistance
 - device.taxi.currentCustomers
+- device.tripinfo.depart
+- device.tripinfo.departPos
+- device.tripinfo.departSpeed
+- device.tripinfo.departDelay
+- device.tripinfo.duration
+- device.tripinfo.rerouteNo
 - device.tripinfo.waitingTime (total waiting time)
 - device.tripinfo.waitingCount
 - device.tripinfo.stopTime (total stopping time)

@@ -256,7 +256,7 @@ configuration:
 | **--parking.maneuver** {{DT_BOOL}} | Whether parking simulation includes maneuvering time and associated lane blocking; *default:* **false** |
 | **--use-stop-ended** {{DT_BOOL}} | Override stop until times with stop ended times when given; *default:* **false** |
 | **--use-stop-started** {{DT_BOOL}} | Override stop arrival times with stop started times when given; *default:* **false** |
-| **--pedestrian.model** {{DT_STR}} | Select among pedestrian models ['nonInteracting', 'striping', 'jupedsim', 'remote']; *default:* **striping** |
+| **--pedestrian.model** {{DT_STR}} | Select among pedestrian models ['nonInteracting', 'striping', 'jupedsim']; *default:* **striping** |
 | **--pedestrian.timegap-crossing** {{DT_FLOAT}} | Minimal acceptable gap (in seconds) between two vehicles before starting to cross; *default:* **2** |
 | **--pedestrian.striping.stripe-width** {{DT_FLOAT}} | Width of parallel stripes for segmenting a sidewalk (meters) for use with model 'striping'; *default:* **0.64** |
 | **--pedestrian.striping.dawdling** {{DT_FLOAT}} | Factor for random slow-downs [0,1] for use with model 'striping'; *default:* **0.2** |
@@ -366,7 +366,7 @@ configuration:
 |--------|-------------|
 | **--emissions.volumetric-fuel** {{DT_BOOL}} | Return fuel consumption values in (legacy) unit l instead of mg; *default:* **false** |
 | **--phemlight-path** {{DT_FILE}} | Determines where to load PHEMlight definitions from; *default:* **./PHEMlight/** |
-| **--phemlight-year** {{DT_INT}} | Enable fleet age modelling with the given reference year in PHEMlight5; *default:* **0** |
+| **--phemlight-year** {{DT_INT}} | Enable fleet age modeling with the given reference year in PHEMlight5; *default:* **0** |
 | **--phemlight-temperature** {{DT_FLOAT}} | Set ambient temperature to correct NOx emissions in PHEMlight5; *default:* **1.79769e+308** |
 | **--device.emissions.probability** {{DT_FLOAT}} | The probability for a vehicle to have a 'emissions' device; *default:* **-1** |
 | **--device.emissions.explicit** {{DT_STR_LIST}} | Assign a 'emissions' device to named vehicles |
@@ -610,6 +610,7 @@ configuration:
 | **--meso-jam-threshold** {{DT_FLOAT}} | Minimum percentage of occupied space to consider a segment jammed. A negative argument causes thresholds to be computed based on edge speed and tauff (default); *default:* **-1** |
 | **--meso-multi-queue** {{DT_BOOL}} | Enable multiple queues at edge ends; *default:* **true** |
 | **--meso-lane-queue** {{DT_BOOL}} | Enable separate queues for every lane; *default:* **false** |
+| **--meso-lookahead** {{DT_FLOAT}} | Choose lane queues by the route of the vehicle at all turns up to FLOAT m ahead; *default:* **0** |
 | **--meso-ignore-lanes-by-vclass** {{DT_STR_LIST}} | Do not build queues (or reduce capacity) for lanes allowing only the given vclasses; *default:* **pedestrian,bicycle** |
 | **--meso-junction-control** {{DT_BOOL}} | Enable mesoscopic traffic light and priority junction handling; *default:* **false** |
 | **--meso-junction-control.limited** {{DT_BOOL}} | Enable mesoscopic traffic light and priority junction handling for saturated links. This prevents faulty traffic lights from hindering flow in low-traffic situations; *default:* **false** |
@@ -632,7 +633,7 @@ configuration:
 
 | Option | Description |
 |--------|-------------|
-| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualisation settings from FILE |
+| **-g** {{DT_FILE}}<br> **--gui-settings-file** {{DT_FILE}} | Load visualization settings from FILE |
 | **-Q** {{DT_BOOL}}<br> **--quit-on-end** {{DT_BOOL}} | Quits the GUI when the simulation stops; *default:* **false** |
 | **-G** {{DT_BOOL}}<br> **--game** {{DT_BOOL}} | Start the GUI in gaming mode; *default:* **false** |
 | **--game.mode** {{DT_STR}} | Select the game type ('tls', 'drt'); *default:* **tls** |

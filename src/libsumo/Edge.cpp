@@ -20,6 +20,7 @@
 #include <config.h>
 
 #include <iterator>
+#include <limits>
 #include <microsim/MSEdge.h>
 #include <microsim/MSLane.h>
 #include <microsim/MSEdgeWeightsStorage.h>
@@ -228,6 +229,12 @@ Edge::getMeanFriction(const std::string& edgeID) {
 
 
 double
+Edge::getMaxSpeed(const std::string& edgeID) {
+    return getEdge(edgeID)->getSpeedLimit();
+}
+
+
+double
 Edge::getLastStepOccupancy(const std::string& edgeID) {
     return getEdge(edgeID)->getOccupancy();
 }
@@ -352,7 +359,23 @@ Edge::setAllowedSVCPermissions(const std::string& edgeID, long long int permissi
 
 void
 Edge::adaptTraveltime(const std::string& edgeID, double time, double beginSeconds, double endSeconds) {
-    MSNet::getInstance()->getWeightsStorage().addTravelTime(getEdge(edgeID), beginSeconds, endSeconds, time);
+    MSEdge* edge = getEdge(edgeID);
+    MSEdgeWeightsStorage& storage = MSNet::getInstance()->getWeightsStorage();
+    if (time != INVALID_DOUBLE_VALUE) {
+        // add time
+        if (beginSeconds == 0 && endSeconds == std::numeric_limits<double>::max()) {
+            // clean up old values before setting whole range
+            while (storage.knowsTravelTime(edge)) {
+                storage.removeTravelTime(edge);
+            }
+        }
+        storage.addTravelTime(edge, beginSeconds, endSeconds, time);
+    } else {
+        // remove time
+        while (storage.knowsTravelTime(edge)) {
+            storage.removeTravelTime(edge);
+        }
+    }
 }
 
 
@@ -437,6 +460,8 @@ Edge::handleVariable(const std::string& objID, const int variable, VariableWrapp
             return wrapper->wrapInt(objID, variable, getLastStepVehicleNumber(objID));
         case LAST_STEP_MEAN_SPEED:
             return wrapper->wrapDouble(objID, variable, getLastStepMeanSpeed(objID));
+        case VAR_MAXSPEED:
+            return wrapper->wrapDouble(objID, variable, getMaxSpeed(objID));
         case VAR_FRICTION:
             return wrapper->wrapDouble(objID, variable, getMeanFriction(objID));
         case LAST_STEP_OCCUPANCY:

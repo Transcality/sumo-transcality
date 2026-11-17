@@ -63,8 +63,9 @@ public:
      *
      * @param[in] veh the car which became a leading one
      * @param[in] link the link on which the car shall register its approach
+     * @param[in] fromState whether the event is restored from a loaded state (keeping the vehicle's event index)
      */
-    void addLeaderCar(MEVehicle* veh, MSLink* link);
+    void addLeaderCar(MEVehicle* veh, MSLink* link, const bool fromState = false);
 
     /** @brief Removes the given car from the leading vehicles
      *
@@ -104,6 +105,15 @@ public:
 
     /** @brief Remove all vehicles before quick-loading state */
     void clearState();
+
+    /// @brief the number of leader events so far (for saving and loading state)
+    static long long int getEventCounter() {
+        return LeaderEvent::myEventCounter;
+    }
+
+    static void setEventCounter(long long int counter) {
+        LeaderEvent::myEventCounter = counter;
+    }
 
 private:
     /** @brief Check whether the vehicle may move
@@ -166,9 +176,9 @@ private:
 
 
     /// @brief leader cars in the segments sorted by exit time
-    typedef std::priority_queue<LeaderEvent> LeaderEventQeue;
-    LeaderEventQeue myLeaderCars;
-    LeaderEventQeue myInvalidatedLeaderCars;
+    typedef std::priority_queue<LeaderEvent> LeaderEventQueue;
+    LeaderEventQueue myLeaderCars;
+    LeaderEventQueue myInvalidatedLeaderCars;
 
     /// @brief mapping from internal edge ids to their initial segments
     std::vector<MESegment*> myEdges2FirstSegments;
@@ -178,6 +188,8 @@ private:
 
     /// @brief the interval at which to recheck at blocked junctions (<=0 means asap)
     const SUMOTime myLinkRecheckInterval;
+
+    bool myInterpolateMesoPos;
 
 private:
     /// @brief Invalidated copy constructor.

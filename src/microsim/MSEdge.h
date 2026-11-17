@@ -27,6 +27,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <iostream>
 #ifdef HAVE_FOX
 #include <utils/foxtools/fxheader.h>
@@ -122,11 +123,11 @@ public:
     /// @todo Has to be called after all edges were built and all connections were set...; Still, is not very nice
     virtual void closeBuilding();
 
-    /// Has to be called after all sucessors and predecessors have been set (after closeBuilding())
+    /// Has to be called after all successors and predecessors have been set (after closeBuilding())
     void buildLaneChanger();
 
-    /* @brief returns whether initizliaing a lane change is permitted on this edge
-     * @note Has to be called after all sucessors and predecessors have been set (after closeBuilding())
+    /* @brief returns whether initializing a lane change is permitted on this edge
+     * @note Has to be called after all successors and predecessors have been set (after closeBuilding())
      */
     bool allowsLaneChanging() const;
 
@@ -187,10 +188,10 @@ public:
 
     double getBruttoOccupancy() const;
 
-    /// @brief return flow based on meanSpead @note: may produced incorrect results when jammed
+    /// @brief return flow based on meanSpeed @note: may produce incorrect results when jammed
     double getFlow() const;
 
-    /// @brief return accumated waiting time for all vehicles on this edges lanes or segments
+    /// @brief return accumulated waiting time for all vehicles on this edges lanes or segments
     double getWaitingSeconds() const;
 
     /// @brief return mean occupancy on this edges lanes or segments
@@ -514,7 +515,7 @@ public:
     double getRoutingSpeed() const;
 
 
-    /// @name Methods releated to vehicle insertion
+    /// @name Methods related to vehicle insertion
     /// @{
 
     /** @brief Tries to insert the given vehicle into the network
@@ -547,7 +548,7 @@ public:
      *
      * If there are no vehicles before departPos, then the lane with the largest
      * gap between departPos and the last vehicle is
-     * Otheriwise the lane with lowes occupancy is selected
+     * Otherwise the lane with lowest occupancy is selected
      * If there is more than one, the first according to its
      *  index in the lane container is chosen.
      *
@@ -695,19 +696,19 @@ public:
         return myLength;
     }
 
-    
+
     /// @brief return the minimum length of all lanes (only differs from getLength for curved internal lanes)
     double getMinLength() const;
 
 
     /** @brief Returns the speed limit of the edge
-     * @caution The speed limit of the first lane is retured; should probably be the fastest lane
+     * @caution The speed limit of the first lane is returned; should probably be the fastest lane
      * @return The maximum speed allowed on this edge
      */
     double getSpeedLimit() const;
 
     /** @brief Returns the speed limit of the edge
-     * @caution The speed limit of the first lane is retured; should probably be the fastest lane
+     * @caution The speed limit of the first lane is returned; should probably be the fastest lane
      * @return The maximum speed allowed on this edge
      */
     double getSpeedLimit(SUMOVehicleClass svc) const;
@@ -831,7 +832,7 @@ public:
     static bool dictionary(const std::string& id, MSEdge* edge);
 
     /** @brief Returns the MSEdge associated to the key id if it exists, otherwise returns nullptr. */
-    static MSEdge* dictionary(const std::string& id);
+    static MSEdge* dictionary(const std::string_view& id);
 
     /** @brief Returns the MSEdge associated to the key id giving a hint with a numerical id. */
     static MSEdge* dictionaryHint(const std::string& id, const int startIdx);
@@ -1054,6 +1055,7 @@ protected:
      * @deprecated Move to MSEdgeControl, make non-static
      */
     static DictType myDict;
+    static std::unordered_map<std::string_view, MSEdge*> myHashDict;
 
     /** @brief Static list of edges
      * @deprecated Move to MSEdgeControl, make non-static

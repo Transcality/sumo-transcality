@@ -122,6 +122,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "function",                               SUMO_TAG_FUNCTION },
     { "edgeControl",                            SUMO_TAG_EDGECONTROL },
     { "routingEngine",                          SUMO_TAG_ROUTINGENGINE },
+    { "cchMetric",                              SUMO_TAG_CCH_METRIC },
 
     { "edgeRelation",                           SUMO_TAG_EDGEREL },
     { "tazRelation",                            SUMO_TAG_TAZREL },
@@ -145,6 +146,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "stopLane",                               GNE_TAG_STOP_LANE },
     { "polygonType",                            SUMO_TAG_POLYTYPE },
     { "connection",                             SUMO_TAG_CONNECTION },
+    { "prohibitedConnection",                   SUMO_TAG_PROHIBITED_CONNECTION },
     { "conflict",                               SUMO_TAG_CONFLICT },
     { "prohibition",                            SUMO_TAG_PROHIBITION },
     { "split",                                  SUMO_TAG_SPLIT },
@@ -170,6 +172,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::tags[] = {
     { "railSignalConstraintTracker",            SUMO_TAG_RAILSIGNAL_CONSTRAINT_TRACKER },
     { "deadlock",                               SUMO_TAG_DEADLOCK },
     { "driveWay",                               SUMO_TAG_DRIVEWAY },
+    { "routePart",                              SUMO_TAG_ROUTEPART },
     { "subDriveWay",                            SUMO_TAG_SUBDRIVEWAY },
     { "link",                                   SUMO_TAG_LINK },
     { "approaching",                            SUMO_TAG_APPROACHING },
@@ -1414,6 +1417,11 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "loaderTime",        SUMO_ATTR_LOADERTIME },
     { "entryPos",          SUMO_ATTR_ENTRYPOS },
     { "routeLength",       SUMO_ATTR_ROUTELENGTH },
+    { "headway",           SUMO_ATTR_HEADWAY },
+    { "cchEffort",         SUMO_ATTR_CCH_EFFORT },
+    { "cchPending",        SUMO_ATTR_CCH_PENDING },
+    { "arcs",              SUMO_ATTR_ARCS },
+    { "weights",           SUMO_ATTR_WEIGHTS },
     // @}
 
     //@name meso edge type attributes
@@ -1428,6 +1436,7 @@ SequentialStringBijection::Entry SUMOXMLDefinitions::attrs[] = {
     { "minorPenalty",      SUMO_ATTR_MESO_MINOR_PENALTY },
     { "overtaking",        SUMO_ATTR_MESO_OVERTAKING },
     { "edgeLength",        SUMO_ATTR_MESO_EDGELENGHT },
+    { "lookahead",         SUMO_ATTR_MESO_LOOKAHEAD },
     // @}
 
     // Other

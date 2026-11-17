@@ -141,11 +141,17 @@ teleporting_highbegin
 # load actuated tls
 actuated
 
+# a static traffic light keeps the start of its current phase when loading state
+tls_spentDuration
+
 # test saving and load vehicles added by calibrator
 calibrator
 
 # see #11394
 continous_lanechange
+
+# a vehicle that waits on the junction for a foe keeps waiting after loading state
+junction_approach
 
 # vehicle stops twice in the same spot, state is saved before departure
 stops_looped
@@ -185,3 +191,17 @@ waut2
 
 # see #17897
 routeLoader
+
+# the CCH router must not change the default random number state when loading state
+cch_vTypeDistribution
+
+# a vehicle that left a turnaround keeps the turnaround lane as further lane when loading state
+turnaround_furtherLane
+# the CCH metric follows edge speeds above the speed limit, so a reloaded state replicates
+cch_speedFactor
+
+# vehicles waiting for insertion do not repeat their pre-insertion reroute after loading state (#18366)
+preinsertion_reroute
+
+# the CCH update threshold state is saved, so a reloaded state replicates
+cch_update_threshold

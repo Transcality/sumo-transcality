@@ -82,7 +82,7 @@ Now, file(s) containing TAZ-Relations can be loaded with "Load Data Elements" by
 After that, if you want to see the relations between all TAZs again, you need to go back to the mode "Network" and then go to the mode "Data" again. By activating the aforementioned two icons, you can see all TAZ-relations.
 
 ### Display the TAZ polygons by different colors
-You can click "Polygons" in the window shown after selecting *Edit-\>Edit Visualisation* and change the colors randomly or by selection. You can also directly click the color palette icon "View Settings" in the tool bar to open the respective window and make color changes.
+You can click "Polygons" in the window shown after selecting *Edit-\>Edit Visualization* and change the colors randomly or by selection. You can also directly click the color palette icon "View Settings" in the tool bar to open the respective window and make color changes.
 
 ![](../images/taz_overview_color.png)
 
@@ -102,13 +102,13 @@ It is also possible to display the relation lines with different colors accordin
 The demand range for each color can be further adjusted/customized as well.
 
 ### Change the width size of the TAZ relation lines to a uniform width
-The width of the relation lines can be uniformly adjusted. It is especially useful for better visualisation when there are many edges in the given network. Firstly, you click "Data" in the window shown after selecting *Edit-\>Edit Visualisation* or after clicking the color palette icon "View Settings". After inputting the desired width size in the rubric "Exaggerate tazRelation width by" you click "openGL", press the button "Recalculate boundaries" and then press "OK" so that the adjusted relation lines can be properly shown. The buttons/rubrics you need to click are illustrated below.
+The width of the relation lines can be uniformly adjusted. It is especially useful for better visualization when there are many edges in the given network. Firstly, you click "Data" in the window shown after selecting *Edit-\>Edit Visualization* or after clicking the color palette icon "View Settings". After inputting the desired width size in the rubric "Exaggerate tazRelation width by" you click "openGL", press the button "Recalculate boundaries" and then press "OK" so that the adjusted relation lines can be properly shown. The buttons/rubrics you need to click are illustrated below.
 
 ![](../images/setWidth_0.png)
 ![](../images/setWidth.png)
 
 ### Change the width of all lines, scaling them according to the demand of each OD pair
-TAZ relation lines can also be displayed with varying widths according to demand. Like above mentioned, firstly, you click "Data" in the window shown after selecting *Edit-\>Edit Visualisation* or after clicking the color palette icon "View Settings". Then choose "by attribute (numericval)" in the drop-down window of "Scale size" and adjust the wished scale size for each demand category. This setting can be used together with the setting to display the TAZ polygons by different colors (see above). The buttons/rubrics you need to click are illustrated below.
+TAZ relation lines can also be displayed with varying widths according to demand. Like above mentioned, firstly, you click "Data" in the window shown after selecting *Edit-\>Edit Visualization* or after clicking the color palette icon "View Settings". Then choose "by attribute (numericval)" in the drop-down window of "Scale size" and adjust the wished scale size for each demand category. This setting can be used together with the setting to display the TAZ polygons by different colors (see above). The buttons/rubrics you need to click are illustrated below.
 
 ![](../images/setScaledWidth.png)
 
@@ -146,3 +146,29 @@ To only see the selected TAZ relations you need to further press the button "Red
 The selected TAZ relations after the "Reduce" action and the respective attributes can be easily saved in XML format (see the illustration below).
 
 ![](../images/saveSelected.png)
+
+## MeanData mode
+
+[Edge- and lane-based traffic measure definitions (`<edgeData>` and `<laneData>`)](../Simulation/Output/Lane-_or_Edge-based_Traffic_Measures.md) can be created and edited directly inside the **Data** supermode (`F4`) by switching to **MeanData mode** (toolbar button or shortcut `M`). Unlike `edgeData` / `edgeRelation` / `tazRelation` demand elements, MeanData definitions describe simulation output detectors rather than spatial canvas objects and are managed entirely through the left-hand **MeanData** frame:
+
+1. **MeanData Type:** Select either `edgeData` or `laneData` in the combo box.
+2. **MeanData Editor:**
+   - **Create MeanData:** Creates a new `<edgeData>` or `<laneData>` definition with an automatically generated unique `id` and selects it for editing.
+   - **Delete MeanData:** Deletes the currently selected MeanData definition.
+   - **Copy MeanData:** Duplicates the currently selected MeanData definition under a new unique `id`.
+3. **Current MeanData:** Selects an existing `<edgeData>` or `<laneData>` element by `id` so its attributes can be edited below.
+4. **Attributes Editor:** Edits the attributes of the selected MeanData element, including:
+   - `id` and output `file`
+   - `type` (`default` traffic measures, `emissions`, `harmonoise`, or `amitran`)
+   - `period`, `begin`, and `end`
+   - `excludeEmpty`, `withInternal`, `maxTraveltime`, `minSamples`, and `haltingSpeedThreshold`
+   - `vTypes`, `trackVehicles`, `detectPersons`, `writeAttributes`, `edges`, `edgesFile`, and `aggregate` (`false`, `true`, or `taz`)
+
+### Loading and saving MeanData definitions
+
+MeanData definitions are stored as additional files (default suffix `.dat.add.xml`) and can be managed from **File -> MeanData Elements**:
+
+- **Load MeanDatas...**: Load `<edgeData>` / `<laneData>` definitions from an existing XML file.
+- **Save MeanDatas**: Save modified MeanData definitions back to their target file.
+- **Save MeanDatas unified as...** (`Ctrl+Shift+M`): Save all defined MeanData elements into a single chosen additional file.
+- **Reload MeanDatas**: Reload MeanData definitions from disk.

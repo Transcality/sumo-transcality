@@ -35,7 +35,6 @@
 #include <utils/emissions/PollutantsInterface.h>
 #include <utils/router/IntermodalNetwork.h>
 #include <utils/vehicle/SUMOVTypeParameter.h>
-#include <utils/vehicle/SUMOVehicleParameter.h>
 #include <utils/xml/SUMOSAXAttributes.h>
 
 #include "SUMOVehicleParserHelper.h"
@@ -1280,7 +1279,7 @@ SUMOVehicleParserHelper::parseCFMParams(SUMOVTypeParameter* into, const SumoXMLT
             } else if (it == SUMO_ATTR_SPEED_TABLE || it == SUMO_ATTR_TRACTION_TABLE || it == SUMO_ATTR_RESISTANCE_TABLE) {
                 into->cfParameter[it] = parsedCFMAttribute;
             } else if (it == SUMO_ATTR_CF_IDM_STEPPING) {
-                // declare a int in wich save CFM int attribute
+                // declare a int in which save CFM int attribute
                 double CFMDoubleAttribute = -1;
                 try {
                     // obtain CFM attribute in int format
@@ -1303,7 +1302,7 @@ SUMOVehicleParserHelper::parseCFMParams(SUMOVTypeParameter* into, const SumoXMLT
                     return false;
                 }
             } else {
-                // declare a double in wich save CFM float attribute
+                // declare a double in which save CFM float attribute
                 double CFMDoubleAttribute = -1;
                 try {
                     // obtain CFM attribute in double format
@@ -1614,7 +1613,7 @@ SUMOVehicleParserHelper::parseLCParams(SUMOVTypeParameter* into, LaneChangeModel
             if (!ok) {
                 return false;
             }
-            // declare a double in wich save CFM attribute
+            // declare a double in which save CFM attribute
             double LCMAttribute = -1;
             try {
                 // obtain CFM attribute in double format
@@ -1685,7 +1684,7 @@ SUMOVehicleParserHelper::parseJMParams(SUMOVTypeParameter* into, const SUMOSAXAt
             if (!ok) {
                 return false;
             }
-            // declare a double in wich save CFM attribute
+            // declare a double in which save CFM attribute
             double JMAttribute = INVALID_DOUBLE;
             try {
                 // obtain CFM attribute in double format
@@ -1876,6 +1875,41 @@ SUMOVehicleParserHelper::parseCarWalkTransfer(const OptionsCont& oc, const bool 
         }
     }
     return carWalk;
+}
+
+
+bool
+SUMOVehicleParserHelper::parseStopTag(const SUMOSAXAttributes& attrs, const SUMOVehicleParameter::Stop* stopParam, SumoXMLTag& tag, std::string& id) {
+    bool ok = true;
+    // dummy stop parameter to hold the attributes
+    SUMOVehicleParameter::Stop stop;
+    if (stopParam != nullptr) {
+        stop = *stopParam;
+    } else {
+        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_BUS_STOP, nullptr, ok, "");
+        stop.busstop = attrs.getOpt<std::string>(SUMO_ATTR_TRAIN_STOP, nullptr, ok, stop.busstop); // alias
+        stop.chargingStation = attrs.getOpt<std::string>(SUMO_ATTR_CHARGING_STATION, nullptr, ok, "");
+        stop.overheadWireSegment = attrs.getOpt<std::string>(SUMO_ATTR_OVERHEAD_WIRE_SEGMENT, nullptr, ok, "");
+        stop.containerstop = attrs.getOpt<std::string>(SUMO_ATTR_CONTAINER_STOP, nullptr, ok, "");
+        stop.parkingarea = attrs.getOpt<std::string>(SUMO_ATTR_PARKING_AREA, nullptr, ok, "");
+    }
+    if (stop.busstop != "") {
+        tag = SUMO_TAG_BUS_STOP;
+        id = stop.busstop;
+    } else if (stop.containerstop != "") {
+        tag = SUMO_TAG_CONTAINER_STOP;
+        id = stop.containerstop;
+    } else if (stop.parkingarea != "") {
+        tag = SUMO_TAG_PARKING_AREA;
+        id = stop.parkingarea;
+    } else if (stop.chargingStation != "") {
+        tag = SUMO_TAG_CHARGING_STATION;
+        id = stop.chargingStation;
+    } else if (stop.overheadWireSegment != "") {
+        tag = SUMO_TAG_OVERHEAD_WIRE_SEGMENT;
+        id = stop.overheadWireSegment;
+    }
+    return ok;
 }
 
 

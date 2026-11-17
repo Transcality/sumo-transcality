@@ -26,6 +26,7 @@
 
 #include <microsim/MSNet.h>
 #include <microsim/MSEdge.h>
+#include <microsim/MSEdgeControl.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/MSLane.h>
 #include <microsim/MSVehicle.h>
@@ -46,6 +47,9 @@ long long int MELoop::LeaderEvent::myEventCounter(0);
 // method definitions
 // ===========================================================================
 MELoop::MELoop(const SUMOTime recheckInterval) : myFullRecheckInterval(recheckInterval), myLinkRecheckInterval(TIME2STEPS(1)) {
+    myInterpolateMesoPos = MSGlobals::gMesoInterpolatePos && (
+                               OptionsCont::getOptions().isSet("fcd-output") ||
+                               OptionsCont::getOptions().isSet("queue-output"));
 }
 
 MELoop::~MELoop() {
@@ -61,6 +65,13 @@ MELoop::~MELoop() {
 
 void
 MELoop::simulate(SUMOTime tMax) {
+    if (myInterpolateMesoPos) {
+        MSEdgeControl& ec = MSNet::getInstance()->getEdgeControl();
+        for (const MSEdge* const edge : ec.getEdges()) {
+            // needs to be called every stop because meso position one step t+1 depends on the position computed in step t
+            edge->getMesoPositions();
+        }
+    }
     while (!myLeaderCars.empty()) {
         LeaderEvent e = myLeaderCars.top();
         assert(e.time > tMax - DELTA_T);
@@ -101,8 +112,8 @@ MELoop::wasInvalidated(const LeaderEvent& e) {
                 myInvalidatedLeaderCars.pop();
             }
         }
-        for (LeaderEvent& e : tmp) {
-            myInvalidatedLeaderCars.push(e);
+        for (LeaderEvent& le : tmp) {
+            myInvalidatedLeaderCars.push(le);
         }
         return curInvalid;
     }
@@ -128,25 +139,34 @@ MELoop::changeSegment(MEVehicle* veh, SUMOTime leaveTime, MESegment* const toSeg
         MSNet::getInstance()->getVehicleControl().scheduleVehicleRemoval(veh);
         return leaveTime;
     } else if ((!MSGlobals::gCheckRoutes || veh->ignoreTransientPermissions())
-            && !ignoreLink
-            && !MESegment::isInvalid(onSegment)
-            && &onSegment->getEdge() != &toSegment->getEdge()
-            && veh->getEdge()->allowedLanes(*veh->succEdge(1), veh->getVClass()) == nullptr) {
+               && !ignoreLink
+               && !MESegment::isInvalid(onSegment)
+               && &onSegment->getEdge() != &toSegment->getEdge()
+               && veh->getEdge()->allowedLanes(*veh->succEdge(1), veh->getVClass()) == nullptr) {
         if (veh->isStopped()) {
             veh->processStop();
         }
         // all queues on the next segment are forbidden. We don't want to check
         // too often whether the forbiden edge has become permitted again
-        if (MSGlobals::gTimeToGridlock > 0) {
+        const SUMOTime ttt = veh->getVehicleType().getParameter().getTimeToTeleport(MSGlobals::gTimeToGridlock);
+        if (ttt > 0) {
             // if teleporting is enabled, make sure we look at the vehicle when the gridlock-time is up
-            const SUMOTime recheck = MSGlobals::gTimeToTeleportDisconnected >= 0 ? MIN2(MSGlobals::gTimeToGridlock, MSGlobals::gTimeToTeleportDisconnected) : MSGlobals::gTimeToGridlock;
+            const SUMOTime recheck = MSGlobals::gTimeToTeleportDisconnected >= 0 ? MIN2(ttt, MSGlobals::gTimeToTeleportDisconnected) : ttt;
             return MAX2(MIN2(leaveTime + myLinkRecheckInterval, MIN2(veh->getBlockTime(), leaveTime) + recheck + 1), leaveTime + 1);
         }
         return leaveTime + myLinkRecheckInterval;
     }
     toSegment->updateEntryBlockTime(leaveTime);
     const SUMOTime entry = toSegment->hasSpaceFor(veh, leaveTime, qIdx);
-    if (entry == leaveTime && (ignoreLink || veh->mayProceed())) {
+    int ps = MESegment::PROCEED_UNKNOWN;
+    if (entry == leaveTime) {
+        if (ignoreLink) {
+            ps = MESegment::PROCEED_YES;
+        } else {
+            ps = veh->mayProceed();
+        }
+    }
+    if (ps == MESegment::PROCEED_YES) {
         if (onSegment != nullptr) {
             if (veh->getQueIndex() == MESegment::PARKING_QUEUE) { // parking or just aborted parking
                 if (veh->isParking()) {
@@ -174,8 +194,14 @@ MELoop::changeSegment(MEVehicle* veh, SUMOTime leaveTime, MESegment* const toSeg
             veh->processStop();
         }
     }
-    if (entry == leaveTime && !ignoreLink) { // this is a long way of saying !veh->mayProceed() (which is a costly call)
-        return entry + MAX2(SUMOTime(1), myLinkRecheckInterval);
+    if ((ps & MESegment::PROCEED_NO) != 0) {
+        if ((ps & MESegment::PROCEED_NO_TLS) != 0) {
+            // recheck on the step grid: link states only change between steps, so keeping the sub-step phase of the
+            // arrival would release the car up to one step before the link opened, depending on that phase alone
+            return entry == SIMSTEP ? SIMSTEP + DELTA_T : SIMSTEP;
+        } else {
+            return entry + myLinkRecheckInterval;
+        }
     }
     return entry;
 }
@@ -192,7 +218,8 @@ MELoop::checkCar(MEVehicle* veh) {
     if (nextEntry == leaveTime) {
         return;
     }
-    const bool r1 = MSGlobals::gTimeToGridlock > 0 && veh->getWaitingTime() > MSGlobals::gTimeToGridlock;
+    const SUMOTime ttt = veh->getVehicleType().getParameter().getTimeToTeleport(MSGlobals::gTimeToGridlock);
+    const bool r1 = ttt > 0 && veh->getWaitingTime() > ttt;
     const bool r3 = MSGlobals::gTimeToTeleportDisconnected >= 0 && veh->getWaitingTime() > MSGlobals::gTimeToTeleportDisconnected;
     if (!veh->isStopped() && (r1 || r3)) {
         const bool disconnected = (MSGlobals::gTimeToTeleportDisconnected >= 0
@@ -204,16 +231,24 @@ MELoop::checkCar(MEVehicle* veh) {
         }
     }
     if (veh->getBlockTime() == SUMOTime_MAX && (!veh->isStopped()
-                || (!veh->isStoppedTriggered() && veh->isStoppedParking()))) {
+            || (!veh->isStoppedTriggered() && veh->isStoppedParking()))) {
         veh->setBlockTime(leaveTime);
     }
     if (nextEntry == SUMOTime_MAX) {
         // all usable queues on the next segment are full
         SUMOTime newEventTime = MAX3(toSegment->getEventTime() + 1, leaveTime + 1, leaveTime + myFullRecheckInterval);
-        if (MSGlobals::gTimeToGridlock > 0) {
+        if (ttt) {
             // if teleporting is enabled, make sure we look at the vehicle when the gridlock-time is up
-            const SUMOTime recheck = MSGlobals::gTimeToTeleportDisconnected >= 0 ? MIN2(MSGlobals::gTimeToGridlock, MSGlobals::gTimeToTeleportDisconnected) : MSGlobals::gTimeToGridlock;
-            newEventTime = MAX2(MIN2(newEventTime, veh->getBlockTime() + recheck + 1), leaveTime + 1);
+            const SUMOTime recheck = veh->getBlockTime() + 1 + ttt;
+            if (recheck > leaveTime) {
+                newEventTime = MIN2(newEventTime, recheck);
+            }
+        }
+        if (MSGlobals::gTimeToTeleportDisconnected >= 0) {
+            const SUMOTime recheck = veh->getBlockTime() + 1 + MSGlobals::gTimeToTeleportDisconnected;
+            if (recheck > leaveTime && veh->getEdge()->allowedLanes(*veh->succEdge(1), veh->getVClass()) == nullptr) {
+                newEventTime = MIN2(newEventTime, recheck);
+            }
         }
         veh->setEventTime(newEventTime);
     } else {
@@ -288,7 +323,10 @@ MELoop::teleportVehicle(MEVehicle* veh, MESegment* const toSegment, bool disconn
 
 
 void
-MELoop::addLeaderCar(MEVehicle* veh, MSLink* link) {
+MELoop::addLeaderCar(MEVehicle* veh, MSLink* link, const bool fromState) {
+    if (!fromState) {
+        veh->setEventIndex(LeaderEvent::myEventCounter++);
+    }
     myLeaderCars.push(LeaderEvent(veh));
     veh->setApproaching(link);
 }
@@ -296,8 +334,8 @@ MELoop::addLeaderCar(MEVehicle* veh, MSLink* link) {
 
 void
 MELoop::clearState() {
-    myLeaderCars = LeaderEventQeue();
-    myInvalidatedLeaderCars = LeaderEventQeue();
+    myLeaderCars = LeaderEventQueue();
+    myInvalidatedLeaderCars = LeaderEventQueue();
 }
 
 
@@ -365,8 +403,8 @@ MELoop::buildSegmentsFor(const MSEdge& e, const OptionsCont& oc) {
     for (int s = numSegments - 1; s >= 0; s--) {
         std::string id = e.getID() + ":" + toString(s);
         newSegment = lift
-            ? new MELSegment(id, e, nextSegment, slength, e.getLanes()[0]->getSpeedLimit(), s, multiQueue, edgeType)
-            : new MESegment(id, e, nextSegment, slength, e.getLanes()[0]->getSpeedLimit(), s, multiQueue, edgeType);
+                     ? new MELSegment(id, e, nextSegment, slength, e.getLanes()[0]->getSpeedLimit(), s, multiQueue, edgeType)
+                     : new MESegment(id, e, nextSegment, slength, e.getLanes()[0]->getSpeedLimit(), s, multiQueue, edgeType);
         multiQueue = laneQueue;
         nextSegment = newSegment;
     }
@@ -410,7 +448,7 @@ MELoop::isEnteringRoundabout(const MSEdge& e) {
 
 MELoop::LeaderEvent::LeaderEvent(MEVehicle* v):
     time(v->getEventTime()),
-    eventIndex(myEventCounter++),
+    eventIndex(v->getEventIndex()),
     nid(v->getNumericalID()),
     veh(v) { }
 

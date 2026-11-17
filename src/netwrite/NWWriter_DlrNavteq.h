@@ -69,6 +69,7 @@ public:
     /// @brief extra attributes into plain output
     static void writeEdgeAttrs(OutputDevice& device, const NBEdge* edge);
     static void writeConnectionAttrs(OutputDevice& device, const NBEdge::Connection& c);
+    static void writeProhibitedManoeuvresAttrs(OutputDevice& device, const NBNodeCont& nc);
 
 private:
     /** @brief Writes the nodes_unsplitted file
@@ -105,7 +106,7 @@ private:
      */
     static void writeConnectedLanes(const OptionsCont& oc, NBNodeCont& nc);
 
-    /// @brief write header comments (input paramters, date, etc...)
+    /// @brief write header comments (input parameters, date, etc...)
     static void writeHeader(OutputDevice& device, const OptionsCont& oc);
 
     /// @brief build the ascii-bit-vector for column vehicle_type

@@ -13,7 +13,7 @@ If you are unsure between a design document and code, prefer code.
 This results in a relatively high development speed but also in a lack of formal documentation.
 
 Diversity is considered a bonus. We do not agree upon or recommend a standard platform or IDE to work
-with or develop for SUMO. We try to enable everything which has a C++11 capable compiler
+with or develop for SUMO. We try to enable everything which has a C++17 capable compiler
 and actively support the three major desktop platforms (Windows, Linux, macOS).
 
 # Git and Release Workflow
@@ -40,7 +40,7 @@ and the central place where all current development tasks are documented.
 We do issue triage every second week in the developer meeting. Send us a [message](../Contact.md) if you want to take part.
 The goal is that in the end every issue is in (at least) one of the following states:
 
-- labelled as "question" or "review needed"
+- labeled as "question" or "review needed"
 - has a (numbered) milestone and at least one assignee
 - is in the backlog
 - is closed

@@ -59,7 +59,8 @@ except ImportError:
 import sumolib
 from . import lane, edge, netshiftadaptor, node, connection, roundabout  # noqa
 from .connection import Connection
-from sumolib.miscutils import intIfPossible
+from sumolib.miscutils import intIfPossible, openz, PRACTICAL_INFINITY
+from sumolib.miscutils import benchmark_cumulative  # noqa
 
 
 class TLS:
@@ -239,9 +240,17 @@ class Net:
         self._version = None
         self._edgeTypes = defaultdict(lambda: EdgeType("DEFAULT_EDGETYPE", "", ""))
         self._routingCache = None
+        self._routingCacheOD = None
+        self._edgeSuccessorCache = None
+        self._edgeCostCache = None
 
     def initRoutingCache(self, maxsize=1000):
-        self._routingCache = lru_cache(maxsize=maxsize)(lambda fromEdge, fromPos, fastest, vClass, ignoreDirection, reversalPenalty, preferences: {})  # noqa
+        self._routingCache = lru_cache(maxsize=maxsize)(lambda fromEdge, fastest, vClass, ignoreDirection, reversalPenalty, preferences: {})  # noqa
+
+    def cacheRoute(self, fromEdge, toEdge, fastest, vClass, cost, path):
+        if self._routingCacheOD is None:
+            self._routingCacheOD = dict()
+        self._routingCacheOD[(fromEdge, toEdge, fastest, vClass)] = (cost, path)
 
     def getVersion(self):
         return self._version
@@ -417,6 +426,27 @@ class Net:
                         lanes.append((the_lane, d))
         return lanes
 
+    def getNearestLane(self, x, y, r=0.1, vClass=None, isGeo=False, allowFallback=True):
+        """Return (lane, lanePos, dist) for the nearest lane at a distance less than r,
+        or None if no lane matches. Both lanePos and dist are in meters.
+
+        If vClass is given, only lanes allowing that vehicle class are considered.
+        If isGeo is True, x and y are longitude and latitude, respectively, and
+        the network's geo-projection is used (requires pyproj).
+        Distances are measured to the lane shape without junction extensions.
+        Internal lanes are considered if the network was read withInternal=True.
+        """
+        if isGeo:
+            x, y = self.convertLonLat2XY(x, y)
+        candidates = [(lane, dist) for lane, dist in
+                      self.getNeighboringLanes(x, y, r, includeJunctions=False, allowFallback=allowFallback)
+                      if lane.allows(vClass)]
+        if not candidates:
+            return None
+        lane, dist = min(candidates, key=lambda candidate: candidate[1])
+        lanePos, dist = lane.getClosestLanePosAndDist((x, y))
+        return lane, lanePos, dist
+
     def hasNode(self, id):
         return id in self._id2node
 
@@ -587,7 +617,7 @@ class Net:
             e.rebuildShape()
 
     def getInternalPath(self, conn, fastest=False):
-        minInternalCost = 1e400
+        minInternalCost = PRACTICAL_INFINITY
         minPath = None
         for c in conn:
             if c.getViaLaneID() != "":
@@ -604,9 +634,11 @@ class Net:
                     minPath = viaPath
         return minPath, minInternalCost
 
-    def getOptimalPath(self, fromEdge, toEdge, fastest=False, maxCost=1e400, vClass=None, reversalPenalty=0,
-                       includeFromToCost=True, withInternal=False, ignoreDirection=False,
-                       fromPos=None, toPos=None, preferences={}):
+    # @benchmark_cumulative
+    # @profile
+    def getOptimalPath(self, fromEdge, toEdge, fastest=False, maxCost=PRACTICAL_INFINITY, vClass=None,
+                       reversalPenalty=0, includeFromToCost=True, withInternal=False, ignoreDirection=False,
+                       fromPos=None, toPos=None, preferences={}, length=None):
         """
         Finds the optimal (shortest or fastest) path for vClass from fromEdge to toEdge
         by using using Dijkstra's algorithm.
@@ -646,12 +678,24 @@ class Net:
             else:
                 return []
 
+        if self._edgeSuccessorCache != (vClass, ignoreDirection):
+            self._edgeSuccessorCache = (vClass, ignoreDirection)
+            for e1 in self.getEdges():
+                e1._succCacche = tuple(chain(e1.getAllowedOutgoing(vClass).items(),
+                                       e1.getIncoming().items() if ignoreDirection else [],
+                                       getToNormalIncoming(e1) if ignoreDirection and not self.hasWalkingArea else []))
+
+        if self._edgeCostCache != (fastest, preferences):
+            self._edgeCostCache = (fastest, preferences)
+            for e1 in self.getEdges():
+                e1._costCache = e1.getLength() / speedFunc(e1)
+
         if self.hasInternal:
             appendix = []
             appendixCost = 0.
             while toEdge.getFunction() == "internal":
                 appendix = [toEdge] + appendix
-                appendixCost += toEdge.getLength() / speedFunc(toEdge)
+                appendixCost += toEdge._costCache
                 toEdge = list(toEdge.getIncoming().keys())[0]
 
         def finalizeCost(cost, path):
@@ -669,6 +713,10 @@ class Net:
         def constructPath(dist):
             # destination was already reached in a previous query
             cost, pred = dist[toEdge]
+            if ((cost == PRACTICAL_INFINITY
+                 # the final node may exceed max cost but the prior node may not
+                 or (cost > maxCost and cost - toEdge._costCache > maxCost))):
+                return None, cost
             path = [toEdge]
             while pred is not None:
                 if self.hasInternal and withInternal:
@@ -725,9 +773,19 @@ class Net:
                         bestCost += remainder(fromEdge, fromPos) / speedFunc(fromEdge)
                     return tuple(path), bestCost
                 else:
-                    return None, 1e400
+                    return None, PRACTICAL_INFINITY
 
-            dist = self._routingCache(fromEdge, fromPos, fastest, vClass, ignoreDirection, reversalPenalty,
+            if self._routingCacheOD is not None and (fromEdge, toEdge, fastest, vClass) in self._routingCacheOD:
+                cost, path = self._routingCacheOD[(fromEdge, toEdge, fastest, vClass)]
+                if cost == PRACTICAL_INFINITY:
+                    return None, cost
+                cost = finalizeCost(cost, path)
+                if cost > maxCost:
+                    return None, cost
+                else:
+                    return tuple(path), cost
+
+            dist = self._routingCache(fromEdge, fastest, vClass, ignoreDirection, reversalPenalty,
                                       tuple(preferences.items()))
             if toEdge in dist:
                 return constructPath(dist)
@@ -743,7 +801,7 @@ class Net:
         elif needLoop:
             # start search on successors of fromEdge
             for e2, conn in fromEdge.getAllowedOutgoing(vClass).items():
-                q.append((e2.getLength() / speedFunc(e2), e2, fromEdge))
+                q.append((e2._costCache, e2, fromEdge))
 
         if len(dist) == 0:
             dist[fromEdge] = (0., None)
@@ -752,21 +810,17 @@ class Net:
 
         while q:
             cost, e1, prev = heapq.heappop(q)
-            if e1 in seen:
-                continue
-            seen.add(e1)
             if e1 == toEdge:
                 return constructPath(dist)
             if cost > maxCost:
                 return None, cost
-
-            for e2, conn in chain(e1.getAllowedOutgoing(vClass).items(),
-                                  e1.getIncoming().items() if ignoreDirection else [],
-                                  getToNormalIncoming(e1) if ignoreDirection and not self.hasWalkingArea else []):
+            seen.add(e1)
+            bidi = e1._bidi  # attribute access is faster than method access
+            for e2, conn in e1._succCacche:
                 if e2 not in seen:
-                    newCost = cost + e2.getLength() / speedFunc(e2)
+                    newCost = cost + e2._costCache
                     #  print(cost, newCost, e2.getID(), speedFunc(e2))
-                    if e2 == e1.getBidi():
+                    if e2 == bidi:
                         newCost += reversalPenalty
                     if self.hasInternal and conn is not None:
                         viaPath, minInternalCost = self.getInternalPath(conn, fastest=fastest)
@@ -775,9 +829,9 @@ class Net:
                     if e2 not in dist or newCost < dist[e2][0]:
                         dist[e2] = (newCost, e1)
                         heapq.heappush(q, (newCost, e2, e1))
-        return None, 1e400
+        return None, PRACTICAL_INFINITY
 
-    def getShortestPath(self, fromEdge, toEdge, maxCost=1e400, vClass=None, reversalPenalty=0,
+    def getShortestPath(self, fromEdge, toEdge, maxCost=PRACTICAL_INFINITY, vClass=None, reversalPenalty=0,
                         includeFromToCost=True, withInternal=False, ignoreDirection=False,
                         fromPos=None, toPos=None, preferences={}):
         """
@@ -797,7 +851,7 @@ class Net:
                                    includeFromToCost, withInternal, ignoreDirection, fromPos, toPos,
                                    preferences)
 
-    def getFastestPath(self, fromEdge, toEdge, maxCost=1e400, vClass=None, reversalPenalty=0,
+    def getFastestPath(self, fromEdge, toEdge, maxCost=PRACTICAL_INFINITY, vClass=None, reversalPenalty=0,
                        includeFromToCost=True, withInternal=False, ignoreDirection=False,
                        fromPos=None, toPos=None, preferences={}):
         """
@@ -1105,6 +1159,17 @@ def lane2edge(laneID):
 
 def lane2index(laneID):
     return int(laneID[laneID.rfind("_") + 1:])
+
+
+def hasInternal(filename):
+    with openz(filename) as f:
+        for line in f:
+            if '<edge id="' in line:
+                if '<edge id=":' in line:
+                    return True
+                else:
+                    return False
+    return False
 
 
 def readNet(filename, **others):

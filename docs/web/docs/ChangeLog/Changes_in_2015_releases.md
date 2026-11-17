@@ -160,7 +160,7 @@ title: Changes in the 2015 releases (versions 0.23.0, 0.24.0 and 0.25.0)
   - Int and float options can now be set in the
     *Processing-\>Options* dialog.
   - Added many lane- and junction-coloring modes already known from
-    [sumo-gui](../sumo-gui.md#edgelane_visualisation_settings). #1756
+    [sumo-gui](../sumo-gui.md#edgelane_visualization_settings). #1756
   - Pedestrian crossings are now supported when editing traffic
     light plans.
   - Attributes of pedestrian crossings can now be modified.
@@ -204,7 +204,7 @@ title: Changes in the 2015 releases (versions 0.23.0, 0.24.0 and 0.25.0)
     will make vehicles recompute their route when entering that
     edge.
   - The size and color of link indices can now be customized (old
-    [gui settings files](../sumo-gui.md#changing_the_appearancevisualisation_of_the_simulation)
+    [gui settings files](../sumo-gui.md#changing_the_appearancevisualization_of_the_simulation)
     may have to be updated).
   - Average trip data (for completed vehicle trips) is now available
     in the network parameter dialogue when running with option **--duration-log.statistics**.
@@ -371,7 +371,7 @@ title: Changes in the 2015 releases (versions 0.23.0, 0.24.0 and 0.25.0)
     classes now cause these vehicles to wait until the closing ends
     if the destination edge is closed.
   - Vehicles with a `<stop>` in their route are now being overtaken if there
-    is sufficient space. This was causing problems when modelling
+    is sufficient space. This was causing problems when modeling
     parked vehicles on a multi-lane road.
   - Fixed bug that resulted in invalid routes when routing at
     simulation time (at intersections where a required connection
@@ -448,7 +448,7 @@ title: Changes in the 2015 releases (versions 0.23.0, 0.24.0 and 0.25.0)
   - Device [assignment by `<param>`](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#devices)
     can now be used to override device assignment by option **--device.<DEVICENAME\>.probability**.
   - Added new `vType`-attribute `carFollowModel` which can be used instead of a child
-    element when declearing the car following model. #663
+    element when declaring the car following model. #663
   - Vehicles which do not have a route and cannot find one on
     insertion get discarded when **--ignore-route-errors** is given. #1825
   - **--vehroute-output** now includes the route length. #1790
@@ -635,7 +635,7 @@ title: Changes in the 2015 releases (versions 0.23.0, 0.24.0 and 0.25.0)
     spot when using the *striping* model. #1506
   - fixed crash when vehicles with `vClass="ignoring"` attempt to drive across
     sidewalks and walkingareas.
-  - fixed invalid `departDelay` in **--tripinfo-output** when using flows with attribute `probablity`. #1482
+  - fixed invalid `departDelay` in **--tripinfo-output** when using flows with attribute `probability`. #1482
   - fixed rerouter interval ends which are now exclusive like all
     other intervals
   - fixed bug that caused invalid exit times when vehicles were
@@ -839,7 +839,7 @@ title: Changes in the 2015 releases (versions 0.23.0, 0.24.0 and 0.25.0)
   - Markings for bike lanes are now drawn at road intersections
     (bike lanes are lanes which only allow vClass *bicycle*).
   - Added options for saving the current viewport and simulation
-    delay along with the current visualisation settings. #1625
+    delay along with the current visualization settings. #1625
 
 - netconvert
   - read heightmaps from GeoTIFFs for instance [SRTM data](https://opendem.info/download_srtm.html) #1495

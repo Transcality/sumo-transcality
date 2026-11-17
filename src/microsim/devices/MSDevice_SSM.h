@@ -221,7 +221,7 @@ private:
 
         /// @brief resets remainingExtraTime to the given value
         void resetExtraTime(double value);
-        /// @brief decreases myRemaingExtraTime by given amount in seconds
+        /// @brief decreases remainingExtraTime by given amount in seconds
         void countDownExtraTime(double amount);
         /// @brief returns the remaining extra time
         double getRemainingExtraTime() const;
@@ -746,18 +746,18 @@ private:
     double myExtraTime;
     /// Whether to use the original coordinate system for output
     bool myUseGeoCoords;
-    /// Wether to print the positions for all timesteps
+    /// Whether to print the positions for all timesteps
     bool myWritePositions;
-    /// Wether to print the lanes and positions for all timesteps and conflicts
+    /// Whether to print the lanes and positions for all timesteps and conflicts
     bool myWriteLanesPositions;
-    /// Wether to write measuers with NA entries
+    /// Whether to write measures with NA entries
     bool myWriteNA;
     /// Whether to exclude certain conflicts containing certain conflict types from the output
     bool myFilterConflictTypes;
     /// Which conflict types to exclude from the output
     std::vector<int> myDroppedConflictTypes;
 
-    /// Flags for switching on / off comutation of different SSMs, derived from myMeasures
+    /// Flags for switching on / off computation of different SSMs, derived from myMeasures
     bool myComputeTTC, myComputeDRAC, myComputePET, myComputeBR, myComputeSGAP, myComputeTGAP, myComputePPET, myComputeMDRAC;
     MSVehicle* myHolderMS;
     /// @}

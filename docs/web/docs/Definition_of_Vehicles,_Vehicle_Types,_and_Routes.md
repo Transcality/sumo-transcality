@@ -24,7 +24,7 @@ a vehicle in SUMO consists of three parts:
 
 Both routes and vehicle types can be shared by several vehicles. It is
 not mandatory to define a vehicle type. If not given, a default type is
-used. The driver of a vehicle does not have to be modelled explicitly.
+used. The driver of a vehicle does not have to be modeled explicitly.
 For the simulation of [persons which walk around or ride in vehicles, additional definitions are necessary](Specification/Persons.md).
 
 # Vehicles and Routes
@@ -492,7 +492,7 @@ These values have the following meanings:
 | personCapacity    | int                               | 4                                                                   | The number of persons (excluding an autonomous driver) the vehicle can transport.                                                                                                                                      |
 | containerCapacity | int                               | 0                                                                   | The number of containers the vehicle can transport.                                                                                                                                                                    |
 | boardingDuration  | float                             | 0.5                                                                 | The time required by a person to board and deboard the vehicle.                                                                                                                                                                    |
-| loadingDuration   | float                             | 90.0                                                                | The time required to load a container onto the vehicle and also to unlaod it    |
+| loadingDuration   | float                             | 90.0                                                                | The time required to load a container onto the vehicle and also to unload it    |
 | boardingFactor    | float                             | 1.0  | The factor applied to `boardingDuration` and `loadingDuration` (set in the vType of the person or container being loaded/unloaded)   |
 | latAlignment      | float, "left", "right", "center", "compact", "nice", "arbitrary" | "right" for bicycles, "center" otherwise                                            | The preferred lateral alignment when using the [sublane-model](Simulation/SublaneModel.md). {{DT_FLOAT}} (in m from the center of the lane) or one of ("left", "right", "center", "compact", "nice", "arbitrary"). |
 | maxSpeedLat       | float                             | 1.0                                                                 | The maximum lateral speed when using the [sublane-model or continuous lane change model](Simulation/SublaneModel.md)                                                                                                                           |
@@ -670,7 +670,7 @@ The following vehicle classes exist:
 | rail_electric  | 21                     | heavy rail vehicle that may only drive on electrified tracks                                                                                                      |
 | rail_fast      | 22                     | [High-speed-rail](https://en.wikipedia.org/wiki/High-speed_rail)                                                                                                  |
 | ship           | 23                     | basic class for navigating waterways                                                                                                                              |
-| container      | 24                     | used for modelling transhipping
+| container      | 24                     | used for modeling transhipping
 | cable_car      | 25                     |
 | subway         | 26                     |
 | aircraft       | 27                     |
@@ -807,7 +807,7 @@ following table.
 | carFollowing-ACC            | ACC                                             | [Car following model by Milanés V. and Shladover S.E.](Car-Following-Models/ACC.md)  |
 | carFollowing-NaSch          | NaSch                                           | Discretized cellular-automaton model by Nagel and Schreckenberg (1992); speeds are rounded to multiples of the "cell size" implied by **accel** and only the gap (not the leader's speed) bounds the safe speed |
 | carFollowing-CACC           | CACC                                            | [Car following model by Milanés V. and Shladover S.E.](Car-Following-Models/CACC.md) |
-| carFollowing-Rail           | Rail                                            | [Model for various train types](Simulation/Railways.md#modelling_trains)                    |
+| carFollowing-Rail           | Rail                                            | [Model for various train types](Simulation/Railways.md#modeling_trains)                    |
 
 ### Car-Following Model Parameters
 
@@ -862,22 +862,22 @@ lists which parameter are used by which model(s). [Details on car-following mode
 | cc7                          | 0.25                                                  |          | Oscillation Acceleration - m/s^2                                                                          | W99       |
 | cc8                          | 2.00                                                  |          | Standstill Acceleration - m/s^2                                                                           | W99       |
 | cc9                          | 1.50                                                  |          | Acceleration at 80km/h - m/s^2                                                                            | W99       |
-| trainType                    |                                                       |          | [string id for pre-defined train type](Simulation/Railways.md#modelling_trains)   | Rail      |
+| trainType                    |                                                       |          | [string id for pre-defined train type](Simulation/Railways.md#modeling_trains)   | Rail      |
 | tractionTable                | depends on trainType                                  | list of FLOAT  | traction values for each speed givein in speedTable                         | Rail      |
 | resistanceTable              | depends on trainType                                  | list of FLOAT  | resistance values for each speed givein in speedTable                       | Rail      |
 | massFactor                   | 1.04 - 1.1 depending on trainType                     | > 0      | factor for train mass to compute rotational weight                                | Rail      |
-| maxPower            |                      | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
-| maxTraction         |                      | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
-| resCoef_constant    |                      | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
-| resCoef_linear      |                      | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
-| resCoef_quadratic   |                      | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
-| curveResistance     |                0     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
-| curveIntegration    |              100     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
-| roeckl_sharp_radius |              300     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
-| roeckl_numerator    |             6380     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
-| roeckl_numerator_sharp  |         4910     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
-| roeckl_offset       |               55     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
-| roeckl_offset_sharp |               30     | > 0      | parameter for [modelling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| maxPower            |                      | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
+| maxTraction         |                      | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
+| resCoef_constant    |                      | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
+| resCoef_linear      |                      | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
+| resCoef_quadratic   |                      | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#custom_dynamics_model_with_parameterized_curves) | Rail      |
+| curveResistance     |                0     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| curveIntegration    |              100     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| roeckl_sharp_radius |              300     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| roeckl_numerator    |             6380     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| roeckl_numerator_sharp  |         4910     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| roeckl_offset       |               55     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
+| roeckl_offset_sharp |               30     | > 0      | parameter for [modeling train dynamics with parameterized curve](Simulation/Railways.md#curve_resistance) | Rail      |
 | tpreview                     | 4.00                                                  | >= 1     | The look ahead time headway for the desired speed. Lower values result in late and hard braking when turning at junctions or when speed limits change (s)       | EIDM      |
 | tPersDrive                   | 3.00                                                  | >= 1     | Correlation time of the Wiener Process for the driving error (originally from [Human Driver Model](https://doi.org/10.1016/j.physa.2005.05.001)) (s)            | EIDM      |
 | tPersEstimate                | 10.00                                                 | >= 1     | Correlation time of the Wiener Process for the estimation errors (originally from [Human Driver Model](https://doi.org/10.1016/j.physa.2005.05.001)) (s)        | EIDM      |
@@ -899,6 +899,12 @@ To select a car following model the following syntax should be used:
 ```xml
 <vType id="idmAlternative" length="5" minGap="2" carFollowModel="IDM" tau="1.0" .../>
 ```
+
+### details on using speedTable
+
+When using any of the values `maxAccelProfile`, `desAccelProfile`, `tractionTable` or `resistanceTable`, then the value `speedTable` must also be defined and the value of all these attributes must be a list of floats of the same length. The in `speedTable` at index *k* will be matched with the value from the other tables at the same index *k* and values for other speeds will be obtained by interpolation.
+
+Example: `<vType id="example" speedTable="0 5.56 13.89 27.78" maxAccelProfile="3 2.6 2 1"/>`  This will progressively reduce the maximum acceleration from 3 to 1 as the speed of the vehicle increases.
 
 ### Default *Krauss* Model Description
 
@@ -922,7 +928,7 @@ model as in [{{SUMO}}/src/microsim/cfmodels/MSCFModel_Krauss.cpp]({{Source}}src/
 
 ### Transient carFollowModel Parameters
 
-carFollowModel parameters that are expected to change during the simulation are modelled via [generic parameters](Simulation/GenericParameters.md). The following parameters are supported (via xml input and `traci.vehicle.setParameter`):
+carFollowModel parameters that are expected to change during the simulation are modeled via [generic parameters](Simulation/GenericParameters.md). The following parameters are supported (via xml input and `traci.vehicle.setParameter`):
 
 - carFollowModel.ignoreIDs : ignore foe vehicles with the given ids
 - carFollowModel.ignoreTypes : ignore foe vehicles that have any of the given types
@@ -986,7 +992,7 @@ lists which parameter are used by which model(s).
 | lcPushyGap              | Minimum lateral gap when encroaching laterally on other drives (alternative way to define lcPushy). *default: minGapLat, range 0 to minGapLat*                                                                                               | SL2015         |
 | lcAssertive             | Willingness to accept lower front and rear gaps on the target lane. The required gap is divided by this value. *default: 1, range: positive reals*                                                                                                      | LC2013,SL2015  |
 | lcImpatience            | Dynamic factor for modifying lcAssertive and lcPushy. *default: 0 (no effect) range -1 to 1*. Impatience acts as a multiplier. At -1 the multiplier is 0.5 and at 1 the multiplier is 1.5.                                                               | SL2015         |
-| lcTimeToImpatience      | Time to reach maximum impatience (of 1). Impatience grows whenever a lane-change manoeuvre is blocked.. *default: infinity (disables impatience growth)*                                                                                                 | SL2015         |
+| lcTimeToImpatience      | Time to reach maximum impatience (of 1). Impatience grows whenever a lane-change maneuver is blocked.. *default: infinity (disables impatience growth)*                                                                                                 | SL2015         |
 | lcAccelLat              | maximum lateral acceleration per second. *default: 1.0*                                                                                                                                                                                                  | SL2015         |
 | lcTurnAlignmentDistance | Distance to an upcoming turn on the vehicles route, below which the alignment should be dynamically adapted to match the turn direction. *default: 0.0 (i.e., disabled)*                                                                                 | SL2015         |
 | lcMaxSpeedLatStanding   | Constant term for lateral speed when standing. Set to 0 to avoid orthogonal sliding. *default: maxSpeedLat (i.e., disabled)*   | LC2013, SL2015         |
@@ -1023,8 +1029,8 @@ listed below.
 | jmIgnoreFoeSpeed       | float (m/s)                          | 0          | This value is used in conjunction with *jmIgnoreFoeProb*. Only vehicles with a speed below or equal to the given value may be ignored. This value also applies to [the default pedestrian model](Simulation/Pedestrians.md#model_striping).                                                                                                                                                                                                                                                                                                     |
 | jmIgnoreJunctionFoeProb        | float                                | 0          | This value causes vehicles to ignore foe vehicles and pedestrians that have already entered a junction with the given probability. The check is performed anew every simulation step. (range \[0,1\]).                                                                                                                                                                                                                                                                    |
 | jmSigmaMinor           | float, scaling factor (like *sigma*) | sigma      | This value configures driving imperfection (dawdling) while passing a minor link (ahead of the intersection after having committed to drive and while still on the intersection).                                                                                                                                                                                                                                                            |
-| jmStoplineGap          | float \>= 0 (m)                      | 1          | This value configures stopping distance in front of a prioritary / TL-controlled stop line. In case the stop line has been relocated by a [**stopOffset**](Networks/SUMO_Road_Networks.md#stop_offsets) item, the maximum of both distances is applied.       |
-| jmStoplineGapMinor         | float \>= 0 (m)                   | 0          | This value configures stopping distance in front of a non-prioritary stop line. In case the stop line has been relocated by a [**stopOffset**](Networks/SUMO_Road_Networks.md#stop_offsets) item, the maximum of both distances is applied.       |
+| jmStoplineGap          | float \>= 0 (m)                      | 1          | This value configures stopping distance in front of a priority / TL-controlled stop line. In case the stop line has been relocated by a [**stopOffset**](Networks/SUMO_Road_Networks.md#stop_offsets) item, the maximum of both distances is applied.       |
+| jmStoplineGapMinor         | float \>= 0 (m)                   | 0          | This value configures stopping distance in front of a non-priority stop line. In case the stop line has been relocated by a [**stopOffset**](Networks/SUMO_Road_Networks.md#stop_offsets) item, the maximum of both distances is applied.       |
 | jmStoplineCrossingGap          | float \>= 0 (m)                      | 1          | This value configures stopping distance in front of a pedestrian crossing. In case the stop line has been relocated by a [**stopOffset**](Networks/SUMO_Road_Networks.md#stop_offsets) item, the maximum of both distances is applied.       |
 | jmTimegapMinor         | float s                              | 1          | This value defines the minimum time gap when passing ahead or after a prioritized vehicle. It is applied when the foe vehicle has not yet entered the intersection   |
 | jmAdvance         | 0 or 1                            | 1          | If this value is set to 1, the ego vehicle may advance towards the conflict point when it's trajectory crosses with a foe vehicle that has already entered the intersection (it will select a speed that brings it to the conflict point just when the foe has gone past). If set to 0, the ego vehicle will remain at the stop line or internal junction until the foe has gone past the conflict point  |
@@ -1071,7 +1077,7 @@ The impatience concept is also used when pedestrians cross a street without havi
 
 ### Transient Parameters
 
-Junction model parameters that are expected to change during the simulation are modelled via [generic parameters](Simulation/GenericParameters.md). The following parameters are supported (via xml input and `traci.vehicle.setParameter`):
+Junction model parameters that are expected to change during the simulation are modeled via [generic parameters](Simulation/GenericParameters.md). The following parameters are supported (via xml input and `traci.vehicle.setParameter`):
 
 - junctionModel.ignoreIDs : ignore foe vehicles with the given ids
 - junctionModel.ignoreTypes : ignore foe vehicles that have any of the given types
@@ -1206,7 +1212,7 @@ public transport see [Simulation/Public Transport](Simulation/Public_Transport.m
 The second vehicle `v1` will stop once at lane `middle_0` as defined in the route, then
 head to lane `end_1` and pass that point at 13.89 m/s before terminating at route at rend edge.
 
-Stops can be childs of vehicles, routes, persons or containers.
+Stops can be children of vehicles, routes, persons or containers.
 
 | Attribute          | Type              | Range                                                                                        | Default            | Remark                |
 | ------------------ | ----------------- | -------------------------------------------------------------------------------------------- | ------------------ | --------------------- |
@@ -1219,7 +1225,7 @@ Stops can be childs of vehicles, routes, persons or containers.
 | endPos             | float(m)          | \-lane.length < x < lane.length (negative values count backwards from the end of the lane) | lane.length        |                                                                                                                        |
 | startPos           | float(m)          | \-lane.length < x < lane.length (negative values count backwards from the end of the lane) | endPos-0.2m        | there must be a difference of more than 0.1m between *startPos* and *endPos*                                           |
 | friendlyPos        | bool              | true,false                                                                                   | false              | whether invalid stop positions should be corrected automatically                                                       |
-| duration           | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | minimum duration for stopping                                                                                          |
+| duration           | float(s) or HH:MM:SS or [distribution string](Simulation/Randomness.md#specifying_distributed_input_values) | ≥0                                                                                           | \-                 | minimum duration for stopping                                                                                          |
 | until              | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the earliest time step at which the route continues                                                                             |
 | arrival            | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the expected time of arrival for the stop. If this value is set, [stop-output](Simulation/Output/StopOutput.md) will include the attribute ''arrivalDelay''. If the vehicles's vType defines attribute `speedFactorPremature`, a vehicle may slow down to prevent premature arrival.                                                                          |
 | ended              | float(s) or HH:MM:SS | ≥0                                                                                           | \-                 | the time step at which the stop ended (i.e. as recorded by a prior simulation). Can be used to overrule 'until' by setting option **--use-stop-ended** (i.e. when trying to reproduce known timings)                                                                            |
@@ -1318,7 +1324,7 @@ in a vehicle, route or vType.
 ```
 
 In the default visualization settings the vehicle color will be used if
-define, otherwise the type and finally the route color. [These settings can be changed.](sumo-gui.md#vehicle_visualisation_settings)
+define, otherwise the type and finally the route color. [These settings can be changed.](sumo-gui.md#vehicle_visualization_settings)
 
 By default color components should be given as integers in the range of
 (0,255) but other definitions are also supported:
@@ -1356,8 +1362,8 @@ placeholder `<DEVICENAME>` below
 - [tripinfo](Simulation/Output/TripInfo.md): vehicle-based traffic data aggregation
 - [vehroute](Simulation/Output/VehRoutes.md): recording of driven route and route changes
 - [taxi](Simulation/Taxi.md): demand responsive transport
-- [glosa](Simulation/GLOSA.md): green light optiomal speed advisory at traffic lights
-- [friction](Simulation/Friction.md): wheather and road surface specific speed changes
+- [glosa](Simulation/GLOSA.md): green light optimal speed advisory at traffic lights
+- [friction](Simulation/Friction.md): whether and road surface specific speed changes
 - [example](Developer/How_To/Device.md): implementation example
 
 ## Automatic assignment

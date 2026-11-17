@@ -74,7 +74,10 @@ movement, then the following value is generated additionally:
 If the vehicle leaves the detector because it arrived, changed lanes or
 teleported a leave event without occupancy is generated.
 
-## Visualisation
+!!! note
+    The timing values are of sub-step resolution, computed by interpolating from the last two simulation steps. This interpolation takes into account **--step-method**.
+
+## Visualization
 
 | A scenario with induction loops | A close-up view at an induction loop |
 |:---:|:---:|

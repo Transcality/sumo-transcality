@@ -19,7 +19,7 @@ The [`<vType>-attribute desiredMaxSpeed`](../Definition_of_Vehicles,_Vehicle_Typ
 models the (mean) desired maximum speed that the vehicles drivers of that type wish to use. The actual desired maximum speed of an individual vehicle is computed by multiplying the `maxDesiredSpeed` of its type with the [individual speedFactor](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#speed_distributions) of that vehicle.
 The individual desired max speed serves as another upper bound on speed next to the `maxSpeed` and the road speed limit.
 
-The main use of this property is to model speed distributions for vehicles that are not limited by the legal road speed limit (i.e. pedestrians and bicycles). In contrast, regular cars are typically restrained by the speed limit and so their speed distribution is modelled by multiplying their individual speedFactor with the speedLimit. Thus, different [vClasses](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#abstract_vehicle_class) have different default values for `desiredMaxSpeed`:
+The main use of this property is to model speed distributions for vehicles that are not limited by the legal road speed limit (i.e. pedestrians and bicycles). In contrast, regular cars are typically restrained by the speed limit and so their speed distribution is modeled by multiplying their individual speedFactor with the speedLimit. Thus, different [vClasses](../Definition_of_Vehicles%2C_Vehicle_Types%2C_and_Routes.md#abstract_vehicle_class) have different default values for `desiredMaxSpeed`:
 
 - `pedestrian`: 1.39 (5km/h)
 - `bicycle`: 5.56 (20km/h)
@@ -49,10 +49,17 @@ When vehicles are driving freely (unconstrained by other vehicles) they will acc
 min(maxSpeed, speedFactor * desiredMaxSpeed,  speedFactor * speedLimit)
 ```
 
-!!! note
-    Legacy behavior can be achieved by setting option **--default.speeddev 0**
 
 Since version 0.24.0 it is also possible to define [vClass-specific speed limits for every edge](../Networks/PlainXML.md#vehicle-class_specific_speed_limits).
+
+## Distinction between maxSpeed and desiredMaxSpeed
+
+The value of `maxSpeed` is intended to model the technical limit of a vehicle and therefore sets a hard upper bound (Which can only be exceed downhill by carFollowModel 'KraussPS' and 'Rail').
+On most roads, cars are assumed to be unconstrained by the `maxSpeed` and instead adapt to the road speed limit (with same variation guided by their individual `speedFactor`. To reflect this, `maxSpeed` of passenger cars defaults to 55.55m/s(200km) (though some vClasses have a different default)[../Vehicle_Type_Parameter_Defaults.md].
+For cars, the value of `desiredMaxSpeed` could be used to set an individual upper bound that is lower than the road speed (i.e. on some German motorways where there is no speedLimit).
+By default, the `desiredMaxSpeed` of cars is set to 1e4m/s to ensure that they are controlled only by `speedLimit` and `speedFactor` unless the user explicitly defines something else.
+
+For pedestrians there exists no speed limit and for bicycles it does not apply in all places. In order to obtain an individual variation in maximum peed, the `desiredMaxSpeed` of pedestrians defaults to 1.39m/s (5km/h) and that of bicycles to 5.5km/s (20km/h). To avoid unwanted influence by the fixed `maxSpeed` setting, their maxSpeed are set to high values.
 
 # Car Following Model
 
@@ -156,7 +163,7 @@ modify the speed limit of an edge.
 [Vehicle devices](../Definition_of_Vehicles,_Vehicle_Types,_and_Routes.md#devices) are a way to customize vehicle behavior or create additional output. The following devices can impact vehicle speed:
 
 - [glosa](../Simulation/GLOSA.md) : slow down and speed up to smooth speed near traffic lights
-- [driverstate](../Driver_State.md) : random changes to speed based on modelled perception errors with regard to car-following gap and speed difference
+- [driverstate](../Driver_State.md) : random changes to speed based on modeled perception errors with regard to car-following gap and speed difference
 
 # TraCI
 

@@ -887,22 +887,32 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
             && isRailwayOrShared(myPermissions)) {
         const MSDriveWay* dw = MSDriveWay::getDepartureDriveway(aVehicle);
         MSEdgeVector occupied;
+        bool dwBlocked = false;
 #ifdef DEBUG_INSERTION
         gDebugFlag4 = DEBUG_COND2(aVehicle) || DEBUG_COND;
 #endif
         if (dw->foeDriveWayOccupied(false, aVehicle, occupied)) {
-            setParameter("insertionBlocked:" + aVehicle->getID(), dw->getID());
+            dwBlocked = true;
 #ifdef DEBUG_INSERTION
             if (DEBUG_COND2(aVehicle) || DEBUG_COND) {
                 std::cout << "   foe of driveway " + dw->getID() + " has occupied edges " + toString(occupied) << "\n";
             }
-            gDebugFlag4 = false;
 #endif
-            return false;
+        } else if (dw->sidingDeadlock(aVehicle)) {
+            dwBlocked = true;
+#ifdef DEBUG_INSERTION
+            if (DEBUG_COND2(aVehicle) || DEBUG_COND) {
+                std::cout << "   insertion on driveway " + dw->getID() + " would cause deadlock\n";
+            }
+#endif
         }
 #ifdef DEBUG_INSERTION
         gDebugFlag4 = false;
 #endif
+        if (dwBlocked) {
+            setParameter("insertionBlocked:" + aVehicle->getID(), dw->getID());
+            return false;
+        }
     }
     if (getBidiLane() != nullptr && isRail) {
         // do not insert if the bidirectional edge is occupied
@@ -1014,7 +1024,7 @@ MSLane::isInsertionSuccess(MSVehicle* aVehicle,
                 if (mayContinue(aVehicle) && hasUnsafeLink()) {
                     // since the route is likely to continue we must be prepared for braking
                     if (checkFailure(aVehicle, speed, dist, cfModel.insertionStopSpeed(aVehicle, speed, seen),
-                                patchSpeedSpecial, "junction '" + currentLane->getEdge().getToJunction()->getID() + "' too close", InsertionCheck::JUNCTION)) {
+                                     patchSpeedSpecial, "junction '" + currentLane->getEdge().getToJunction()->getID() + "' too close", InsertionCheck::JUNCTION)) {
                         // we may not drive with the given velocity - we cannot stop at the junction
                         return false;
                     }
@@ -1479,7 +1489,7 @@ MSLane::getLastVehicleInformation(const MSVehicle* ego, double latOffset, double
 #ifdef DEBUG_SURROUNDING
     if (DEBUG_COND2(ego) || DEBUG_COND) {
         std::cout << "    getLastVehicleInformation lane=" << getID() << " ego=" << Named::getIDSecure(ego) << " latOffset=" << latOffset << " minPos=" << minPos << " allowCached=" << allowCached
-        << " hasCache=" << (myLeaderInfoTime >= MSNet::getInstance()->getCurrentTimeStep()) << "\n";
+                  << " hasCache=" << (myLeaderInfoTime >= MSNet::getInstance()->getCurrentTimeStep()) << "\n";
     }
 #endif
     if (myLeaderInfoTime < MSNet::getInstance()->getCurrentTimeStep() || ego != nullptr || minPos > 0 || !allowCached) {
@@ -2914,7 +2924,7 @@ MSLane::addApproachingLane(MSLane* lane, bool warnMultiCon) {
         myApproachingLanes[approachingEdge] = std::vector<MSLane*>();
     } else if (!approachingEdge->isInternal() && warnMultiCon) {
         // whenever a normal edge connects twice, there is a corresponding
-        // internal edge wich connects twice, one warning is sufficient
+        // internal edge which connects twice, one warning is sufficient
         WRITE_WARNINGF(TL("Lane '%' is approached multiple times from edge '%'. This may cause collisions."),
                        getID(), approachingEdge->getID());
     }
@@ -3264,7 +3274,7 @@ MSLane::getLogicalPredecessorLane() const {
         // get only those edges which connect to this lane
         for (MSEdgeVector::iterator i = pred.begin(); i != pred.end();) {
             std::vector<IncomingLaneInfo>::const_iterator j = find_if(myIncomingLanes.begin(), myIncomingLanes.end(), edge_finder(*i));
-            if (j == myIncomingLanes.end()) {
+            if (j == myIncomingLanes.end() || myEdge->getBidiEdge() == *i || ((*i)->isInternal() && myEdge->getBidiEdge() == (*i)->getNormalBefore())) {
                 i = pred.erase(i);
             } else {
                 ++i;
@@ -3750,8 +3760,10 @@ MSLane::saveState(OutputDevice& out) {
     const bool toRailJunction = myLinks.size() > 0 && (
                                     myEdge->getToJunction()->getType() == SumoXMLNodeType::RAIL_SIGNAL
                                     || myEdge->getToJunction()->getType() == SumoXMLNodeType::RAIL_CROSSING);
+    // foes on the junction are judged by the approach information of the previous step
+    const bool saveApproaching = toRailJunction || isInternal();
     const bool hasVehicles = myVehicles.size() > 0;
-    if (hasVehicles || (toRailJunction && hasApproaching())) {
+    if (hasVehicles || (saveApproaching && hasApproaching())) {
         out.openTag(SUMO_TAG_LANE);
         out.writeAttr(SUMO_ATTR_ID, getID());
         if (hasVehicles) {
@@ -3759,7 +3771,7 @@ MSLane::saveState(OutputDevice& out) {
             out.writeAttr(SUMO_ATTR_VALUE, myVehicles);
             out.closeTag();
         }
-        if (toRailJunction) {
+        if (saveApproaching) {
             for (const MSLink* link : myLinks) {
                 if (link->getApproaching().size() > 0) {
                     out.openTag(SUMO_TAG_LINK);
@@ -3945,8 +3957,8 @@ MSLane::getFollowersOnConsecutive(const MSVehicle* ego, double backOffset,
             for (std::vector<MSLane::IncomingLaneInfo>::iterator it = toExamine.begin(); it != toExamine.end(); ++it) {
                 MSLane* next = (*it).lane;
                 searchDist = maxSearchDist
-                    ? MAX2(searchDist, next->getMaximumBrakeDist() - backOffset)
-                    : MIN2(searchDist, next->getMaximumBrakeDist() - backOffset);
+                             ? MAX2(searchDist, next->getMaximumBrakeDist() - backOffset)
+                             : MIN2(searchDist, next->getMaximumBrakeDist() - backOffset);
                 MSLeaderInfo first = next->getFirstVehicleInformation(nullptr, 0, false, std::numeric_limits<double>::max(), false);
                 MSLeaderInfo firstFront = next->getFirstVehicleInformation(nullptr, 0, true);
 #ifdef DEBUG_CONTEXT
@@ -4133,9 +4145,6 @@ MSLane::getLeadersOnConsecutive(double dist, double seen, double speed, const MS
 #endif
             // check for link leaders
             const MSLink::LinkLeaders linkLeaders = (*link)->getLeaderInfo(ego, seen);
-            if (DEBUG_COND2(ego)) {
-                std::cout << "    numLinkLeaders=" << linkLeaders.size() << "\n";
-            }
             for (const MSLink::LinkLeader& ll : linkLeaders) {
                 MSVehicle* veh = ll.vehAndGap.first;
                 // in the context of lane changing all junction leader candidates must be respected
@@ -4202,7 +4211,9 @@ MSLane::getLeadersOnConsecutive(double dist, double seen, double speed, const MS
             dist = ego->getCarFollowModel().brakeGap(nextLane->getVehicleMaxSpeed(ego));
         }
 #ifdef DEBUG_CONTEXT
-        if (DEBUG_COND2(ego)) std::cout << "   newDist=" << dist << " newSeen=" << seen << "\n";
+        if (DEBUG_COND2(ego)) {
+            std::cout << "   newDist=" << dist << " newSeen=" << seen << "\n";
+        }
 #endif
         if (!nextInternal) {
             view++;
@@ -4591,9 +4602,11 @@ MSLane::initCollisionOptions(const OptionsCont& oc) {
 
 void
 MSLane::setPermissions(SVCPermissions permissions, long long transientID) {
+    const SVCPermissions oldPermissions = myPermissions;
     if (transientID == CHANGE_PERMISSIONS_PERMANENT) {
         myPermissions = permissions;
         myOriginalPermissions = permissions;
+        updateInternalLanePermissions(oldPermissions);
     } else {
         myPermissionChanges[transientID] = permissions;
         resetPermissions(CHANGE_PERMISSIONS_PERMANENT);
@@ -4603,6 +4616,7 @@ MSLane::setPermissions(SVCPermissions permissions, long long transientID) {
 
 void
 MSLane::resetPermissions(long long transientID) {
+    const SVCPermissions oldPermissions = myPermissions;
     myPermissionChanges.erase(transientID);
     if (myPermissionChanges.empty()) {
         myPermissions = myOriginalPermissions;
@@ -4611,6 +4625,24 @@ MSLane::resetPermissions(long long transientID) {
         myPermissions = SVCAll;
         for (const auto& item : myPermissionChanges) {
             myPermissions &= item.second;
+        }
+    }
+    updateInternalLanePermissions(oldPermissions);
+}
+
+
+void
+MSLane::updateInternalLanePermissions(SVCPermissions oldPermissions) {
+    if (isInternal()) {
+        return;
+    }
+    for (MSLink* const link : getLinkCont()) {
+        MSLane* const internal = link->getViaLane();
+        // only update internal lanes that mirror the permissions of this lane;
+        // lanes with connection-specific permissions are left untouched
+        if (internal != nullptr && internal->getPermissions() == oldPermissions) {
+            internal->setPermissions(myPermissions, CHANGE_PERMISSIONS_PERMANENT);
+            internal->getEdge().rebuildAllowedLanes(false, false);
         }
     }
 }

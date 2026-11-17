@@ -27,13 +27,13 @@
 #include <string>
 #include <utils/common/SUMOTime.h>
 #include <utils/xml/SUMOXMLDefinitions.h>
+#include "SUMOVehicleParameter.h"
 
 
 // ===========================================================================
 // class declarations
 // ===========================================================================
 class SUMOSAXAttributes;
-class SUMOVehicleParameter;
 class SUMOVTypeParameter;
 
 
@@ -125,7 +125,7 @@ public:
     /** @brief Parses the vehicle class
      *
      * When given, the vehicle class is parsed using getVehicleClassID.
-     *  Exceptions occuring within this process are catched and reported.
+     *  Exceptions occurring within this process are caught and reported.
      *
      * If no vehicle class is available in the attributes, the default class (SVC_IGNORING)
      *  is returned.
@@ -134,14 +134,14 @@ public:
      * @param[in] id The id of the parsed element, for error message generation
      * @return The parsed vehicle class
      * @see SUMOVehicleClass
-     * @todo Recheck how errors are handled and what happens if they occure
+     * @todo Recheck how errors are handled and what happens if they occur
      */
     static SUMOVehicleClass parseVehicleClass(const SUMOSAXAttributes& attrs, const std::string& id);
 
     /** @brief Parses the vehicle class
      *
      * When given, the vehicle class is parsed using getVehicleShapeID.
-     *  Exceptions occuring within this process are catched and reported.
+     *  Exceptions occurring within this process are caught and reported.
      *
      * If no vehicle class is available in the attributes, the default class (SVS_UNKNOWN)
      *  is returned.
@@ -150,7 +150,7 @@ public:
      * @param[in] id The id of the parsed element, for error message generation
      * @return The parsed vehicle shape
      * @see SUMOVehicleShape
-     * @todo Recheck how errors are handled and what happens if they occure
+     * @todo Recheck how errors are handled and what happens if they occur
      */
     static SUMOVehicleShape parseGuiShape(const SUMOSAXAttributes& attrs, const std::string& id);
 
@@ -185,6 +185,9 @@ public:
     static bool validProfile(SUMOVTypeParameter* vtype, const std::string data, const SumoXMLAttr attr);
 
     static int parseCarWalkTransfer(const OptionsCont& oc, const bool hasTaxi);
+
+    /// @brief parse named stopping place attrs (or use stopParam attrs) and return it's tag and id
+    static bool parseStopTag(const SUMOSAXAttributes& attrs, const SUMOVehicleParameter::Stop* stopParam, SumoXMLTag& tag, std::string& id);
 
 private:
     /**@brief parse ID

@@ -288,7 +288,8 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
             sink = myRoute->getLastEdge();
         }
     }
-    ConstMSEdgeVector oldEdgesRemaining(source == *myCurrEdge ? myCurrEdge : myCurrEdge + 1, myRoute->end());
+    // on insertion, the new route is compared against the complete loaded route
+    ConstMSEdgeVector oldEdgesRemaining(onInit ? myRoute->begin() : (source == *myCurrEdge ? myCurrEdge : myCurrEdge + 1), myRoute->end());
     ConstMSEdgeVector edges;
     if (source != sink || !sink->prohibits(this)) {
         edges.push_back(source);
@@ -297,7 +298,7 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
     std::set<int> jumps;
 
 
-    double sourcePos = onInit ? 0 : getPositionOnLane();
+    double sourcePos = getPositionOnLane();
 #ifdef DEBUG_REROUTE
     if (DEBUG_COND) {
         std::cout << " curEdge=" << (*myCurrEdge)->getID() << " source=" << source->getID() << " sourcePos=" << sourcePos << " lane=" << Named::getIDSecure(getLane()) << " departPos=" << myParameter->departPos << " oldEdgesRemaining=" << toString(oldEdgesRemaining) << "\n";
@@ -366,7 +367,7 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
             const SUMOTime arrival = (itsov == stopsOnVia.end() ? -1 : itsov->second.arrival);
             const double pos = (itsov == stopsOnVia.end() ? 0 : itsov->second.pos);
             stops.push_back(StopEdgeInfo(viaEdge, priority, arrival, pos));
-            // @todo determine wether the viaEdge is also used by a stop and then use the stop priority here
+            // @todo determine whether the viaEdge is also used by a stop and then use the stop priority here
             if (jumpEdges.count(viaEdge) != 0) {
                 jumps.insert((int)stops.size());
             }
@@ -454,9 +455,10 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
             } else if (stopEdgeInfo.isSink) {
                 //error = TLF("Vehicle '%' has no valid route from edge '%' to destination edge '%'.", getID(), source->getID(), stopEdge->getID());
                 edges.clear();
-                if (onInit && source == stopEdge && stops.size() == 1 && sourcePos > myArrivalPos) {
+                if (source == stopEdge && stops.size() == 1 && sourcePos > myArrivalPos) {
                     edges.push_back(stopEdge);
-                    WRITE_WARNING(TLF("Vehicle '%' ignores arrivalPos % when driving from edge '%' to edge '%'.", getID(), myArrivalPos, source->getID(), stopEdge->getID()));
+                    WRITE_WARNING(TLF("Vehicle '%' ignores arrivalPos % when driving from edge '%' to edge '%' with departPos %.",
+                                getID(), myArrivalPos, source->getID(), stopEdge->getID(), sourcePos));
                 }
             } else if (source == stopEdge && stopEdgeInfo.stopPar != nullptr && stopEdgeInfo.stopPar->endPos >= sourcePos) {
                 // special case: no failure on dynamically computed stop position
@@ -501,9 +503,11 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
         edges.pop_back();
     }
     const double routeCost = router.recomputeCosts(edges, this, t);
-    const double previousCost = onInit ? routeCost : router.recomputeCosts(oldEdgesRemaining, this, t);
+    // trips have no loaded route to compare against when routed on insertion
+    const bool isTripInit = onInit && myParameter->wasSet(VEHPARS_FORCE_REROUTE);
+    const double previousCost = isTripInit ? routeCost : router.recomputeCosts(oldEdgesRemaining, this, t);
     const double savings = previousCost - routeCost;
-    bool savingsOk = onInit || info != "device.rerouting" || gWeightsRandomFactor != 1;
+    bool savingsOk = isTripInit || info != "device.rerouting" || gWeightsRandomFactor != 1;
     if (!savingsOk) {
         MSDevice_Routing* routingDevice = static_cast<MSDevice_Routing*>(getDevice(typeid(MSDevice_Routing)));
         assert(routingDevice != 0);
