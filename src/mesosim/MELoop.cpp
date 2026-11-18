@@ -747,15 +747,17 @@ MELoop::saveRNGStates(OutputDevice& out) {
         out.openTag(SUMO_TAG_RNGMESOGROUP);
         out.writeAttr(SUMO_ATTR_INDEX, i);
         out.writeAttr(SUMO_ATTR_STATE, RandHelper::saveState(&myGroups[i].rng));
+        out.writeAttr(SUMO_ATTR_COUNT, myGroups[i].eventCounter);
         out.closeTag();
     }
 }
 
 
 void
-MELoop::loadRNGState(int index, const std::string& state) {
+MELoop::loadRNGState(int index, const std::string& state, long long int eventCounter) {
     if (index < (int)myGroups.size()) {
         RandHelper::loadState(state, &myGroups[index].rng);
+        myGroups[index].eventCounter = eventCounter;
     } else {
         WRITE_WARNINGF(TL("Ignoring the random number state of meso group % (the simulation uses % groups)."), toString(index), toString(myGroups.size()));
     }

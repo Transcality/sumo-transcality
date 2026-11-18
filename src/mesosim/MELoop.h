@@ -134,9 +134,9 @@ public:
      */
     void buildGroups(const OptionsCont& oc);
 
-    /// @brief save / load the states of the random number generators of the groups
+    /// @brief save / load the states of the random number generators and the event counters of the groups
     void saveRNGStates(OutputDevice& out);
-    void loadRNGState(int index, const std::string& state);
+    void loadRNGState(int index, const std::string& state, long long int eventCounter);
 
 private:
     /** @brief Check whether the vehicle may move
