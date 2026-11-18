@@ -64,7 +64,8 @@ SUMORouteLoaderControl::loadNext(SUMOTime step) {
     }
     // the routes are read route-steps ahead: at once when the horizon is reached or, continuously, up to route-steps ahead of every step
     const SUMOTime horizon = myContinuous ? step + myInAdvanceStepNo : step;
-    if (myCurrentLoadTime > horizon) {
+    // vehicles departing within this step must be loaded now (their insertion events may be due)
+    if (STEPFLOOR(myCurrentLoadTime) > horizon) {
         return;
     }
     const SUMOTime loadMaxTime = myLoadAll ? SUMOTime_MAX : (myContinuous ? horizon : MAX2(myCurrentLoadTime + myInAdvanceStepNo, step));
