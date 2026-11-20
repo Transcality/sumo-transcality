@@ -170,3 +170,7 @@ meso_tripinfo_state
 
 # actuated traffic lights keep the detections of their detectors when loading state
 meso_actuated_detectors
+
+# with --meso-threads, the junction groups keep their random number states and event counters when loading state
+meso_threads_state
+
