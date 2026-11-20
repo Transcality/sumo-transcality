@@ -136,6 +136,10 @@ public:
 
     /// @brief save / load the states of the random number generators and the event counters of the groups
     void saveRNGStates(OutputDevice& out);
+    /** @brief load the random number state and the event counter of a group
+     * @param[in] eventCounter the saved counter, -1 if the state has none (saved by an older build): the counter then
+     *  continues after the highest event index of the loaded vehicles (see addLeaderCar)
+     */
     void loadRNGState(int index, const std::string& state, long long int eventCounter);
 
 private:
