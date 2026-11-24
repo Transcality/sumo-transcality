@@ -171,8 +171,24 @@ MELoop::simulate(SUMOTime tMax) {
             }
         }
         // the cars the serial part made due again within the step (the followers at the group borders) continue in a further round
-        if (round == myRounds || !anyEventDue(tMax)) {
+        if (!anyEventDue(tMax)) {
             return;
+        }
+        if (round == myRounds) {
+            // the events still due run on this thread, otherwise cars rechecked within the step
+            // (e.g. every millisecond behind a blocked segment) fall behind the simulation time and teleport too late
+            while (true) {
+                Group* next = nullptr;
+                for (Group& g : myGroups) {
+                    if (!g.leaders.empty() && g.leaders.top().time <= tMax && (next == nullptr || g.leaders.top().time < next->leaders.top().time)) {
+                        next = &g;
+                    }
+                }
+                if (next == nullptr) {
+                    return;
+                }
+                processEvents(next->leaders, next->invalidated, next->leaders.top().time, -1);
+            }
         }
     }
 }

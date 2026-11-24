@@ -304,7 +304,7 @@ private:
     /// @brief the end of the current simulation step
     SUMOTime myStepEnd = 0;
 
-    /// @brief how many parallel rounds a step may run (0: until no event is due, see simulate)
+    /// @brief how many parallel rounds a step may run, the events still due then run serially (0: until no event is due)
     int myRounds = 8;
 
     /// @brief whether a group has an event due until the given time
