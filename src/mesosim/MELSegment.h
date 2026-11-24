@@ -120,6 +120,9 @@ private:
     typedef std::vector<Gap> Gaps;
     std::vector<Gaps> myGaps;
 
+    /// @brief upstream arrival time of the latest gap left by a queued vehicle (for each queue, -1 if there is none)
+    std::vector<SUMOTime> myJamGapTimes;
+
     /// @brief records when the gap a vehicle leaves in the queue at the given time reaches the upstream end
     void recordGap(const int qIdx, const SUMOTime time, const bool queued);
 

@@ -75,6 +75,7 @@ MELSegment::MELSegment(const std::string& id,
     // the gap only has to pass the vehicles that fit into the segment (the remaining length cannot be occupied)
     myJamLength(MAX2(1., floor(length / DEFAULT_VEH_LENGTH_WITH_GAP)) * DEFAULT_VEH_LENGTH_WITH_GAP) {
     myGaps.resize(myQueues.size());
+    myJamGapTimes.resize(myQueues.size(), -1);
 }
 
 
@@ -110,6 +111,10 @@ MELSegment::recordGap(const int qIdx, const SUMOTime time, const bool queued) {
     myEdge.lock(); // the gui reads the gaps when drawing vehicles
     gaps.insert(gaps.begin(), {time + MAX2((SUMOTime)0, waveTime - remainderTime), time, queued});
     myEdge.unlock();
+    if (queued) {
+        // gaps are inserted in order of departure, so this gap is the last one left by a queued vehicle
+        myJamGapTimes[qIdx] = gaps.front().arrival;
+    }
 }
 
 
@@ -131,11 +136,34 @@ void
 MELSegment::updateEntryBlockTime(SUMOTime time) {
     for (int qIdx = 0; qIdx < (int)myQueues.size(); qIdx++) {
         Queue& q = myQueues[qIdx];
-        const int numGaps = numTravelingGaps(qIdx, time);
-        // the entering vehicle needs space in addition to the vehicles and the traveling gaps
-        if (numGaps > 0 && q.getOccupancy() + (double)(numGaps + 1) * DEFAULT_VEH_LENGTH_WITH_GAP > myQueueCapacity) {
+        int numGaps = numTravelingGaps(qIdx, time);
+        if (numGaps == 0) {
+            continue;
+        }
+        // gaps are sorted in descending order of arrival, the gap which reaches the upstream end first is at the back
+        const Gaps& gaps = myGaps[qIdx];
+        SUMOTime unblockTime = gaps.back().arrival;
+        if (myJamGapTimes[qIdx] > time) {
+            // While a jam discharges, the entering vehicle needs space in addition to the vehicles and the traveling gaps.
+            numGaps++;
+        } else {
+            // In free flow the constraint is exactly binding at capacity (the free-flow headway equals the gap travel
+            // time per vehicle). Since a gap only frees space once it has reached the upstream end, rounding would block
+            // vehicles and cause phantom jams (#18684). The next vehicle cannot follow the entering vehicle before tau_ff
+            // so gaps that arrive within this time are counted as arrived
+            auto it = gaps.rbegin();
+            while (it != gaps.rend() && it->arrival <= time + myTau_ff) {
+                ++it;
+                numGaps--;
+            }
+            if (it == gaps.rend()) {
+                continue;
+            }
+            unblockTime = it->arrival - myTau_ff;
+        }
+        if (q.getOccupancy() + (double)numGaps * DEFAULT_VEH_LENGTH_WITH_GAP > myQueueCapacity) {
             // segment is jammed because the empty spaces have not yet reached the upstream end.
-            q.setEntryBlockTime(MAX2(q.getEntryBlockTime(), myGaps[qIdx].back().arrival));
+            q.setEntryBlockTime(MAX2(q.getEntryBlockTime(), unblockTime));
         }
     }
 }
@@ -205,6 +233,10 @@ MELSegment::getQueueExtraState(int qIdx) const {
         result += toString(gap.departure);
         result += gap.queued ? " 1" : " 0";
     }
+    if (!myGaps[qIdx].empty() && myJamGapTimes[qIdx] >= myGaps[qIdx].back().arrival) {
+        // a gap left by a queued vehicle is still traveling
+        result += " j" + toString(myJamGapTimes[qIdx]);
+    }
     return result;
 }
 
@@ -213,7 +245,12 @@ void
 MELSegment::loadQueueExtraState(int qIdx, const std::string& state, SUMOTime offset) {
     Gaps& gaps = myGaps[qIdx];
     gaps.clear();
-    const std::vector<std::string> values = StringTokenizer(state).getVector();
+    myJamGapTimes[qIdx] = -1;
+    std::vector<std::string> values = StringTokenizer(state).getVector();
+    if (!values.empty() && values.back()[0] == 'j') {
+        myJamGapTimes[qIdx] = StringUtils::toLong(values.back().substr(1)) - offset;
+        values.pop_back();
+    }
     for (int i = 0; i + 2 < (int)values.size(); i += 3) {
         gaps.push_back({StringUtils::toLong(values[i]) - offset, StringUtils::toLong(values[i + 1]) - offset, values[i + 2] == "1"});
     }
