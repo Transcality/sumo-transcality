@@ -676,8 +676,8 @@ MSRoutingEngine::initRouter(SUMOVehicle* vehicle) {
     myRouterProvider = new MSRouterProvider(router, nullptr, transRouter, railRouter);
 #ifndef THREAD_POOL
 #ifdef HAVE_FOX
-    if (MSGlobals::gNumThreads > 1 && myThreadPool == nullptr) {
-        // the routes are computed by their own threads, so that the simulation threads do not wait for them
+    if (MSGlobals::gNumThreads > 1 && MSGlobals::gNumMesoThreads > 0 && myThreadPool == nullptr) {
+        // with --meso-threads the routes are computed by their own threads, so that the junction groups do not wait for them
         myThreadPool = new MFXWorkerThread::Pool();
         for (int i = 0; i < MSGlobals::gNumThreads; i++) {
             new MSEdgeControl::WorkerThread(*myThreadPool);
@@ -688,6 +688,16 @@ MSRoutingEngine::initRouter(SUMOVehicle* vehicle) {
         if (static_cast<MSEdgeControl::WorkerThread*>(threads.front())->setRouterProvider(myRouterProvider)) {
             for (std::vector<MFXWorkerThread*>::const_iterator t = threads.begin() + 1; t != threads.end(); ++t) {
                 static_cast<MSEdgeControl::WorkerThread*>(*t)->setRouterProvider(myRouterProvider->clone());
+            }
+        }
+    }
+    MFXWorkerThread::Pool& simulationPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
+    if (simulationPool.size() > 0) {
+        // person trips are still routed on the simulation threads (MSStageTrip), which need routers of their own
+        for (MFXWorkerThread* const t : simulationPool.getWorkers()) {
+            MSRouterProvider* const provider = myRouterProvider->clone();
+            if (!static_cast<MSEdgeControl::WorkerThread*>(t)->setRouterProvider(provider)) {
+                delete provider;
             }
         }
     }
@@ -724,6 +734,11 @@ MSRoutingEngine::reroute(SUMOVehicle& vehicle, const SUMOTime currentTime, const
             task->defer();
         }
         myThreadPool->add(task);
+        return;
+    }
+    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
+    if (threadPool.size() > 0) {
+        threadPool.add(new RoutingTask(vehicle, currentTime, info, onInit, silent, prohibited));
         return;
     }
 #endif
@@ -804,6 +819,12 @@ MSRoutingEngine::getRouterTT(const int rngIndex, SUMOVehicleClass svc, const Pro
 #ifdef HAVE_FOX
     if (myThreadPool != nullptr) {
         auto& router = static_cast<MSEdgeControl::WorkerThread*>(myThreadPool->getWorkers()[rngIndex % myThreadPool->size()])->getRouter(svc);
+        router.prohibit(prohibited);
+        return router;
+    }
+    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
+    if (threadPool.size() > 0) {
+        auto& router = static_cast<MSEdgeControl::WorkerThread*>(threadPool.getWorkers()[rngIndex % MSGlobals::gNumThreads])->getRouter(svc);
         router.prohibit(prohibited);
         return router;
     }
@@ -1040,6 +1061,10 @@ MSRoutingEngine::waitForAll() {
             delete task;
         }
         myPendingTasks.clear();
+    }
+    MFXWorkerThread::Pool& threadPool = MSNet::getInstance()->getEdgeControl().getThreadPool();
+    if (threadPool.size() > 0) {
+        threadPool.waitAll();
     }
 #endif
 }
