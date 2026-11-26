@@ -202,15 +202,15 @@ private:
     };
 
     /// @brief leader cars in the segments sorted by exit time
-    typedef std::priority_queue<LeaderEvent> LeaderEventQeue;
-    LeaderEventQeue myLeaderCars;
-    LeaderEventQeue myInvalidatedLeaderCars;
+    typedef std::priority_queue<LeaderEvent> LeaderEventQueue;
+    LeaderEventQueue myLeaderCars;
+    LeaderEventQueue myInvalidatedLeaderCars;
 
     /// @brief check whether the current car was invalidated and remove it from the invalidated cars
-    static bool wasInvalidated(const LeaderEvent& e, LeaderEventQeue& invalidated);
+    static bool wasInvalidated(const LeaderEvent& e, LeaderEventQueue& invalidated);
 
     /// @brief check all cars with an event time up to tMax (group -1 for the queues without groups)
-    void processEvents(LeaderEventQeue& leaders, LeaderEventQeue& invalidated, SUMOTime tMax, const int group);
+    void processEvents(LeaderEventQueue& leaders, LeaderEventQueue& invalidated, SUMOTime tMax, const int group);
 
     /// @brief the group whose queue holds the event of the given car
     int getGroup(const MEVehicle* veh) const;
@@ -273,8 +273,8 @@ private:
     /// @brief a set of junctions with the edges ending there, see buildGroups
     struct Group {
         Group(const std::string& id) : rng(id) {}
-        LeaderEventQeue leaders;
-        LeaderEventQeue invalidated;
+        LeaderEventQueue leaders;
+        LeaderEventQueue invalidated;
         long long int eventCounter = 0;
         SumoRNG rng;
         /// @brief cars which enter the segment of another group at the end of the parallel part of the step
@@ -343,6 +343,8 @@ private:
 
     /// @brief the interval at which to recheck at blocked junctions (<=0 means asap)
     const SUMOTime myLinkRecheckInterval;
+
+    bool myInterpolateMesoPos;
 
 private:
     /// @brief Invalidated copy constructor.

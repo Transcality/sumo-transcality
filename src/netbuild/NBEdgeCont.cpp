@@ -936,6 +936,8 @@ NBEdgeCont::appendRailwayTurnarounds(const NBPTStopCont& sc) {
                                 KEEPCLEAR_UNSPECIFIED,
                                 NBEdge::UNSPECIFIED_CONTPOS, NBEdge::UNSPECIFIED_VISIBILITY_DISTANCE,
                                 SUMO_const_haltingSpeed);
+            // finalize connections to prevent removal during recheck
+            edge->declareConnectionsAsLoaded();
         }
     }
 }
@@ -1022,6 +1024,9 @@ NBEdgeCont::joinSameNodeConnectingEdges(NBDistrictCont& dc,
         NBEdge* newEdge = new NBEdge(id, from, to, "", speed, NBEdge::UNSPECIFIED_FRICTION, nolanes, priority,
                                      NBEdge::UNSPECIFIED_WIDTH, NBEdge::UNSPECIFIED_OFFSET,
                                      tpledge->myLaneSpreadFunction, tpledge->getStreetName());
+        newEdge->setRoundaboutGuessExcluded(std::any_of(edges.begin(), edges.end(), [](const NBEdge* edge) {
+            return edge->isRoundaboutGuessExcluded();
+        }));
         // copy lane attributes
         int laneIndex = 0;
         for (i = edges.begin(); i != edges.end(); ++i) {
@@ -1223,6 +1228,29 @@ NBEdgeCont::getGeneratedFrom(const std::string& id) const {
 }
 
 
+static bool
+hasStraightPriorityApproach(const EdgeVector& loop) {
+    for (size_t i = 0; i < loop.size(); ++i) {
+        const NBEdge* ringIn = loop[i];
+        const NBEdge* ringOut = loop[(i + 1) % loop.size()];
+        const NBNode* node = ringIn->getToNode();
+        const double outAngle = ringOut->getAngleAtNode(node);
+        const double ringTurn = std::abs(NBHelpers::relAngle(ringIn->getAngleAtNode(node), outAngle));
+        if (ringTurn <= 30.) {
+            continue;
+        }
+        for (const NBEdge* approach : node->getIncomingEdges()) {
+            if (approach->getPriority() > ringIn->getPriority()
+                    && (approach->getPermissions() & ringOut->getPermissions() & ~SVC_PEDESTRIAN) != 0
+                    && std::abs(NBHelpers::relAngle(approach->getAngleAtNode(node), outAngle)) <= 15.) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
 int
 NBEdgeCont::guessRoundabouts() {
     myGuessedRoundabouts.clear();
@@ -1232,7 +1260,7 @@ NBEdgeCont::guessRoundabouts() {
     }
     // step 1: keep only those edges which have no turnarounds and which are not
     // part of a loaded roundabout
-    std::set<NBEdge*> candidates;
+    std::set<NBEdge*, ComparatorIdLess> candidates;
     SVCPermissions valid = SVCAll & ~SVC_PEDESTRIAN;
     for (EdgeCont::const_iterator i = myEdges.begin(); i != myEdges.end(); ++i) {
         NBEdge* e = (*i).second;
@@ -1246,7 +1274,7 @@ NBEdgeCont::guessRoundabouts() {
 
     // step 2:
     std::set<NBEdge*> visited;
-    for (std::set<NBEdge*>::const_iterator i = candidates.begin(); i != candidates.end(); ++i) {
+    for (std::set<NBEdge*, ComparatorIdLess>::const_iterator i = candidates.begin(); i != candidates.end(); ++i) {
         EdgeVector loopEdges;
         // start with a random edge (this doesn't have to be a roundabout edge)
         // loop over connected edges (using always the leftmost one)
@@ -1422,6 +1450,30 @@ NBEdgeCont::guessRoundabouts() {
             }
             if (formFactor(loopEdges) > 0.6
                     && loopLength < OptionsCont::getOptions().getFloat("roundabouts.guess.max-length")) {
+                // Preserve explicitly loaded roundabouts.
+                const bool loaded = std::any_of(loopEdges.begin(), loopEdges.end(), [&loadedRoundaboutEdges](NBEdge* edge) {
+                    return loadedRoundaboutEdges.count(edge) != 0;
+                });
+                if (!loaded) {
+                    const bool excluded = std::any_of(loopEdges.begin(), loopEdges.end(), [](const NBEdge* edge) {
+                        // Netconvert can also load previously converted OSM networks.
+                        if (edge->isRoundaboutGuessExcluded()) {
+                            return true;
+                        }
+                        const auto types = StringTokenizer(edge->getTypeID(), "|").getVector();
+                        return std::any_of(types.begin(), types.end(), [](const std::string& type) {
+                            return type == "highway.service"
+                                   || (StringUtils::startsWith(type, "highway.") && StringUtils::endsWith(type, "_link"));
+                        });
+                    });
+                    const bool allSignals = std::all_of(loopEdges.begin(), loopEdges.end(), [](const NBEdge* edge) {
+                        const NBNode* node = edge->getToNode();
+                        return node->isTrafficLight() || node->isTLControlled();
+                    });
+                    if (excluded || allSignals || hasStraightPriorityApproach(loopEdges)) {
+                        continue;
+                    }
+                }
                 // collected edges are marked in markRoundabouts
                 EdgeSet guessed(loopEdges.begin(), loopEdges.end());
                 if (loadedRoundaboutEdges.count(loopEdges.front()) != 0) {
@@ -1455,46 +1507,63 @@ NBEdgeCont::guessRoundabouts() {
 
 int
 NBEdgeCont::extractRoundabouts() {
-    std::set<NBEdge*> candidateEdges;
+    EdgeVector candidateEdges;
     for (const auto& edge : myEdges) {
         NBEdge* const e = edge.second;
         if (e->getJunctionPriority(e->getToNode()) == NBEdge::JunctionPriority::ROUNDABOUT || e->getJunctionPriority(e->getFromNode()) == NBEdge::JunctionPriority::ROUNDABOUT) {
-            candidateEdges.insert(e);
+            candidateEdges.push_back(e);
         }
     }
     std::set<NBEdge*> visited;
     int extracted = 0;
-    for (const auto& edgeIt : candidateEdges) {
-        EdgeVector loopEdges;
-        NBEdge* e = edgeIt;
-        if (visited.count(e) > 0) {
+    for (NBEdge* const startEdge : candidateEdges) {
+        if (visited.count(startEdge) > 0) {
             // already seen
             continue;
         }
-        loopEdges.push_back(e);
-        bool doLoop = true;
-        //
-        do {
-            if (std::find(visited.begin(), visited.end(), e) != visited.end()) {
-                if (loopEdges.size() > 1) {
-                    addRoundabout(EdgeSet(loopEdges.begin(), loopEdges.end()));
+        EdgeVector loopEdges;
+        NBEdge* e = startEdge;
+        while (true) {
+            const auto loopIt = std::find(loopEdges.begin(), loopEdges.end(), e);
+            if (loopIt != loopEdges.end()) {
+                if (loopEdges.end() - loopIt > 1) {
+                    addRoundabout(EdgeSet(loopIt, loopEdges.end()));
+                    visited.insert(loopIt, loopEdges.end());
                     ++extracted;
+                } else {
+                    visited.insert(e);
                 }
-                doLoop = false;
                 break;
             }
-            visited.insert(e);
+            if (visited.count(e) > 0) {
+                visited.insert(loopEdges.begin(), loopEdges.end());
+                break;
+            }
             loopEdges.push_back(e);
             const EdgeVector& outgoingEdges = e->getToNode()->getOutgoingEdges();
-            EdgeVector::const_iterator me = std::find_if(outgoingEdges.begin(), outgoingEdges.end(), [](const NBEdge * outgoingEdge) {
-                return outgoingEdge->getJunctionPriority(outgoingEdge->getToNode()) == NBEdge::JunctionPriority::ROUNDABOUT;
-            });
-            if (me == outgoingEdges.end()) { // no closed loop
-                doLoop = false;
-            } else {
-                e = *me;
+            NBEdge* next = nullptr;
+            for (NBEdge* const outgoingEdge : outgoingEdges) {
+                if (outgoingEdge->getJunctionPriority(outgoingEdge->getToNode()) == NBEdge::JunctionPriority::ROUNDABOUT
+                        && std::find(loopEdges.begin(), loopEdges.end(), outgoingEdge) != loopEdges.end()) {
+                    next = outgoingEdge;
+                    break;
+                }
             }
-        } while (doLoop);
+            if (next == nullptr) {
+                for (NBEdge* const outgoingEdge : outgoingEdges) {
+                    if (outgoingEdge->getJunctionPriority(outgoingEdge->getToNode()) == NBEdge::JunctionPriority::ROUNDABOUT
+                            && visited.count(outgoingEdge) == 0) {
+                        next = outgoingEdge;
+                        break;
+                    }
+                }
+            }
+            if (next == nullptr) { // no closed loop
+                visited.insert(loopEdges.begin(), loopEdges.end());
+                break;
+            }
+            e = next;
+        }
     }
     return extracted;
 }
@@ -1579,7 +1648,9 @@ NBEdgeCont::removeRoundaboutEdges(const EdgeSet& toRemove, std::set<EdgeSet>& ro
     for (const EdgeSet& r : roundabouts) {
         EdgeSet r2;
         std::set_difference(r.begin(), r.end(), toRemove.begin(), toRemove.end(), std::inserter(r2, r2.end()));
-        rList.push_back(r2);
+        if (!r2.empty()) {
+            rList.push_back(r2);
+        }
     }
     roundabouts.clear();
     roundabouts.insert(rList.begin(), rList.end());

@@ -7,6 +7,9 @@
     <flow id="exit" begin="0" end="900" vehsPerHour="600">
         <route edges="in beg exit exit2"/>
     </flow>
+    <flow id="busthrough" type="bus" begin="0" end="900" vehsPerHour="120">
+        <route edges="in beg main"/>
+    </flow>
     <flow id="bus" type="bus" begin="0" end="900" vehsPerHour="60">
         <route edges="in beg exit exit2"/>
     </flow>

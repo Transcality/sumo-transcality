@@ -39,11 +39,50 @@ try:
     HAVE_CERTIFI = True
 except ImportError:
     HAVE_CERTIFI = False
-
 import sumolib
+
+DEBUG = False
+if DEBUG:
+    import urllib
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPHandler(debuglevel=1),
+        urllib.request.HTTPSHandler(debuglevel=1)
+    )
+    urllib.request.install_opener(opener)
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 TYPEMAP_DIR = os.path.join(THIS_DIR, "..", "data", "typemap")
+
+EUROPE = [
+    (-25.0, 66.8),
+    (15.0, 71.5),
+    (32.0, 70.5),
+    (41.0, 60.0),
+    (41.0, 43.0),
+    (28.0, 34.5),
+    (14.5, 35.5),
+    (-6.0, 35.8),
+    (-10.5, 36.8),
+    (-11.5, 51.5),
+    (-25.0, 63.0)]
+
+NORTH_AMERICA = [
+    (-168.0, 66.0),
+    (-168.0, 52.0),
+    (-138.0, 58.0),
+    (-126.0, 48.0),
+    (-118.0, 32.0),
+    (-106.0, 20.0),
+    (-84.0, 8.0),
+    (-77.0, 7.5),
+    (-72.0, 18.0),
+    (-64.0, 18.0),
+    (-79.5, 25.5),
+    (-66.0, 44.0),
+    (-52.0, 47.0),
+    (-60.0, 62.0),
+    (-85.0, 74.0),
+    (-140.0, 71.0)]
 
 
 def readCompressed(options, urls, context, query, roadTypesJSON, getShapes, filename):
@@ -165,8 +204,10 @@ def readCompressed(options, urls, context, query, roadTypesJSON, getShapes, file
     for idx in range(options.retries + 1):
         url = urls[idx % len(urls)]
         try:
+            if options.verbose:
+                print("querying url:", url)
             req = Request(url, data=finalQuery.encode(), headers=headers)
-            with urlopen(req, context=context) as response:
+            with urlopen(req, context=context, timeout=options.timeout) as response:
                 if options.verbose:
                     print(response.status, response.reason)
                 if response.getheader('Content-Encoding') == 'gzip':
@@ -220,7 +261,7 @@ def get_options(args):
     optParser.add_argument("-a", "--area", type=int, help="area id to retrieve")
     optParser.add_argument("-x", "--polygon", category="processing",
                            help="calculate bounding box from polygon data in file")
-    optParser.add_argument("-u", "--url", default="hpi,oapi,pcoffee",
+    optParser.add_argument("-u", "--url", default="dressel,dressel-na,hpi,oapi,pcoffee",
                            help="Download from the given Overpass server(s)")
     optParser.add_argument("-w", "--wikidata", action="store_true",
                            default=False, help="get the corresponding wikidata")
@@ -236,6 +277,8 @@ def get_options(args):
                            help="write configuration to the given FILE and not as comment into the output file")
     optParser.add_argument("--retries", type=int, default=5,
                            help="How many attempts to download if a 504 is encountered")
+    optParser.add_argument("--timeout", type=int, default=250,
+                           help="Set request timeout")
     optParser.add_argument("--retry-delay", type=int, default=3, help="Delay between download attempts")
     optParser.add_argument("-v", "--verbose", action="store_true",
                            default=False, help="tell me what you are doing")
@@ -271,8 +314,24 @@ def get(args=None):
 
     shortcut = {"oapi": "https://overpass-api.de/api/interpreter",
                 "hpi": "https://osm.hpi.de/overpass/api/interpreter",
-                "pcoffee": "https://overpass.private.coffee/api/interpreter"}
-    urls = [shortcut.get(u, u) for u in options.url.split(",")]
+                "pcoffee": "https://overpass.private.coffee/api/interpreter",
+                "vkmaps": "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+                "dressel-na": "https://ovp.dresel.systems/api-na/interpreter",
+                "dressel": "https://ovp.dresel.systems/api/interpreter"}
+
+    restricted = {"dressel": EUROPE, "dressel-na": NORTH_AMERICA}
+    urlopts = options.url.split(",")
+    for u, shape in restricted.items():
+        if u in urlopts:
+            if options.area:
+                urlopts.remove(u)
+            else:
+                for pos in [(west, south), (west, north), (east, north), (east, south)]:
+                    if not sumolib.geomhelper.isWithin(pos, shape):
+                        urlopts.remove(u)
+                        break
+
+    urls = [shortcut.get(u, u) for u in urlopts]
     context = ssl.create_default_context(cafile=certifi.where() if HAVE_CERTIFI else None)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
 

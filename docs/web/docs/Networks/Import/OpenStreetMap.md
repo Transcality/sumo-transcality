@@ -534,7 +534,7 @@ must be extended by:
 For the most part, the relationship between OSM and .net.xml is simple:
 
 - OSM node id "1234" translates into junction id "1234".
-- OSM way id "5677" translates into multiple edge ids "5678\#0",
+- OSM way id "5678" translates into multiple edge ids "5678\#0",
   "5678\#1", "5678\#2", "-5678\#0", "-5678\#1", "-5678\#2"
 
 OSM ways are mostly bi-directional and cross multiple intersections. In
@@ -545,7 +545,7 @@ By setting the option **--output.original-names**, each lane in the network will
 name from the input network that it is derived from in a child element:
 
 ```xml
-<param key="origID" value="...."/>
+<param key="origId" value="...."/>
 ```
 
 Some OSM elements may not appear in the created network because they are
@@ -554,6 +554,26 @@ along an edge (due to option **--geometry-remove**).
 Thus, a sequence of ways (i.e. "42", "43", "57") without intersection, would be joined into a single SUMO edge using the id of the first way ("42").
 
 Also, option [**--junctions.join**](#junctions) can lead to the removal of some ways and nodes. Multiple nodes ("1", "2") are joined into "cluster_1_2" and the edges that are within the cluster are converted into internal edges named ":cluster_1_2_INDEX".
+
+## Reviewing a map issue found in SUMO
+
+Use `tools/osmMapReview.py` to prepare a local Markdown report for a suspected OpenStreetMap issue. Keep the original OSM XML and build the network with **--output.original-names** to preserve the IDs of source ways and joined nodes.
+
+```console
+netconvert --osm-files region.osm.xml --output.original-names -o region.net.xml
+sumo -c scenario.sumocfg --log simulation.log
+python tools/osmMapReview.py --osm-file region.osm.xml --net-file region.net.xml --log-file simulation.log --log-line 23 -o review.md
+```
+
+For example, a failed route may report `No connection between edge '400' and edge '200'.` The tool copies that diagnostic into the report and links the source OSM ways for both edges. Start with the log alone and open those links to inspect the location. The report leaves the observation and evidence sections as prompts.
+
+You can then edit the report or rerun the command with your own text. For this example, **--observation "Check whether the turn between these roads is permitted."** records what you want to verify. An observation comes from the person investigating the diagnostic. After checking the site, you could use **--evidence "A no-left-turn sign is posted at the junction (local survey, YYYY-MM-DD)."** to record what you found and how you verified it.
+
+Repeat **--osm-file** for a network built from several extracts. Choose the relevant log line with **--log-line** when there are several diagnostics. You can also select SUMO objects with **--edge**, **--lane** or **--junction**. Use **--way** or **--node** to identify a source feature directly.
+
+The report lists each matching feature and its highest version in the supplied extracts. Joining can produce multiple source IDs. Generated or removed elements and networks built without original names can leave incomplete provenance. The map pin uses network geometry when available and can fall back to an approximate position on a source way. Supply **--latitude** and **--longitude** together to set the location yourself.
+
+Use **--category map-data** for a verified OpenStreetMap error, **--category import** for a conversion problem, or **--category simulation** for simulation behavior. Keep uncertain findings **unclassified** while you gather evidence. Check the current map and nearby notes. Add a manual note only when the evidence confirms a map issue. Check the report for private information before sharing it. [OpenStreetMap Notes guidance](https://wiki.openstreetmap.org/wiki/Notes)
 
 ## Warnings during Import
 
@@ -597,7 +617,7 @@ whole of Scotland) but some precautions should be taken:
 
 # Importing Public Transport Data
 
-netconvert and further SUMO tools can be used to import public transpot
+netconvert and further SUMO tools can be used to import public transport
 data from OSM. The easiest way to do this is by using the
 [OSM-Web-Wizard tool](../../Tutorials/OSMWebWizard.md). Performing the
 import without the wizard is explained in

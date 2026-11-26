@@ -225,6 +225,10 @@ MSRouteHandler::parseFromViaTo(SumoXMLTag tag, const SUMOSAXAttributes& attrs) {
 
 void
 MSRouteHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
+    if (myDiscardedTransportableDepth != 0) {
+        myElementStack.push_back(element);
+        return;
+    }
     try {
         if (myActiveTransportablePlan != nullptr && myActiveTransportablePlan->empty() && myVehicleParameter->departProcedure == DepartDefinition::TRIGGERED
                 && element != SUMO_TAG_RIDE && element != SUMO_TAG_TRANSPORT && element != SUMO_TAG_PARAM) {
@@ -258,6 +262,22 @@ MSRouteHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
         deleteActivePlanAndVehicleParameter();
         throw;
     }
+}
+
+
+void
+MSRouteHandler::myEndElement(int element) {
+    if (myDiscardedTransportableDepth == 0) {
+        SUMORouteHandler::myEndElement(element);
+        return;
+    }
+    if (myElementStack.size() == myDiscardedTransportableDepth) {
+        deleteActivePlanAndVehicleParameter();
+        myParamStack.pop_back();
+        myActiveRoute.clear();
+        myDiscardedTransportableDepth = 0;
+    }
+    myElementStack.pop_back();
 }
 
 
@@ -619,6 +639,9 @@ MSRouteHandler::closeVehicle() {
         // let's check whether this vehicle had to depart before the simulation starts
         if (!(myAddVehiclesDirectly || checkLastDepart()) || (myVehicleParameter->depart <= MSNet::getInstance()->getStateLoaderTime() && !myAmLoadingState)) {
             mySkippedVehicles.insert(myVehicleParameter->id);
+            if (route != nullptr && route->getID() == embeddedRouteID) {
+                route->checkRemoval();
+            }
             return;
         }
     }
@@ -683,6 +706,16 @@ MSRouteHandler::closeVehicle() {
         }
     }
 
+    if (route->getEdges().size() == 1
+            && myVehicleParameter->departPosProcedure == DepartPosDefinition::GIVEN
+            && myVehicleParameter->arrivalPosProcedure == ArrivalPosDefinition::GIVEN
+            && myVehicleParameter->arrivalPos > 0
+            && myVehicleParameter->arrivalPos <= myVehicleParameter->departPos) {
+        WRITE_WARNINGF(TL("Vehicle '%' ignores unreachable arrivalPos %."),
+                       myVehicleParameter->id, toString(myVehicleParameter->arrivalPos),
+                       toString(myVehicleParameter->departPos));
+    }
+
     // try to build the vehicle
     SUMOVehicle* vehicle = nullptr;
     if (vehControl.getVehicle(myVehicleParameter->id) == nullptr) {
@@ -744,6 +777,8 @@ MSRouteHandler::closeVehicle() {
             }
             myVehicleParameter = nullptr;
         } else {
+            // persons and containers that depart triggered by this vehicle are discarded as well (#18596)
+            myScaledVehicles.insert(myVehicleParameter->id);
             vehControl.deleteVehicle(vehicle, true);
             myVehicleParameter = nullptr;
             vehicle = nullptr;
@@ -1167,7 +1202,9 @@ MSRouteHandler::addRideOrTransport(const SUMOSAXAttributes& attrs, const SumoXML
                 myVehicleParameter->depart = startVeh->depart;
             }
             if (startVeh == nullptr) {
-                if (mySkippedVehicles.count(vehID) == 0) {
+                if (myScaledVehicles.count(vehID) != 0) {
+                    WRITE_WARNINGF(TL("Skipping % '%' with triggered departure because vehicle '%' was removed by scaling."), agent, aid, vehID);
+                } else if (mySkippedVehicles.count(vehID) == 0) {
                     throw ProcessError("Unknown vehicle '" + vehID + "' in triggered departure for " + agent + " '" + aid + "'.");
                 }
                 // we cannot simply throw here because we need to parse the rest of the person (just to discard it)
@@ -1491,9 +1528,18 @@ MSRouteHandler::parseWalkPositions(const SUMOSAXAttributes& attrs, const std::st
 
         bs = retrieveStoppingPlace(attrs, " " + description);
         if (bs != nullptr) {
-            arrivalPos = bs->getAccessPos(toEdge != nullptr ? toEdge : &bs->getLane().getEdge());
+            const MSEdge* const arrivalEdge = toEdge != nullptr ? toEdge : &bs->getLane().getEdge();
+            arrivalPos = bs->getAccessPos(arrivalEdge);
             if (arrivalPos < 0) {
-                throw ProcessError("Bus stop '" + bs->getID() + "' is not connected to arrival edge '" + toEdge->getID() + "' for " + description + ".");
+                const std::string message = TLF("Bus stop '%' is not connected to arrival edge '%' for %.",
+                                               bs->getID(), arrivalEdge->getID(), description);
+                if (MSGlobals::gCheckRoutes) {
+                    throw ProcessError(message);
+                }
+                WRITE_WARNINGF(TL("% Skipping this plan."), message);
+                // The person or person flow is the parent of this stage.
+                myDiscardedTransportableDepth = myElementStack.size() - 1;
+                return;
             }
             if (attrs.hasAttribute(SUMO_ATTR_ARRIVALPOS)) {
                 const double length = toEdge != nullptr ? toEdge->getLength() : bs->getLane().getLength();
@@ -1537,13 +1583,22 @@ MSRouteHandler::addPersonTrip(const SUMOSAXAttributes& attrs) {
         const MSEdge* to = nullptr;
         parseFromViaTo(SUMO_TAG_PERSON, attrs);
         myInsertStopEdgesAt = -1;
-        if (attrs.hasAttribute(SUMO_ATTR_FROM) || attrs.hasAttribute(SUMO_ATTR_FROM_JUNCTION) || attrs.hasAttribute(SUMO_ATTR_FROM_TAZ)
-                || attrs.hasAttribute(SUMO_ATTR_FROMXY) || attrs.hasAttribute(SUMO_ATTR_FROMLONLAT)) {
+        const bool hasExplicitFrom = (attrs.hasAttribute(SUMO_ATTR_FROM) || attrs.hasAttribute(SUMO_ATTR_FROM_JUNCTION)
+                                      || attrs.hasAttribute(SUMO_ATTR_FROM_TAZ) || attrs.hasAttribute(SUMO_ATTR_FROMXY)
+                                      || attrs.hasAttribute(SUMO_ATTR_FROMLONLAT));
+        if (hasExplicitFrom) {
             from = myActiveRoute.front();
         } else if (myActiveTransportablePlan->empty()) {
             throw ProcessError(TLF("Start edge not defined for person '%'.", myVehicleParameter->id));
         } else {
             from = myActiveTransportablePlan->back()->getDestination();
+        }
+        if (hasExplicitFrom && !myActiveTransportablePlan->empty()) {
+            const MSEdge* const previousDestination = myActiveTransportablePlan->back()->getDestination();
+            if (previousDestination != nullptr && previousDestination != from) {
+                WRITE_WARNINGF(TL("Person '%' jumps from edge '%' to personTrip origin edge '%'."),
+                               id, previousDestination->getID(), from->getID());
+            }
         }
         if (attrs.hasAttribute(SUMO_ATTR_TO) || attrs.hasAttribute(SUMO_ATTR_TO_JUNCTION) || attrs.hasAttribute(SUMO_ATTR_TO_TAZ)
                 || attrs.hasAttribute(SUMO_ATTR_TOXY) || attrs.hasAttribute(SUMO_ATTR_TOLONLAT)) {
@@ -1559,6 +1614,9 @@ MSRouteHandler::addPersonTrip(const SUMOSAXAttributes& attrs) {
         double arrivalPos = 0;
         MSStoppingPlace* stoppingPlace = nullptr;
         parseWalkPositions(attrs, myVehicleParameter->id, from, to, departPos, arrivalPos, stoppingPlace, nullptr, ok);
+        if (myDiscardedTransportableDepth != 0) {
+            return;
+        }
 
         SVCPermissions modeSet = 0;
         if (attrs.hasAttribute(SUMO_ATTR_MODES)) {
@@ -1656,6 +1714,9 @@ MSRouteHandler::addWalk(const SUMOSAXAttributes& attrs) {
                 myActiveTransportablePlan->push_back(new MSStageWaiting(myActiveRoute.front(), nullptr, -1, myVehicleParameter->depart, initialDepartPos, "start", true));
             }
             parseWalkPositions(attrs, myVehicleParameter->id, myActiveRoute.front(), myActiveRoute.back(), departPos, arrivalPos, bs, myActiveTransportablePlan->back(), ok);
+            if (myDiscardedTransportableDepth != 0) {
+                return;
+            }
             if (myActiveRoute.empty()) {
                 throw ProcessError(TLF("No edges to walk for person '%'.", myVehicleParameter->id));
             }

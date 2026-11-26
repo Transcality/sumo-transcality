@@ -235,6 +235,9 @@ public:
      */
     static void loadState(const SUMOSAXAttributes& attrs);
 
+    /// @brief Loads the arcs of a CCH metric that lag behind the speeds
+    static void loadCCHMetric(const SUMOSAXAttributes& attrs);
+
 #ifdef HAVE_FOX
     static void waitForAll();
 #endif
@@ -409,6 +412,10 @@ private:
     /// @brief build the shared CCH + the live family with one metric per
     /// loaded type, publish initial metrics
     static void initCCH();
+    /// @brief build the live family without metrics
+    static void buildCCHLive();
+    /// @brief the live family restored from a state, built on first use
+    static MSCCHMetricFamily* getLoadedCCH();
 
     /// @brief waits for the fill of the CCH metrics on the customize thread (before the efforts, permissions or dirty lists change)
     static void waitForCustomize();

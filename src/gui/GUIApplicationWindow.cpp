@@ -124,6 +124,7 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_J_TOGGLEDRAWJUNCTIONSHAPE,      GUIApplicationWindow::onCmdToggleDrawJunctionShape),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_K_OPENTLSPROGRAMS,              GUIApplicationWindow::onCmdToggleSecondaryShape),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_F_FULSCREENMODE,                GUIApplicationWindow::onCmdFullScreen),
+    FXMAPFUNC(SEL_CHORE,    MID_HOTKEY_CTRL_F_FULSCREENMODE,                GUIApplicationWindow::onChoreLeaveFullScreen),
     FXMAPFUNC(SEL_COMMAND,  MID_LISTINTERNAL,                               GUIApplicationWindow::onCmdListInternal),
     FXMAPFUNC(SEL_COMMAND,  MID_LISTPARKING,                                GUIApplicationWindow::onCmdListParking),
     FXMAPFUNC(SEL_COMMAND,  MID_LISTTELEPORTING,                            GUIApplicationWindow::onCmdListTeleporting),
@@ -151,6 +152,7 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_COMMAND,  MID_DELAY_TOGGLE,                                           GUIApplicationWindow::onCmdDelayToggle),
     FXMAPFUNC(SEL_COMMAND,  MID_DEMAND_SCALE,                                           GUIApplicationWindow::onCmdDemandScale),
     FXMAPFUNC(SEL_COMMAND,  MID_CLEARMESSAGEWINDOW,                                     GUIApplicationWindow::onCmdClearMsgWindow),
+    FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_SHIFT_W_TOGGLEMESSAGEWINDOW,                GUIApplicationWindow::onCmdToggleMessageWindow),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_B_BREAKPOINT,                                    GUIApplicationWindow::onCmdBreakpoint),
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_ALT_B_BREAKPOINT_EARLY,                          GUIApplicationWindow::onCmdBreakpointEarly),
     // Stats
@@ -164,7 +166,7 @@ FXDEFMAP(GUIApplicationWindow) GUIApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_P_OPENSHAPES,                               GUIApplicationWindow::onUpdNeedsNetwork),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_U_OPENEDGEDATA,                             GUIApplicationWindow::onUpdNeedsNetwork),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_R_RELOAD,                                   GUIApplicationWindow::onUpdReload),
-    FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_QUICK_RELOAD,                               GUIApplicationWindow::onUpdReload),
+    FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_QUICK_RELOAD,                               GUIApplicationWindow::onUpdQuickReload),
     FXMAPFUNC(SEL_UPDATE,   MID_RECENTFILE,                                             GUIApplicationWindow::onUpdOpenRecent),
     FXMAPFUNC(SEL_UPDATE,   MID_NEW_MICROVIEW,                                          GUIApplicationWindow::onUpdAddView),
     FXMAPFUNC(SEL_UPDATE,   MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS,   GUIApplicationWindow::onUpdStart),
@@ -341,6 +343,8 @@ GUIApplicationWindow::dependentBuild(const bool isLibsumo) {
         myCartesianCoordinate->setTipText(TL("Enter 'x, y' to center view"));
         myCartesianCoordinate->setBackColor(myCartesianFrame->getBackColor());
         myCartesianCoordinate->setText(TL("N/A"));
+        myCartesianCoordinate->disable();
+        myCartesianCoordinate->setEditable(false);
         // build buttons
         std::vector<std::string> help({
             TL("number of running vehicles"),
@@ -598,11 +602,11 @@ GUIApplicationWindow::fillMenuBar() {
     GUIDesigns::buildFXMenuCommandShortcut(mySettingsMenu,
                                            TL("Application Settings"), "Ctrl+H", TL("Open a Dialog for Application Settings editing."),
                                            nullptr, this, MID_HOTKEY_CTRL_H_APPSETTINGS_OPENEDGETYPES);
-    myGamingModeCheckbox = new FXMenuCheck(mySettingsMenu,
-                                           TL("Gaming Mode\tCtrl+G\tToggle gaming mode on/off."),
-                                           this, MID_HOTKEY_CTRL_G_GAMINGMODE_TOGGLEGRID);
     GUIDesigns::buildFXMenuCommandShortcut(mySettingsMenu,
-                                           TL("Full Screen Mode"), "Ctrl+F", TL("Toggle full screen mode on/off."),
+                                           TL("Gaming Mode"), "Ctrl+G", TL("Toggle gaming mode on/off."),
+                                           nullptr, this, MID_HOTKEY_CTRL_G_GAMINGMODE_TOGGLEGRID);
+    GUIDesigns::buildFXMenuCommandShortcut(mySettingsMenu,
+                                           TL("Full Screen Mode"), "Ctrl+F or F11", TL("Toggle full screen mode on/off."),
                                            GUIIconSubSys::getIcon(GUIIcon::FULL_SCREEN), this, MID_HOTKEY_CTRL_F_FULSCREENMODE);
     // build Locate menu
     myLocatorMenu = new FXMenuPane(this);
@@ -645,10 +649,10 @@ GUIApplicationWindow::fillMenuBar() {
     myControlMenu = new FXMenuPane(this);
     GUIDesigns::buildFXMenuTitle(myMenuBar, TL("Simulation"), nullptr, myControlMenu);
     GUIDesigns::buildFXMenuCommandShortcut(myControlMenu,
-                                           TL("Run"), "A,space", TL("Start/ Resume the simulation."),
+                                           TL("Run"), "A or Spacebar", TL("Start/ Resume the simulation."),
                                            GUIIconSubSys::getIcon(GUIIcon::START), this, MID_HOTKEY_CTRL_A_STARTSIMULATION_OPENADDITIONALELEMENTS);
     GUIDesigns::buildFXMenuCommandShortcut(myControlMenu,
-                                           TLC("Simulation", "Stop"), "S,space", TL("Halt the simulation."),
+                                           TLC("Simulation", "Stop"), "S or Spacebar", TL("Halt the simulation."),
                                            GUIIconSubSys::getIcon(GUIIcon::STOP), this, MID_HOTKEY_CTRL_S_STOPSIMULATION_SAVENETWORK);
     GUIDesigns::buildFXMenuCommandShortcut(myControlMenu,
                                            TL("Step"), "D", TL("Perform one simulation step."),
@@ -696,6 +700,8 @@ GUIApplicationWindow::fillMenuBar() {
     new FXMenuSeparator(myWindowMenu);
     GUIDesigns::buildFXMenuCheckbox(myWindowMenu, TL("Show Status Line"), TL("Toggle the Status Bar on/off."), myStatusbar, FXWindow::ID_TOGGLESHOWN);
     GUIDesigns::buildFXMenuCheckbox(myWindowMenu, TL("Show Message Window"), TL("Toggle the Message Window on/off."), myMessageWindow, FXWindow::ID_TOGGLESHOWN);
+    GUIDesigns::buildFXMenuCommandShortcut(myWindowMenu, TL("Toggle Message Window and Status Line"), "Ctrl+Shift+W", TL("Show or hide both the Message Window and the Status Line."),
+                                           nullptr, this, MID_HOTKEY_CTRL_SHIFT_W_TOGGLEMESSAGEWINDOW);
     GUIDesigns::buildFXMenuCheckbox(myWindowMenu, TL("Show Simulation Time"), TL("Toggle the Simulation Time on/off."), myToolBar3, FXWindow::ID_TOGGLESHOWN);
     GUIDesigns::buildFXMenuCheckbox(myWindowMenu, TL("Show Simulation Delay"), TL("Toggle the Simulation Delay Entry on/off."), myToolBar4, FXWindow::ID_TOGGLESHOWN);
     addToWindowsMenu(myWindowMenu);
@@ -1222,11 +1228,12 @@ GUIApplicationWindow::onCmdOpenEdgeData(FXObject*, FXSelector, void*) {
 
 long
 GUIApplicationWindow::onCmdReload(FXObject* sender, FXSelector sel, void*) {
-    if (!myAmLoading && (sender == nullptr || (myRunThread->networkAvailable() && myLoadThread->getFileName() != "" && TraCIServer::getInstance() == nullptr))) {
+    if (!myAmLoading && (sender == nullptr || (myLoadThread->getFileName() != "" && TraCIServer::getInstance() == nullptr))) {
         storeWindowSizeAndPos();
         getApp()->beginWaitCursor();
         myAmLoading = true;
-        myIsReload = sender != nullptr || sel == 1;
+        // without a loaded simulation (failed load or closed simulation) this behaves like a fresh load
+        myIsReload = (sender != nullptr && myRunThread->networkAvailable()) || sel == 1;
         closeAllWindows();
         myLoadThread->start();
         if (sender == nullptr) {
@@ -1242,7 +1249,7 @@ GUIApplicationWindow::onCmdReload(FXObject* sender, FXSelector sel, void*) {
 
 long
 GUIApplicationWindow::onCmdQuickReload(FXObject*, FXSelector, void*) {
-    if (!myAmLoading) {
+    if (!myAmLoading && myRunThread->networkAvailable()) {
         setStatusBarText(TL("Quick-Reloading."));
         MSNet::getInstance()->quickReload();
     }
@@ -1306,6 +1313,16 @@ GUIApplicationWindow::onUpdOpen(FXObject* sender, FXSelector, void* ptr) {
 
 long
 GUIApplicationWindow::onUpdReload(FXObject* sender, FXSelector, void* ptr) {
+    sender->handle(this,
+                   myAmLoading || myLoadThread->getFileName() == "" || TraCIServer::getInstance() != nullptr
+                   ? FXSEL(SEL_COMMAND, ID_DISABLE) : FXSEL(SEL_COMMAND, ID_ENABLE),
+                   ptr);
+    return 1;
+}
+
+
+long
+GUIApplicationWindow::onUpdQuickReload(FXObject* sender, FXSelector, void* ptr) {
     sender->handle(this,
                    myAmLoading || !myRunThread->networkAvailable() || TraCIServer::getInstance() != nullptr
                    ? FXSEL(SEL_COMMAND, ID_DISABLE) : FXSEL(SEL_COMMAND, ID_ENABLE),
@@ -1496,6 +1513,13 @@ GUIApplicationWindow::onCmdClearMsgWindow(FXObject*, FXSelector, void*) {
 
 
 long
+GUIApplicationWindow::onCmdToggleMessageWindow(FXObject*, FXSelector, void*) {
+    toggleMessageWindowAndStatusBar(myMessageWindow);
+    return 1;
+}
+
+
+long
 GUIApplicationWindow::onCmdBreakpoint(FXObject*, FXSelector, void*) {
     // see updateTimeLCD for the DELTA_T
     if (myRunThread->networkAvailable()) {
@@ -1631,13 +1655,15 @@ GUIApplicationWindow::onCmdAppSettings(FXObject*, FXSelector, void*) {
 
 long
 GUIApplicationWindow::onCmdGaming(FXObject*, FXSelector, void*) {
-    if (myGLWindows.empty()) {
+    // without a view, the gaming mode can only be left
+    if (myGLWindows.empty() && !myAmGaming) {
         return 1;
     }
     myAmGaming = !myAmGaming;
-    myGLWindows[0]->getView()->editVisualisationSettings()->gaming = myAmGaming;
+    if (!myGLWindows.empty()) {
+        myGLWindows[0]->getView()->editVisualisationSettings()->gaming = myAmGaming;
+    }
     if (myAmGaming) {
-        myGamingModeCheckbox->setCheck(TRUE);
         myMenuBar->hide();
         myStatusbar->hide();
         myToolBar1->hide();
@@ -1659,7 +1685,6 @@ GUIApplicationWindow::onCmdGaming(FXObject*, FXSelector, void*) {
         myEmergencyVehicleLabel->setFgColor(MFXUtils::getFXColor(RGBColor::RED));
         myTotalDistanceLabel->setFgColor(MFXUtils::getFXColor(RGBColor::RED));
     } else {
-        myGamingModeCheckbox->setCheck(FALSE);
         myMenuBar->show();
         myStatusbar->show();
         myToolBar1->show();
@@ -1715,11 +1740,12 @@ GUIApplicationWindow::onCmdToggleSecondaryShape(FXObject*, FXSelector, void*) {
 
 long
 GUIApplicationWindow::onCmdFullScreen(FXObject*, FXSelector, void*) {
-    if (myGLWindows.empty()) {
+    if (myGLWindows.empty() && !myAmFullScreen) {
         return 1;
     }
     myAmFullScreen = !myAmFullScreen;
     if (myAmFullScreen) {
+        myWasMaximizedBeforeFullScreen = isMaximized();
         getApp()->reg().writeIntEntry("SETTINGS", "x", getX());
         getApp()->reg().writeIntEntry("SETTINGS", "y", getY());
         getApp()->reg().writeIntEntry("SETTINGS", "width", getWidth());
@@ -1746,16 +1772,32 @@ GUIApplicationWindow::onCmdFullScreen(FXObject*, FXSelector, void*) {
         }
         update();
     } else {
-        place(PLACEMENT_VISIBLE);
         setDecorations(DECOR_ALL);
-        restore();
         myToolBar3->show();
-        myAmGaming = !myAmGaming;
+        // re-apply the gaming mode (it is left if no view remains)
+        myAmGaming = myGLWindows.empty() || !myAmGaming;
         onCmdGaming(nullptr, 0, nullptr);
-        setWidth(getApp()->reg().readIntEntry("SETTINGS", "width", 600));
-        setHeight(getApp()->reg().readIntEntry("SETTINGS", "height", 400));
-        setX(getApp()->reg().readIntEntry("SETTINGS", "x", 150));
-        setY(getApp()->reg().readIntEntry("SETTINGS", "y", 150));
+        if (!myWasMaximizedBeforeFullScreen) {
+            restore();
+            position(getApp()->reg().readIntEntry("SETTINGS", "x", 150),
+                     getApp()->reg().readIntEntry("SETTINGS", "y", 150),
+                     getApp()->reg().readIntEntry("SETTINGS", "width", 600),
+                     getApp()->reg().readIntEntry("SETTINGS", "height", 400));
+        }
+    }
+    // show or hide the full screen hint
+    for (GUIGlChildWindow* const window : myGLWindows) {
+        window->getView()->update();
+    }
+    return 1;
+}
+
+
+long
+GUIApplicationWindow::onChoreLeaveFullScreen(FXObject*, FXSelector, void*) {
+    // a (re)load opens a new view, so the full screen mode is kept
+    if (myAmFullScreen && myGLWindows.empty() && !myAmLoading) {
+        onCmdFullScreen(nullptr, 0, nullptr);
     }
     return 1;
 }
@@ -2440,6 +2482,8 @@ GUIApplicationWindow::closeAllWindows() {
     myGeoCoordinate->disable();
     myGeoCoordinate->setEditable(false);
     myCartesianCoordinate->setText(TL("N/A"));
+    myCartesianCoordinate->disable();
+    myCartesianCoordinate->setEditable(false);
     if (myTestCoordinate) {
         myTestCoordinate->setText(TL("N/A"));
     }

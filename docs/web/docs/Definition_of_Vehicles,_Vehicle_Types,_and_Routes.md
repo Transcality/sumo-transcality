@@ -492,7 +492,7 @@ These values have the following meanings:
 | personCapacity    | int                               | 4                                                                   | The number of persons (excluding an autonomous driver) the vehicle can transport.                                                                                                                                      |
 | containerCapacity | int                               | 0                                                                   | The number of containers the vehicle can transport.                                                                                                                                                                    |
 | boardingDuration  | float                             | 0.5                                                                 | The time required by a person to board and deboard the vehicle.                                                                                                                                                                    |
-| loadingDuration   | float                             | 90.0                                                                | The time required to load a container onto the vehicle and also to unlaod it    |
+| loadingDuration   | float                             | 90.0                                                                | The time required to load a container onto the vehicle and also to unload it    |
 | boardingFactor    | float                             | 1.0  | The factor applied to `boardingDuration` and `loadingDuration` (set in the vType of the person or container being loaded/unloaded)   |
 | latAlignment      | float, "left", "right", "center", "compact", "nice", "arbitrary" | "right" for bicycles, "center" otherwise                                            | The preferred lateral alignment when using the [sublane-model](Simulation/SublaneModel.md). {{DT_FLOAT}} (in m from the center of the lane) or one of ("left", "right", "center", "compact", "nice", "arbitrary"). |
 | maxSpeedLat       | float                             | 1.0                                                                 | The maximum lateral speed when using the [sublane-model or continuous lane change model](Simulation/SublaneModel.md)                                                                                                                           |
@@ -719,6 +719,7 @@ The following shapes are known:
 
 - "pedestrian"
 - "bicycle"
+- "bicycle/cargo" (front-loading cargo bicycle)
 - "moped"
 - "motorcycle"
 - "passenger"
@@ -899,6 +900,12 @@ To select a car following model the following syntax should be used:
 ```xml
 <vType id="idmAlternative" length="5" minGap="2" carFollowModel="IDM" tau="1.0" .../>
 ```
+
+### details on using speedTable
+
+When using any of the values `maxAccelProfile`, `desAccelProfile`, `tractionTable` or `resistanceTable`, then the value `speedTable` must also be defined and the value of all these attributes must be a list of floats of the same length. The in `speedTable` at index *k* will be matched with the value from the other tables at the same index *k* and values for other speeds will be obtained by interpolation.
+
+Example: `<vType id="example" speedTable="0 5.56 13.89 27.78" maxAccelProfile="3 2.6 2 1"/>`  This will progressively reduce the maximum acceleration from 3 to 1 as the speed of the vehicle increases.
 
 ### Default *Krauss* Model Description
 
@@ -1356,7 +1363,7 @@ placeholder `<DEVICENAME>` below
 - [tripinfo](Simulation/Output/TripInfo.md): vehicle-based traffic data aggregation
 - [vehroute](Simulation/Output/VehRoutes.md): recording of driven route and route changes
 - [taxi](Simulation/Taxi.md): demand responsive transport
-- [glosa](Simulation/GLOSA.md): green light optiomal speed advisory at traffic lights
+- [glosa](Simulation/GLOSA.md): green light optimal speed advisory at traffic lights
 - [friction](Simulation/Friction.md): whether and road surface specific speed changes
 - [example](Developer/How_To/Device.md): implementation example
 

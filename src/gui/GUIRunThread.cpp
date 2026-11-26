@@ -57,15 +57,25 @@ GUIRunThread::GUIRunThread(FXApp* app, MFXInterThreadEventClient* parent, double
     mySimulationInProgress(false),
     myOk(true),
     myHaveSignaledEnd(false),
+    myEndState(MSNet::SIMSTATE_RUNNING),  // dummy value, not ended
     mySimDelay(simDelay),
     myEventQue(eq),
     myEventThrow(ev),
     myLastEndMillis(-1),
     myLastBreakMillis(0),
+    myMinWait(0),
+    myAccumulatedWait(0),
     myAmLibsumo(false) {
     myErrorRetriever = new MsgRetrievingFunction<GUIRunThread>(this, &GUIRunThread::retrieveMessage, MsgHandler::MsgType::MT_ERROR);
     myMessageRetriever = new MsgRetrievingFunction<GUIRunThread>(this, &GUIRunThread::retrieveMessage, MsgHandler::MsgType::MT_MESSAGE);
     myWarningRetriever = new MsgRetrievingFunction<GUIRunThread>(this, &GUIRunThread::retrieveMessage, MsgHandler::MsgType::MT_WARNING);
+
+#ifdef WIN32
+    // windows default system timer resolution is 16
+    // above value is a compromise to achieve real-time-factor 1000 on 1ms delay
+    myMinWait = 32;
+#endif
+
 }
 
 
@@ -168,7 +178,16 @@ GUIRunThread::tryStep() {
         wait -= (myLastEndMillis - beg);
         if (wait > 0) {
             myLastBreakMillis = myLastEndMillis;
-            sleep(wait);
+            myAccumulatedWait += wait;
+            if (myAccumulatedWait > myMinWait) {
+#ifdef WIN32
+                if (mySimDelay < myMinWait) {
+                    myAccumulatedWait *= 0.5;
+                }
+#endif
+                sleep(myAccumulatedWait);
+                myAccumulatedWait = 0;
+            }
 #ifndef WIN32
         } else if (myLastEndMillis - myLastBreakMillis > 1000) {
             // ensure redraw event is successful at least once per second (#9028)
@@ -214,6 +233,7 @@ GUIRunThread::makeStep() {
                     // MSNet destructor may trigger MsgHandler (via routing device cleanup). Closing output devices here is not safe
                     // OutputDevice::closeAll();
                     myHaveSignaledEnd = true;
+                    myEndState = state;
                 }
                 break;
             default:
@@ -300,7 +320,7 @@ GUIRunThread::deleteSim() {
     //
     mySimulationLock.lock();
     if (myNet != nullptr) {
-        myNet->closeSimulation(mySimStartTime, MSNet::getStateMessage(myNet->simulationState(mySimEndTime)));
+        myNet->closeSimulation(mySimStartTime, MSNet::getStateMessage((MSNet::SimulationState)myEndState));
     }
     while (mySimulationInProgress) {
         sleep(50);

@@ -338,6 +338,7 @@ NBEdge::NBEdge(const std::string& id, NBNode* from, NBNode* to, const NBEdge* tp
     mySignalNode(to == tpl->myTo ? tpl->mySignalNode : nullptr),
     myIsOffRamp(false),
     myIsBidi(tpl->myIsBidi),
+    myRoundaboutGuessExcluded(tpl->myRoundaboutGuessExcluded),
     myIndex(-1) {
     init(numLanes > 0 ? numLanes : tpl->getNumLanes(), myGeom.size() > 0, "");
     for (int i = 0; i < getNumLanes(); i++) {
@@ -804,9 +805,9 @@ NBEdge::isRailDeadEnd() const {
         return false;
     }
     for (NBEdge* out : myTo->getOutgoingEdges()) {
-        if (isRailway(out->getPermissions()) &&
+        if (isRailway(out->getPermissions() & getPermissions()) &&
                 out != getTurnDestination(true)) {
-            return true;
+            return false;
         }
     }
     return true;
@@ -4094,6 +4095,7 @@ NBEdge::expandableBy(NBEdge* possContinuation, std::string& reason) const {
 
 void
 NBEdge::append(NBEdge* e) {
+    myRoundaboutGuessExcluded |= e->myRoundaboutGuessExcluded;
     // append geometry
     myGeom.append(e->myGeom);
     for (int i = 0; i < (int)myLanes.size(); i++) {

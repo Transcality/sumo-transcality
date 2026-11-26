@@ -26,6 +26,7 @@
 
 #include <microsim/MSNet.h>
 #include <microsim/MSEdge.h>
+#include <microsim/MSEdgeControl.h>
 #include <microsim/MSGlobals.h>
 #include <microsim/MSLane.h>
 #include <microsim/MSLink.h>
@@ -64,6 +65,9 @@ struct MELoop::DeferredScope {
 // method definitions
 // ===========================================================================
 MELoop::MELoop(const SUMOTime recheckInterval) : myFullRecheckInterval(recheckInterval), myLinkRecheckInterval(TIME2STEPS(1)) {
+    myInterpolateMesoPos = MSGlobals::gMesoInterpolatePos && (
+                               OptionsCont::getOptions().isSet("fcd-output") ||
+                               OptionsCont::getOptions().isSet("queue-output"));
 }
 
 MELoop::~MELoop() {
@@ -87,6 +91,13 @@ MELoop::~MELoop() {
 
 void
 MELoop::simulate(SUMOTime tMax) {
+    if (myInterpolateMesoPos) {
+        MSEdgeControl& ec = MSNet::getInstance()->getEdgeControl();
+        for (const MSEdge* const edge : ec.getEdges()) {
+            // needs to be called every stop because meso position one step t+1 depends on the position computed in step t
+            edge->getMesoPositions();
+        }
+    }
     if (myGroups.empty()) {
         processEvents(myLeaderCars, myInvalidatedLeaderCars, tMax, -1);
         return;
@@ -245,7 +256,7 @@ MELoop::anyEventDue(SUMOTime tMax) const {
 
 
 void
-MELoop::processEvents(LeaderEventQeue& leaders, LeaderEventQeue& invalidated, SUMOTime tMax, const int group) {
+MELoop::processEvents(LeaderEventQueue& leaders, LeaderEventQueue& invalidated, SUMOTime tMax, const int group) {
     while (!leaders.empty()) {
         LeaderEvent e = leaders.top();
         assert(group >= 0 || e.time > tMax - DELTA_T);
@@ -269,7 +280,7 @@ MELoop::processEvents(LeaderEventQeue& leaders, LeaderEventQeue& invalidated, SU
 
 
 bool
-MELoop::wasInvalidated(const LeaderEvent& e, LeaderEventQeue& invalidated) {
+MELoop::wasInvalidated(const LeaderEvent& e, LeaderEventQueue& invalidated) {
     if (e.time == invalidated.top().time) {
         // we need to check whether any of the events with the same time
         // is our current vehicle because the order in which
@@ -332,7 +343,15 @@ MELoop::changeSegment(MEVehicle* veh, SUMOTime leaveTime, MESegment* const toSeg
     }
     toSegment->updateEntryBlockTime(leaveTime);
     const SUMOTime entry = toSegment->hasSpaceFor(veh, leaveTime, qIdx);
-    if (entry == leaveTime && (ignoreLink || veh->mayProceed())) {
+    int ps = MESegment::PROCEED_UNKNOWN;
+    if (entry == leaveTime) {
+        if (ignoreLink) {
+            ps = MESegment::PROCEED_YES;
+        } else {
+            ps = veh->mayProceed();
+        }
+    }
+    if (ps == MESegment::PROCEED_YES) {
         if (onSegment != nullptr) {
             if (veh->getQueIndex() == MESegment::PARKING_QUEUE) { // parking or just aborted parking
                 if (veh->isParking()) {
@@ -375,12 +394,14 @@ MELoop::changeSegment(MEVehicle* veh, SUMOTime leaveTime, MESegment* const toSeg
             veh->processStop();
         }
     }
-    if (entry == leaveTime && !ignoreLink) { // this is a long way of saying !veh->mayProceed() (which is a costly call)
-        // recheck on the step grid: link states only change between steps, so keeping the sub-step phase of the
-        // arrival would release the car up to one step before the link opened, depending on that phase alone
-        const SUMOTime now = MSNet::getInstance()->getCurrentTimeStep();
-        const SUMOTime recheck = MAX2(entry + MAX2(SUMOTime(1), myLinkRecheckInterval), now + 1);
-        return now + (recheck - now + DELTA_T - 1) / DELTA_T * DELTA_T;
+    if ((ps & MESegment::PROCEED_NO) != 0) {
+        if ((ps & MESegment::PROCEED_NO_TLS) != 0) {
+            // recheck on the step grid: link states only change between steps, so keeping the sub-step phase of the
+            // arrival would release the car up to one step before the link opened, depending on that phase alone
+            return entry == SIMSTEP ? SIMSTEP + DELTA_T : SIMSTEP;
+        } else {
+            return entry + myLinkRecheckInterval;
+        }
     }
     return entry;
 }
@@ -561,11 +582,11 @@ MELoop::addLeaderCar(MEVehicle* veh, MSLink* link, const bool fromState) {
 
 void
 MELoop::clearState() {
-    myLeaderCars = LeaderEventQeue();
-    myInvalidatedLeaderCars = LeaderEventQeue();
+    myLeaderCars = LeaderEventQueue();
+    myInvalidatedLeaderCars = LeaderEventQueue();
     for (Group& g : myGroups) {
-        g.leaders = LeaderEventQeue();
-        g.invalidated = LeaderEventQeue();
+        g.leaders = LeaderEventQueue();
+        g.invalidated = LeaderEventQueue();
         g.deferred.clear();
         g.serial.clear();
         g.arrivals.clear();

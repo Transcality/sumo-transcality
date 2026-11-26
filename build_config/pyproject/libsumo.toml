@@ -35,6 +35,8 @@ wheel.packages = ["tools/libsumo"]
 
 [tool.scikit-build.cmake.define]
 CMAKE_CXX_SCAN_FOR_MODULES = "OFF"
+ENABLE_FFMPEG = "OFF"
+ENABLE_OSG = "OFF"
 
 [tool.cibuildwheel]
 before-all = "build_config/install_dependencies.sh"
@@ -42,8 +44,10 @@ build = ["cp*manylinux_x86_64", "cp*manylinux_aarch64", "cp*-win_amd64", "cp*-ma
 
 [tool.cibuildwheel.windows]
 before-all = ""
+# delvewheel would pull in all dlls again, so do nothing here
+repair-wheel-command = ""
 
 [[tool.cibuildwheel.overrides]]
 select = "*-macosx_*"
-inherit.repair-wheel-command = "append"
-repair-wheel-command = '''find {dest_dir} \( -name "*.dylib" -o -name "*.so" \) -exec strip -x -S {} \;'''
+# delocate would copy all dylibs again, they are shared via sumo-data, see tools/build_config/relocate.py
+repair-wheel-command = ""

@@ -943,6 +943,9 @@ public:
     void resetPermissions(long long transientID);
     bool hadPermissionChanges() const;
 
+    /** @brief Propagate a permission change of this lane to internal lanes that mirror it */
+    void updateInternalLanePermissions(SVCPermissions oldPermissions);
+
     /** @brief Sets the permissions for changing to the left neighbour lane
      * @param[in] permissions The new permissions
      */
@@ -1311,6 +1314,16 @@ public:
     MFXWorkerThread::Task* getLaneChangeTask(const SUMOTime time) {
         mySimulationTask.init(&MSLane::changeLanes, time);
         return &mySimulationTask;
+    }
+
+    MFXWorkerThread::Task* getJunctionApproachTask(const SUMOTime time) {
+        mySimulationTask.init(&MSLane::setJunctionApproachesTask, time);
+        return &mySimulationTask;
+    }
+
+    /// @brief setJunctionApproaches with the signature of a simulation task
+    void setJunctionApproachesTask(const SUMOTime /* t */) {
+        setJunctionApproaches();
     }
 #endif
 
@@ -1804,11 +1817,7 @@ private:
             myTime = time;
         }
         void run(MFXWorkerThread* /*context*/) {
-            try {
-                (myLane.*(myOperation))(myTime);
-            } catch (ProcessError& e) {
-                WRITE_ERROR(e.what());
-            }
+            (myLane.*(myOperation))(myTime);
         }
     private:
         Operation myOperation = nullptr;

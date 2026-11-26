@@ -119,7 +119,7 @@ protected:
 protected:
     /// @brief try add the polygon and return the next index on success
     static int addPolygon(const PCOSMEdge* edge, const PositionVector& vec, const PCTypeMap::TypeDef& def,
-                          const std::string& fullType, int index, bool useName, PCPolyContainer& toFill, bool ignorePruning, bool withAttributes);
+                          const std::string& fullType, int index, bool useName, PCPolyContainer& toFill, bool ignorePruning, bool withAttributes, const std::string& toDiscard);
 
     /// @brief try add the POI and return the next index on success
     static int addPOI(const PCOSMNode* node, const Position& pos, const PCTypeMap::TypeDef& def,
@@ -128,6 +128,7 @@ protected:
 
 protected:
     static const std::set<std::string> MyKeysToInclude;
+    static std::set<std::string> MyDiscardOverrides;
 
 private:
     static std::set<std::string> initMyKeysToInclude();
@@ -138,6 +139,10 @@ private:
     static double mergeClosest(const std::map<long long int, PCOSMNode*>& nodes, std::vector<std::vector<long long int> >& snippets);
 
     static double parseHeight(const std::map<std::string, std::string>& attrs, long long int id);
+
+    /// @brief Whether the type id or full type should be used
+    static bool myFullType;
+
 protected:
     /**
      * @class NodesHandler

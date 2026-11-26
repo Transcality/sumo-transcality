@@ -28,6 +28,9 @@
 #include <utils/iodevices/OutputDevice.h>
 #include <utils/common/RandHelper.h>
 #include <utils/common/StringTokenizer.h>
+#ifdef HAVE_FOX
+#include <utils/common/ScopedLocker.h>
+#endif
 #include "MSNet.h"
 #include "MSJunction.h"
 #include "MSJunctionLogic.h"
@@ -738,6 +741,9 @@ MSLink::setApproaching(const SUMOVehicle* approaching, const SUMOTime arrivalTim
         std::cout << "\n";
     }
 #endif
+#ifdef HAVE_FOX
+    ScopedLocker<> lock(myApproachingVehiclesMutex, MSGlobals::gNumSimThreads > 1);
+#endif
     if (MSGlobals::gUseMesoSim) {
         // - in meso, setApproaching may be called multiple times without intermediate removeApproaching (whenever a vehicle is blocked in MELoop::checkCar)
         // explicit erasure is necessary because emplace does nothing if the key already exists
@@ -748,6 +754,26 @@ MSLink::setApproaching(const SUMOVehicle* approaching, const SUMOTime arrivalTim
     myApproachingVehicles.emplace(approaching,
                                   ApproachingVehicleInformation(arrivalTime, leaveTime, arrivalSpeed, leaveSpeed, setRequest,
                                           arrivalSpeedBraking, waitingTime, dist, approaching->getSpeed(), latOffset));
+}
+
+
+void
+MSLink::updateApproaching(const SUMOVehicle* approaching, const SUMOTime arrivalTime, const double arrivalSpeed, const double leaveSpeed,
+                          const bool setRequest, const double arrivalSpeedBraking, const SUMOTime waitingTime, double dist, double latOffset) {
+    {
+#ifdef HAVE_FOX
+        ScopedLocker<> lock(myApproachingVehiclesMutex, MSGlobals::gNumSimThreads > 1);
+#endif
+        auto it = myApproachingVehicles.find(approaching);
+        if (it != myApproachingVehicles.end()) {
+            const SUMOTime leaveTime = getLeaveTime(arrivalTime, arrivalSpeed, leaveSpeed, approaching->getVehicleType().getLength());
+            it->second = ApproachingVehicleInformation(arrivalTime, leaveTime, arrivalSpeed, leaveSpeed, setRequest,
+                         arrivalSpeedBraking, waitingTime, dist, approaching->getSpeed(), latOffset);
+            return;
+        }
+    }
+    // setApproaching locks itself
+    setApproaching(approaching, arrivalTime, arrivalSpeed, leaveSpeed, setRequest, arrivalSpeedBraking, waitingTime, dist, latOffset);
 }
 
 
@@ -764,6 +790,9 @@ MSLink::setApproaching(const SUMOVehicle* approaching, ApproachingVehicleInforma
         }
         std::cout << "\n";
     }
+#endif
+#ifdef HAVE_FOX
+    ScopedLocker<> lock(myApproachingVehiclesMutex, MSGlobals::gNumSimThreads > 1);
 #endif
     myApproachingVehicles.emplace(approaching, ai);
 }
@@ -789,6 +818,9 @@ MSLink::removeApproaching(const SUMOVehicle* veh) {
         }
         std::cout << "\n";
     }
+#endif
+#ifdef HAVE_FOX
+    ScopedLocker<> lock(myApproachingVehiclesMutex, MSGlobals::gNumSimThreads > 1);
 #endif
     myApproachingVehicles.erase(veh);
 }
@@ -1424,7 +1456,9 @@ MSLink::writeApproaching(OutputDevice& od, const std::string fromLaneID) const {
         for (auto it : myApproachingVehicles) {
             toSort.push_back(std::make_pair(it.second.arrivalTime, it.first));
         }
-        std::sort(toSort.begin(), toSort.end());
+        std::sort(toSort.begin(), toSort.end(), [](const std::pair<SUMOTime, const SUMOVehicle*>& a, const std::pair<SUMOTime, const SUMOVehicle*>& b) {
+            return a.first < b.first || (a.first == b.first && a.second->getNumericalID() < b.second->getNumericalID());
+        });
         for (std::vector<std::pair<SUMOTime, const SUMOVehicle*> >::const_iterator it = toSort.begin(); it != toSort.end(); ++it) {
             od.openTag("approaching");
             const ApproachingVehicleInformation& avi = myApproachingVehicles.find(it->second)->second;
