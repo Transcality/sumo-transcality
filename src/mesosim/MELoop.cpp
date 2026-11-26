@@ -93,8 +93,9 @@ MELoop::simulate(SUMOTime tMax) {
     }
     // each group only changes its own segments, so the groups process their events in parallel
     myStepEnd = tMax;
+    // ties are broken by the id, which (unlike the numerical id) does not change when loading a state
     const auto byEvent = [](const MEVehicle * a, const MEVehicle * b) {
-        return a->getEventTime() < b->getEventTime() || (a->getEventTime() == b->getEventTime() && a->getNumericalID() < b->getNumericalID());
+        return a->getEventTime() < b->getEventTime() || (a->getEventTime() == b->getEventTime() && a->getID() < b->getID());
     };
     std::vector<MEVehicle*> deferred;
     std::vector<MEVehicle*> serial;
@@ -139,7 +140,7 @@ MELoop::simulate(SUMOTime tMax) {
             }
             // the events are scheduled in the order of the moves, so the order does not depend on the threads
             std::sort(leaders.begin(), leaders.end(), [](const DeferredLeader & a, const DeferredLeader & b) {
-                return a.time < b.time || (a.time == b.time && a.veh->getNumericalID() < b.veh->getNumericalID());
+                return a.time < b.time || (a.time == b.time && a.veh->getID() < b.veh->getID());
             });
             for (const DeferredLeader& l : leaders) {
                 l.veh->setDeferred(false);
@@ -153,7 +154,7 @@ MELoop::simulate(SUMOTime tMax) {
             }
             for (Group& g : myGroups) {
                 std::sort(g.departures.begin(), g.departures.end(), [](const DeferredMove * a, const DeferredMove * b) {
-                    return a->time < b->time || (a->time == b->time && a->veh->getNumericalID() < b->veh->getNumericalID());
+                    return a->time < b->time || (a->time == b->time && a->veh->getID() < b->veh->getID());
                 });
             }
             runPhase(DEPARTURES);
@@ -746,15 +747,19 @@ MELoop::saveRNGStates(OutputDevice& out) {
         out.openTag(SUMO_TAG_RNGMESOGROUP);
         out.writeAttr(SUMO_ATTR_INDEX, i);
         out.writeAttr(SUMO_ATTR_STATE, RandHelper::saveState(&myGroups[i].rng));
+        out.writeAttr(SUMO_ATTR_COUNT, myGroups[i].eventCounter);
         out.closeTag();
     }
 }
 
 
 void
-MELoop::loadRNGState(int index, const std::string& state) {
+MELoop::loadRNGState(int index, const std::string& state, long long int eventCounter) {
     if (index < (int)myGroups.size()) {
         RandHelper::loadState(state, &myGroups[index].rng);
+        if (eventCounter >= 0) {
+            myGroups[index].eventCounter = eventCounter;
+        }
     } else {
         WRITE_WARNINGF(TL("Ignoring the random number state of meso group % (the simulation uses % groups)."), toString(index), toString(myGroups.size()));
     }

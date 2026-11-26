@@ -249,10 +249,13 @@ MSStateHandler::myStartElement(int element, const SUMOSAXAttributes& attrs) {
             break;
         }
         case SUMO_TAG_RNGMESOGROUP: {
+            bool ok;
             const int index = attrs.getInt(SUMO_ATTR_INDEX);
             const std::string state = attrs.getString(SUMO_ATTR_STATE);
+            // states saved before the counters were added have none (-1)
+            const long long int eventCounter = attrs.getOpt<long long int>(SUMO_ATTR_COUNT, nullptr, ok, -1);
             if (MSGlobals::gUseMesoSim) {
-                MSGlobals::gMesoNet->loadRNGState(index, state);
+                MSGlobals::gMesoNet->loadRNGState(index, state, eventCounter);
             }
             break;
         }
