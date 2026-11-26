@@ -22,6 +22,7 @@
 #include <config.h>
 
 #include <utils/common/StringTokenizer.h>
+#include <utils/options/OptionsCont.h>
 #include <utils/geom/GeomHelper.h>
 #include <utils/vehicle/SUMOVehicleParameter.h>
 #include <utils/router/PedestrianRouter.h>
@@ -222,7 +223,7 @@ MSStageDriving::getStageSummary(const bool isPerson) const {
 }
 
 
-void
+bool
 MSStageDriving::proceed(MSNet* net, MSTransportable* transportable, SUMOTime now, MSStage* previous) {
     myOriginStop = (previous->getStageType() == MSStageType::TRIP
                     ? previous->getOriginStop()
@@ -238,8 +239,14 @@ MSStageDriving::proceed(MSNet* net, MSTransportable* transportable, SUMOTime now
             startVeh = net->getInsertionControl().getLastFlowVehicle(vehID);
         }
         if (startVeh == nullptr) {
-            throw ProcessError("Vehicle '" + vehID + "' not found for triggered departure of " +
-                               (isPerson ? "person" : "container") + " '" + transportable->getID() + "'.");
+            // the vehicle may have been removed already, e.g. because it could not depart (#18596)
+            const std::string error = "Vehicle '" + vehID + "' not found for triggered departure of " +
+                                      (isPerson ? "person" : "container") + " '" + transportable->getID() + "'.";
+            if (OptionsCont::getOptions().getBool("ignore-route-errors")) {
+                WRITE_WARNING(error);
+                return false;
+            }
+            throw ProcessError(error);
         }
         if (transportable->isPerson()) {
             const int pCap = startVeh->getVehicleType().getParameter().personCapacity;
@@ -263,7 +270,7 @@ MSStageDriving::proceed(MSNet* net, MSTransportable* transportable, SUMOTime now
         myStopWaitPos = Position::INVALID;
         myWaitingPos = previous->getEdgePos(now);
         myVehicle->addTransportable(transportable);
-        return;
+        return true;
     }
     if (myOriginStop != nullptr) {
         // the arrival stop may have an access point
@@ -296,6 +303,7 @@ MSStageDriving::proceed(MSNet* net, MSTransportable* transportable, SUMOTime now
     } else {
         registerWaiting(transportable, now);
     }
+    return true;
 }
 
 

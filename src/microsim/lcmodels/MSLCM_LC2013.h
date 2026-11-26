@@ -102,7 +102,7 @@ public:
 
     double getOppositeSafetyFactor() const override;
 
-    void prepareStep() override;
+    void prepareStep(SumoRNG* rng) override;
 
     /// @brief try to retrieve the given parameter from this device. Throw exception for unsupported key
     std::string getParameter(const std::string& key) const override;
@@ -182,6 +182,12 @@ protected:
     /// @brief reserve space at the end of the lane to avoid dead locks
     bool saveBlockerLength(double length, double foeLeftSpace) override;
 
+    /// @brief keep the state seen by vehicles on other edges while deciding
+    void saveDecisionState() override;
+
+    /// @brief saveBlockerLength for a vehicle on another edge while deciding
+    bool saveBlockerLengthLater(double length, double foeLeftSpace) override;
+
     inline bool amBlockingLeader() {
         return (myOwnState & LCA_AMBLOCKINGLEADER) != 0;
     }
@@ -220,6 +226,8 @@ protected:
 
     double myLeadingBlockerLength;
     double myLeftSpace;
+    /// @brief myLeftSpace before deciding
+    double myDecisionLeftSpace;
 
     /*@brief the speed to use when computing the look-ahead distance for
      * determining urgency of strategic lane changes */
@@ -267,5 +275,7 @@ protected:
     // @brief thresholds for changing to the right/left
     long long int myChangeProbThresholdRight;
     long long int myChangeProbThresholdLeft;
+    // @brief threshold for keepRight (must stay finite even if lcSpeedGain <= 0)
+    long long int myKeepRightProbThreshold;
     //@}
 };

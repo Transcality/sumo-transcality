@@ -71,6 +71,19 @@ public:
         double lookahead;
     };
 
+    enum Proceed_Status {
+        /// @brief mayProceed was not called
+        PROCEED_UNKNOWN = 0,
+        /// @brief the vehicle may proceed to the next segment
+        PROCEED_YES = 1,
+        /// @brief the vehicle must stay on the current segment
+        PROCEED_NO = 2,
+        /// @brief vehicle want's to change to right lane
+        PROCEED_NO_TLS = 4,
+        /// @brief vehicle want's to change to right lane
+        PROCEED_NO_STOP = 8,
+    };
+
 
 protected:
     class Queue {
@@ -222,6 +235,14 @@ public:
         myRNG = rng;
     }
 
+    /// @brief the other groups a vehicle may enter within one step after an event on this segment, with the least time it needs to get there (see MELoop::buildReach)
+    const std::vector<std::pair<int, SUMOTime> >& getReach() const {
+        return myReach;
+    }
+    void addReach(int group, SUMOTime time) {
+        myReach.push_back(std::make_pair(group, time));
+    }
+
     /// @brief model specific queue state (e.g. the gap times of meso-ltm) for saving / loading
     virtual std::string getQueueExtraState(int /*qIdx*/) const {
         return "";
@@ -332,6 +353,9 @@ public:
      */
     double getMeanSpeed(bool useCache) const;
 
+    /// @brief Maximum vehicle speed for the given queue, accounting for internal junction segments.
+    double getVehicleMaxSpeed(const MEVehicle& veh, int queueIndex) const;
+
     /// @brief reset myLastMeanSpeedUpdate
     void resetCachedSpeeds();
 
@@ -376,9 +400,9 @@ public:
      * In case of disabled junction control it returns always true.
      *
      * @param[in] veh The vehicle in question
-     * @return Whether it may pass to the next segment
+     * @return bitsset from Proceed_Status indicating whether veh may pass to the next segment
      */
-    bool isOpen(const MEVehicle* veh) const;
+    int isOpen(const MEVehicle* veh) const;
 
     /** @brief Removes the vehicle from the segment, adapting its parameters
      *
@@ -454,6 +478,11 @@ public:
     /// @brief whether a reminder of this segment must be updated on the main thread (see MELoop::isGroupSafe)
     inline bool hasSerialReminders() const {
         return myHasSerialReminders;
+    }
+
+    /// @brief whether a reminder of this segment must be updated while all groups wait (see MELoop::isGlobalMove)
+    inline bool hasGlobalReminders() const {
+        return myHasGlobalReminders;
     }
 
     /// @brief Like getEventTime but returns seconds (for visualization)
@@ -668,6 +697,9 @@ protected:
     int myGroup = 0;
     SumoRNG* myRNG = nullptr;
 
+    /// @brief the other groups a vehicle may enter within one step after an event on this segment (see getReach)
+    std::vector<std::pair<int, SUMOTime> > myReach;
+
     /// @brief Whether tls penalty is enabled
     bool myTLSPenalty;
 
@@ -714,6 +746,9 @@ protected:
 
     /// @brief whether a reminder other than mean data was added (see hasSerialReminders)
     bool myHasSerialReminders = false;
+
+    /// @brief whether a reminder other than mean data and induction loops was added (see hasGlobalReminders)
+    bool myHasGlobalReminders = false;
 
     /* @brief segment for signifying vaporization. This segment has invalid
      * data and should only be used as a unique pointer */

@@ -16,6 +16,9 @@ plain
 # two vehicles saved and reloaded
 precision
 
+# the odometer and the tripinfo device are saved with save-state.precision
+state_precision
+
 # include route and vtype dists
 dists
 
@@ -141,8 +144,14 @@ teleporting_highbegin
 # load actuated tls
 actuated
 
+# an uncoordinated traffic light keeps its time in cycle when loading state
+tls_cycleTime
+
 # a static traffic light keeps the start of its current phase when loading state
 tls_spentDuration
+
+# a WAUT switch waiting for its GSP is kept when loading state
+waut_gsp
 
 # test saving and load vehicles added by calibrator
 calibrator
@@ -203,3 +212,9 @@ turnaround_furtherLane
 
 # vehicles waiting for insertion do not repeat their pre-insertion reroute after loading state (#18366)
 preinsertion_reroute
+
+# the pre-insertion reroute does not depend on route-steps
+route_steps_reroute
+
+# the CCH update threshold state is saved, so a reloaded state replicates
+cch_update_threshold

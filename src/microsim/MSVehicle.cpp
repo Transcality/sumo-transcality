@@ -2852,12 +2852,11 @@ MSVehicle::planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVecto
                       << "' is " << laneStopOffset << " (-> stopDist=" << stopDist << ")" << std::endl;
         }
 #endif
-        if (isRail()
-                && !lane->isInternal()) {
+        if (isRail() && !lane->isInternal()) {
             // check for train direction reversal
             if (lane->getBidiLane() != nullptr
                     && (*link)->getLane()->getBidiLane() == lane) {
-                double vMustReverse = getCarFollowModel().stopSpeed(this, getSpeed(), seen - POSITION_EPS);
+                double vMustReverse = getCarFollowModel().stopSpeed(this, getSpeed(), seen - NUMERICAL_EPS);
                 if (seen < 1) {
                     mustSeeBeforeReversal = 2 * seen + getLength();
                 }
@@ -2869,14 +2868,17 @@ MSVehicle::planMoveInternal(const SUMOTime t, MSLeaderInfo ahead, DriveItemVecto
                                 && seen > SPEED2DIST(v));
         }
 
-        bool canReverseEventually = false;
-        const double vReverse = checkReversal(canReverseEventually, laneMaxV, seen);
-        v = MIN2(v, vReverse);
+        if (!planningToStop) {
+            // no need to slow down for reversal if we are alrady slowing down for a stop
+            bool canReverseEventually = false;
+            const double vReverse = checkReversal(canReverseEventually, laneMaxV, seen);
+            v = MIN2(v, vReverse);
 #ifdef DEBUG_PLAN_MOVE
-        if (DEBUG_COND) {
-            std::cout << SIMTIME << " veh=" << getID() << " canReverseEventually=" << canReverseEventually << " v=" << v << "\n";
-        }
+            if (DEBUG_COND) {
+                std::cout << SIMTIME << " veh=" << getID() << " canReverseEventually=" << canReverseEventually << " v=" << v << "\n";
+            }
 #endif
+        }
 
         // check whether we need to slow down in order to finish a continuous lane change
         if (myLaneChangeModel->isChangingLanes()) {
@@ -4836,7 +4838,7 @@ MSVehicle::executeMove() {
         // State needs to be reset for all vehicles before the next call to MSEdgeControl::changeLanes
         if (myActionStep) {
             // check (#2681): Can this be skipped?
-            myLaneChangeModel->prepareStep();
+            myLaneChangeModel->prepareStep(oldLaneMaybeOpposite->getRNG());
         } else {
             myLaneChangeModel->resetSpeedLat();
 #ifdef DEBUG_ACTIONSTEPS
@@ -4845,6 +4847,8 @@ MSVehicle::executeMove() {
             }
 #endif
         }
+        // vehicles deciding on other edges see this state (MSLaneChanger::decideLaneChanges)
+        myLaneChangeModel->saveDecisionState();
         myLaneChangeModel->setPreviousAngleOffset(myLaneChangeModel->getAngleOffset());
         myAngle = computeAngle();
     }
@@ -5496,14 +5500,35 @@ MSVehicle::setApproachingForAllLinks() {
     if (!myActionStep) {
         return;
     }
-    removeApproachingInformation(myLFLinkLanesPrev);
-    for (DriveProcessItem& dpi : myLFLinkLanes) {
+    // links approached in both steps are updated in place, the others are removed
+    auto approaches = [](const DriveItemVector & items, DriveItemVector::const_iterator end, const MSLink * link) {
+        for (DriveItemVector::const_iterator it = items.begin(); it != end; ++it) {
+            if (it->myLink == link) {
+                return true;
+            }
+        }
+        return false;
+    };
+    for (const DriveProcessItem& dpi : myLFLinkLanesPrev) {
+        if (dpi.myLink != nullptr && !approaches(myLFLinkLanes, myLFLinkLanes.end(), dpi.myLink)) {
+            dpi.myLink->removeApproaching(this);
+        }
+    }
+    myLaneChangeModel->removeShadowApproachingInformation();
+    for (DriveItemVector::iterator it = myLFLinkLanes.begin(); it != myLFLinkLanes.end(); ++it) {
+        DriveProcessItem& dpi = *it;
         if (dpi.myLink != nullptr) {
             if (dpi.myLink->getState() == LINKSTATE_ALLWAY_STOP) {
                 dpi.myArrivalTime += (SUMOTime)RandHelper::rand((int)2, getRNG()); // tie braker
             }
-            dpi.myLink->setApproaching(this, dpi.myArrivalTime, dpi.myArrivalSpeed, dpi.getLeaveSpeed(),
-                                       dpi.mySetRequest, dpi.myArrivalSpeedBraking, getWaitingTimeFor(dpi.myLink), dpi.myDistance, getLateralPositionOnLane());
+            // only the first registration counts on looped routes (emplace keeps it)
+            if (approaches(myLFLinkLanesPrev, myLFLinkLanesPrev.end(), dpi.myLink) && !approaches(myLFLinkLanes, it, dpi.myLink)) {
+                dpi.myLink->updateApproaching(this, dpi.myArrivalTime, dpi.myArrivalSpeed, dpi.getLeaveSpeed(),
+                                              dpi.mySetRequest, dpi.myArrivalSpeedBraking, getWaitingTimeFor(dpi.myLink), dpi.myDistance, getLateralPositionOnLane());
+            } else {
+                dpi.myLink->setApproaching(this, dpi.myArrivalTime, dpi.myArrivalSpeed, dpi.getLeaveSpeed(),
+                                           dpi.mySetRequest, dpi.myArrivalSpeedBraking, getWaitingTimeFor(dpi.myLink), dpi.myDistance, getLateralPositionOnLane());
+            }
         }
     }
     if (isRail()) {

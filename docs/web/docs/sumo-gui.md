@@ -122,8 +122,8 @@ methods:
 ## Keyboard Shortcuts
 
 Various menu items are accessible via keyboard shortcuts. These are
-documented directly in the menu. (i.e. <kbd>Ctrl</kbd> + <kbd>l</kbd>, <kbd>Ctrl</kbd> + <kbd>e</kbd> opens the edge
-locator, <kbd>Ctrl</kbd> + <kbd>d</kbd> performs a single simulation step). Additional shortcuts
+documented directly in the menu. (i.e. <kbd>Shift</kbd> + <kbd>E</kbd> opens the edge
+locator, <kbd>D</kbd> performs a single simulation step). Additional shortcuts
 are listed below:
 
 - <kbd>Ctrl</kbd> + <kbd>LeftClick</kbd>: toggle selection status of object under cursor
@@ -140,6 +140,8 @@ are listed below:
 - Double-LeftClick: stop tracking
 - <kbd>Ctrl</kbd> + <kbd>J</kbd>: toggle 'show junction shapes'
 - <kbd>Ctrl</kbd> + <kbd>K</kbd>: toggle 'show secondary edge shape' (loaded with option **--alternative-net-file**)
+- <kbd>Ctrl</kbd> + <kbd>F</kbd> or <kbd>F11</kbd>: toggle full screen mode
+- <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>: toggle message window and status line
 
 ## Object Properties / Right-Click-Functions
 
@@ -715,19 +717,18 @@ well](#changing_the_appearancevisualization_of_the_simulation).
 In addition to changing the appearance of simulated structures, one may
 also load additional background images ("decals") into
 **sumo-gui**. For this, open the visualization
-settings using ![icon_colorwheel.png](images/icon_colorwheel.png "Colorwheel") and - if you are not yet here - choose the
+settings using ![icon_colorwheel.png](images/icon_colorwheel.png "Colorwheel") (or <kbd>F9</kbd>) and - if you are not yet here - choose the
 "Background" panel (see Figure below). You will see a table with the following
-columns: **file**, **centerX**, **centerY**, **width**,
+columns: **filename**, **centerX**, **centerY**, **width**,
 **height**, **rotation**, **layer** and **relative**.
 
 ![](images/Decals_gui.png "The decals GUI")
 
 **The decals GUI.**
 
-Now, if you click into the first row of the "picture file" column, you
-should be able to enter the complete path of an image file. Confirming
-the path by pressing RETURN should force **sumo-gui**
-to load and display the file below the road network, as shown in the figure:
+Clicking the green plus button (![icon_add.png](images/icon_add.png "Add")) adds a new row. In each row, you can select an image file using a file selection dialog or enter its path in the filename input field.
+
+**sumo-gui** loads and displays the image files in a layer below the road network, as shown in the figure:
 
 ![](images/Background_example.png "Background example")
 
@@ -744,9 +745,9 @@ When setting the column **relative** to *1*, position and size values
 will be taken as screen-relative pixel values instead of
 network-relative meter values.
 
-After aligning your decals, you can save them using the "Save Decals"
+After aligning your decals, you can save them using the "Save XML Decals"
 button located in the dialog. Accordingly, previously saved decals can
-be loaded by pressing the "Load Decals" button.
+be loaded by pressing the "Load XML Decals" button.
 
 When defining decals in XML a single line which looks like this:
 

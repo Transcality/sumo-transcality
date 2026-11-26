@@ -282,7 +282,7 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - Persons are no longer listed before their departure in *traci.person.getIDList()* Issue #5674 (regression in 1.1.0)
   - Fixed crash when using parallel rerouting with TraCI. Issue #5553
   - Function *traci.vehicle.setStop* now correctly updates an existing stop when setting a new *until*-value. Issue #5712
-  - TraaS function *SumoTraciConection.close()* now cleanly disconnects from the SUMO server. Issue #4962
+  - TraaS function *SumoTraciConnection.close()* now cleanly disconnects from the SUMO server. Issue #4962
   - Fixed several issues with position conversions when the edge has a length different from the geometrical distance. Issue #5780
   - Libsumo now supports getAllSubscriptionResults
   - Function *traci.vehicle.moveTo* can now move vehicles onto internal lanes. Issue #5932
@@ -309,7 +309,7 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - Saved states now include lane ids and only the lanes with traffic on them. This reduces state file size and also permits loading state files with a modified network. Issue #5872
   - Initial "pseudo routes" (consisting of start and end edge only) are only written optionally. Issue #5639
   - Traffic lights with type delay_based now use a default detection range of 100m (instead of using the whole lane length). This greatly improves efficiency by avoiding interference from far-away upstream junctions. The default range can be set using the new option **--tls.delay_based.detector-range** {{DT_FLOAT}}. Issue #5897
-  - Added battery model parameter "recuperationEfficencyByDecel" to vary the recuperation efficiency based on the deceleration level. Thanks to Sagaama Insaf for the contribution. Issue #5675
+  - Added battery model parameter "recuperationEfficiencyByDecel" to vary the recuperation efficiency based on the deceleration level. Thanks to Sagaama Insaf for the contribution. Issue #5675
 
 - netconvert
   - Now importing High-Speed-Rail tracks from OSM Issue #5525
@@ -508,7 +508,7 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - Fixed *vehicle.setStop* in TraaS client library. Issue #5105
   - Fixed crash when calling *simulation.getDistance* to compute the driving distance between unconnected parts of the network Issue #5114
   - Fixed invalid driving distance result when calling *simulation.getDistanceRoad* and one of the edges is an internal edges after an internal junction. Issue #5114
-  - TraaS functions *Trafficlight.setPhaseDuraton, Trafficlight.getPhaseDuration, Trafficlight.getNextSwitch, Trafficlight.setCompleteRedYellowGreenDefinition, Vehicle.setAdaptedTraveltime, Vehicle.getAdaptedTraveltime, Lanearea.getLastStepHaltingNumber* and *Lanearea.getLastStepVehicleIDs* are now working (regression due to protocol change in 1.0.0).
+  - TraaS functions *Trafficlight.setPhaseDuration, Trafficlight.getPhaseDuration, Trafficlight.getNextSwitch, Trafficlight.setCompleteRedYellowGreenDefinition, Vehicle.setAdaptedTraveltime, Vehicle.getAdaptedTraveltime, Lanearea.getLastStepHaltingNumber* and *Lanearea.getLastStepVehicleIDs* are now working (regression due to protocol change in 1.0.0).
   - Fixed C++ client function *vehicle.getStopState* (regression due to protocol change in 1.0.0)
   - Fixed estimation of speed and acceleration after using moveToXY. Issue #5250
   - *traci.vehicle.getLaneChangeState* now returns correct information while controlling the vehicle with moveToXY in sublane simulation. Issue #5255
@@ -532,7 +532,7 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
   - Person [rides](../Specification/Persons.md#rides) now allow the special value *ANY* for the *lines* attribute. When this is set, persons may enter any vehicle that will stop at the destination *busStop* of the ride.
   - Option **--weights.random-factor** {{DT_FLOAT}} now also applies when routing persons. Issue #1353
   - Added output of harmonic mean speed to induction loops, which approximates the space mean speed. Issue #4919
-  - Added controlability of reaction time (actionStepLength) to DriverState Model. Issue #5355
+  - Added controllability of reaction time (actionStepLength) to DriverState Model. Issue #5355
   - `<edgeData>`-output now supports attribute `detectPersons="walk"` which can be used to record pedestrian traffic instead of vehicular traffic. Issue #5252
   - Railway simulation improvements:
     - When a railSignal is placed on a short edge at the incoming network fringe, the signal will regulate train insertion for all trains longer than the insertion edge. Issue #5135
@@ -638,16 +638,16 @@ title: Changes in the 2019 releases (versions 1.2.0, 1.3.0, 1.3.1 and 1.4.0)
 
 - TraCI
   - TraCI Version is now 20
-  - Function *trafficlight.setCompleteRedYellowGreeenDefinition* now
+  - Function *trafficlight.setCompleteRedYellowGreenDefinition* now
     expects the 5th component *next* to be a list of integers when
     defining phases. Function
-    '*'trafficlight.getCompleteRedYellowGreeenDefinition* now
+    '*'trafficlight.getCompleteRedYellowGreenDefinition* now
     returns a list of integers as the 5th component (next) when
     defining phases. Custom clients must be patched to handle this.
-  - Function *trafficlight.setCompleteRedYellowGreeenDefinition* now
+  - Function *trafficlight.setCompleteRedYellowGreenDefinition* now
     accepts *name* as an optional 6th component when defining
     phases. Function
-    '*'trafficlight.getCompleteRedYellowGreeenDefinition* now
+    '*'trafficlight.getCompleteRedYellowGreenDefinition* now
     returns *name* as the 6th component when defining phases. Custom
     clients must be patched to handle this.
   - TraaS function *Simulation.findRoute* now returns SumoStage

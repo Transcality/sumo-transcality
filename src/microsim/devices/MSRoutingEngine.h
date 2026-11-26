@@ -22,9 +22,11 @@
 #pragma once
 #include <config.h>
 
+#include <atomic>
 #include <set>
 #include <vector>
 #include <map>
+#include <mutex>
 #include <thread>
 #include <utils/common/SUMOTime.h>
 #include <utils/common/WrappingCommand.h>
@@ -235,6 +237,9 @@ public:
      */
     static void loadState(const SUMOSAXAttributes& attrs);
 
+    /// @brief Loads the arcs of a CCH metric that lag behind the speeds
+    static void loadCCHMetric(const SUMOSAXAttributes& attrs);
+
 #ifdef HAVE_FOX
     static void waitForAll();
 #endif
@@ -365,6 +370,12 @@ private:
     /// @brief The router to use
     static MSRouterProvider* myRouterProvider;
 
+    /// @brief whether the routers of all threads are built (see initRouterOnce)
+    static std::atomic<bool> myRouterReady;
+
+    /// @brief serialises building the routers when the first queries come from several threads
+    static std::mutex myRouterInitLock;
+
     /// @brief The container of pre-calculated routes
     static std::map<std::pair<const MSEdge*, const MSEdge*>, ConstMSRoutePtr> myCachedRoutes;
 
@@ -409,6 +420,10 @@ private:
     /// @brief build the shared CCH + the live family with one metric per
     /// loaded type, publish initial metrics
     static void initCCH();
+    /// @brief build the live family without metrics
+    static void buildCCHLive();
+    /// @brief the live family restored from a state, built on first use
+    static MSCCHMetricFamily* getLoadedCCH();
 
     /// @brief waits for the fill of the CCH metrics on the customize thread (before the efforts, permissions or dirty lists change)
     static void waitForCustomize();

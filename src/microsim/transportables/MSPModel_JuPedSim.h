@@ -26,6 +26,20 @@
 #include <vector>
 #include <map>
 #include <geos_c.h>
+#include <utils/common/StopWatch.h>
+#include <utils/shapes/ShapeContainer.h>
+#include <microsim/MSNet.h>
+#include "MSPModel_Interacting.h"
+
+#ifdef _MSC_VER
+#pragma warning(push)
+// mask warnings about int conversion (4267), class layout (4371),
+//  inline function (4514 4710 4711), reinterpret_cast (4946) in protobuf and
+//  pop/push in different files (5031), missing virtual destructors (5204),
+//  overrides (4266), casts (4191), 'this' in initializers (4355) in boost
+//  and deprecations in grpc (4996)
+#pragma warning(disable: 4191 4266 4267 4355 4371 4514 4710 4711 4946 4996 5031 5204)
+#endif
 #ifdef HAVE_BOOST
 #if __has_include(<boost/process/v1.hpp>)  // Boost 1.86+
 #include <boost/process/v1.hpp>
@@ -35,10 +49,6 @@ namespace bp = boost::process::v1;
 namespace bp = boost::process;
 #endif
 #endif
-#include <utils/common/StopWatch.h>
-#include <utils/shapes/ShapeContainer.h>
-#include <microsim/MSNet.h>
-#include "MSPModel_Interacting.h"
 #pragma push_macro("TS")
 #pragma push_macro("Min")
 #pragma push_macro("Max")
@@ -50,6 +60,9 @@ namespace bp = boost::process;
 #pragma pop_macro("TS")
 #pragma pop_macro("Min")
 #pragma pop_macro("Max")
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 // ===========================================================================
 // class declarations

@@ -20,6 +20,8 @@
 /****************************************************************************/
 #include <config.h>
 
+#include <cmath>
+
 #include <foreign/tcpip/storage.h>
 #include <utils/geom/GeomHelper.h>
 #include <utils/common/MsgHandler.h>
@@ -257,6 +259,11 @@ double
 Vehicle::getLanePosition(const std::string& vehID) {
     MSBaseVehicle* veh = Helper::getVehicle(vehID);
     return (veh->isOnRoad() || veh->isParking()) ? veh->getPositionOnLane() : INVALID_DOUBLE_VALUE;
+}
+
+double
+Vehicle::getArrivalPos(const std::string& vehID) {
+    return Helper::getVehicle(vehID)->getArrivalPos();
 }
 
 double
@@ -1594,7 +1601,11 @@ Vehicle::add(const std::string& vehID,
              const std::string& toTaz,
              const std::string& line,
              int /*personCapacity*/,
-             int personNumber) {
+             int personNumber,
+             const std::string& departPosLat,
+             const std::string& arrivalPosLat,
+             double speedFactor,
+             const std::string& insertionChecks) {
     SUMOVehicle* veh = MSNet::getInstance()->getVehicleControl().getVehicle(vehID);
     if (veh != nullptr) {
         throw TraCIException("The vehicle '" + vehID + "' to add already exists.");
@@ -1676,6 +1687,30 @@ Vehicle::add(const std::string& vehID,
     }
     if (!SUMOVehicleParameter::parseArrivalSpeed(arrivalSpeed, "vehicle", vehID, vehicleParams.arrivalSpeed, vehicleParams.arrivalSpeedProcedure, error)) {
         throw TraCIException(error);
+    }
+    if (!departPosLat.empty()) {
+        if (!SUMOVehicleParameter::parseDepartPosLat(departPosLat, "vehicle", vehID, vehicleParams.departPosLat, vehicleParams.departPosLatProcedure, error)) {
+            throw TraCIException(error);
+        }
+        vehicleParams.parametersSet |= VEHPARS_DEPARTPOSLAT_SET;
+    }
+    if (!arrivalPosLat.empty()) {
+        if (!SUMOVehicleParameter::parseArrivalPosLat(arrivalPosLat, "vehicle", vehID, vehicleParams.arrivalPosLat, vehicleParams.arrivalPosLatProcedure, error)) {
+            throw TraCIException(error);
+        }
+        vehicleParams.parametersSet |= VEHPARS_ARRIVALPOSLAT_SET;
+    }
+    if (speedFactor > 0) {
+        vehicleParams.speedFactor = speedFactor;
+        vehicleParams.parametersSet |= VEHPARS_SPEEDFACTOR_SET;
+    }
+    if (!insertionChecks.empty()) {
+        try {
+            vehicleParams.insertionChecks = SUMOVehicleParameter::parseInsertionChecks(insertionChecks);
+            vehicleParams.parametersSet |= VEHPARS_INSERTION_CHECKS_SET;
+        } catch (const InvalidArgument& e) {
+            throw TraCIException(e.what());
+        }
     }
     // mark non-default attributes
     if (departLane != "first") {
@@ -1765,10 +1800,11 @@ Vehicle::moveToXY(const std::string& vehID, const std::string& edgeID, const int
     // angle must be in [0,360] because it will be compared against those returned by naviDegree()
     // angle set to INVALID_DOUBLE_VALUE is ignored in the evaluated and later set to the angle of the matched lane
     if (angle != INVALID_DOUBLE_VALUE) {
-        while (angle >= 360.) {
-            angle -= 360.;
+        if (!std::isfinite(angle)) {
+            throw TraCIException("Angle must be finite.");
         }
-        while (angle < 0.) {
+        angle = std::fmod(angle, 360.);
+        if (angle < 0.) {
             angle += 360.;
         }
     }
@@ -2898,6 +2934,8 @@ Vehicle::handleVariable(const std::string& objID, const int variable, VariableWr
             return wrapper->wrapColor(objID, variable, getColor(objID));
         case VAR_LANEPOSITION:
             return wrapper->wrapDouble(objID, variable, getLanePosition(objID));
+        case VAR_ARRIVALPOS:
+            return wrapper->wrapDouble(objID, variable, getArrivalPos(objID));
         case VAR_LANEPOSITION_LAT:
             return wrapper->wrapDouble(objID, variable, getLateralLanePosition(objID));
         case VAR_CO2EMISSION:

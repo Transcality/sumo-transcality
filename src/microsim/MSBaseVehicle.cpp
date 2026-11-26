@@ -312,7 +312,7 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
     std::set<int> jumps;
 
 
-    double sourcePos = deferred != nullptr ? deferred->sourcePos : (onInit ? 0 : getPositionOnLane());
+    double sourcePos = deferred != nullptr ? deferred->sourcePos : getPositionOnLane();
 #ifdef DEBUG_REROUTE
     if (DEBUG_COND) {
         std::cout << " curEdge=" << (*myCurrEdge)->getID() << " source=" << source->getID() << " sourcePos=" << sourcePos << " lane=" << Named::getIDSecure(getLane()) << " departPos=" << myParameter->departPos << " oldEdgesRemaining=" << toString(oldEdgesRemaining) << "\n";
@@ -469,9 +469,10 @@ MSBaseVehicle::reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<M
             } else if (stopEdgeInfo.isSink) {
                 //error = TLF("Vehicle '%' has no valid route from edge '%' to destination edge '%'.", getID(), source->getID(), stopEdge->getID());
                 edges.clear();
-                if (onInit && source == stopEdge && stops.size() == 1 && sourcePos > myArrivalPos) {
+                if (source == stopEdge && stops.size() == 1 && sourcePos > myArrivalPos) {
                     edges.push_back(stopEdge);
-                    WRITE_WARNING(TLF("Vehicle '%' ignores arrivalPos % when driving from edge '%' to edge '%'.", getID(), myArrivalPos, source->getID(), stopEdge->getID()));
+                    WRITE_WARNING(TLF("Vehicle '%' ignores arrivalPos % when driving from edge '%' to edge '%' with departPos %.",
+                                getID(), myArrivalPos, source->getID(), stopEdge->getID(), sourcePos));
                 }
             } else if (source == stopEdge && stopEdgeInfo.stopPar != nullptr && stopEdgeInfo.stopPar->endPos >= sourcePos) {
                 // special case: no failure on dynamically computed stop position
@@ -1284,9 +1285,7 @@ MSBaseVehicle::saveState(OutputDevice& out) {
     myParameter->write(out, OptionsCont::getOptions(), SUMO_TAG_VEHICLE, typeID);
     // params and stops must be written in child classes since they may wish to add additional attributes first
     out.writeAttr(SUMO_ATTR_ROUTE, myRoute->getID());
-    std::ostringstream os;
-    os << myOdometer << " " << myNumberReroutes;
-    out.writeAttr(SUMO_ATTR_DISTANCE, os.str());
+    out.writeAttr(SUMO_ATTR_DISTANCE, toString(myOdometer) + " " + toString(myNumberReroutes));
     if (myParameter->arrivalPosProcedure == ArrivalPosDefinition::RANDOM) {
         out.writeAttr(SUMO_ATTR_ARRIVALPOS_RANDOMIZED, myArrivalPos);
     }
@@ -2843,6 +2842,10 @@ MSBaseVehicle::getRNGIndex() const {
 
 SumoRNG*
 MSBaseVehicle::getRNG() const {
+    if (MSAbstractLaneChangeModel::myDecidingEdge != nullptr) {
+        // all draws while deciding lane changes use the rng of the deciding edge (it selects the thread)
+        return MSAbstractLaneChangeModel::myDecidingEdge->getLanes()[0]->getRNG();
+    }
     const MSLane* lane = getLane();
     if (lane == nullptr) {
         return getEdge()->getLanes()[0]->getRNG();

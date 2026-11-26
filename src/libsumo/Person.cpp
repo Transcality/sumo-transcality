@@ -19,6 +19,8 @@
 /****************************************************************************/
 #include <config.h>
 
+#include <cmath>
+
 #include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/MSEdge.h>
@@ -108,6 +110,12 @@ Person::getSlope(const std::string& personID) {
     }
     const double gp = lane->interpolateLanePosToGeometryPos(ep);
     return lane->getShape().slopeDegreeAtOffset(gp);
+}
+
+
+double
+Person::getArrivalPos(const std::string& personID) {
+    return getPerson(personID)->getArrivalPos();
 }
 
 
@@ -750,6 +758,9 @@ Person::appendStage(const std::string& personID, const TraCIStage& stage) {
 void
 Person::replaceStage(const std::string& personID, const int stageIndex, const TraCIStage& stage) {
     MSTransportable* p = getPerson(personID);
+    if (stageIndex < 0) {
+        throw TraCIException("The stage index may not be negative.");
+    }
     if (stageIndex >= p->getNumRemainingStages()) {
         throw TraCIException("Specified stage index:  is not valid for person " + personID);
     }
@@ -933,10 +944,11 @@ Person::moveToXY(const std::string& personID, const std::string& edgeID, const d
     // angle must be in [0,360] because it will be compared against those returned by naviDegree()
     // angle set to INVALID_DOUBLE_VALUE is ignored in the evaluated and later set to the angle of the matched lane
     if (angle != INVALID_DOUBLE_VALUE) {
-        while (angle >= 360.) {
-            angle -= 360.;
+        if (!std::isfinite(angle)) {
+            throw TraCIException("Angle must be finite.");
         }
-        while (angle < 0.) {
+        angle = std::fmod(angle, 360.);
+        if (angle < 0.) {
             angle += 360.;
         }
     }
@@ -1314,6 +1326,8 @@ Person::handleVariable(const std::string& objID, const int variable, VariableWra
             return wrapper->wrapString(objID, variable, getLaneID(objID));
         case VAR_LANEPOSITION:
             return wrapper->wrapDouble(objID, variable, getLanePosition(objID));
+        case VAR_ARRIVALPOS:
+            return wrapper->wrapDouble(objID, variable, getArrivalPos(objID));
         case VAR_COLOR:
             return wrapper->wrapColor(objID, variable, getColor(objID));
         case VAR_WAITING_TIME:

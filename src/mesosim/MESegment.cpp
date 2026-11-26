@@ -34,6 +34,7 @@
 #include <microsim/traffic_lights/MSRailSignalControl.h>
 #include <microsim/output/MSXMLRawOut.h>
 #include <microsim/output/MSDetectorFileOutput.h>
+#include <microsim/output/MSInductLoop.h>
 #include <microsim/output/MSMeanData.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/devices/MSDevice.h>
@@ -269,8 +270,7 @@ MESegment::initSegment(const MesoEdgeType& edgeType, const MSEdge& parent, const
                            parent.hasMinorLink());
     myMinorPenalty = edgeType.minorPenalty;
     myOvertaking = edgeType.overtaking && myCapacity > myLength;
-    // keyed by the edge id rather than its numerical id: adding or removing edges elsewhere renumbers the edges
-    // and would change the draws on every other segment, too
+    // keyed by the edge id because adding or removing edges elsewhere renumbers the numerical ids
     myOvertakeKey = (long long int)((uint64_t)RandHelper::murmur3_32(parent.getID(), myIndex) << 32);
 
     //std::cout << getID() << " myMinorPenalty=" << myMinorPenalty << " myTLSPenalty=" << myTLSPenalty << " myJunctionControl=" << myJunctionControl << " myOvertaking=" << myOvertaking << "\n";
@@ -344,6 +344,10 @@ MESegment::addDetector(MSMoveReminder* data, int queueIndex) {
     // calibrators, drive ways) keeps the moves on this segment in the serial part of the parallel loop
     if (dynamic_cast<MSMeanData::MeanDataValues*>(data) == nullptr) {
         myHasSerialReminders = true;
+        // induction loops (of actuated traffic lights) only see the vehicles of this segment, which synchronised groups never move at once
+        if (dynamic_cast<MSInductLoop*>(data) == nullptr) {
+            myHasGlobalReminders = true;
+        }
     }
     if (queueIndex == -1) {
         for (Queue& q : myQueues) {
@@ -616,7 +620,7 @@ MESegment::getLink(const MEVehicle* veh, bool penalty) const {
 }
 
 
-bool
+int
 MESegment::isOpen(const MEVehicle* veh) const {
 #ifdef DEBUG_OPENED
     if (DEBUG_COND || DEBUG_COND2(veh)) {
@@ -645,16 +649,25 @@ MESegment::isOpen(const MEVehicle* veh) const {
 #endif
     if (myTLSPenalty) {
         // XXX should limited control take precedence over tls penalty?
-        return true;
+        return PROCEED_YES;
     }
     const MSLink* link = getLink(veh);
-    return (link == nullptr
+    const bool open = (link == nullptr
             || link->havePriority()
             || limitedControlOverride(link)
             || link->opened(veh->getEventTime(), veh->getSpeed(), veh->estimateLeaveSpeed(link),
-                            veh->getVehicleType().getLengthWithGap(), veh->getImpatience(),
-                            veh->getVehicleType().getCarFollowModel().getMaxDecel(), veh->getWaitingTime(),
-                            0, nullptr, false, veh));
+                veh->getVehicleType().getLengthWithGap(), veh->getImpatience(),
+                veh->getVehicleType().getCarFollowModel().getMaxDecel(), veh->getWaitingTime(),
+                0, nullptr, false, veh));
+    if (open) {
+        return PROCEED_YES;
+    } else {
+        int status = PROCEED_NO;
+        if (link != nullptr && link->isTLSControlled()) {
+            status |= PROCEED_NO_TLS;
+        }
+        return status;
+    }
 }
 
 
@@ -789,6 +802,16 @@ MESegment::addReminders(MEVehicle* veh) const {
 }
 
 
+double
+MESegment::getVehicleMaxSpeed(const MEVehicle& veh, int queueIndex) const {
+    const auto& routeLanes = veh.getEdge()->getLanes();
+    // The route edge is still the incoming edge until the vehicle leaves the junction.
+    const MSLane* const lane = queueIndex < (int)routeLanes.size()
+            ? routeLanes[queueIndex] : myEdge.getLanes()[queueIndex];
+    return lane->getVehicleMaxSpeed(&veh);
+}
+
+
 void
 MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isDepart, const bool isTeleport, const bool newEdge,
                    SUMOTime* const deferredEventTime) {
@@ -814,7 +837,7 @@ MESegment::receive(MEVehicle* veh, const int qIdx, SUMOTime time, const bool isD
     assert(veh->getEdge() == &getEdge() || getEdge().isInternal());
     // route continues
     Queue& q = myQueues[qIdx];
-    const double maxSpeedOnEdge = veh->getEdge()->getLanes()[qIdx]->getVehicleMaxSpeed(veh);
+    const double maxSpeedOnEdge = getVehicleMaxSpeed(*veh, qIdx);
     const double uspeed = MAX2(maxSpeedOnEdge, MESO_MIN_SPEED);
     std::vector<MEVehicle*>& cars = q.getModifiableVehicles();
     MEVehicle* newLeader = nullptr; // first vehicle in the current queue

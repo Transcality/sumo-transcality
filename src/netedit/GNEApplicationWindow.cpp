@@ -270,6 +270,8 @@ FXDEFMAP(GNEApplicationWindow) GNEApplicationWindowMap[] = {
     FXMAPFUNC(SEL_UPDATE,  MID_GNE_NETWORKVIEWOPTIONS_AUTOOPPOSITEEDGES,        GNEApplicationWindow::onUpdToggleViewOption),
     FXMAPFUNC(SEL_COMMAND, MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS,       GNEApplicationWindow::onCmdToggleViewOption),
     FXMAPFUNC(SEL_UPDATE,  MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS,       GNEApplicationWindow::onUpdToggleViewOption),
+    FXMAPFUNC(SEL_COMMAND, MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS,   GNEApplicationWindow::onCmdToggleViewOption),
+    FXMAPFUNC(SEL_UPDATE,  MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS,   GNEApplicationWindow::onUpdToggleViewOption),
     // Demand view options
     FXMAPFUNC(SEL_COMMAND, MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID,                  GNEApplicationWindow::onCmdToggleViewOption),
     FXMAPFUNC(SEL_UPDATE,  MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID,                  GNEApplicationWindow::onUpdToggleViewOption),
@@ -415,6 +417,7 @@ FXDEFMAP(GNEApplicationWindow) GNEApplicationWindowMap[] = {
     FXMAPFUNC(SEL_COMMAND, MID_GNE_POSTPROCESSINGPYTHONTOOL,    GNEApplicationWindow::onCmdPostProcessingPythonTool),
     // toolbar windows
     FXMAPFUNC(SEL_COMMAND,  MID_CLEARMESSAGEWINDOW, GNEApplicationWindow::onCmdClearMsgWindow),
+    FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_CTRL_SHIFT_W_TOGGLEMESSAGEWINDOW, GNEApplicationWindow::onCmdToggleMessageWindow),
     // toolbar help
     FXMAPFUNC(SEL_COMMAND,  MID_HOTKEY_F1_ONLINEDOCUMENTATION,  GNEApplicationWindow::onCmdHelp),
     FXMAPFUNC(SEL_COMMAND,  MID_CHANGELOG,                      GNEApplicationWindow::onCmdChangelog),
@@ -605,6 +608,8 @@ GNEApplicationWindow::dependentBuild() {
     myCartesianCoordinate->setTipText(TL("Enter 'x, y' to center view"));
     myCartesianCoordinate->setBackColor(myCartesianFrame->getBackColor());
     myCartesianCoordinate->setText(TL("N/A"));
+    myCartesianCoordinate->disable();
+    myCartesianCoordinate->setEditable(false);
     // build test coordinates label (only if gui-testing is enabled)
     myTestFrame = new FXHorizontalFrame(myStatusbar, GUIDesignHorizontalFrameStatusBar);
     myTestCoordinate = new FXLabel(myTestFrame, TL("N/A"), nullptr, GUIDesignLabelStatusBar);
@@ -1083,6 +1088,8 @@ GNEApplicationWindow::onCmdSmartReload(FXObject* sender, FXSelector sel, void* p
         if (myStartedWithNewNet) {
             // preserve output file if defined in bucket
             const auto outputFile = myFileBucketHandler->getDefaultFilename(FileBucket::Type::NETWORK);
+            // forget other files (e.g. demand) because they cannot be loaded into an empty network
+            myFileBucketHandler->resetDefaultFilenames();
             // create new network
             createNewNetwork();
             // restore ignore flags
@@ -1332,6 +1339,13 @@ GNEApplicationWindow::onUpdOpen(FXObject* sender, FXSelector, void*) {
 long
 GNEApplicationWindow::onCmdClearMsgWindow(FXObject*, FXSelector, void*) {
     myMessageWindow->clear();
+    return 1;
+}
+
+
+long
+GNEApplicationWindow::onCmdToggleMessageWindow(FXObject*, FXSelector, void*) {
+    toggleMessageWindowAndStatusBar(myMessageWindow);
     return 1;
 }
 
@@ -1840,6 +1854,8 @@ GNEApplicationWindow::closeAllWindows(const bool resetFilenames) {
     myGeoCoordinate->disable();
     myGeoCoordinate->setEditable(false);
     myCartesianCoordinate->setText(TL("N/A"));
+    myCartesianCoordinate->disable();
+    myCartesianCoordinate->setEditable(false);
     myTestCoordinate->setText(TL("N/A"));
     myTestFrame->hide();
     myMessageWindow->unregisterMsgHandlers();
@@ -3186,7 +3202,7 @@ GNEApplicationWindow::onCmdToggleViewOption(FXObject* sender, FXSelector sel, vo
             case MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS:
                 return myViewNet->onCmdToggleShowPolygonSymbols(sender, sel, ptr);
             case MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS:
-                return myViewNet->onCmdToggleDrawJunctionShape(sender, sel, ptr);
+                return myViewNet->onCmdToggleDrawFilledWalkingAreas(sender, sel, ptr);
             // Demand
             case MID_GNE_DEMANDVIEWOPTIONS_SHOWGRID:
                 return myViewNet->onCmdToggleShowGrid(sender, sel, ptr);
@@ -3359,6 +3375,13 @@ GNEApplicationWindow::onUpdToggleViewOption(FXObject* sender, FXSelector sel, vo
                 break;
             case MID_GNE_NETWORKVIEWOPTIONS_SHOWPOLYGONSYMBOLS:
                 if (myViewNet->getNetworkViewOptions().menuCheckShowPolygonSymbols->amChecked()) {
+                    menuCheck->setCheck(TRUE);
+                } else {
+                    menuCheck->setCheck(FALSE);
+                }
+                break;
+            case MID_GNE_NETWORKVIEWOPTIONS_DRAWFILLEDWALKINGAREAS:
+                if (myViewNet->getNetworkViewOptions().menuCheckDrawFilledWalkingAreas->amChecked()) {
                     menuCheck->setCheck(TRUE);
                 } else {
                     menuCheck->setCheck(FALSE);
@@ -3584,6 +3607,8 @@ GNEApplicationWindow::onCmdSaveNetwork(FXObject* sender, FXSelector sel, void* p
             // After saving a net successfully, add it into Recent Nets list.
             myMenuBarFile.myRecentNetworks.appendFile(myFileBucketHandler->getDefaultFilename(FileBucket::Type::NETWORK).c_str());
             myMessageWindow->addSeparator();
+            // the network exists now as file, so reload must load it (and its configs) instead of creating a new one
+            myStartedWithNewNet = false;
         } else {
             PROGRESS_FAILED_MESSAGE();
             WRITE_ERROR(TLF("Could not save network in '%'.", myFileBucketHandler->getDefaultFilename(FileBucket::Type::NETWORK)));
@@ -3801,7 +3826,7 @@ GNEApplicationWindow::onUpdSaveNeteditConfig(FXObject* sender, FXSelector, void*
         sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
     } else if (myNet->getAttributeCarriers()->getEdges().size() == 0) {
         // a config requires at least ONE edge
-        return sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
+        sender->handle(this, FXSEL(SEL_COMMAND, ID_DISABLE), nullptr);
     } else if (!myFileBucketHandler->isFilenameDefined(FileBucket::Type::NETEDIT_CONFIG)) {
         sender->handle(this, FXSEL(SEL_COMMAND, ID_ENABLE), nullptr);
     } else if (!myNet->getSavingStatus()->isNeteditConfigSaved()) {
@@ -4537,6 +4562,10 @@ GNEApplicationWindow::onCmdOpenDataElements(FXObject*, FXSelector, void*) {
         if (!myAllowUndoRedoLoading) {
             myUndoList->clear();
         }
+        // refresh the current frame (e.g. the dataSet list of the data frames)
+        if (myViewNet->getViewParent()->getCurrentShownFrame()) {
+            myViewNet->getViewParent()->getCurrentShownFrame()->updateFrameAfterUndoRedo();
+        }
         update();
     }
     return 1;
@@ -4564,6 +4593,10 @@ GNEApplicationWindow::onCmdReloadDataElements(FXObject*, FXSelector, void*) {
     // check if clear undoList
     if (!myAllowUndoRedoLoading) {
         myUndoList->clear();
+    }
+    // refresh the current frame (e.g. the dataSet list of the data frames)
+    if (myViewNet->getViewParent()->getCurrentShownFrame()) {
+        myViewNet->getViewParent()->getCurrentShownFrame()->updateFrameAfterUndoRedo();
     }
     update();
     return 1;

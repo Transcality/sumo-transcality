@@ -54,12 +54,14 @@ sumo-gui = "sumo:sumo_gui"
 [tool.scikit-build]
 build-dir = "_skbuild"
 install.components = ["runtime", "data", "dll", "proj_data", "tools"]
-wheel.packages = ["tools/build_config/sumo"]
+wheel.packages = ["pysrc/sumo"]
 wheel.install-dir = "sumo"
 wheel.py-api = "py3"
 
 [tool.scikit-build.cmake.define]
 CMAKE_CXX_SCAN_FOR_MODULES = "OFF"
+ENABLE_FFMPEG = "OFF"
+ENABLE_OSG = "OFF"
 
 [tool.cibuildwheel]
 before-all = "build_config/install_dependencies.sh"

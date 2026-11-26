@@ -89,7 +89,7 @@ public:
 
 
     /// @brief Resets all generated values to allow computation of next interval
-    virtual void reset();
+    virtual void reset() override;
 
     /// @brief get name
     std::string getName() const {
@@ -123,7 +123,7 @@ public:
      * @return True if vehicle enters the induction loop
      * @see Notification
      */
-    bool notifyEnter(SUMOTrafficObject& veh, Notification reason, const MSLane* enteredLane = 0);
+    bool notifyEnter(SUMOTrafficObject& veh, Notification reason, const MSLane* enteredLane = 0) override;
 
     /** @brief Checks whether the vehicle shall be counted and/or shall still touch this MSMoveReminder
      *
@@ -141,7 +141,7 @@ public:
      * @see enterDetectorByMove
      * @see leaveDetectorByMove
      */
-    bool notifyMove(SUMOTrafficObject& veh, double oldPos, double newPos, double newSpeed);
+    bool notifyMove(SUMOTrafficObject& veh, double oldPos, double newPos, double newSpeed) override;
 
 
     /** @brief Dismisses the vehicle if it is on the detector due to a lane change
@@ -158,7 +158,7 @@ public:
      * @see MSMoveReminder
      * @see MSMoveReminder::notifyLeave
      */
-    bool notifyLeave(SUMOTrafficObject& veh, double lastPos, MSMoveReminder::Notification reason, const MSLane* enteredLane = 0);
+    bool notifyLeave(SUMOTrafficObject& veh, double lastPos, MSMoveReminder::Notification reason, const MSLane* enteredLane = 0) override;
 
 
     //@}
@@ -168,34 +168,35 @@ public:
     /// @name Methods returning current values
     /// @{
 
-    /** @brief Returns the speed of the vehicle on the detector
+    /** @brief Returns the mean speed of the vehicles which left the detector
      *
-     * If no vehicle is on the detector, -1 is returned, otherwise
-     *  this vehicle's current speed.
+     * Like a real loop, the speed of a vehicle is only known once it has passed the detector.
+     *  The (passing) speeds of all vehicles which left the detector in the step starting
+     *  at SIMSTEP - offset are averaged. If no vehicle left, -1 is returned.
      *
-     * @return The speed [m/s] of the vehicle if one is on the detector, -1 otherwise
+     * @param[in] offset The time offset (usually DELTA_T for the last step)
+     * @return The mean speed [m/s] of the vehicles which left the detector, -1 if there were none
      */
     double getSpeed(const int offset) const;
 
 
-    /** @brief Returns the length of the vehicle on the detector
+    /** @brief Returns the mean length of the vehicles which left the detector
      *
-     * If no vehicle is on the detector, -1 is returned, otherwise
-     *  this vehicle's length.
+     * The lengths of all vehicles which left the detector in the step starting
+     *  at SIMSTEP - offset are averaged. If no vehicle left, -1 is returned.
      *
-     * @return The length [m] of the vehicle if one is on the detector, -1 otherwise
+     * @param[in] offset The time offset (usually DELTA_T for the last step)
+     * @return The mean length [m] of the vehicles which left the detector, -1 if there were none
      */
     double getVehicleLength(const int offset) const;
 
 
-    /** @brief Returns the current occupancy
+    /** @brief Returns the occupancy of the last step
      *
-     * If a vehicle is on the detector, 1 is returned. If a vehicle has passed the detector
-     *  in this timestep, its occupancy value is returned. If no vehicle has passed,
-     *  0 is returned.
+     * The percentage of the last step during which any vehicle (including vehicles which
+     *  entered in an earlier step or left by lane change) was on the detector.
      *
-     * @return This detector's current occupancy
-     * @todo recheck (especially if more than one vehicle has passed)
+     * @return This detector's occupancy [%] during the last step
      */
     double getOccupancy() const;
 
@@ -270,7 +271,7 @@ public:
      * @see MSDetectorFileOutput::writeXMLOutput
      * @exception IOError If an error on writing occurs (!!! not yet implemented)
      */
-    void writeXMLOutput(OutputDevice& dev, SUMOTime startTime, SUMOTime stopTime);
+    void writeXMLOutput(OutputDevice& dev, SUMOTime startTime, SUMOTime stopTime) override;
 
 
     /** @brief Opens the XML-output using "detector" as root element
@@ -279,14 +280,14 @@ public:
      * @see MSDetectorFileOutput::writeXMLDetectorProlog
      * @exception IOError If an error on writing occurs (!!! not yet implemented)
      */
-    void writeXMLDetectorProlog(OutputDevice& dev) const;
+    void writeXMLDetectorProlog(OutputDevice& dev) const override;
 
     /** @brief Updates the detector (computes values)
      * only used when detecting persons
      *
      * @param[in] step The current time step
      */
-    void detectorUpdate(const SUMOTime step);
+    void detectorUpdate(const SUMOTime step) override;
     /// @}
 
 
@@ -336,13 +337,20 @@ public:
      */
     std::vector<VehicleData> collectVehiclesOnDet(SUMOTime t, bool includeEarly = false, bool leaveTime = false, bool forOccupancy = false, bool lastInterval = false) const;
 
+    /** @brief Returns vehicle data for vehicles that regularly left the detector in the step starting at the given time
+     *
+     * @param[in] t The begin of the step
+     * @return The list of vehicles
+     */
+    std::vector<VehicleData> collectVehiclesLeftDet(SUMOTime t) const;
+
     /// @brief allows for special color in the gui version
     virtual void setSpecialColor(const RGBColor* /*color*/) {};
 
     virtual void setVisible(bool /*show*/) {};
 
     /** @brief Remove all vehicles before quick-loading state */
-    virtual void clearState(SUMOTime time);
+    virtual void clearState(SUMOTime time) override;
 
 protected:
     /// @name Function for summing up values

@@ -109,17 +109,17 @@ void
 Helper::subscribe(const int commandId, const std::string& id, const std::vector<int>& variables,
                   const double beginTime, const double endTime, const libsumo::TraCIResults& params,
                   const int contextDomain, const double range) {
-    myLastContextSubscription = nullptr;
     if (variables.empty()) {
         for (std::vector<libsumo::Subscription>::iterator j = mySubscriptions.begin(); j != mySubscriptions.end();) {
             if (j->id == id && j->commandId == commandId && j->contextDomain == contextDomain) {
-                j = mySubscriptions.erase(j);
+                j = eraseSubscription(mySubscriptions, j, myLastContextSubscription);
             } else {
                 ++j;
             }
         }
         return;
     }
+    myLastContextSubscription = nullptr;
     std::vector<std::shared_ptr<tcpip::Storage> > parameters;
     for (const int var : variables) {
         const auto& p = params.find(var);
@@ -176,11 +176,12 @@ Helper::handleSubscriptions(const SUMOTime t) {
     for (std::vector<libsumo::Subscription>::iterator i = mySubscriptions.begin(); i != mySubscriptions.end();) {
         const libsumo::Subscription& s = *i;
         const bool isArrivedVehicle = (s.commandId == CMD_SUBSCRIBE_VEHICLE_VARIABLE || s.commandId == CMD_SUBSCRIBE_VEHICLE_CONTEXT)
-                                      && (find(getVehicleStateChanges(MSNet::VehicleState::ARRIVED).begin(), getVehicleStateChanges(MSNet::VehicleState::ARRIVED).end(), s.id) != getVehicleStateChanges(MSNet::VehicleState::ARRIVED).end());
+                                      && (MSNet::getInstance()->getVehicleControl().getVehicle(s.id) == nullptr
+                                          || find(getVehicleStateChanges(MSNet::VehicleState::ARRIVED).begin(), getVehicleStateChanges(MSNet::VehicleState::ARRIVED).end(), s.id) != getVehicleStateChanges(MSNet::VehicleState::ARRIVED).end());
         const bool isArrivedPerson = (s.commandId == libsumo::CMD_SUBSCRIBE_PERSON_VARIABLE || s.commandId == libsumo::CMD_SUBSCRIBE_PERSON_CONTEXT)
                                      && MSNet::getInstance()->getPersonControl().get(s.id) == nullptr;
         if (s.endTime < t || isArrivedVehicle || isArrivedPerson) {
-            i = mySubscriptions.erase(i);
+            i = eraseSubscription(mySubscriptions, i, myLastContextSubscription);
             continue;
         }
         ++i;
@@ -218,8 +219,29 @@ Helper::needNewSubscription(libsumo::Subscription& s, std::vector<Subscription>&
 }
 
 
+std::vector<Subscription>::iterator
+Helper::eraseSubscription(std::vector<Subscription>& subscriptions,
+                          std::vector<Subscription>::iterator position, Subscription*& lastContextSubscription) {
+    const auto removedIndex = position - subscriptions.begin();
+    const auto contextIndex = lastContextSubscription == nullptr
+                              ? -1 : lastContextSubscription - subscriptions.data();
+    if (contextIndex == removedIndex) {
+        lastContextSubscription = nullptr;
+    }
+    auto next = subscriptions.erase(position);
+    if (contextIndex > removedIndex) {
+        // Erasing an earlier entry moves the active context subscription.
+        lastContextSubscription = &subscriptions[contextIndex - 1];
+    }
+    return next;
+}
+
+
 void
 Helper::clearSubscriptions() {
+    for (auto& wrapper : myWrapper) {
+        wrapper.second->clear();
+    }
     mySubscriptions.clear();
     myLastContextSubscription = nullptr;
 }
@@ -708,6 +730,8 @@ Helper::cleanup() {
     Helper::clearSubscriptions();
     delete myLaneTree;
     myLaneTree = nullptr;
+    myRemoteControlledVehicles.clear();
+    myRemoteControlledPersons.clear();
 }
 
 
@@ -1828,7 +1852,7 @@ Helper::moveToXYMap_matchingRoutePosition(const Position& pos, const std::string
 
     assert(lane != nullptr);
     // quit if no solution was found, reporting a failure
-    if (lane == nullptr) {
+    if (*lane == nullptr) {
 #ifdef DEBUG_MOVEXY
         std::cout << "  b failed - no best route lane" << std::endl;
 #endif

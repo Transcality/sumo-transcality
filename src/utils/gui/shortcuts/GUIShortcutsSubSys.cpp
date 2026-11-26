@@ -95,7 +95,12 @@ GUIShortcutsSubSys::buildAccelerators(FXAccelTable* accelTable, FXObject* target
     accelTable->addAccel(parseKey(KEY_F8),  target, FXSEL(SEL_COMMAND, MID_HOTKEY_F8_CLEANINVALID_CROSSINGS_DEMANDELEMENTS));
     accelTable->addAccel(parseKey(KEY_F9),  target, FXSEL(SEL_COMMAND, MID_HOTKEY_F9_EDIT_VIEWSCHEME));
     accelTable->addAccel(parseKey(KEY_F10), target, FXSEL(SEL_COMMAND, MID_HOTKEY_F10_OPTIONSMENU));
+    // in sumo-gui, F11 is an alias of Ctrl + F (full screen mode)
+    if (sumogui) {
+        accelTable->addAccel(parseKey(KEY_F11), target, FXSEL(SEL_COMMAND, MID_HOTKEY_CTRL_F_FULSCREENMODE));
+    } else {
     accelTable->addAccel(parseKey(KEY_F11), target, FXSEL(SEL_COMMAND, MID_HOTKEY_F11_FRONTELEMENT));
+    }
     accelTable->addAccel(parseKey(KEY_F12), target, FXSEL(SEL_COMMAND, MID_HOTKEY_F12_ABOUT));
 
     // other hotkeys
@@ -225,6 +230,9 @@ GUIShortcutsSubSys::buildAccelerators(FXAccelTable* accelTable, FXObject* target
 
     accelTable->addAccel(parseKey(KEY_t, KEYMODIFIER_CONTROL, KEYMODIFIER_SHIFT), target, FXSEL(SEL_COMMAND, MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET));
     accelTable->addAccel(parseKey(KEY_T, KEYMODIFIER_CONTROL, KEYMODIFIER_SHIFT), target, FXSEL(SEL_COMMAND, MID_HOTKEY_CTRL_SHIFT_T_OPEN_NET));
+
+    accelTable->addAccel(parseKey(KEY_w, KEYMODIFIER_CONTROL, KEYMODIFIER_SHIFT), target, FXSEL(SEL_COMMAND, MID_HOTKEY_CTRL_SHIFT_W_TOGGLEMESSAGEWINDOW));
+    accelTable->addAccel(parseKey(KEY_W, KEYMODIFIER_CONTROL, KEYMODIFIER_SHIFT), target, FXSEL(SEL_COMMAND, MID_HOTKEY_CTRL_SHIFT_W_TOGGLEMESSAGEWINDOW));
 
     // shift hotkeys
 

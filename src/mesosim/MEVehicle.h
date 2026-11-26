@@ -356,9 +356,9 @@ public:
     bool replaceRoute(ConstMSRoutePtr route,  const std::string& info, bool onInit = false, int offset = 0, bool addRouteStops = true, bool removeStops = true, std::string* msgReturn = nullptr);
 
     /** @brief Returns whether the vehicle is allowed to pass the next junction, checks also for triggered stops
-     * @return true iff the vehicle may drive over the next junction
+     * @return MESegment::PROCEED_YES iff the vehicle may drive over the next junction
      */
-    bool mayProceed();
+    int mayProceed();
 
     /** @brief Updates a single vehicle detector if present
      */
@@ -397,6 +397,15 @@ public:
 
     void setDeferred(bool deferred) {
         myAmDeferred = deferred;
+    }
+
+    /// @brief which other groups the pending event of the vehicle holds back (see MELoop, option --meso-threads.event-sync)
+    int getEventHolds() const {
+        return myEventHolds;
+    }
+
+    void setEventHolds(int holds) {
+        myEventHolds = holds;
     }
 
     /// @name state io
@@ -438,6 +447,9 @@ protected:
 
     /// @brief whether the vehicle's event waits for the serial part of a parallel step
     bool myAmDeferred = false;
+
+    /// @brief which other groups the pending event of the vehicle holds back
+    int myEventHolds = 0;
 
     /// @brief An instance of a velocity/lane influencing instance; built in "getInfluencer"
     BaseInfluencer* myInfluencer;

@@ -86,7 +86,7 @@ public:
     /// @brief get run thread
     GUIRunThread* getRunner();
 
-    /// @brief build dependt
+    /// @brief build dependent
     void dependentBuild(const bool isLibsumo);
 
     /// @brief set status bar text
@@ -113,19 +113,19 @@ public:
     /// @name Inter-thread event handling
     /// @{
 
-    /// @brief a certain event ocurred
+    /// @brief a certain event occurred
     virtual void eventOccurred();
 
-    /// @brief called when event "simulation loaded" ocurred
+    /// @brief called when event "simulation loaded" occurred
     void handleEvent_SimulationLoaded(GUIEvent* e);
 
-    /// @brief called when event "simulation step" ocurred
+    /// @brief called when event "simulation step" occurred
     void handleEvent_SimulationStep(GUIEvent* e);
 
-    /// @brief called when event "message" ocurred
+    /// @brief called when event "message" occurred
     void handleEvent_Message(GUIEvent* e);
 
-    /// @brief called when event "simulation ended" ocurred
+    /// @brief called when event "simulation ended" occurred
     void handleEvent_SimulationEnded(GUIEvent* e);
 
     /// @}
@@ -208,6 +208,9 @@ public:
     /// @brief Toggle full screen mode
     long onCmdFullScreen(FXObject*, FXSelector, void*);
 
+    /// @brief Leave full screen mode after the last view was closed
+    long onChoreLeaveFullScreen(FXObject*, FXSelector, void*);
+
     /// @brief Toggle listing of internal structures
     long onCmdListInternal(FXObject*, FXSelector, void*);
 
@@ -286,6 +289,9 @@ public:
     /// @brief Determines whether reloading is enabled
     long onUpdReload(FXObject*, FXSelector, void*);
 
+    /// @brief Determines whether quick reload can be executed
+    long onUpdQuickReload(FXObject*, FXSelector, void*);
+
     /// @brief Determines whether opening a recent file is enabled
     long onUpdOpenRecent(FXObject*, FXSelector, void*);
 
@@ -312,6 +318,9 @@ public:
 
     /// @brief Called if the message window shall be cleared
     long onCmdClearMsgWindow(FXObject*, FXSelector, void*);
+
+    /// @brief Called to show or hide the message window and the status line
+    long onCmdToggleMessageWindow(FXObject*, FXSelector, void*);
 
     /// @brief Called to set a breakpoint via hotkey
     long onCmdBreakpoint(FXObject*, FXSelector, void*);
@@ -531,9 +540,6 @@ protected:
     /// @brief the semaphore when waiting for event completion
     FXCondition myEventCondition;
 
-    /// @brief menu checkbox to activate game mode
-    FXMenuCheck* myGamingModeCheckbox;
-
     /// @name game related things
     /// {
 
@@ -554,6 +560,9 @@ protected:
 
     /// @brief flag for enable TLS gameMode
     bool myTLSGame = false;
+
+    /// @brief whether the window was maximized before entering the full screen mode
+    bool myWasMaximizedBeforeFullScreen = false;
 
     /// @brief waiting time label
     MFXLCDLabel* myWaitingTimeLabel = nullptr;

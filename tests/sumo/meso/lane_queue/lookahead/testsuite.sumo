@@ -10,5 +10,5 @@ edge_type
 # vehicles choose the lane queue by a turn on the next edge (within 300m)
 two_edges
 
-# a lane chain through a bus lane leaves cars a queue they may use
+# a lane chain through a bus lane restricts buses but leaves cars a queue they may use
 bus_chain

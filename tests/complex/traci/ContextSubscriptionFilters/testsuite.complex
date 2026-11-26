@@ -27,3 +27,8 @@ turn
 
 # Tests whether lanes filter in combination with up-/down-stream distance filters work correctly
 lanesUpDownDistance
+
+# filter ownership after subscription removal, expiry and arrival
+subscription_lifetime
+# Remove subscriptions when their reference vehicle is explicitly removed
+removed_reference_vehicle

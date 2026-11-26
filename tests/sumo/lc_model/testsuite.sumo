@@ -45,5 +45,11 @@ bugs
 # test lateral imperfection
 lcSigma
 
+# lateral imperfection does not depend on the number of threads
+lcSigma_threads
+
 # test vType attribute 'lcm'
 specify_lcm
+
+# lane changes are decided on all edges before any is executed
+parallel

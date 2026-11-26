@@ -59,6 +59,7 @@
 #pragma once
 #include <config.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <limits>
@@ -130,8 +131,8 @@ public:
      *   multipliers that cancel out of the moved-or-not decision)
      * @param[in] updateFactor / updateConstant the deadband: an edge's arcs
      *   are only refilled when its gate effort moved by MORE than BOTH the
-     *   relative factor AND the absolute constant (seconds) since this
-     *   buffer last applied it -- the sufficientSaving() analog. The
+     *   relative factor AND the absolute constant (seconds) since it was
+     *   last applied -- the sufficientSaving() analog. The
      *   moving-average speed filter smears every traffic event into many
      *   ticks of sub-percent drift; without a deadband that drift marks
      *   thousands of arcs per barrier and partial re-customization
@@ -162,12 +163,10 @@ public:
         myUpdateFactor(updateFactor), myUpdateConstant(updateConstant),
         myEnsembleK(ensembleK > 1 ? ensembleK : 1) {
         const unsigned space = myGraph->edgeIdSpace();
-        for (int i = 0; i < 2; i++) {
-            // NaN = "never applied": the first pending occurrence always
-            // passes the deadband and primes the entry
-            myAppliedEffort[i].assign(space, std::numeric_limits<double>::quiet_NaN());
-            myPendingFlag[i].assign(space, 0);
-        }
+        // NaN = "never applied": the first pending occurrence always
+        // passes the deadband and primes the entry
+        myAppliedEffort.assign(space, std::numeric_limits<double>::quiet_NaN());
+        myPendingFlag.assign(space, 0);
     }
 
     ~CCHMetricFamily() {
@@ -262,18 +261,16 @@ public:
         }
     }
 
-    /// @brief queue an edge whose gate effort changed (both buffers; the
-    /// deadband applies later, at the customize barrier)
+    /// @brief queue an edge whose gate effort changed (the deadband applies
+    /// later, at the customize barrier)
     void markDirty(const E* e) {
         const int id = e->getNumericalID();
-        if (id < 0 || id >= (int)myPendingFlag[0].size()) {
+        if (id < 0 || id >= (int)myPendingFlag.size()) {
             return;
         }
-        for (int i = 0; i < 2; i++) {
-            if (!myPendingFlag[i][id]) {
-                myPendingFlag[i][id] = 1;
-                myPendingList[i].push_back(e);
-            }
+        if (!myPendingFlag[id]) {
+            myPendingFlag[id] = 1;
+            myPendingList.push_back(e);
         }
     }
 
@@ -284,14 +281,13 @@ public:
      * change). The caller must also invalidate the graph's class masks. */
     void invalidateEdge(const E* e) {
         const int id = e->getNumericalID();
-        if (id < 0 || id >= (int)myPendingFlag[0].size()) {
+        if (id < 0 || id >= (int)myPendingFlag.size()) {
             return;
         }
         markDirty(e);
         // NaN sentinel: the deadband always passes, so the flip reaches the
         // metric at the next barrier even though the speed table did not move
-        myAppliedEffort[0][id] = std::numeric_limits<double>::quiet_NaN();
-        myAppliedEffort[1][id] = std::numeric_limits<double>::quiet_NaN();
+        myAppliedEffort[id] = std::numeric_limits<double>::quiet_NaN();
         myFullFillsPending = 2;
         myMetricStale.store(true, std::memory_order_release);
     }
@@ -360,27 +356,24 @@ public:
             return;
         }
         myFilledEpoch = mySpeedEpoch.load(std::memory_order_acquire);
-        // buffers flip in lockstep across types (every call processes all)
-        const int backShared = 1 - myLiveMetrics.front()->frontIndex;
         // Permission flip pending: run a FULL refill on this pass's back
-        // buffer (the other buffer gets its full refill on the next pass --
-        // myFullFillsPending counts both down). The fills below re-prime the
+        // buffer, the next pass copies it to the other buffer
+        // (myFullFillsPending counts both down). The fills below re-prime the
         // graph's connection masks, which the flip's caller invalidated.
-        bool forceFull = false;
+        const int fullFill = myFullFillsPending;
         if (myFullFillsPending > 0) {
             myFullFillsPending--;
-            forceFull = true;
         }
         // Deadband pass, once, on the type-shared gate effort: accept edges
-        // whose effort moved by more than BOTH bounds since this buffer last
-        // applied them; rejected edges stay pending (see the constructor doc)
+        // whose effort moved by more than BOTH bounds since they were last
+        // applied; rejected edges stay pending (see the constructor doc)
         std::vector<const E*> accepted;
-        if (!forceFull && myLiveMetrics.front()->metric[backShared] != nullptr) {
+        if (fullFill < 2) {
             std::vector<const E*> stillPending;
-            for (const E* e : myPendingList[backShared]) {
+            for (const E* e : myPendingList) {
                 const int id = e->getNumericalID();
                 const double effNow = myGateEffort(e, nullptr, now);
-                const double effApplied = myAppliedEffort[backShared][id];
+                const double effApplied = myAppliedEffort[id];
                 bool pass = true;
                 // without a threshold every marked edge passes: the gate effort may be clamped
                 // at the minimum travel time while a type with speedFactor > 1 still sees changes
@@ -391,16 +384,17 @@ public:
                 }
                 if (pass) {
                     accepted.push_back(e);
-                    myAppliedEffort[backShared][id] = effNow;
-                    myPendingFlag[backShared][id] = 0;
+                    myAppliedEffort[id] = effNow;
+                    myPendingFlag[id] = 0;
                 } else {
                     stillPending.push_back(e);
                 }
             }
-            myPendingList[backShared].swap(stillPending);
+            myPendingList.swap(stillPending);
         }
         for (LiveMetric* c : myLiveMetrics) {
             const int back = 1 - c->frontIndex;
+            const std::vector<unsigned>& front = c->weight[c->frontIndex];
             // Fill from the live efforts, masking arcs the class is not
             // permitted on -- this is where per-class permissions AND active
             // closures become inf_weight. The fill reference is the type's
@@ -410,37 +404,48 @@ public:
             // approximation CHRouterWrapper makes per hierarchy; exact
             // per-vehicle randomization remains the domain of the exact
             // routers.
-            if (c->metric[back] == nullptr) {
-                // first use of this buffer for THIS type only (streamed/late
-                // vType): no previous state to diff against for this type,
-                // but every other already-running type's sparse deadband
-                // state is unaffected, so this branch must NOT trigger the
-                // shared wipe below (which would reset the type-shared
-                // myPendingList/myAppliedEffort for everybody just because
-                // one type is new)
-                myGraph->fillInputWeights(myFillEffort, c->vClass, c->refVehicle, now, c->weight[back]);
-                c->metric[back] = std::make_shared<RoutingKit::CustomizableContractionHierarchyMetric>(
-                                      myGraph->cch(), c->weight[back]);
+            if (c->metric[back] == nullptr || fullFill > 0) {
+                if (fullFill == 2 || c->metric[c->frontIndex] == nullptr) {
+                    // first use of THIS type (streamed/late vType) or a
+                    // permission flip: wholesale refill from the re-primed
+                    // masks and live permissions. Only the flip invalidates
+                    // the type-shared deadband state below.
+                    myGraph->fillInputWeights(myFillEffort, c->vClass, c->refVehicle, now, c->weight[back]);
+                } else {
+                    // second buffer of this type, or the second pass after a
+                    // flip: copy the front, then apply the accepted edges
+                    std::copy(front.begin(), front.end(), c->weight[back].begin());
+                    for (const E* e : accepted) {
+                        for (const unsigned a : myGraph->arcsOfEdge(e)) {
+                            c->weight[back][a] = myGraph->computeArcWeight(a, myFillEffort, c->vClass, c->refVehicle, now);
+                        }
+                    }
+                }
+                if (c->metric[back] == nullptr) {
+                    c->metric[back] = std::make_shared<RoutingKit::CustomizableContractionHierarchyMetric>(
+                                          myGraph->cch(), c->weight[back]);
+                }
                 c->metric[back]->customize();  // serial; avoids OpenMP oversubscription under FOX
-            } else if (forceFull) {
-                // permission flip: wholesale refill in place from the
-                // re-primed masks and live permissions (the metric already
-                // references weight[back]), then a full customize. This is
-                // the ONLY case that invalidates the type-shared deadband
-                // state below, since it is the only one that actually
-                // changes what "applied" means for every type at once.
-                myGraph->fillInputWeights(myFillEffort, c->vClass, c->refVehicle, now, c->weight[back]);
-                c->metric[back]->customize();
             } else {
                 // SPARSE PATH: metric[back] is the customization of the
-                // current contents of weight[back]. Recompute only the arcs
-                // of accepted edges (edge->arc reverse image), write the
-                // ones that moved, and propagate through affected triangles
-                // only. Cost scales with traffic transitions, not with the
-                // network.
+                // current contents of weight[back]. Bring the back up to the
+                // front (the arcs the last pass changed there), recompute only
+                // the arcs of accepted edges (edge->arc reverse image), write
+                // the ones that moved, and propagate through affected
+                // triangles only. Cost scales with traffic transitions, not
+                // with the network.
                 std::vector<unsigned>& applied = c->weight[back];
                 c->partial->reset(myGraph->cch());
                 unsigned changed = 0;
+                for (const E* e : myLastAccepted) {
+                    for (const unsigned a : myGraph->arcsOfEdge(e)) {
+                        if (applied[a] != front[a]) {
+                            applied[a] = front[a];
+                            c->partial->update_arc(a);
+                            ++changed;
+                        }
+                    }
+                }
                 for (const E* e : accepted) {
                     for (const unsigned a : myGraph->arcsOfEdge(e)) {
                         const unsigned newW = myGraph->computeArcWeight(a, myFillEffort, c->vClass, c->refVehicle, now);
@@ -456,21 +461,21 @@ public:
                 }
             }
         }
-        if (forceFull) {
+        if (fullFill == 2) {
             // a permission flip's full refill matched every arc to the live
-            // efforts/masks for this buffer: type-shared deadband entries
-            // are stale; NaN re-arms the first-change auto-pass. (A plain
-            // per-type first-fill above does NOT reach here -- it must not
-            // wipe deadband state that other, already-running types still
-            // depend on.)
-            for (const E* e : myPendingList[backShared]) {
-                myPendingFlag[backShared][e->getNumericalID()] = 0;
+            // efforts/masks: type-shared deadband entries are stale; NaN
+            // re-arms the first-change auto-pass. (A plain per-type first
+            // fill above does NOT reach here -- it must not wipe deadband
+            // state that other, already-running types still depend on.)
+            for (const E* e : myPendingList) {
+                myPendingFlag[e->getNumericalID()] = 0;
             }
-            myPendingList[backShared].clear();
-            myAppliedEffort[backShared].assign(myAppliedEffort[backShared].size(),
-                                               std::numeric_limits<double>::quiet_NaN());
+            myPendingList.clear();
+            myAppliedEffort.assign(myAppliedEffort.size(), std::numeric_limits<double>::quiet_NaN());
         }
-        myFilledFull = forceFull;
+        myLastAccepted.swap(accepted);
+        // a permission flip's first pass refilled wholesale: its publish clears the stale flag
+        myFilledFull = fullFill == 2;
         myFilled = true;
     }
 
@@ -558,6 +563,84 @@ public:
     /// @brief whether any type has live metric state yet
     bool empty() const {
         return myLiveMetrics.empty();
+    }
+
+    /// @brief whether the deadband can keep the metrics behind the efforts
+    /// (then its state and the lagging arcs belong to the simulation state)
+    bool hasDeadband() const {
+        return myUpdateFactor > 1. || myUpdateConstant > 0.;
+    }
+
+    /// @brief the gate effort the edge was last applied with (NaN = never)
+    double getAppliedEffort(const E* e) const {
+        return myAppliedEffort[e->getNumericalID()];
+    }
+
+    /// @brief whether the edge waits for the deadband
+    bool isPending(const E* e) const {
+        return myPendingFlag[e->getNumericalID()] != 0;
+    }
+
+    /// @brief restore the deadband state of an edge (state loading)
+    void loadEdge(const E* e, double appliedEffort, bool pending) {
+        myAppliedEffort[e->getNumericalID()] = appliedEffort;
+        if (pending) {
+            markDirty(e);
+        }
+    }
+
+    /// @brief the type keys with metric state
+    std::vector<const K*> getKeys() const {
+        std::vector<const K*> keys;
+        for (const auto& item : myByKey) {
+            keys.push_back(item.first);
+        }
+        return keys;
+    }
+
+    /// @brief the number of metrics per type
+    int getEnsembleSize() const {
+        return myEnsembleK;
+    }
+
+    /// @brief the arcs of the published metric of a type and ensemble slot
+    /// whose weight differs from a fresh fill at @p now
+    void getLaggingArcs(const K* key, int slot, double now, std::vector<int>& arcs, std::vector<int>& weights) const {
+        const LiveMetric* c = myByKey.find(key)->second[slot];
+        if (c->metric[c->frontIndex] == nullptr) {
+            return;
+        }
+        std::vector<unsigned> fresh;
+        myGraph->fillInputWeights(myFillEffort, c->vClass, c->refVehicle, now, fresh);
+        const std::vector<unsigned>& front = c->weight[c->frontIndex];
+        for (unsigned a = 0; a < (unsigned)fresh.size(); a++) {
+            if (front[a] != fresh[a]) {
+                arcs.push_back((int)a);
+                weights.push_back((int)front[a]);
+            }
+        }
+    }
+
+    /// @brief publish the metric of a type and ensemble slot as a fresh fill
+    /// at @p now with the given arcs overwritten (state loading); the other
+    /// buffer is dropped, so the next customize copies this one
+    void loadMetric(const K* key, int slot, double now, const std::vector<int>& arcs, const std::vector<int>& weights) {
+        seedKey(key);
+        if (slot < 0 || slot >= myEnsembleK) {
+            return;
+        }
+        LiveMetric* c = myByKey[key][slot];
+        myGraph->fillInputWeights(myFillEffort, c->vClass, c->refVehicle, now, c->weight[0]);
+        for (int i = 0; i < (int)arcs.size() && i < (int)weights.size(); i++) {
+            if (arcs[i] >= 0 && arcs[i] < (int)c->weight[0].size()) {
+                c->weight[0][arcs[i]] = (unsigned)weights[i];
+            }
+        }
+        c->metric[0] = std::make_shared<RoutingKit::CustomizableContractionHierarchyMetric>(myGraph->cch(), c->weight[0]);
+        c->metric[0]->customize();
+        c->metric[1].reset();
+        c->frontIndex = 0;
+        c->front.store(c->metric[0].get(), std::memory_order_release);
     }
     /// @}
 
@@ -716,17 +799,19 @@ private:
     uint64_t myFilledEpoch = 0;
     /// @brief how many barriers the published metrics may lag (setPublishLag)
     uint64_t myPublishLag = 0;
-    /// @brief how many customize passes must run a FULL refill after a
-    /// permission flip: 2 = both ping-pong buffers (the sparse path cannot
+    /// @brief how many customize passes must replace a whole buffer after a
+    /// permission flip: 2 = refill one, then copy it (the sparse path cannot
     /// repair connection-level mask changes: arcsOfEdge deliberately omits
     /// the tail side)
     int myFullFillsPending = 0;
-    /// @brief per-buffer edge state for the sparse path: the gate effort
-    /// each edge's arcs were last filled from (NaN = never applied /
-    /// forced), the pending-dirty flag, and the pending list
-    std::vector<double> myAppliedEffort[2];
-    std::vector<char> myPendingFlag[2];
-    std::vector<const E*> myPendingList[2];
+    /// @brief edge state for the sparse path, shared by both buffers: the
+    /// gate effort each edge's arcs were last filled from (NaN = never
+    /// applied / forced), the pending-dirty flag, the pending list and the
+    /// edges the last customize applied (the other buffer copies their arcs)
+    std::vector<double> myAppliedEffort;
+    std::vector<char> myPendingFlag;
+    std::vector<const E*> myPendingList;
+    std::vector<const E*> myLastAccepted;
     /// @}
 
 private:

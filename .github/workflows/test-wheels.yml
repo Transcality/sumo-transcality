@@ -35,6 +35,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.generate-matrix.outputs.test_matrix) }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
     env:
       WHEEL_SOURCE: ${{ inputs.wheel_source || 'https://sumo.dlr.de/daily/ciwheels' }}
 
@@ -83,10 +84,9 @@ jobs:
       run: |
         ls python-wheels
         source testenv/*/activate
-        python -m pip install --no-index -f python-wheels sumo_data
         WHEEL=$(ls python-wheels/eclipse_sumo*${{ matrix.manylinux }}*$(uname -m).whl)
-        echo wheel=$WHEEL
-        python -m pip install $WHEEL
+        DATA_WHEEL=$(ls python-wheels/sumo_data*${{ matrix.manylinux }}*$(uname -m).whl)
+        python -m pip install $WHEEL $DATA_WHEEL
         python -c "import sumo; print('SUMO_HOME=' + sumo.SUMO_HOME)" >> $GITHUB_ENV
 
     - name: Running tests with sumo wheel
@@ -100,11 +100,16 @@ jobs:
         if [[ "${{ matrix.os }}" == "ubuntu-24.04-arm" ]]; then OS=linux_arm; fi
         export SUMO_BIN_DIR=$(python -c "import os,sys; print(os.path.dirname(sys.executable))")
         TEXTTEST_CALL="tests/runTests.sh -b ci -v ci.fast -finverse $PWD/tests/filter_files/${OS}_failures.txt"
-        $TEXTTEST_CALL -a activitygen,duarouter,jtrrouter,marouter,od2trips,polyconvert
         python -m pip install -r tools/req_ci.txt
-        $TEXTTEST_CALL -a netconvert,netgen
-        $TEXTTEST_CALL -a sumo
-        $TEXTTEST_CALL -a complex,tools,traci
+        # the applications only depend on the binaries, which are the same for all Python versions,
+        # so they are tested with the reference version only (see the shards in generate-matrix.yml)
+        if [[ "${{ matrix.shard }}" == "binaries" ]]; then
+          $TEXTTEST_CALL -a activitygen,duarouter,jtrrouter,marouter,od2trips,polyconvert
+          $TEXTTEST_CALL -a netconvert,netgen
+          $TEXTTEST_CALL -a sumo,traci
+        else
+          $TEXTTEST_CALL -a complex,tools
+        fi
 
     - name: Cleaning up test environment
       shell: bash
@@ -113,6 +118,7 @@ jobs:
         echo 'SUMO_HOME=' >> $GITHUB_ENV
 
     - name: Preparing Python environment for libsumo
+      if: ${{ matrix.shard == 'python' }}
       shell: bash
       run: |
         python -m venv libsumo_testenv --system-site-packages
@@ -122,25 +128,25 @@ jobs:
         python -m pip install texttest
 
     - name: Installing libsumo wheels (macos / windows)
-      if: ${{ !startsWith(matrix.os, 'ubuntu') || inputs.wheel_source != 'python-wheels' }}
+      if: ${{ matrix.shard == 'python' && (!startsWith(matrix.os, 'ubuntu') || inputs.wheel_source != 'python-wheels') }}
       shell: bash
       run: |
         if [[ "${{ matrix.os }}" != "windows-latest" ]]; then source libsumo_testenv/*/activate; fi
         python -m pip install --no-index -f $WHEEL_SOURCE libsumo
 
     - name: Installing libsumo wheels (linux)
-      if: ${{ startsWith(matrix.os, 'ubuntu') && inputs.wheel_source == 'python-wheels' }}
+      if: ${{ matrix.shard == 'python' && (startsWith(matrix.os, 'ubuntu') && inputs.wheel_source == 'python-wheels') }}
       shell: bash
       run: |
         source libsumo_testenv/*/activate
-        python -m pip install --no-index -f python-wheels traci sumo-data
+        python -m pip install --no-index -f python-wheels traci
         PYTAG="${{ matrix.python_version }}"
         WHEEL=$(ls python-wheels/libsumo*cp${PYTAG/.}-cp${PYTAG/.}-*${{ matrix.manylinux }}*$(uname -m).whl)
-        echo wheel=$WHEEL
-        python -m pip install $WHEEL
+        DATA_WHEEL=$(ls python-wheels/sumo_data*${{ matrix.manylinux }}*$(uname -m).whl)
+        python -m pip install $WHEEL $DATA_WHEEL
 
     - name: Verify wheel binary signatures
-      if: runner.os == 'macOS'
+      if: ${{ matrix.shard == 'python' && (runner.os == 'macOS') }}
       shell: bash
       run: |
         for f in $(find "libsumo_testenv" -name "*.so" -o -name "*.dylib"); do
@@ -149,6 +155,7 @@ jobs:
         done
 
     - name: Running libsumo tests
+      if: ${{ matrix.shard == 'python' }}
       shell: bash
       run: |
         source libsumo_testenv/*/activate
@@ -157,14 +164,12 @@ jobs:
     - name: Compressing test results
       if: failure()
       shell: bash
-      run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then choco install zip -y; fi
-        zip -r texttesttmp.zip ~/.texttest/tmp
+      run: 7z a -bso0 -bsp0 texttesttmp-${{ matrix.os }}-${{ matrix.manylinux }}-${{ matrix.python_version }}-${{ matrix.shard }}.zip ~/.texttest/tmp
 
     - name: Uploading test results
       if: failure()
       uses: actions/upload-artifact@v7
       with:
-        name: texttesttmp-${{ matrix.os }}-${{ matrix.manylinux }}-${{ matrix.python_version }}
-        path: texttesttmp.zip
+        path: texttesttmp-${{ matrix.os }}-${{ matrix.manylinux }}-${{ matrix.python_version }}-${{ matrix.shard }}.zip
+        archive: false
         if-no-files-found: warn

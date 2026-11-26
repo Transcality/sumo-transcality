@@ -89,10 +89,10 @@ class Connection(StepManager):
         self._queue = []
         self._subscriptionMapping = {}
         self._lock = threading.Lock()
-        if traceFile is not None:
-            self.startTracing(traceFile, traceGetters, DOMAINS)
         for domain in DOMAINS:
             domain._register(self, self._subscriptionMapping)
+        if traceFile is not None:
+            self.startTracing(traceFile, traceGetters, [getattr(self, domain._name) for domain in DOMAINS])
         self._label = label
         if _connectHook is not None:
             _connectHook(self)
@@ -104,20 +104,21 @@ class Connection(StepManager):
 
     def _recvExact(self):
         try:
-            result = bytes()
+            # Accumulate chunks in a bytearray for speedup over repeated bytes concatenation.
+            result = bytearray()
             while len(result) < 4:
                 t = self._socket.recv(4 - len(result))
                 if not t:
                     return None
-                result += t
+                result.extend(t)
             length = struct.unpack("!i", result)[0] - 4
-            result = bytes()
+            result = bytearray()
             while len(result) < length:
                 t = self._socket.recv(length - len(result))
                 if not t:
                     return None
-                result += t
-            return Storage(result)
+                result.extend(t)
+            return Storage(bytes(result))
         except socket.error:
             return None
 
@@ -127,7 +128,8 @@ class Connection(StepManager):
         length = struct.pack("!i", len(self._string) + 4)
         if _DEBUG:
             print("sending", Storage(length + self._string).getDebugString())
-        self._socket.send(length + self._string)
+        # sendall makes sure that the complete framed message is sent across partial writes.
+        self._socket.sendall(length + self._string)
         result = self._recvExact()
         if _DEBUG:
             print("receiving", result.getDebugString())
@@ -152,7 +154,8 @@ class Connection(StepManager):
         return result
 
     def _pack(self, format, *values):
-        packed = bytes()
+        # Grow list payloads without repeatedly copying the encoded prefix.
+        packed = bytearray()
         for f, v in zip(format, values):
             if f == "i":
                 packed += struct.pack("!Bi", tc.TYPE_INTEGER, int(v))
@@ -205,11 +208,10 @@ class Connection(StepManager):
                 s = str(v[0]).encode("utf8")
                 packed += struct.pack("!Bi", tc.POSITION_ROADMAP, len(s)) + s
                 packed += struct.pack("!dB", v[1], v[2])
-        return packed
+        return bytes(packed)
 
     def _sendCmd(self, cmdID, varID, objID, format="", *values):
         with self._lock:
-            self._queue.append(cmdID)
             packed = self._pack(format, *values)
             objID = str(objID).encode("utf8")
             length = len(packed) + 1 + 1  # length and command
@@ -219,16 +221,17 @@ class Connection(StepManager):
                 else:
                     length += 1 + 4 + len(objID)
             if length <= 255:
-                self._string += struct.pack("!BB", length, cmdID)
+                command = struct.pack("!BB", length, cmdID)
             else:
-                self._string += struct.pack("!BiB", 0, length + 4, cmdID)
+                command = struct.pack("!BiB", 0, length + 4, cmdID)
             if varID is not None:
                 if isinstance(varID, tuple):
-                    self._string += struct.pack("!dd", *varID)
+                    command += struct.pack("!dd", *varID)
                 else:
-                    self._string += struct.pack("!B", varID)
-                self._string += struct.pack("!i", len(objID)) + objID
-            self._string += packed
+                    command += struct.pack("!B", varID)
+                command += struct.pack("!i", len(objID)) + objID
+            self._queue.append(cmdID)
+            self._string += command + packed
             return self._sendExact()
 
     def _readSubscription(self, result):
@@ -274,7 +277,7 @@ class Connection(StepManager):
                             "Cannot handle subscription response %02x for %s." % (response, objectID))
         return objectID, response
 
-    def _subscribe(self, cmdID, begin, end, objID, varIDs, parameters):
+    def _subscriptionArgs(self, varIDs, parameters):
         format = "u"
         args = [len(varIDs)]
         for v in varIDs:
@@ -294,6 +297,10 @@ class Connection(StepManager):
                 else:
                     format += "s"
                     args.append(parameters[v])
+        return format, args
+
+    def _subscribe(self, cmdID, begin, end, objID, varIDs, parameters):
+        format, args = self._subscriptionArgs(varIDs, parameters)
         result = self._sendCmd(cmdID, (begin, end), objID, format, *args)
         if varIDs:
             objectID, response = self._readSubscription(result)
@@ -305,8 +312,8 @@ class Connection(StepManager):
         return self._subscriptionMapping[cmdID]
 
     def _subscribeContext(self, cmdID, begin, end, objID, domain, dist, varIDs, parameters=None):
-        result = self._sendCmd(cmdID, (begin, end), objID, "uDu" + (len(varIDs) * "u"),
-                               domain, dist, len(varIDs), *varIDs)
+        format, args = self._subscriptionArgs(varIDs, parameters)
+        result = self._sendCmd(cmdID, (begin, end), objID, "uD" + format, domain, dist, *args)
         if varIDs:
             objectID, response = self._readSubscription(result)
             if response - cmdID != 16 or objectID != objID:
@@ -355,6 +362,8 @@ class Connection(StepManager):
         if self._traceFile:
             self._traceFile.write("traci.load(%s)\n" % repr(args))
         self._sendCmd(tc.CMD_LOAD, None, None, "l", args)
+        for subscriptionResults in self._subscriptionMapping.values():
+            subscriptionResults.reset()
 
     def simulationStep(self, step=0.):
         """
@@ -391,17 +400,21 @@ class Connection(StepManager):
         self._sendCmd(tc.CMD_SETORDER, None, None, "I", order)
 
     def close(self, wait=True):
-        StepManager.close(self, True)
-        for listenerID in list(self._stepListeners.keys()):
-            self.removeStepListener(listenerID)
-        if self._socket is not None:
-            self._sendCmd(tc.CMD_CLOSE, None, None)
-            self._socket.close()
+        try:
+            StepManager.close(self, True)
+            for listenerID in list(self._stepListeners.keys()):
+                self.removeStepListener(listenerID)
+            if self._socket is not None:
+                self._sendCmd(tc.CMD_CLOSE, None, None)
+        finally:
+            if self._socket is not None:
+                self._socket.close()
             self._socket = None
+            self.simulation._setConnection(None)
+            if self._label is not None:
+                if _connections.get("") is self:
+                    del _connections[""]
+                if _connections.get(self._label) is self:
+                    del _connections[self._label]
         if wait and self._process is not None:
             self._process.wait()
-        self.simulation._setConnection(None)
-        if self._label is not None:
-            if _connections.get("") == self:
-                del _connections[""]
-            del _connections[self._label]

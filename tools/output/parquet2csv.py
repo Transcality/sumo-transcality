@@ -18,10 +18,18 @@
 """
 This script reads a parquet file and converts it to csv.
 """
+import faulthandler
 import sys
 
-import pandas as pd
+# texttest does not time out collate scripts and this one has been seen to hang in CI,
+# so dump the stack and exit instead of blocking forever
+faulthandler.dump_traceback_later(120, exit=True)
+
+import pyarrow.parquet as pq  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding='utf-8')
-pd.read_parquet(sys.argv[1]).to_csv(sys.stdout, index=False, lineterminator='\n', float_format='%.4f')
+# pd.read_parquet hands a Python file object to the reader, which can abort the process at exit
+# ("terminate called without an active exception", https://github.com/apache/arrow/issues/54536),
+# reading the path natively avoids this
+pq.read_table(sys.argv[1]).to_pandas().to_csv(sys.stdout, index=False, lineterminator='\n', float_format='%.4f')

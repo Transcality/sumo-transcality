@@ -13,6 +13,9 @@ plain
 # two vehicles saved and reloaded
 precision
 
+# the odometer and the tripinfo device are saved with save-state.precision
+state_precision
+
 # include route and vtype dists
 dists
 dists2
@@ -176,3 +179,6 @@ meso_threads_state
 
 # a state saved with --meso-threads by a build without the event counters of the groups (input_state.xml, saved at 240) still loads and continues like the run that saved it
 meso_threads_state_legacy
+
+# the tripinfo device's reminder state survives loading state
+meso_tripinfo_vss
