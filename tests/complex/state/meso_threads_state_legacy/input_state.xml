@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-11-20T18:08:28.674488+01:00 by Eclipse SUMO sumo UNKNOWN
+<!-- generated on 2026-11-26T14:09:46.849077+01:00 by Eclipse SUMO sumo UNKNOWN
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -10,7 +10,7 @@
 
     <output>
         <save-state.times value="240"/>
-        <save-state.files value="input_state.xml"/>
+        <save-state.files value="state240.xml"/>
         <save-state.rng value="true"/>
         <save-state.precision value="9"/>
     </output>
@@ -18,11 +18,6 @@
     <time>
         <end value="241"/>
     </time>
-
-    <processing>
-        <default.departspeed value="0"/>
-        <default.departlane value="first"/>
-    </processing>
 
     <report>
         <duration-log.disable value="true"/>
@@ -117,26 +112,26 @@
     <route id="west" state="1" edges="3/2to2/2 2/2to1/2"/>
     <delay number="20" begin="60" end="40" depart="0.000000000" time="4551.000000000" speedFactor="1.179700000" decel="4.500000000"/>
     <vType id="DEFAULT_VEHTYPE"/>
-    <vehicle id="w2_east.0" depart="220.000" route="east" distance="0 0" speedFactor="1.030400000" state="2208 220000 0 0 1 0 239410 229705 9223372036854774807 0 0 0 223 239410"/>
-    <vehicle id="w2_north.0" depart="220.000" route="north" distance="0 0" speedFactor="0.957100000" state="2208 220000 0 0 1 0 240896 230448 9223372036854774807 0 0 0 225 240896"/>
-    <vehicle id="w2_west.0" depart="220.000" route="west" distance="0 0" speedFactor="1.091900000" state="2208 220000 0 0 2 0 247474 238316 9223372036854774807 0 0 0 162 247474"/>
-    <vehicle id="w2_south.0" depart="220.000" route="south" distance="0 0" speedFactor="1.037800000" state="2208 220000 0 0 1 0 239272 229636 9223372036854774807 0 0 0 131 239272"/>
-    <vehicle id="w2_east.1" depart="224.000" route="east" distance="0 0" speedFactor="1.043400000" state="2208 224000 0 0 1 0 243168 233584 9223372036854774807 0 0 0 222 243168"/>
-    <vehicle id="w2_north.1" depart="224.000" route="north" distance="0 0" speedFactor="1.088000000" state="2208 224000 0 0 1 0 242776 233191 9223372036854774807 0 0 0 224 242776"/>
-    <vehicle id="w2_west.1" depart="224.000" route="west" distance="0 0" speedFactor="0.997400000" state="2208 224000 0 0 1 0 244052 234026 9223372036854774807 0 0 0 161 244052"/>
-    <vehicle id="w2_south.1" depart="224.000" route="south" distance="0 0" speedFactor="0.900500000" state="2208 224000 0 0 1 0 246210 235105 9223372036854774807 0 0 0 130 246210"/>
-    <vehicle id="w2_east.2" depart="228.000" route="east" distance="0 0" speedFactor="0.876900000" state="2208 228000 0 0 0 0 239404 228000 9223372036854774807 0 0 0 227 239404"/>
-    <vehicle id="w2_north.2" depart="228.000" route="north" distance="0 0" speedFactor="0.850400000" state="2208 228000 0 0 0 0 239759 228000 9223372036854774807 0 0 0 226 239759"/>
-    <vehicle id="w2_west.2" depart="228.000" route="west" distance="0 0" speedFactor="0.854900000" state="2208 228000 0 0 0 0 239697 228000 9223372036854774807 0 0 0 160 239697"/>
-    <vehicle id="w2_south.2" depart="228.000" route="south" distance="0 0" speedFactor="1.168900000" state="2208 228000 0 0 1 0 248090 236985 9223372036854774807 0 0 0 132 248090"/>
-    <vehicle id="w2_east.3" depart="232.000" route="east" distance="0 0" speedFactor="1.016800000" state="2208 232000 0 0 0 0 241835 232000 9223372036854774807 0 0 0 -1 241835"/>
-    <vehicle id="w2_north.3" depart="232.000" route="north" distance="0 0" speedFactor="1.095800000" state="2208 232000 0 0 0 0 241639 232000 9223372036854774807 0 0 0 -1 241639"/>
-    <vehicle id="w2_west.3" depart="232.000" route="west" distance="0 0" speedFactor="1.003200000" state="2208 232000 0 0 0 0 241968 232000 9223372036854774807 0 0 0 -1 241968"/>
-    <vehicle id="w2_south.3" depart="232.000" route="south" distance="0 0" speedFactor="0.996000000" state="2208 232000 0 0 0 0 242040 232000 9223372036854774807 0 0 0 133 242040"/>
-    <vehicle id="w2_east.4" depart="236.000" route="east" distance="0 0" speedFactor="0.898900000" state="2208 236000 0 0 0 0 247125 236000 9223372036854774807 0 0 0 -1 247125"/>
-    <vehicle id="w2_north.4" depart="236.000" route="north" distance="0 0" speedFactor="1.142500000" state="2208 236000 0 0 0 0 244753 236000 9223372036854774807 0 0 0 -1 244753"/>
-    <vehicle id="w2_west.4" depart="236.000" route="west" distance="0 0" speedFactor="1.023600000" state="2208 236000 0 0 0 0 245769 236000 9223372036854774807 0 0 0 -1 245769"/>
-    <vehicle id="w2_south.4" depart="236.000" route="south" distance="0 0" speedFactor="0.969500000" state="2208 236000 0 0 0 0 246315 236000 9223372036854774807 0 0 0 -1 246315"/>
+    <vehicle id="w2_east.0" depart="220.000" route="east" distance="0.000000000 0" speedFactor="1.030400000" state="2208 220000 0 0 1 0 239410 229705 9223372036854774807 0 0 0 226 239410"/>
+    <vehicle id="w2_north.0" depart="220.000" route="north" distance="0.000000000 0" speedFactor="0.957100000" state="2208 220000 0 0 1 0 240896 230448 9223372036854774807 0 0 0 228 240896"/>
+    <vehicle id="w2_west.0" depart="220.000" route="west" distance="0.000000000 0" speedFactor="1.091900000" state="2208 220000 0 0 2 0 247474 238316 9223372036854774807 0 0 0 163 247474"/>
+    <vehicle id="w2_south.0" depart="220.000" route="south" distance="0.000000000 0" speedFactor="1.037800000" state="2208 220000 0 0 1 0 239272 229636 9223372036854774807 0 0 0 132 239272"/>
+    <vehicle id="w2_east.1" depart="224.000" route="east" distance="0.000000000 0" speedFactor="1.043400000" state="2208 224000 0 0 1 0 243168 233584 9223372036854774807 0 0 0 225 243168"/>
+    <vehicle id="w2_north.1" depart="224.000" route="north" distance="0.000000000 0" speedFactor="1.088000000" state="2208 224000 0 0 1 0 242776 233191 9223372036854774807 0 0 0 227 242776"/>
+    <vehicle id="w2_west.1" depart="224.000" route="west" distance="0.000000000 0" speedFactor="0.997400000" state="2208 224000 0 0 1 0 244052 234026 9223372036854774807 0 0 0 162 244052"/>
+    <vehicle id="w2_south.1" depart="224.000" route="south" distance="0.000000000 0" speedFactor="0.900500000" state="2208 224000 0 0 1 0 246210 235105 9223372036854774807 0 0 0 131 246210"/>
+    <vehicle id="w2_east.2" depart="228.000" route="east" distance="0.000000000 0" speedFactor="0.876900000" state="2208 228000 0 0 0 0 239404 228000 9223372036854774807 0 0 0 230 239404"/>
+    <vehicle id="w2_north.2" depart="228.000" route="north" distance="0.000000000 0" speedFactor="0.850400000" state="2208 228000 0 0 0 0 239759 228000 9223372036854774807 0 0 0 229 239759"/>
+    <vehicle id="w2_west.2" depart="228.000" route="west" distance="0.000000000 0" speedFactor="0.854900000" state="2208 228000 0 0 0 0 239697 228000 9223372036854774807 0 0 0 161 239697"/>
+    <vehicle id="w2_south.2" depart="228.000" route="south" distance="0.000000000 0" speedFactor="1.168900000" state="2208 228000 0 0 1 0 248090 236985 9223372036854774807 0 0 0 133 248090"/>
+    <vehicle id="w2_east.3" depart="232.000" route="east" distance="0.000000000 0" speedFactor="1.016800000" state="2208 232000 0 0 0 0 241835 232000 9223372036854774807 0 0 0 -1 241835"/>
+    <vehicle id="w2_north.3" depart="232.000" route="north" distance="0.000000000 0" speedFactor="1.095800000" state="2208 232000 0 0 0 0 241639 232000 9223372036854774807 0 0 0 -1 241639"/>
+    <vehicle id="w2_west.3" depart="232.000" route="west" distance="0.000000000 0" speedFactor="1.003200000" state="2208 232000 0 0 0 0 241968 232000 9223372036854774807 0 0 0 -1 241968"/>
+    <vehicle id="w2_south.3" depart="232.000" route="south" distance="0.000000000 0" speedFactor="0.996000000" state="2208 232000 0 0 0 0 242040 232000 9223372036854774807 0 0 0 134 242040"/>
+    <vehicle id="w2_east.4" depart="236.000" route="east" distance="0.000000000 0" speedFactor="0.898900000" state="2208 236000 0 0 0 0 247125 236000 9223372036854774807 0 0 0 -1 247125"/>
+    <vehicle id="w2_north.4" depart="236.000" route="north" distance="0.000000000 0" speedFactor="1.142500000" state="2208 236000 0 0 0 0 244753 236000 9223372036854774807 0 0 0 -1 244753"/>
+    <vehicle id="w2_west.4" depart="236.000" route="west" distance="0.000000000 0" speedFactor="1.023600000" state="2208 236000 0 0 0 0 245769 236000 9223372036854774807 0 0 0 -1 245769"/>
+    <vehicle id="w2_south.4" depart="236.000" route="south" distance="0.000000000 0" speedFactor="0.969500000" state="2208 236000 0 0 0 0 246315 236000 9223372036854774807 0 0 0 -1 246315"/>
     <flowState id="w2_east" begin="220.000" end="260.000" period="4" next="20.000000000" route="east" done="5" index="5"/>
     <flowState id="w2_north" begin="220.000" end="260.000" period="4" next="20.000000000" route="north" done="5" index="5"/>
     <flowState id="w2_west" begin="220.000" end="260.000" period="4" next="20.000000000" route="west" done="5" index="5"/>
@@ -151,7 +146,7 @@
         <vehicles time="65900" blockTime="55115" value="" state="78460 64020 0 76580 62140 0 74700 60260 0 72820 58380 0 64186 49746 0 62306 47866 0 59330 44890 0 57450 43010 0 54542 40102 0"/>
     </segment>
     <segment id="1/0to1/1:3">
-        <vehicles time="105400" blockTime="65899" value="" state="121470 103520 1 119590 101640 1 117710 99760 1 115830 97880 1 113950 96000 1 112070 94120 1 110190 92240 1 108310 90360 1 106430 88480 1 103950 86000 1"/>
+        <vehicles time="105400" blockTime="65899" value="" state="121470 103520 1 119590 101640 1 117710 99760 1 115830 97880 1 113950 96000 1 112070 94120 1 110190 92240 1 108310 90360 1 106430 88480 1 103950 86000 1 j121470"/>
     </segment>
     <segment id="1/1to1/2:0">
         <vehicles time="117434" blockTime="105399" value="" state="129994 115554 0 128114 113674 0 126234 111794 0 124354 109914 0 122474 108034 0 120594 106154 0 118714 104274 0 116834 102394 0 114954 100514 0 111098 96658 0"/>
@@ -175,7 +170,7 @@
         <vehicles time="68705" blockTime="58429" value="" state="81265 66825 0 78533 64093 0 76653 62213 0 74773 60333 0 66472 52032 0 64592 50152 0"/>
     </segment>
     <segment id="1/1to2/1:3">
-        <vehicles time="133360" blockTime="68704" value="" state="149430 131480 1 146950 129000 1 88764 74324 0 86884 72444 0 77856 63416 0 75976 61536 0 66968 52528 0"/>
+        <vehicles time="133360" blockTime="68704" value="" state="149430 131480 1 146950 129000 1 88764 74324 0 86884 72444 0 77856 63416 0 75976 61536 0 66968 52528 0 j149430"/>
     </segment>
     <segment id="2/1to3/1:0">
         <vehicles time="143635" blockTime="133359" value="" state="156195 141755 0 153388 138948 0"/>
@@ -223,7 +218,7 @@
         <vehicles time="65916" blockTime="240195" value="w2_west.0"/>
     </segment>
     <segment id="3/2to2/2:3">
-        <vehicles time="96400" blockTime="65915" value="" state="112470 94520 1 110590 92640 1 108710 90760 1 106830 88880 1 104950 87000 1 103070 85120 1 101190 83240 1 99310 81360 1 97430 79480 1 94950 77000 1"/>
+        <vehicles time="96400" blockTime="65915" value="" state="112470 94520 1 110590 92640 1 108710 90760 1 106830 88880 1 104950 87000 1 103070 85120 1 101190 83240 1 99310 81360 1 97430 79480 1 94950 77000 1 j112470"/>
     </segment>
     <segment id="3/2to3/1:0">
         <vehicles time="238865" blockTime="-9223372036854775808" value="w2_south.4 w2_south.3" state="251425 236985 0 249545 235105 0 244076 229636 0"/>
@@ -235,7 +230,7 @@
         <vehicles time="71192" blockTime="60087" value="" state="83752 69312 0 75861 61421 0 71940 57500 0 70060 55620 0 68163 53723 0 60690 46250 0 58810 44370 0"/>
     </segment>
     <segment id="3/2to3/1:3">
-        <vehicles time="105400" blockTime="71191" value="" state="121470 103520 1 119590 101640 1 117710 99760 1 115830 97880 1 113950 96000 1 112070 94120 1 110190 92240 1 108310 90360 1 106430 88480 1 103950 86000 1"/>
+        <vehicles time="105400" blockTime="71191" value="" state="121470 103520 1 119590 101640 1 117710 99760 1 115830 97880 1 113950 96000 1 112070 94120 1 110190 92240 1 108310 90360 1 106430 88480 1 103950 86000 1 j121470"/>
     </segment>
     <tlLogic id="0/0" programID="0" phase="2" duration="2000" until="269000" cycleTime="36000" active="1"/>
     <tlLogic id="0/1" programID="0" phase="0" duration="9000" until="262000" cycleTime="9000" active="1"/>
